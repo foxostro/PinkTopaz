@@ -1,0 +1,8 @@
+syntax:glob
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Debug/
+PinkTopaz.build/
+PinkTopaz.xcodeproj/
+cmake_install.cmake
