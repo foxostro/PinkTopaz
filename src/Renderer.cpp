@@ -11,7 +11,7 @@
 
 #include "Renderer.hpp"
 
-namespace PinkTopaz::Renderer {
+namespace PinkTopaz {
     
     Renderer::Renderer(SDL_Window *_window) : window(_window)
     {
@@ -48,4 +48,4 @@ namespace PinkTopaz::Renderer {
         SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "Exiting render loop.");
     }
     
-} // namespace PinkTopaz::Renderer
+} // namespace PinkTopaz

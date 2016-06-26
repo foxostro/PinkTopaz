@@ -25,9 +25,8 @@ namespace PinkTopaz {
         thr = std::unique_ptr<std::thread>(new std::thread([this]{ this->run(); }));
     }
     
-    void Actor::finish()
+    void Actor::join()
     {
-        setShouldShutdown();
         thr->join();
     }
     

@@ -12,7 +12,7 @@
 #include <SDL2/SDL.h>
 #include "Actor.hpp"
 
-namespace PinkTopaz::Renderer {
+namespace PinkTopaz {
     
     // Actor which handles the task of Renderering.
     // This one does OpenGL renderering. This actor and associated objects are actually the only parts of the engine
@@ -36,6 +36,6 @@ namespace PinkTopaz::Renderer {
         Renderer(SDL_Window *window);
     };
 
-} // namespace PinkTopaz::Renderer
+} // namespace PinkTopaz
 
 #endif /* Renderer_hpp */

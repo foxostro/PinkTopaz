@@ -50,8 +50,8 @@ namespace PinkTopaz {
         // Starts the thread. The actor may begin processing messages after this call.
         void start();
         
-        // Ensures clean shutdown of the actor and blocks until it has shutdown and the thread has terminated.
-        void finish();
+        // Blocks until the thread terminates and joins.
+        void join();
     };
     
 } // namespace PinkTopaz
