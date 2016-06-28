@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.8)
 project (PinkTopaz)
 set(APP_NAME "PinkTopaz")
 
-set(CMAKE_CXX_FLAGS "-Wall -Werror -std=c++1z")
+set(CMAKE_CXX_FLAGS "-Wall -Werror -fno-rtti -fno-exceptions -std=c++1z")
 
 # Define the target and specify source files for it. This must be done before the target can be referenced.
 set(SOURCE_FILES
