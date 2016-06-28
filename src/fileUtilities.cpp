@@ -23,15 +23,20 @@ namespace PinkTopaz {
     
     std::string stringFromFileContents(const char *filePath)
     {
-        std::ifstream stream(filePath);
-        std::string str;
+        std::ifstream in(filePath, std::ios::in | std::ios::binary);
 
-        stream.seekg(0, std::ios::end);
-        str.reserve(stream.tellg());
-        stream.seekg(0, std::ios::beg);
+        if (!in) {
+            SDL_LogError(SDL_LOG_CATEGORY_ERROR, "failed to open file: %s, filePath=%s\n", strerror(errno), filePath);
+        }
 
-        str.assign((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
-        return str;
+        std::string contents;
+        in.seekg(0, std::ios::end);
+        contents.resize(in.tellg());
+        in.seekg(0, std::ios::beg);
+        in.read(&contents[0], contents.size());
+        in.close();
+
+        return contents;
     }
 
 } // namespace PinkTopaz
