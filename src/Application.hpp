@@ -9,6 +9,7 @@
 #ifndef Application_hpp
 #define Application_hpp
 
+#include "SDL.h"
 #include <OpenGL/gl3.h>
 
 namespace PinkTopaz {
@@ -22,6 +23,9 @@ namespace PinkTopaz {
 
         // Runs the game loop on the current thread and returns when the game has ended.
         void run();
+        
+    private:
+        void runInnerScope(SDL_Window *window);
     };
 
 } // namespace PinkTopaz

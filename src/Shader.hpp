@@ -10,13 +10,14 @@
 #define Shader_hpp
 
 #include <OpenGL/gl3.h>
+#include <string>
 
 namespace PinkTopaz {
     
 class Shader
 {
 public:
-    Shader(const GLchar *vertexShaderSource, const GLchar *fragmentShaderSource);
+    Shader(const std::string &vertexShaderSource, const std::string &fragmentShaderSource);
     ~Shader();
     void use();
     

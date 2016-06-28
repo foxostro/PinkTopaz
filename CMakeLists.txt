@@ -10,6 +10,7 @@ set(SOURCE_FILES
     "src/Application.cpp" "src/Application.hpp"
     "src/Shader.cpp" "src/Shader.hpp"
     "src/glUtilities.cpp" "src/glUtilities.hpp"
+    "src/fileUtilities.cpp" "src/fileUtilities.hpp"
     )
 add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
 
@@ -38,4 +39,9 @@ if(APPLE)
 	add_custom_command(TARGET PinkTopaz POST_BUILD
 	                   COMMAND ${CMAKE_COMMAND} -E copy_directory
 	                   ${SDL2_LIBRARY} $<TARGET_FILE_DIR:PinkTopaz>/../Frameworks/SDL2.framework)
+
+	# On Mac OS, copy the resources directory into the app bundle. Important for redistributing the game.
+	add_custom_command(TARGET PinkTopaz POST_BUILD
+	                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+	                   "./res" $<TARGET_FILE_DIR:PinkTopaz>/../Resources)
 endif(APPLE)

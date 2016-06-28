@@ -13,6 +13,7 @@
 #include "Application.hpp"
 #include "Shader.hpp"
 #include "glUtilities.hpp"
+#include "fileUtilities.hpp"
 
 namespace PinkTopaz {
     
@@ -26,61 +27,18 @@ namespace PinkTopaz {
         // Nothing to do
     }
     
-    void Application::run()
+    void Application::runInnerScope(SDL_Window *window)
     {
-        if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-            SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_Init failed: %s\n", SDL_GetError());
-        }
-        
-        SDL_version compiled;
-        SDL_version linked;
-        
-        SDL_VERSION(&compiled);
-        SDL_GetVersion(&linked);
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "We compiled against SDL version %d.%d.%d.\n", compiled.major, compiled.minor, compiled.patch);
-        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "We are linking against SDL version %d.%d.%d.\n", linked.major, linked.minor, linked.patch);
-        
-        SDL_Window *window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600,
-                                  SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
-
-        SDL_LogSetPriority(SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_INFO);
-        SDL_LogSetPriority(SDL_LOG_CATEGORY_ERROR, SDL_LOG_PRIORITY_ERROR);
-
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-        SDL_GL_SetSwapInterval(1);
-        SDL_GL_CreateContext(window);
-        
-        int major = 0;
-        int minor = 0;
-        glGetIntegerv(GL_MAJOR_VERSION, &major);
-        glGetIntegerv(GL_MINOR_VERSION, &minor);
-        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "OpenGL version is %d.%d\n", major, minor);
-        
         glClearColor(0.2, 0.4, 0.5, 1.0);
         
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-        
+
         static const GLfloat vertices[] = {
             0.0f,  0.5f,  0.0f,
             0.5f, -0.5f,  0.0f,
             -0.5f, -0.5f,  0.0f
         };
-        
-        static const char *vertexShaderSource =
-            "#version 410\n"
-            "in vec3 vp;\n"
-            "void main() {\n"
-            "	gl_Position = vec4(vp, 1.0);\n"
-            "}\n";
-        
-        static const char *fragmentShaderSource =
-            "#version 410\n"
-            "out vec4 fragColor;\n"
-            "void main() {\n"
-            "	fragColor = vec4(0.5, 0.0, 0.5, 1.0);\n"
-            "}\n";
         
         GLuint vbo = 0;
         glGenBuffers(1, &vbo);
@@ -94,9 +52,10 @@ namespace PinkTopaz {
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
         glBindVertexArray(0);
-        
-        Shader shader(vertexShaderSource, fragmentShaderSource);
 
+        Shader shader(stringFromFileContents("vert.glsl.txt"),
+                      stringFromFileContents("frag.glsl.txt"));
+        
         bool quit = false;
         
         while(!quit)
@@ -115,15 +74,52 @@ namespace PinkTopaz {
             
             checkGLError();
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+            
             shader.use();
             glBindVertexArray(vao);
             glDrawArrays(GL_TRIANGLES, 0, 3);
-
+            
             glFlush();
             SDL_GL_SwapWindow(window);
         }
+    }
+    
+    void Application::run()
+    {
+        if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+            SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_Init failed: %s\n", SDL_GetError());
+        }
+        
+        setCurrentWorkingDirectory(SDL_GetBasePath());
 
+        SDL_version compiled;
+        SDL_version linked;
+        
+        SDL_VERSION(&compiled);
+        SDL_GetVersion(&linked);
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "We compiled against SDL version %d.%d.%d.\n", compiled.major, compiled.minor, compiled.patch);
+        SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "We are linking against SDL version %d.%d.%d.\n", linked.major, linked.minor, linked.patch);
+        
+        SDL_Window *window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600,
+                                  SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
+
+        SDL_LogSetPriority(SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_INFO);
+        SDL_LogSetPriority(SDL_LOG_CATEGORY_ERROR, SDL_LOG_PRIORITY_ERROR);
+
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+        SDL_GL_SetSwapInterval(1);
+        SDL_GLContext glContext = SDL_GL_CreateContext(window);
+
+        int major = 0;
+        int minor = 0;
+        glGetIntegerv(GL_MAJOR_VERSION, &major);
+        glGetIntegerv(GL_MINOR_VERSION, &minor);
+        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "OpenGL version is %d.%d\n", major, minor);
+        
+        runInnerScope(window);
+
+        SDL_GL_DeleteContext(glContext);
         SDL_DestroyWindow(window);
         SDL_Quit();
     }

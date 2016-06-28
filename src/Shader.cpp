@@ -13,30 +13,32 @@
 
 namespace PinkTopaz {
     
-    Shader::Shader(const GLchar *vertexShaderSource, const GLchar *fragmentShaderSource) : program(0)
+    Shader::Shader(const std::string &vertexShaderSource, const std::string &fragmentShaderSource)
     {
-        GLuint vertexShader = 0;
-        vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-        
-        GLuint fragmentShader = 0;
-        fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-        
-        glCompileShader(vertexShader);
-        checkShaderCompileStatus(vertexShader);
-        
-        glCompileShader(fragmentShader);
-        checkShaderCompileStatus(fragmentShader);
+        const GLchar *vert = (const GLchar *)vertexShaderSource.c_str();
+        const GLchar *frag = (const GLchar *)fragmentShaderSource.c_str();
+
+        std::vector<std::pair<GLenum, const GLchar *> > shaderType = {
+            std::make_pair(GL_VERTEX_SHADER, vert),
+            std::make_pair(GL_FRAGMENT_SHADER, frag),
+        };
         
         program = glCreateProgram();
-        glAttachShader(program, vertexShader);
-        glAttachShader(program, fragmentShader);
+        
+        for(auto p : shaderType)
+        {
+            GLuint shader = glCreateShader(p.first);
+            glShaderSource(shader, 1, &p.second, NULL);
+            
+            glCompileShader(shader);
+            checkShaderCompileStatus(shader);
+            
+            glAttachShader(program, shader);
+            glDeleteShader(shader); // We can delete the shader as soon as the program has a reference to it.
+        }
+
         glLinkProgram(program);
         checkProgramLinkStatus();
-        
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
 
         checkGLError();
     }
