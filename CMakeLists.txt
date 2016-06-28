@@ -7,9 +7,8 @@ set(CMAKE_CXX_FLAGS "-Wall -Werror -fno-rtti -fno-exceptions -std=c++1z")
 # Define the target and specify source files for it. This must be done before the target can be referenced.
 set(SOURCE_FILES
     "src/main.cpp"
-    "src/Actor.cpp" "src/Actor.hpp"
-    "src/Renderer.cpp" "src/Renderer.hpp"
-    "src/Window.cpp" "src/Window.hpp"
+    "src/WorkQueue.cpp" "src/WorkQueue.hpp"
+    "src/Application.cpp" "src/Application.hpp"
     )
 add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
 
