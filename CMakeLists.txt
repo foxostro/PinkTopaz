@@ -8,6 +8,8 @@ set(CMAKE_CXX_FLAGS "-Wall -Werror -fno-rtti -fno-exceptions -std=c++1z")
 set(SOURCE_FILES
     "src/main.cpp"
     "src/Application.cpp" "src/Application.hpp"
+    "src/Shader.cpp" "src/Shader.hpp"
+    "src/glUtilities.cpp" "src/glUtilities.hpp"
     )
 add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
 

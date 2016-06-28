@@ -9,6 +9,8 @@
 #ifndef Application_hpp
 #define Application_hpp
 
+#include <OpenGL/gl3.h>
+
 namespace PinkTopaz {
     
     // The central game loop, basically.
