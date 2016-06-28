@@ -90,7 +90,13 @@ namespace PinkTopaz {
             SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_Init failed: %s\n", SDL_GetError());
         }
         
-        setCurrentWorkingDirectory(SDL_GetBasePath());
+        // Set the current working directory to the SDL data path.
+        // On Mac OS, this is the bundle "Resources" directory.
+        {
+            char *path = SDL_GetBasePath();
+            setCurrentWorkingDirectory(path);
+            SDL_free(path);
+        }
 
         SDL_version compiled;
         SDL_version linked;
