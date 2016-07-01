@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.8)
 project (PinkTopaz)
 set(APP_NAME "PinkTopaz")
 
-set(CMAKE_CXX_FLAGS "-Wall -Werror -fno-rtti -fno-exceptions -std=c++1z")
+set(CMAKE_CXX_FLAGS "-Wall -Werror -std=c++1z")
 
 # Define the target and specify source files for it. This must be done before the target can be referenced.
 set(SOURCE_FILES
@@ -25,8 +25,13 @@ find_package(OpenGL)
 # Cmake configures a header file with some macros.
 configure_file("${PROJECT_SOURCE_DIR}/src/config.h.in" "${PROJECT_BINARY_DIR}/config.h")
 
+message("SDL2_INCLUDE_DIR: ${SDL2_INCLUDE_DIR}")
+
 # Now link them all together.
-include_directories(${SDL2_INCLUDE_DIR} ${OPENGL_INCLUDE_DIRS} ${PROJECT_BINARY_DIR})
+include_directories(${SDL2_INCLUDE_DIR}
+                    "/opt/local/include/"
+                    ${OPENGL_INCLUDE_DIRS}
+                    ${PROJECT_BINARY_DIR})
 target_link_libraries(PinkTopaz ${SDL2_LIBRARY} ${OPENGL_LIBRARIES})    
 
 if(APPLE)

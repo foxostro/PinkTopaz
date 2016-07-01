@@ -69,8 +69,7 @@ namespace PinkTopaz {
             
             std::vector<GLchar> infoLog(length);
             glGetShaderInfoLog(shader, length, &length, &infoLog[0]);
-            SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to compile shader: %s\n", infoLog.data());
-            abort();
+            throw OpenGLException("Failed to compile shader: %s\n", infoLog.data());
         }
     }
     
@@ -88,8 +87,7 @@ namespace PinkTopaz {
             
             std::vector<GLchar> infoLog(length);
             glGetProgramInfoLog(program, length, &length, &infoLog[0]);
-            SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to link shader program: %s\n", infoLog.data());
-            abort();
+            throw OpenGLException("Failed to link shader program: %s\n", infoLog.data());
         }
     }
     

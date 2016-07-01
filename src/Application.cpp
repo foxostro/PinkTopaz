@@ -8,6 +8,9 @@
 
 #include "SDL.h"
 #include <vector>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/constants.hpp>
 
 #include "config.h"
 #include "Application.hpp"
@@ -40,6 +43,8 @@ namespace PinkTopaz {
             -0.5f, -0.5f,  0.0f
         };
         
+        glm::mat4 projection = glm::perspective(glm::pi<float>() * 0.25f, 4.0f / 3.0f, 0.1f, 100.f);
+        
         GLuint vbo = 0;
         glGenBuffers(1, &vbo);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -68,6 +73,18 @@ namespace PinkTopaz {
                     case SDL_QUIT:
                         SDL_Log("Received SDL_QUIT.");
                         quit = true;
+                        break;
+                        
+                    case SDL_WINDOWEVENT:
+                        switch(e.window.event)
+                        {
+                            case SDL_WINDOWEVENT_RESIZED:
+                                // fall through
+                                
+                            case SDL_WINDOWEVENT_SIZE_CHANGED:
+                                glViewport(0, 0, e.window.data1, e.window.data2);
+                                break;
+                        }
                         break;
                 }
             }
