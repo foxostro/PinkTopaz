@@ -19,10 +19,11 @@
 #include "Shader.hpp"
 #include "glUtilities.hpp"
 #include "fileUtilities.hpp"
+#include "RetinaSupport.h"
 
 namespace PinkTopaz {
     
-    Application::Application()
+    Application::Application() : _window(nullptr)
     {
         // Nothing to do
     }
@@ -35,9 +36,9 @@ namespace PinkTopaz {
     void Application::windowSizeChanged(int windowWidth, int windowHeight)
     {
         constexpr float znear = 0.1f;
-        constexpr float zfar = 100.0f; 
-
-        glViewport(0, 0, windowWidth, windowHeight);
+        constexpr float zfar = 100.0f;
+        float scaleFactor = windowScaleFactor(_window);
+        glViewport(0, 0, windowWidth * scaleFactor, windowHeight * scaleFactor);
         glm::mat4 proj = glm::perspective(glm::pi<float>() * 0.25f, (float)windowWidth / windowHeight, znear, zfar);
         glUniformMatrix4fv(_projLoc, 1, GL_FALSE, glm::value_ptr(proj));
     }
@@ -64,8 +65,8 @@ namespace PinkTopaz {
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "We compiled against SDL version %d.%d.%d.\n", compiled.major, compiled.minor, compiled.patch);
         SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "We are linking against SDL version %d.%d.%d.\n", linked.major, linked.minor, linked.patch);
         
-        SDL_Window *window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600,
-                                  SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
+        _window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600,
+                                   SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
 
         SDL_LogSetPriority(SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_INFO);
         SDL_LogSetPriority(SDL_LOG_CATEGORY_ERROR, SDL_LOG_PRIORITY_ERROR);
@@ -73,7 +74,7 @@ namespace PinkTopaz {
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
         SDL_GL_SetSwapInterval(1);
-        SDL_GLContext glContext = SDL_GL_CreateContext(window);
+        SDL_GLContext glContext = SDL_GL_CreateContext(_window);
 
         int major = 0;
         int minor = 0;
@@ -85,7 +86,7 @@ namespace PinkTopaz {
         
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-        
+
         static const GLfloat vertices[] = {
             0.0f,  0.5f,  0.0f,
             0.5f, -0.5f,  0.0f,
@@ -109,18 +110,15 @@ namespace PinkTopaz {
                                                      stringFromFileContents("frag.glsl.txt")));
         _shader->use();
         _viewLoc = glGetUniformLocation(_shader->getProgram(), "view");
-        _projLoc = glGetUniformLocation (_shader->getProgram(), "proj");
+        _projLoc = glGetUniformLocation(_shader->getProgram(), "proj");
         
         glm::mat4 view = glm::lookAt(glm::vec3(0, 0, -3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
         glUniformMatrix4fv(_viewLoc, 1, GL_FALSE, glm::value_ptr(view));
         
         // Setup the projection matrix and viewport using the initial size of the window.
         {
-            GLint viewport[4];
-            glGetIntegerv(GL_VIEWPORT, viewport);
-            
             int windowWidth = 0, windowHeight = 0;
-            SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+            SDL_GetWindowSize(_window, &windowWidth, &windowHeight);
             windowSizeChanged(windowWidth, windowHeight);
         }
         
@@ -162,13 +160,14 @@ namespace PinkTopaz {
             glDrawArrays(GL_TRIANGLES, 0, 3);
             
             glFlush();
-            SDL_GL_SwapWindow(window);
+            SDL_GL_SwapWindow(_window);
         }
         
         _shader.reset();
 
         SDL_GL_DeleteContext(glContext);
-        SDL_DestroyWindow(window);
+        SDL_DestroyWindow(_window);
+        _window = nullptr;
         SDL_Quit();
     }
     

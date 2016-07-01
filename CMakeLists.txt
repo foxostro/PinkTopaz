@@ -11,7 +11,13 @@ set(SOURCE_FILES
     "src/Shader.cpp" "src/Shader.hpp"
     "src/glUtilities.cpp" "src/glUtilities.hpp"
     "src/fileUtilities.cpp" "src/fileUtilities.hpp"
+    "src/RetinaSupport.h"
     )
+
+if(APPLE)
+    list(APPEND SOURCE_FILES "src/osx/RetinaSupport.m")
+endif(APPLE)
+
 add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
 
 # Have Cmake find the SDL framework.
@@ -37,8 +43,7 @@ target_link_libraries(PinkTopaz ${SDL2_LIBRARY} ${OPENGL_LIBRARIES})
 if(APPLE)
 	# On Mac OS, we use a custom template for Info.plist so that we can specify the
 	# NSHighResolutionCapable key and enable HiDPI support.
-	# HiDPI support disabled because I don't know how to detect the real scaling factor from within SDL.
-	#set_target_properties(PinkTopaz PROPERTIES MACOSX_BUNDLE_INFO_PLIST src/MacOSXBundleInfo.plist.in)
+	set_target_properties(PinkTopaz PROPERTIES MACOSX_BUNDLE_INFO_PLIST src/MacOSXBundleInfo.plist.in)
 	set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.foxostro.pinktopaz")
 
 	# On Mac OS, copy the SDL framework into the app bundle. Important for redistributing the game.

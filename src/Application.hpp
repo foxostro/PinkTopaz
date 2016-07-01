@@ -28,6 +28,7 @@ namespace PinkTopaz {
     private:
         void windowSizeChanged(int windowWidth, int windowHeight);
         
+        SDL_Window *_window;
         std::unique_ptr<Shader> _shader;
         int _viewLoc, _projLoc;
     };
