@@ -8,8 +8,10 @@
 
 #include "SDL.h"
 #include <vector>
+#include <OpenGL/gl3.h>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/constants.hpp>
 
 #include "config.h"
@@ -30,75 +32,14 @@ namespace PinkTopaz {
         // Nothing to do
     }
     
-    void Application::runInnerScope(SDL_Window *window)
+    void Application::windowSizeChanged(int windowWidth, int windowHeight)
     {
-        glClearColor(0.2, 0.4, 0.5, 1.0);
-        
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
+        constexpr float znear = 0.1f;
+        constexpr float zfar = 100.0f; 
 
-        static const GLfloat vertices[] = {
-            0.0f,  0.5f,  0.0f,
-            0.5f, -0.5f,  0.0f,
-            -0.5f, -0.5f,  0.0f
-        };
-        
-        glm::mat4 projection = glm::perspective(glm::pi<float>() * 0.25f, 4.0f / 3.0f, 0.1f, 100.f);
-        
-        GLuint vbo = 0;
-        glGenBuffers(1, &vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        
-        GLuint vao = 0;
-        glGenVertexArrays(1, &vao);
-        glBindVertexArray(vao);
-        glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-        glBindVertexArray(0);
-
-        Shader shader(stringFromFileContents("vert.glsl.txt"),
-                      stringFromFileContents("frag.glsl.txt"));
-        
-        bool quit = false;
-        
-        while(!quit)
-        {
-            SDL_Event e;
-            
-            if (SDL_PollEvent(&e)) {
-                switch(e.type)
-                {
-                    case SDL_QUIT:
-                        SDL_Log("Received SDL_QUIT.");
-                        quit = true;
-                        break;
-                        
-                    case SDL_WINDOWEVENT:
-                        switch(e.window.event)
-                        {
-                            case SDL_WINDOWEVENT_RESIZED:
-                                // fall through
-                                
-                            case SDL_WINDOWEVENT_SIZE_CHANGED:
-                                glViewport(0, 0, e.window.data1, e.window.data2);
-                                break;
-                        }
-                        break;
-                }
-            }
-            
-            checkGLError();
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            
-            shader.use();
-            glBindVertexArray(vao);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
-            
-            glFlush();
-            SDL_GL_SwapWindow(window);
-        }
+        glViewport(0, 0, windowWidth, windowHeight);
+        glm::mat4 proj = glm::perspective(glm::pi<float>() * 0.25f, (float)windowWidth / windowHeight, znear, zfar);
+        glUniformMatrix4fv(_projLoc, 1, GL_FALSE, glm::value_ptr(proj));
     }
     
     void Application::run()
@@ -140,7 +81,91 @@ namespace PinkTopaz {
         glGetIntegerv(GL_MINOR_VERSION, &minor);
         SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "OpenGL version is %d.%d\n", major, minor);
         
-        runInnerScope(window);
+        glClearColor(0.2, 0.4, 0.5, 1.0);
+        
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        
+        static const GLfloat vertices[] = {
+            0.0f,  0.5f,  0.0f,
+            0.5f, -0.5f,  0.0f,
+            -0.5f, -0.5f,  0.0f
+        };
+        
+        GLuint vbo = 0;
+        glGenBuffers(1, &vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        
+        GLuint vao = 0;
+        glGenVertexArrays(1, &vao);
+        glBindVertexArray(vao);
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glBindVertexArray(0);
+        
+        _shader = std::unique_ptr<Shader>(new Shader(stringFromFileContents("vert.glsl.txt"),
+                                                     stringFromFileContents("frag.glsl.txt")));
+        _shader->use();
+        _viewLoc = glGetUniformLocation(_shader->getProgram(), "view");
+        _projLoc = glGetUniformLocation (_shader->getProgram(), "proj");
+        
+        glm::mat4 view = glm::lookAt(glm::vec3(0, 0, -3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+        glUniformMatrix4fv(_viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+        
+        // Setup the projection matrix and viewport using the initial size of the window.
+        {
+            GLint viewport[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            
+            int windowWidth = 0, windowHeight = 0;
+            SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+            windowSizeChanged(windowWidth, windowHeight);
+        }
+        
+        checkGLError();
+        
+        bool quit = false;
+        
+        while(!quit)
+        {
+            SDL_Event e;
+            
+            if (SDL_PollEvent(&e)) {
+                switch(e.type)
+                {
+                    case SDL_QUIT:
+                        SDL_Log("Received SDL_QUIT.");
+                        quit = true;
+                        break;
+                        
+                    case SDL_WINDOWEVENT:
+                        switch(e.window.event)
+                        {
+                            case SDL_WINDOWEVENT_RESIZED:
+                                // fall through
+                                
+                            case SDL_WINDOWEVENT_SIZE_CHANGED:
+                                windowSizeChanged(e.window.data1, e.window.data2);
+                                break;
+                        }
+                        break;
+                }
+            }
+            
+            checkGLError();
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            
+            _shader->use();
+            glBindVertexArray(vao);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+            
+            glFlush();
+            SDL_GL_SwapWindow(window);
+        }
+        
+        _shader.reset();
 
         SDL_GL_DeleteContext(glContext);
         SDL_DestroyWindow(window);

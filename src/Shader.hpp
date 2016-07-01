@@ -21,6 +21,11 @@ public:
     ~Shader();
     void use();
     
+    inline GLuint getProgram() const
+    {
+        return program;
+    }
+    
 private:
     void checkShaderCompileStatus(GLuint shader);
     void checkProgramLinkStatus();

@@ -11,6 +11,7 @@
 
 #include "SDL.h"
 #include <OpenGL/gl3.h>
+#include "Shader.hpp"
 
 namespace PinkTopaz {
     
@@ -25,7 +26,10 @@ namespace PinkTopaz {
         void run();
         
     private:
-        void runInnerScope(SDL_Window *window);
+        void windowSizeChanged(int windowWidth, int windowHeight);
+        
+        std::unique_ptr<Shader> _shader;
+        int _viewLoc, _projLoc;
     };
 
 } // namespace PinkTopaz

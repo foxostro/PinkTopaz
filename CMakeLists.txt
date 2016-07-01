@@ -37,7 +37,8 @@ target_link_libraries(PinkTopaz ${SDL2_LIBRARY} ${OPENGL_LIBRARIES})
 if(APPLE)
 	# On Mac OS, we use a custom template for Info.plist so that we can specify the
 	# NSHighResolutionCapable key and enable HiDPI support.
-	set_target_properties(PinkTopaz PROPERTIES MACOSX_BUNDLE_INFO_PLIST src/MacOSXBundleInfo.plist.in)
+	# HiDPI support disabled because I don't know how to detect the real scaling factor from within SDL.
+	#set_target_properties(PinkTopaz PROPERTIES MACOSX_BUNDLE_INFO_PLIST src/MacOSXBundleInfo.plist.in)
 	set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.foxostro.pinktopaz")
 
 	# On Mac OS, copy the SDL framework into the app bundle. Important for redistributing the game.
