@@ -106,8 +106,8 @@ namespace PinkTopaz {
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
         glBindVertexArray(0);
         
-        _shader = std::unique_ptr<Shader>(new Shader(stringFromFileContents("vert.glsl.txt"),
-                                                     stringFromFileContents("frag.glsl.txt")));
+        _shader = std::unique_ptr<Shader>(new Shader(stringFromFileContents("vert.glsl"),
+                                                     stringFromFileContents("frag.glsl")));
         _shader->use();
         _viewLoc = glGetUniformLocation(_shader->getProgram(), "view");
         _projLoc = glGetUniformLocation(_shader->getProgram(), "proj");
