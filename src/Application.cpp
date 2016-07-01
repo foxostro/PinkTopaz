@@ -11,7 +11,6 @@
 #include <OpenGL/gl3.h>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/constants.hpp>
 
 #include "config.h"
@@ -40,7 +39,7 @@ namespace PinkTopaz {
         float scaleFactor = windowScaleFactor(_window);
         glViewport(0, 0, windowWidth * scaleFactor, windowHeight * scaleFactor);
         glm::mat4 proj = glm::perspective(glm::pi<float>() * 0.25f, (float)windowWidth / windowHeight, znear, zfar);
-        glUniformMatrix4fv(_projLoc, 1, GL_FALSE, glm::value_ptr(proj));
+        _shader->setUniform("proj", proj);
     }
     
     void Application::run()
@@ -109,12 +108,8 @@ namespace PinkTopaz {
         _shader = std::unique_ptr<Shader>(new Shader(stringFromFileContents("vert.glsl"),
                                                      stringFromFileContents("frag.glsl")));
         _shader->use();
-        _viewLoc = glGetUniformLocation(_shader->getProgram(), "view");
-        _projLoc = glGetUniformLocation(_shader->getProgram(), "proj");
-        
-        glm::mat4 view = glm::lookAt(glm::vec3(0, 0, -3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-        glUniformMatrix4fv(_viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-        
+        _shader->setUniform("view", glm::lookAt(glm::vec3(0, 0, -3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)));
+
         // Setup the projection matrix and viewport using the initial size of the window.
         {
             int windowWidth = 0, windowHeight = 0;
@@ -122,6 +117,7 @@ namespace PinkTopaz {
             windowSizeChanged(windowWidth, windowHeight);
         }
         
+        // Now that setup is complete, check for OpenGL error before entering the game loop.
         checkGLError();
         
         bool quit = false;
@@ -152,7 +148,6 @@ namespace PinkTopaz {
                 }
             }
             
-            checkGLError();
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
             _shader->use();

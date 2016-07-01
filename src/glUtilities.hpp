@@ -13,6 +13,12 @@
 #include <exception>
 #include <string>
 
+#ifdef NDEBUG
+#define CHECK_GL_ERROR(...)
+#else
+#define CHECK_GL_ERROR(...) checkGLError(__VA_ARGS__)
+#endif
+
 namespace PinkTopaz {
     
     class OpenGLException : public std::exception

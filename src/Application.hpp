@@ -30,7 +30,6 @@ namespace PinkTopaz {
         
         SDL_Window *_window;
         std::unique_ptr<Shader> _shader;
-        int _viewLoc, _projLoc;
     };
 
 } // namespace PinkTopaz

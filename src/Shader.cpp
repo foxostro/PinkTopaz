@@ -10,6 +10,7 @@
 #include "Shader.hpp"
 #include "glUtilities.hpp"
 #include <vector>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace PinkTopaz {
     
@@ -23,7 +24,7 @@ namespace PinkTopaz {
             std::make_pair(GL_FRAGMENT_SHADER, frag),
         };
         
-        program = glCreateProgram();
+        _program = glCreateProgram();
         
         for(auto p : shaderType)
         {
@@ -31,33 +32,40 @@ namespace PinkTopaz {
             glShaderSource(shader, 1, &p.second, NULL);
             
             glCompileShader(shader);
-            checkShaderCompileStatus(shader);
+            _checkShaderCompileStatus(shader);
             
-            glAttachShader(program, shader);
+            glAttachShader(_program, shader);
             glDeleteShader(shader); // We can delete the shader as soon as the program has a reference to it.
         }
 
-        glLinkProgram(program);
-        checkProgramLinkStatus();
+        glLinkProgram(_program);
+        _checkProgramLinkStatus();
 
-        checkGLError();
+        CHECK_GL_ERROR();
     }
     
     Shader::~Shader()
     {
-        glDeleteProgram(program);
-        checkGLError();
+        glDeleteProgram(_program);
+        CHECK_GL_ERROR();
     }
     
     void Shader::use()
     {
-        glUseProgram(program);
-        checkGLError();
+        glUseProgram(_program);
+        CHECK_GL_ERROR();
     }
     
-    void Shader::checkShaderCompileStatus(GLuint shader)
+    void Shader::setUniform(const GLchar *name, const glm::mat4 &value)
     {
-        checkGLError();
+        int loc = glGetUniformLocation(_program, name);
+        glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(value));
+        CHECK_GL_ERROR();
+    }
+    
+    void Shader::_checkShaderCompileStatus(GLuint shader)
+    {
+        CHECK_GL_ERROR();
         
         GLint isCompiled = 0;
         
@@ -73,20 +81,20 @@ namespace PinkTopaz {
         }
     }
     
-    void Shader::checkProgramLinkStatus()
+    void Shader::_checkProgramLinkStatus()
     {
-        checkGLError();
+        CHECK_GL_ERROR();
 
         GLint isLinked = 0;
         
-        glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
+        glGetProgramiv(_program, GL_LINK_STATUS, &isLinked);
         
         if (isLinked == GL_FALSE) {
             GLint length = 0;
-            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+            glGetProgramiv(_program, GL_INFO_LOG_LENGTH, &length);
             
             std::vector<GLchar> infoLog(length);
-            glGetProgramInfoLog(program, length, &length, &infoLog[0]);
+            glGetProgramInfoLog(_program, length, &length, &infoLog[0]);
             throw OpenGLException("Failed to link shader program: %s\n", infoLog.data());
         }
     }
