@@ -16,6 +16,7 @@
 
 #include "config.h"
 #include "Application.hpp"
+#include "TextureArray.hpp"
 #include "Shader.hpp"
 #include "glUtilities.hpp"
 #include "FileUtilities.hpp"
@@ -88,37 +89,6 @@ namespace PinkTopaz {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         
-        
-        
-        GLuint texture;
-        {
-            SDL_Surface *surface = IMG_Load("terrain.png");
-            
-            // Assume square tiles arranged vertically.
-            const int tileWidth = surface->w;
-            const int tileHeight = surface->w;
-            const int numTiles = surface->h / surface->w;
-            
-            texture = 0;
-            glGenTextures(1, &texture);
-            glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
-            
-            glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            
-            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA,
-                         tileWidth, tileHeight, numTiles,
-                         0, GL_BGRA, GL_UNSIGNED_BYTE,
-                         surface->pixels);
-            
-            glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-            CHECK_GL_ERROR();
-            
-            SDL_FreeSurface(surface);
-        }
-        
         _shader = std::unique_ptr<Shader>(new Shader(stringFromFileContents("vert.glsl"),
                                                      stringFromFileContents("frag.glsl")));
         _shader->use();
@@ -134,6 +104,7 @@ namespace PinkTopaz {
             windowSizeChanged(windowWidth, windowHeight);
         }
         
+        auto texture = std::unique_ptr<TextureArray>(new TextureArray("terrain.png"));
         auto vao = std::unique_ptr<StaticMeshVAO>(new StaticMeshVAO(StaticMesh("terrain.3d.bin")));
 
         // Now that setup is complete, check for OpenGL error before entering the game loop.
@@ -169,6 +140,7 @@ namespace PinkTopaz {
             
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
+            texture->bind();
             _shader->use();
             glBindVertexArray(vao->getVAO());
             glDrawArrays(GL_TRIANGLES, 0, vao->getNumVerts());
@@ -176,10 +148,10 @@ namespace PinkTopaz {
             glFlush();
             SDL_GL_SwapWindow(_window);
         }
-        
-        glDeleteTextures(2, &texture);
+
         _shader.reset();
         vao.reset();
+        texture.reset();
 
         SDL_GL_DeleteContext(glContext);
         SDL_DestroyWindow(_window);

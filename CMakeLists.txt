@@ -13,6 +13,7 @@ set(SOURCE_FILES
     "src/FileUtilities.cpp" "src/FileUtilities.hpp"
     "src/Exception.cpp" "src/Exception.hpp"
     "src/StaticMesh.cpp" "src/StaticMesh.hpp"
+    "src/TextureArray.cpp" "src/TextureArray.hpp"
     "src/RetinaSupport.h"
     )
 
