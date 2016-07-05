@@ -9,7 +9,7 @@
 #ifndef Shader_hpp
 #define Shader_hpp
 
-#include <OpenGL/gl3.h>
+#include "opengl.hpp"
 #include <string>
 #include <glm/mat4x4.hpp>
 

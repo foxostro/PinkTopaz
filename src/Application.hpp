@@ -10,7 +10,7 @@
 #define Application_hpp
 
 #include "SDL.h"
-#include <OpenGL/gl3.h>
+#include "opengl.hpp"
 #include "Shader.hpp"
 
 namespace PinkTopaz {

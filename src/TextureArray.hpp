@@ -9,7 +9,7 @@
 #ifndef TextureArray_hpp
 #define TextureArray_hpp
 
-#include <OpenGL/gl3.h>
+#include "opengl.hpp"
 
 namespace PinkTopaz {
     

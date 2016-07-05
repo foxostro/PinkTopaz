@@ -10,7 +10,7 @@
 #define StaticMesh_hpp
 
 #include <vector>
-#include <OpenGL/gl3.h>
+#include "opengl.hpp"
 
 namespace PinkTopaz {
     
