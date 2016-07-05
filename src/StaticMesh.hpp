@@ -29,7 +29,7 @@ namespace PinkTopaz {
             uint32_t magic;
             uint32_t version;
             uint32_t w, h, d;
-            GLsizei numVerts;
+            int32_t numVerts;
             uint32_t len;
             Vertex vertices[0];
         };
@@ -41,6 +41,28 @@ namespace PinkTopaz {
         
     private:
         std::vector<uint8_t> _bytes;
+    };
+    
+    // The StaticMeshVAO instance must be used only on the OpenGL thread.
+    class StaticMeshVAO
+    {
+    public:
+        StaticMeshVAO(const StaticMesh &mesh);
+        ~StaticMeshVAO();
+
+        GLuint getVAO() const
+        {
+            return _vao;
+        }
+        
+        GLsizei getNumVerts() const
+        {
+            return _numVerts;
+        }
+
+    private:
+        GLuint _vao;
+        GLsizei _numVerts;
     };
     
 } // namespace PinkTopaz

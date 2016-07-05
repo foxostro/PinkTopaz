@@ -87,41 +87,6 @@ namespace PinkTopaz {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         
-        GLuint vao;
-        GLsizei numVerts;
-        {
-            StaticMesh mesh("terrain.3d.bin");
-            numVerts = mesh.getHeader()->numVerts;
-        
-            const GLsizei stride = sizeof(StaticMesh::Vertex);
-
-            GLsizeiptr bufferSize = mesh.getHeader()->numVerts * stride;
-            const GLvoid *vertsBuffer = (const GLvoid *)mesh.getHeader()->vertices;
-            
-            const GLvoid *offsetVertex   = (const GLvoid *)offsetof(StaticMesh::Vertex, position);
-            const GLvoid *offsetTexCoord = (const GLvoid *)offsetof(StaticMesh::Vertex, texCoord);
-            const GLvoid *offsetColor    = (const GLvoid *)offsetof(StaticMesh::Vertex, color);
-            
-            vao = 0;
-            glGenVertexArrays(1, &vao);
-            glBindVertexArray(vao);
-
-            GLuint vbo = 0;
-            glGenBuffers(1, &vbo);
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            glBufferData(GL_ARRAY_BUFFER, bufferSize, vertsBuffer, GL_STATIC_DRAW);
-            
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            glVertexAttribPointer(0, 3, GL_FLOAT,         GL_FALSE, stride, offsetVertex);
-            glVertexAttribPointer(1, 3, GL_FLOAT,         GL_FALSE, stride, offsetTexCoord);
-            glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_FALSE, stride, offsetColor);
-            glEnableVertexAttribArray(0);
-            glEnableVertexAttribArray(1);
-            glEnableVertexAttribArray(2);
-            glBindVertexArray(0);
-            glDeleteBuffers(1, &vbo); // Release our reference after the VAO is initialized.
-        }
-        
         _shader = std::unique_ptr<Shader>(new Shader(stringFromFileContents("vert.glsl"),
                                                      stringFromFileContents("frag.glsl")));
         _shader->use();
@@ -136,6 +101,8 @@ namespace PinkTopaz {
             windowSizeChanged(windowWidth, windowHeight);
         }
         
+        auto vao = std::unique_ptr<StaticMeshVAO>(new StaticMeshVAO(StaticMesh("terrain.3d.bin")));
+
         // Now that setup is complete, check for OpenGL error before entering the game loop.
         checkGLError();
         
@@ -170,15 +137,15 @@ namespace PinkTopaz {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
             _shader->use();
-            glBindVertexArray(vao);
-            glDrawArrays(GL_TRIANGLES, 0, numVerts);
+            glBindVertexArray(vao->getVAO());
+            glDrawArrays(GL_TRIANGLES, 0, vao->getNumVerts());
             
             glFlush();
             SDL_GL_SwapWindow(_window);
         }
         
-        glDeleteVertexArrays(1, &vao);
         _shader.reset();
+        vao.reset();
 
         SDL_GL_DeleteContext(glContext);
         SDL_DestroyWindow(_window);
