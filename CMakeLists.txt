@@ -10,7 +10,9 @@ set(SOURCE_FILES
     "src/Application.cpp" "src/Application.hpp"
     "src/Shader.cpp" "src/Shader.hpp"
     "src/glUtilities.cpp" "src/glUtilities.hpp"
-    "src/fileUtilities.cpp" "src/fileUtilities.hpp"
+    "src/FileUtilities.cpp" "src/FileUtilities.hpp"
+    "src/Exception.cpp" "src/Exception.hpp"
+    "src/StaticMesh.cpp" "src/StaticMesh.hpp"
     "src/RetinaSupport.h"
     )
 

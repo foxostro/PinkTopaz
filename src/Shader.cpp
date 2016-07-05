@@ -9,6 +9,7 @@
 #include "SDL.h"
 #include "Shader.hpp"
 #include "glUtilities.hpp"
+#include "Exception.hpp"
 #include <vector>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -77,7 +78,7 @@ namespace PinkTopaz {
             
             std::vector<GLchar> infoLog(length);
             glGetShaderInfoLog(shader, length, &length, &infoLog[0]);
-            throw OpenGLException("Failed to compile shader: %s\n", infoLog.data());
+            throw Exception("Failed to compile shader: %s\n", infoLog.data());
         }
     }
     
@@ -95,7 +96,7 @@ namespace PinkTopaz {
             
             std::vector<GLchar> infoLog(length);
             glGetProgramInfoLog(_program, length, &length, &infoLog[0]);
-            throw OpenGLException("Failed to link shader program: %s\n", infoLog.data());
+            throw Exception("Failed to link shader program: %s\n", infoLog.data());
         }
     }
     

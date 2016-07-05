@@ -17,8 +17,9 @@
 #include "Application.hpp"
 #include "Shader.hpp"
 #include "glUtilities.hpp"
-#include "fileUtilities.hpp"
+#include "FileUtilities.hpp"
 #include "RetinaSupport.h"
+#include "StaticMesh.hpp"
 
 namespace PinkTopaz {
     
@@ -85,30 +86,48 @@ namespace PinkTopaz {
         
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
+        
+        GLuint vao;
+        GLsizei numVerts;
+        {
+            StaticMesh mesh("terrain.3d.bin");
+            numVerts = mesh.getHeader()->numVerts;
+        
+            const GLsizei stride = sizeof(StaticMesh::Vertex);
 
-        static const GLfloat vertices[] = {
-            0.0f,  0.5f,  0.0f,
-            0.5f, -0.5f,  0.0f,
-            -0.5f, -0.5f,  0.0f
-        };
-        
-        GLuint vbo = 0;
-        glGenBuffers(1, &vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        
-        GLuint vao = 0;
-        glGenVertexArrays(1, &vao);
-        glBindVertexArray(vao);
-        glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-        glBindVertexArray(0);
+            GLsizeiptr bufferSize = mesh.getHeader()->numVerts * stride;
+            const GLvoid *vertsBuffer = (const GLvoid *)mesh.getHeader()->vertices;
+            
+            const GLvoid *offsetVertex   = (const GLvoid *)offsetof(StaticMesh::Vertex, position);
+            const GLvoid *offsetTexCoord = (const GLvoid *)offsetof(StaticMesh::Vertex, texCoord);
+            const GLvoid *offsetColor    = (const GLvoid *)offsetof(StaticMesh::Vertex, color);
+            
+            vao = 0;
+            glGenVertexArrays(1, &vao);
+            glBindVertexArray(vao);
+
+            GLuint vbo = 0;
+            glGenBuffers(1, &vbo);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glBufferData(GL_ARRAY_BUFFER, bufferSize, vertsBuffer, GL_STATIC_DRAW);
+            
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glVertexAttribPointer(0, 3, GL_FLOAT,         GL_FALSE, stride, offsetVertex);
+            glVertexAttribPointer(1, 3, GL_FLOAT,         GL_FALSE, stride, offsetTexCoord);
+            glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_FALSE, stride, offsetColor);
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(2);
+            glBindVertexArray(0);
+            glDeleteBuffers(1, &vbo); // Release our reference after the VAO is initialized.
+        }
         
         _shader = std::unique_ptr<Shader>(new Shader(stringFromFileContents("vert.glsl"),
                                                      stringFromFileContents("frag.glsl")));
         _shader->use();
-        _shader->setUniform("view", glm::lookAt(glm::vec3(0, 0, -3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)));
+        _shader->setUniform("view", glm::lookAt(glm::vec3(85.1, 16.1, 140.1),
+                                                glm::vec3(85.1, 16.1, 150.1),
+                                                glm::vec3(0, 1, 0)));
 
         // Setup the projection matrix and viewport using the initial size of the window.
         {
@@ -152,12 +171,13 @@ namespace PinkTopaz {
             
             _shader->use();
             glBindVertexArray(vao);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
+            glDrawArrays(GL_TRIANGLES, 0, numVerts);
             
             glFlush();
             SDL_GL_SwapWindow(_window);
         }
         
+        glDeleteVertexArrays(1, &vao);
         _shader.reset();
 
         SDL_GL_DeleteContext(glContext);

@@ -1,10 +1,17 @@
 #version 410
 
-uniform mat4 view, proj;
+layout (location=0) in vec3 vp;
+layout (location=1) in vec3 vt;
+layout (location=2) in vec4 vc;
 
-in vec3 vp;
+out vec3 texCoord;
+out vec4 color;
+
+uniform mat4 view, proj;
 
 void main()
 {
+	texCoord = vt;
+	color = vc;
 	gl_Position = proj * view * vec4(vp, 1.0);
 }
