@@ -7,6 +7,7 @@
 //
 
 #include "SDL.h"
+#include "SDL_image.h"
 #include <vector>
 #include <OpenGL/gl3.h>
 #include <glm/mat4x4.hpp>
@@ -87,12 +88,44 @@ namespace PinkTopaz {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         
+        
+        
+        GLuint texture;
+        {
+            SDL_Surface *surface = IMG_Load("terrain.png");
+            
+            // Assume square tiles arranged vertically.
+            const int tileWidth = surface->w;
+            const int tileHeight = surface->w;
+            const int numTiles = surface->h / surface->w;
+            
+            texture = 0;
+            glGenTextures(1, &texture);
+            glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
+            
+            glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            
+            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA,
+                         tileWidth, tileHeight, numTiles,
+                         0, GL_BGRA, GL_UNSIGNED_BYTE,
+                         surface->pixels);
+            
+            glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+            CHECK_GL_ERROR();
+            
+            SDL_FreeSurface(surface);
+        }
+        
         _shader = std::unique_ptr<Shader>(new Shader(stringFromFileContents("vert.glsl"),
                                                      stringFromFileContents("frag.glsl")));
         _shader->use();
         _shader->setUniform("view", glm::lookAt(glm::vec3(85.1, 16.1, 140.1),
-                                                glm::vec3(85.1, 16.1, 150.1),
+                                                glm::vec3(80.1, 20.1, 130.1),
                                                 glm::vec3(0, 1, 0)));
+        _shader->setUniform("tex", 0);
 
         // Setup the projection matrix and viewport using the initial size of the window.
         {
@@ -144,6 +177,7 @@ namespace PinkTopaz {
             SDL_GL_SwapWindow(_window);
         }
         
+        glDeleteTextures(2, &texture);
         _shader.reset();
         vao.reset();
 

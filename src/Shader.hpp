@@ -33,6 +33,9 @@ public:
     // Set a mat4 uniform by name. Assumes the shader has already been bound for use.
     void setUniform(const GLchar *name, const glm::mat4 &value);
     
+    // Set an integer uniform by name. Assumes the shader has already been bound for use.
+    void setUniform(const GLchar *name, GLint value);
+    
 private:
     void _checkShaderCompileStatus(GLuint shader);
     void _checkProgramLinkStatus();

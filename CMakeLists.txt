@@ -33,14 +33,13 @@ find_package(OpenGL)
 # Cmake configures a header file with some macros.
 configure_file("${PROJECT_SOURCE_DIR}/src/config.h.in" "${PROJECT_BINARY_DIR}/config.h")
 
-message("SDL2_INCLUDE_DIR: ${SDL2_INCLUDE_DIR}")
-
 # Now link them all together.
 include_directories(${SDL2_INCLUDE_DIR}
                     "/opt/local/include/"
                     ${OPENGL_INCLUDE_DIRS}
-                    ${PROJECT_BINARY_DIR})
-target_link_libraries(PinkTopaz ${SDL2_LIBRARY} ${OPENGL_LIBRARIES})    
+                    ${PROJECT_BINARY_DIR}
+                    "/Library/Frameworks/SDL2_image.framework/Headers")
+target_link_libraries(PinkTopaz ${SDL2_LIBRARY} ${OPENGL_LIBRARIES} "-framework SDL2_image")
 
 if(APPLE)
 	# On Mac OS, we use a custom template for Info.plist so that we can specify the

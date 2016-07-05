@@ -59,8 +59,15 @@ namespace PinkTopaz {
     
     void Shader::setUniform(const GLchar *name, const glm::mat4 &value)
     {
-        int loc = glGetUniformLocation(_program, name);
+        GLint loc = glGetUniformLocation(_program, name);
         glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(value));
+        CHECK_GL_ERROR();
+    }
+    
+    void Shader::setUniform(const GLchar *name, GLint value)
+    {
+        GLint loc = glGetUniformLocation(_program, name);
+        glUniform1i(loc, value);
         CHECK_GL_ERROR();
     }
     

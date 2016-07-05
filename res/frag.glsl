@@ -1,5 +1,7 @@
 #version 410
 
+uniform sampler2DArray tex;
+
 in vec3 texCoord;
 in vec4 color;
 out vec4 fragColor;
@@ -16,6 +18,6 @@ vec4 fog(vec4 color, vec4 fcolor, float depth, float density)
 
 void main(void)
 {
-    //fragColor = fog(color, fogColor, gl_FragCoord.z / gl_FragCoord.w, fogDensity);
-    fragColor = vec4(texCoord.xyz, 1);
+	vec4 texcolor = texture(tex, texCoord.stp);
+    fragColor = fog(texcolor * color, fogColor, gl_FragCoord.z / gl_FragCoord.w, fogDensity);
 }
