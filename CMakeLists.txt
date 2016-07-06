@@ -24,24 +24,25 @@ endif(APPLE)
 
 add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
 
-# Have Cmake find the SDL framework.
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-find_package(SDL2 REQUIRED)
-string(REPLACE "-framework Cocoa" "" SDL2_LIBRARY ${SDL2_LIBRARY})
-
-# And OpenGL, we need that too.
 find_package(OpenGL)
+find_package(GLM)
+find_package(SDL2_image REQUIRED)
+find_package(SDL2 REQUIRED)
+# string(REPLACE "-framework Cocoa" "" SDL2_LIBRARY ${SDL2_LIBRARY})
 
 # Cmake configures a header file with some macros.
 configure_file("${PROJECT_SOURCE_DIR}/src/config.h.in" "${PROJECT_BINARY_DIR}/config.h")
 
-# Now link them all together.
 include_directories(${SDL2_INCLUDE_DIR}
-                    "/opt/local/include/"
+                    ${SDL2_IMAGE_INCLUDE_DIR}
+                    ${GLM_INCLUDE_DIR}
                     ${OPENGL_INCLUDE_DIRS}
-                    ${PROJECT_BINARY_DIR}
-                    "/Library/Frameworks/SDL2_image.framework/Headers")
-target_link_libraries(PinkTopaz ${SDL2_LIBRARY} ${OPENGL_LIBRARIES} "-framework SDL2_image")
+                    ${PROJECT_BINARY_DIR})
+target_link_libraries(PinkTopaz
+                      ${SDL2_LIBRARY}
+                      ${SDL2_IMAGE_LIBRARY}
+                      ${OPENGL_LIBRARIES})
 
 if(APPLE)
 	# On Mac OS, we use a custom template for Info.plist so that we can specify the

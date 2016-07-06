@@ -12,6 +12,8 @@
 // The OpenGL headers are located at a different place, and have different names, on different
 // platforms. This header is intended to be a central place where this differentiation can be done
 // for PinkTopaz.
+#ifdef __APPLE__
 #include <OpenGL/gl3.h>
+#endif
 
 #endif /* opengl_h */
