@@ -12,6 +12,7 @@
 #include "SDL.h"
 #include "opengl.hpp"
 #include "Shader.hpp"
+#include <memory>
 
 namespace PinkTopaz {
     

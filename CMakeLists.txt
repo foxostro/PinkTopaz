@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.8)
 project (PinkTopaz)
 set(APP_NAME "PinkTopaz")
 
-set(CMAKE_CXX_FLAGS "-Wall -Werror -std=c++1z")
+set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z")
 
 # Define the target and specify source files for it. This must be done before the target can be referenced.
 set(SOURCE_FILES
@@ -20,6 +20,8 @@ set(SOURCE_FILES
 
 if(APPLE)
     list(APPEND SOURCE_FILES "src/osx/RetinaSupport.m")
+else()
+    list(APPEND SOURCE_FILES "src/linux/RetinaSupport.c")
 endif(APPLE)
 
 add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})

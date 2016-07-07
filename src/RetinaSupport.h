@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-#import "SDL.h"
+#include "SDL.h"
 
 float windowScaleFactor(SDL_Window *window);
 
