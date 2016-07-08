@@ -31,7 +31,18 @@ find_package(OpenGL)
 find_package(GLM)
 find_package(SDL2_image REQUIRED)
 find_package(SDL2 REQUIRED)
-# string(REPLACE "-framework Cocoa" "" SDL2_LIBRARY ${SDL2_LIBRARY})
+
+# EntityX ECS library.
+find_package(PkgConfig)
+pkg_check_modules(PC_LIBENTITYX QUIET entityx)
+set(ENTITYX_CFLAGS ${PC_LIBENTITYX_CFLAGS_OTHER})
+
+find_path(ENTITYX_INCLUDE_DIR entityx/entityx.h
+          HINTS ${PC_LIBENTITYX_INCLUDEDIR} ${PC_LIBENTITYX_INCLUDE_DIRS}
+          PATH_SUFFIXES )
+
+find_library(ENTITYX_LIBRARY NAMES entityx
+             HINTS ${PC_LIBENTITYX_LIBDIR} ${PC_LIBENTITYX_LIBRARY_DIRS} )
 
 # Cmake configures a header file with some macros.
 configure_file("${PROJECT_SOURCE_DIR}/src/config.h.in" "${PROJECT_BINARY_DIR}/config.h")
@@ -40,11 +51,13 @@ include_directories(${SDL2_INCLUDE_DIR}
                     ${SDL2_IMAGE_INCLUDE_DIR}
                     ${GLM_INCLUDE_DIR}
                     ${OPENGL_INCLUDE_DIRS}
-                    ${PROJECT_BINARY_DIR})
+                    ${PROJECT_BINARY_DIR}
+                    ${ENTITYX_INCLUDE_DIR} )
 target_link_libraries(PinkTopaz
                       ${SDL2_LIBRARY}
                       ${SDL2_IMAGE_LIBRARY}
-                      ${OPENGL_LIBRARIES})
+                      ${OPENGL_LIBRARIES}
+                      ${ENTITYX_LIBRARY} )
 
 if(APPLE)
 	# On Mac OS, we use a custom template for Info.plist so that we can specify the

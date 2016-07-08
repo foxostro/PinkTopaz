@@ -13,6 +13,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/constants.hpp>
+#include <entityx/entityx.h>
 
 #include "config.h"
 #include "Application.hpp"
