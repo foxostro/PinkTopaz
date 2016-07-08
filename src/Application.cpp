@@ -139,7 +139,7 @@ namespace PinkTopaz {
         
         void update(entityx::TimeDelta dt)
         {
-            systems.update<StaticMeshRenderSystem>(dt);
+            systems.update_all(dt);
         }
     };
     
@@ -165,8 +165,8 @@ namespace PinkTopaz {
     
     void Application::inner()
     {
-        auto shader = std::shared_ptr<Shader>(new Shader(stringFromFileContents("vert.glsl"),
-                                                         stringFromFileContents("frag.glsl")));
+        auto shader = std::make_shared<Shader>(stringFromFileContents("vert.glsl"),
+                                               stringFromFileContents("frag.glsl"));
         shader->setUniform("view", glm::mat4(1.0f));
         shader->setUniform("tex", 0);
         
@@ -177,8 +177,8 @@ namespace PinkTopaz {
             windowSizeChanged(windowWidth, windowHeight, shader);
         }
         
-        auto texture = std::shared_ptr<TextureArray>(new TextureArray("terrain.png"));
-        auto vao = std::shared_ptr<StaticMeshVAO>(new StaticMeshVAO(StaticMesh("terrain.3d.bin")));
+        auto texture = std::make_shared<TextureArray>("terrain.png");
+        auto vao = std::make_shared<StaticMeshVAO>(StaticMesh("terrain.3d.bin"));
         
         // Now that setup is complete, check for OpenGL error before entering the game loop.
         checkGLError();
