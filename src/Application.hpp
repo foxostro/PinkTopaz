@@ -27,10 +27,10 @@ namespace PinkTopaz {
         void run();
         
     private:
-        void windowSizeChanged(int windowWidth, int windowHeight);
+        void windowSizeChanged(int windowWidth, int windowHeight, std::shared_ptr<Shader> &shader);
+        void inner();
         
         SDL_Window *_window;
-        std::unique_ptr<Shader> _shader;
     };
 
 } // namespace PinkTopaz

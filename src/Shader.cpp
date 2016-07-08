@@ -51,23 +51,29 @@ namespace PinkTopaz {
         CHECK_GL_ERROR();
     }
     
-    void Shader::use()
+    void Shader::bind()
     {
         glUseProgram(_program);
+        CHECK_GL_ERROR();
+    }
+    
+    void Shader::unbind()
+    {
+        glUseProgram(0);
         CHECK_GL_ERROR();
     }
     
     void Shader::setUniform(const GLchar *name, const glm::mat4 &value)
     {
         GLint loc = glGetUniformLocation(_program, name);
-        glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(value));
+        glProgramUniformMatrix4fv(getProgram(), loc, 1, GL_FALSE, glm::value_ptr(value));
         CHECK_GL_ERROR();
     }
     
     void Shader::setUniform(const GLchar *name, GLint value)
     {
         GLint loc = glGetUniformLocation(_program, name);
-        glUniform1i(loc, value);
+        glProgramUniform1i(getProgram(), loc, value);
         CHECK_GL_ERROR();
     }
     

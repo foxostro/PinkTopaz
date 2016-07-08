@@ -28,7 +28,8 @@ public:
     }
     
     // Bind the shader program for use.
-    void use();
+    void bind();
+    void unbind();
     
     // Set a mat4 uniform by name. Assumes the shader has already been bound for use.
     void setUniform(const GLchar *name, const glm::mat4 &value);
