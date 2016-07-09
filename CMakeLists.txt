@@ -14,6 +14,7 @@ set(SOURCE_FILES
     "src/Exception.cpp" "src/Exception.hpp"
     "src/StaticMesh.cpp" "src/StaticMesh.hpp"
     "src/TextureArray.cpp" "src/TextureArray.hpp"
+    "src/World.cpp" "src/World.hpp"
     "src/RetinaSupport.h"
     "src/opengl.hpp"
     )
