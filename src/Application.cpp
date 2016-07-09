@@ -27,6 +27,8 @@
 
 namespace PinkTopaz {
     // Tags the entity which acts as the camera.
+    // We expect there to only be one entity at a time that has the ActiveCamera component. Systems will generally
+    // listen for the event where this component is added to an entity and set that entity as the camera.
     struct ActiveCamera
     {
         ActiveCamera() {}
@@ -67,45 +69,54 @@ namespace PinkTopaz {
     };
     
     // System for rendering static meshes in the world, associated with the RenderableStaticMesh components.
-    class StaticMeshRenderSystem : public entityx::System<StaticMeshRenderSystem>
+    class StaticMeshRenderSystem : public entityx::System<StaticMeshRenderSystem>,
+                                   public entityx::Receiver<StaticMeshRenderSystem>
     {
     public:
         StaticMeshRenderSystem() {}
+        
+        void configure(entityx::EventManager &em) override
+        {
+            em.subscribe<entityx::ComponentAddedEvent<ActiveCamera>>(*this);
+            em.subscribe<entityx::ComponentRemovedEvent<ActiveCamera>>(*this);
+        }
         
         void update(entityx::EntityManager &es,
                     entityx::EventManager &events,
                     entityx::TimeDelta dt) override
         {
-            auto cameraTransform = getCameraTransform(es);
+            glm::mat4x4 cameraTransform;
+            if (_activeCamera.valid()) {
+                cameraTransform = _activeCamera.component<Transform>()->value;
+            }
             
             es.each<RenderableStaticMesh, Transform>([cameraTransform](entityx::Entity entity,
                                                                        RenderableStaticMesh &mesh,
                                                                        Transform &transform)
             {
-                auto shader = mesh.shader;
-                auto texture = mesh.texture;
-                auto vao = mesh.vao;
-                
-                glm::mat4x4 view = cameraTransform->value * transform.value;
-                shader->setUniform("view", view);
-                
-                shader->bind();
-                texture->bind();
-                glBindVertexArray(vao->getVAO());
-                glDrawArrays(GL_TRIANGLES, 0, vao->getNumVerts());
-                shader->unbind();
+                mesh.shader->bind();
+                mesh.shader->setUniform("view", cameraTransform * transform.value);
+                mesh.texture->bind();
+                glBindVertexArray(mesh.vao->getVAO());
+                glDrawArrays(GL_TRIANGLES, 0, mesh.vao->getNumVerts());
+                mesh.shader->unbind();
             });
         }
-
-        // Grab the first entity that is tagged with ActiveCamera and retrieve it's Transform.
-        entityx::ComponentHandle<Transform> getCameraTransform(entityx::EntityManager &es)
+        
+        void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)
         {
-            entityx::ComponentHandle<Transform> cameraTransform;
-            entityx::ComponentHandle<ActiveCamera> cameraTag;
-            auto camera = *es.entities_with_components(cameraTag, cameraTransform).begin();
-            cameraTransform = camera.component<Transform>();
-            return cameraTransform;
+            _activeCamera = event.entity;
         }
+        
+        void receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event)
+        {
+            if (_activeCamera == event.entity) {
+                _activeCamera.invalidate();
+            }
+        }
+        
+    private:
+        entityx::Entity _activeCamera;
     };
     
     // A World is the same thing as a game zone or level.
@@ -123,8 +134,8 @@ namespace PinkTopaz {
             systems.configure();
             
             // Create an entity to represent the camera.
-            // Render systems will look this entity up by using the ActiveCamera component as a tag.
-            // They will retrieve it's transformation and take it into account when rendering their stuff.
+            // Render systems will know by the ActiveCamera that this is the camera. They will retrieve the entity's
+            // transformation and take it into account when rendering their stuff.
             entityx::Entity camera = entities.create();
             camera.assign<Transform>(glm::vec3(85.1, 16.1, 140.1),
                                      glm::vec3(80.1, 20.1, 130.1),
@@ -201,16 +212,19 @@ namespace PinkTopaz {
                         
                     case SDL_WINDOWEVENT:
                         switch(e.window.event)
-                    {
-                        case SDL_WINDOWEVENT_RESIZED:
-                            // fall through
-                            
-                        case SDL_WINDOWEVENT_SIZE_CHANGED:
-                            windowSizeChanged(e.window.data1, e.window.data2, shader);
-                            break;
-                    }
+                        {
+                            case SDL_WINDOWEVENT_RESIZED:
+                                // fall through
+                                
+                            case SDL_WINDOWEVENT_SIZE_CHANGED:
+                                windowSizeChanged(e.window.data1, e.window.data2, shader);
+                                break;
+                        }
                         break;
                 }
+                
+                // TODO: emit SDL_event here and consume in an input system.
+                gameWorld.events.emit(e);
             }
             
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
