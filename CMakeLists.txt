@@ -15,6 +15,11 @@ set(SOURCE_FILES
     "src/StaticMesh.cpp" "src/StaticMesh.hpp"
     "src/TextureArray.cpp" "src/TextureArray.hpp"
     "src/World.cpp" "src/World.hpp"
+    "src/RenderSystem.cpp" "src/RenderSystem.hpp"
+    "src/WindowSizeChangedEvent.hpp"
+    "src/ActiveCamera.hpp"
+    "src/Transform.hpp"
+    "src/RenderableStaticMesh.hpp"
     "src/RetinaSupport.h"
     "src/opengl.hpp"
     )

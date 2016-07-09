@@ -6,15 +6,16 @@
 //
 //
 
-#include "SDL.h"
+#include "Application.hpp"
 
+#include "SDL.h"
 #include "config.h"
 #include "opengl.hpp"
 #include "glUtilities.hpp"
 #include "FileUtilities.hpp"
 #include "RetinaSupport.h"
 #include "World.hpp"
-#include "Application.hpp"
+#include "WindowSizeChangedEvent.hpp"
 
 namespace PinkTopaz {
     
