@@ -4,31 +4,63 @@ set(APP_NAME "PinkTopaz")
 
 set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z")
 
-# Define the target and specify source files for it. This must be done before the target can be referenced.
-set(SOURCE_FILES
-    "src/main.cpp"
-    "src/Application.cpp" "src/Application.hpp"
+set(SOURCE_FILES_OPENGL
     "src/Shader.cpp" "src/Shader.hpp"
     "src/glUtilities.cpp" "src/glUtilities.hpp"
-    "src/FileUtilities.cpp" "src/FileUtilities.hpp"
-    "src/Exception.cpp" "src/Exception.hpp"
     "src/StaticMesh.cpp" "src/StaticMesh.hpp"
     "src/TextureArray.cpp" "src/TextureArray.hpp"
-    "src/World.cpp" "src/World.hpp"
+    "src/opengl.hpp"
+  )
+
+set(SOURCE_FILES_SYSTEMS
     "src/RenderSystem.cpp" "src/RenderSystem.hpp"
-    "src/WindowSizeChangedEvent.hpp"
+  )
+
+set(SOURCE_FILES_COMPONENTS
     "src/ActiveCamera.hpp"
     "src/Transform.hpp"
     "src/RenderableStaticMesh.hpp"
+  )
+
+set(SOURCE_FILES_EVENTS
+    "src/WindowSizeChangedEvent.hpp"
+  )
+
+set(SOURCE_FILES_OTHER_ECS
+    "src/World.cpp" "src/World.hpp"
+  )
+
+set(SOURCE_FILES_MISC
+    "src/main.cpp"
+    "src/Application.cpp" "src/Application.hpp"
+    "src/FileUtilities.cpp" "src/FileUtilities.hpp"
+    "src/Exception.cpp" "src/Exception.hpp"
     "src/RetinaSupport.h"
-    "src/opengl.hpp"
-    )
+  )
 
 if(APPLE)
-    list(APPEND SOURCE_FILES "src/osx/RetinaSupport.m")
+    set(SOURCE_FILES_PLATFORM_SUPPORT "src/RetinaSupport.h" "src/osx/RetinaSupport.m")
 else()
-    list(APPEND SOURCE_FILES "src/linux/RetinaSupport.c")
+    set(SOURCE_FILES_PLATFORM_SUPPORT "src/RetinaSupport.h" "src/linux/RetinaSupport.c")
 endif(APPLE)
+
+set(SOURCE_FILES
+    ${SOURCE_FILES_OTHER_ECS}
+    ${SOURCE_FILES_SYSTEMS}
+    ${SOURCE_FILES_COMPONENTS}
+    ${SOURCE_FILES_EVENTS}
+    ${SOURCE_FILES_OPENGL}
+    ${SOURCE_FILES_PLATFORM_SUPPORT}
+    ${SOURCE_FILES_MISC}
+    )
+
+source_group("ECS\\Systems" FILES ${SOURCE_FILES_SYSTEMS})
+source_group("ECS\\Components" FILES ${SOURCE_FILES_COMPONENTS})
+source_group("ECS\\Events" FILES ${SOURCE_FILES_EVENTS})
+source_group("ECS\\" FILES ${SOURCE_FILES_OTHER_ECS})
+source_group("OpenGL Wrapper" FILES ${SOURCE_FILES_OPENGL})
+source_group("Platform Support" FILES ${SOURCE_FILES_PLATFORM_SUPPORT})
+source_group("Misc" FILES ${SOURCE_FILES_MISC})
 
 add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
 
