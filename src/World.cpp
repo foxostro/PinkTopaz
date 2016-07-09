@@ -6,6 +6,7 @@
 //
 //
 
+#include "SDL.h"
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp> // for lookAt
@@ -56,17 +57,17 @@ namespace PinkTopaz {
         std::shared_ptr<TextureArray> texture;
     };
     
-    // System for rendering static meshes in the world, associated with the RenderableStaticMesh components.
-    class StaticMeshRenderSystem : public entityx::System<StaticMeshRenderSystem>,
-                                   public entityx::Receiver<StaticMeshRenderSystem>
+    // System for rendering game objects in the world.
+    class RenderSystem : public entityx::System<RenderSystem>, public entityx::Receiver<RenderSystem>
     {
     public:
-        StaticMeshRenderSystem() {}
+        RenderSystem() {}
         
         void configure(entityx::EventManager &em) override
         {
             em.subscribe<entityx::ComponentAddedEvent<ActiveCamera>>(*this);
             em.subscribe<entityx::ComponentRemovedEvent<ActiveCamera>>(*this);
+            em.subscribe<WindowSizeChangedEvent>(*this);
         }
         
         void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override
@@ -76,16 +77,31 @@ namespace PinkTopaz {
                 cameraTransform = _activeCamera.component<Transform>()->value;
             }
             
-            auto f = [cameraTransform](entityx::Entity entity, RenderableStaticMesh &mesh, Transform &transform) {
+            std::set<std::shared_ptr<Shader>> shadersEncountered;
+            
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            auto f = [&](entityx::Entity entity, RenderableStaticMesh &mesh, Transform &transform) {
                 mesh.shader->bind();
+                
+                // If we have a new projection matrix then pass it to each shader used for rendering.
+                // Take care to do this only once for each unique shader encountered.
+                if (_projHasBeenUpdated) {
+                    if (shadersEncountered.find(mesh.shader) == shadersEncountered.end()) {
+                        shadersEncountered.insert(mesh.shader);
+                        mesh.shader->setUniform("proj", _proj);
+                    }
+                }
+                
                 mesh.shader->setUniform("view", cameraTransform * transform.value);
                 mesh.texture->bind();
                 glBindVertexArray(mesh.vao->getVAO());
                 glDrawArrays(GL_TRIANGLES, 0, mesh.vao->getNumVerts());
                 mesh.shader->unbind();
             };
-            
             es.each<RenderableStaticMesh, Transform>(f);
+            glFlush();
+            
+            _projHasBeenUpdated = false;
         }
         
         void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)
@@ -100,7 +116,20 @@ namespace PinkTopaz {
             }
         }
         
+        void receive(const WindowSizeChangedEvent &event)
+        {
+            // When the window size changes, recalculate the projection matrix.
+            // On the next update, we will pass this matrix to the shaders used to render each object.
+            constexpr float znear = 0.1f;
+            constexpr float zfar = 100.0f;
+            glViewport(0, 0, event.width * event.windowScaleFactor, event.height * event.windowScaleFactor);
+            _proj = glm::perspective(glm::pi<float>() * 0.25f, (float)event.width / event.height, znear, zfar);
+            _projHasBeenUpdated = true;
+        }
+        
     private:
+        bool _projHasBeenUpdated;
+        glm::mat4x4 _proj;
         entityx::Entity _activeCamera;
     };
     
@@ -108,7 +137,7 @@ namespace PinkTopaz {
                  const std::shared_ptr<Shader> &shader,
                  const std::shared_ptr<TextureArray> &texture)
     {
-        systems.add<StaticMeshRenderSystem>();
+        systems.add<RenderSystem>();
         systems.configure();
         
         // Create an entity to represent the camera.

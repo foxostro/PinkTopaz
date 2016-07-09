@@ -7,7 +7,6 @@
 //
 
 #include "SDL.h"
-#include <glm/gtc/matrix_transform.hpp> // for glm::perspective()
 
 #include "config.h"
 #include "opengl.hpp"
@@ -29,29 +28,12 @@ namespace PinkTopaz {
         // Nothing to do
     }
     
-    void Application::windowSizeChanged(int windowWidth, int windowHeight, std::shared_ptr<Shader> &shader)
-    {
-        constexpr float znear = 0.1f;
-        constexpr float zfar = 100.0f;
-        float scaleFactor = windowScaleFactor(_window);
-        glViewport(0, 0, windowWidth * scaleFactor, windowHeight * scaleFactor);
-        glm::mat4 proj = glm::perspective(glm::pi<float>() * 0.25f, (float)windowWidth / windowHeight, znear, zfar);
-        shader->setUniform("proj", proj);
-    }
-    
     void Application::inner()
     {
         auto shader = std::make_shared<Shader>(stringFromFileContents("vert.glsl"),
                                                stringFromFileContents("frag.glsl"));
         shader->setUniform("view", glm::mat4(1.0f));
         shader->setUniform("tex", 0);
-        
-        // Setup the projection matrix and viewport using the initial size of the window.
-        {
-            int windowWidth = 0, windowHeight = 0;
-            SDL_GetWindowSize(_window, &windowWidth, &windowHeight);
-            windowSizeChanged(windowWidth, windowHeight, shader);
-        }
         
         auto texture = std::make_shared<TextureArray>("terrain.png");
         auto vao = std::make_shared<StaticMeshVAO>(StaticMesh("terrain.3d.bin"));
@@ -60,6 +42,15 @@ namespace PinkTopaz {
         checkGLError();
         
         World gameWorld(vao, shader, texture);
+        
+        // Send an event containing the initial window size and scale factor.
+        // This will allow the render system to setup projection matrices and such.
+        {
+            WindowSizeChangedEvent event;
+            SDL_GetWindowSize(_window, &event.width, &event.height);
+            event.windowScaleFactor = windowScaleFactor(_window);
+            gameWorld.events.emit(event);
+        }
         
         bool quit = false;
         
@@ -82,19 +73,19 @@ namespace PinkTopaz {
                                 // fall through
                                 
                             case SDL_WINDOWEVENT_SIZE_CHANGED:
-                                windowSizeChanged(e.window.data1, e.window.data2, shader);
-                                break;
+                            {
+                                WindowSizeChangedEvent event;
+                                event.width = e.window.data1;
+                                event.height = e.window.data2;
+                                event.windowScaleFactor = windowScaleFactor(_window);
+                                gameWorld.events.emit(event);
+                            } break;
                         }
                         break;
                 }
-                
-                // TODO: emit SDL_event here and consume in an input system.
-                gameWorld.events.emit(e);
             }
-            
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
             gameWorld.update(0);
-            glFlush();
             SDL_GL_SwapWindow(_window);
         }
     }

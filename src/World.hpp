@@ -16,6 +16,14 @@
 
 namespace PinkTopaz {
     
+    struct WindowSizeChangedEvent
+    {
+        WindowSizeChangedEvent() : windowScaleFactor(0), width(0), height(0) {}
+
+        float windowScaleFactor;
+        int width, height;
+    };
+    
     // A World is the same thing as a game zone or level.
     // This is a collection of interacting entities and associated systems.
     // It is, of course, entirely possible to have multiple worlds. However, interactions across worlds are not
