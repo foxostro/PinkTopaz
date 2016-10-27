@@ -11,3 +11,4 @@ Dependencies:
 * SDL2_image <https://www.libsdl.org/projects/SDL_image/>
 * GLM <http://glm.g-truc.net/0.9.7/index.html>
 * EntityX <https://github.com/alecthomas/entityx>
+* Google Test <https://github.com/google/googletest>

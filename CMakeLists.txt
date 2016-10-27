@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.6)
 project (PinkTopaz)
 set(APP_NAME "PinkTopaz")
 
@@ -10,25 +10,25 @@ set(SOURCE_FILES_OPENGL
     "src/StaticMesh.cpp" "src/StaticMesh.hpp"
     "src/TextureArray.cpp" "src/TextureArray.hpp"
     "src/opengl.hpp"
-  )
+    )
 
 set(SOURCE_FILES_SYSTEMS
     "src/RenderSystem.cpp" "src/RenderSystem.hpp"
-  )
+    )
 
 set(SOURCE_FILES_COMPONENTS
     "src/ActiveCamera.hpp"
     "src/Transform.hpp"
     "src/RenderableStaticMesh.hpp"
-  )
+    )
 
 set(SOURCE_FILES_EVENTS
     "src/WindowSizeChangedEvent.hpp"
-  )
+    )
 
 set(SOURCE_FILES_OTHER_ECS
     "src/World.cpp" "src/World.hpp"
-  )
+    )
 
 set(SOURCE_FILES_MISC
     "src/main.cpp"
@@ -36,7 +36,11 @@ set(SOURCE_FILES_MISC
     "src/FileUtilities.cpp" "src/FileUtilities.hpp"
     "src/Exception.cpp" "src/Exception.hpp"
     "src/RetinaSupport.h"
-  )
+    )
+
+set(SOURCE_FILES_TEST
+    "src/test/test.cpp"
+    )
 
 if(APPLE)
     set(SOURCE_FILES_PLATFORM_SUPPORT "src/RetinaSupport.h" "src/osx/RetinaSupport.m")
@@ -65,22 +69,24 @@ source_group("Misc" FILES ${SOURCE_FILES_MISC})
 add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-find_package(OpenGL)
-find_package(GLM)
+find_package(OpenGL REQUIRED)
+find_package(GLM REQUIRED)
 find_package(SDL2_image REQUIRED)
 find_package(SDL2 REQUIRED)
 
 # EntityX ECS library.
-find_package(PkgConfig)
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(PC_LIBENTITYX QUIET entityx)
 set(ENTITYX_CFLAGS ${PC_LIBENTITYX_CFLAGS_OTHER})
 
 find_path(ENTITYX_INCLUDE_DIR entityx/entityx.h
           HINTS ${PC_LIBENTITYX_INCLUDEDIR} ${PC_LIBENTITYX_INCLUDE_DIRS}
-          PATH_SUFFIXES )
+          PATH_SUFFIXES
+          )
 
 find_library(ENTITYX_LIBRARY NAMES entityx
-             HINTS ${PC_LIBENTITYX_LIBDIR} ${PC_LIBENTITYX_LIBRARY_DIRS} )
+             HINTS ${PC_LIBENTITYX_LIBDIR} ${PC_LIBENTITYX_LIBRARY_DIRS}
+             )
 
 # Cmake configures a header file with some macros.
 configure_file("${PROJECT_SOURCE_DIR}/src/config.h.in" "${PROJECT_BINARY_DIR}/config.h")
@@ -90,12 +96,14 @@ include_directories(${SDL2_INCLUDE_DIR}
                     ${GLM_INCLUDE_DIR}
                     ${OPENGL_INCLUDE_DIRS}
                     ${PROJECT_BINARY_DIR}
-                    ${ENTITYX_INCLUDE_DIR} )
+                    ${ENTITYX_INCLUDE_DIR}
+                    )
 target_link_libraries(PinkTopaz
                       ${SDL2_LIBRARY}
                       ${SDL2_IMAGE_LIBRARY}
                       ${OPENGL_LIBRARIES}
-                      ${ENTITYX_LIBRARY} )
+                      ${ENTITYX_LIBRARY}
+                      )
 
 if(APPLE)
 	# On Mac OS, we use a custom template for Info.plist so that we can specify the
@@ -113,3 +121,12 @@ if(APPLE)
 	                   COMMAND ${CMAKE_COMMAND} -E copy_directory
 	                   "./res" $<TARGET_FILE_DIR:PinkTopaz>/../Resources)
 endif(APPLE)
+
+# Set up unit test support.
+enable_testing()
+set(PROJECT_TEST_NAME ${APP_NAME}Test)
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+add_executable(${PROJECT_TEST_NAME} ${SOURCE_FILES_TEST})
+target_link_libraries(${PROJECT_TEST_NAME} ${GTEST_BOTH_LIBRARIES})
+add_test(${PROJECT_TEST_NAME} ${PROJECT_TEST_NAME})

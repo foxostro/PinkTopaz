@@ -9,3 +9,5 @@ PinkTopaz.build/
 PinkTopaz.xcodeproj/
 cmake_install.cmake
 config.h
+CTestTestfile.cmake
+Testing/
