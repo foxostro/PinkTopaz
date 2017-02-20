@@ -55,6 +55,8 @@ namespace PinkTopaz {
         
         bool quit = false;
         
+        Uint32 ticksBeginMs = SDL_GetTicks();
+        
         while(!quit)
         {
             SDL_Event e;
@@ -85,8 +87,15 @@ namespace PinkTopaz {
                         break;
                 }
             }
+            
+            Uint32 ticksEndMs = SDL_GetTicks();
+            Uint32 ticksElapsedMs = ticksEndMs - ticksBeginMs;
+            ticksBeginMs = ticksEndMs;
+            entityx::TimeDelta dt = ticksElapsedMs;
+            gameWorld.update(dt);
+            
+//           	SDL_Log("frame time: %.2f milliseconds", (float)dt);
 
-            gameWorld.update(0);
             SDL_GL_SwapWindow(_window);
         }
     }
