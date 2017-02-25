@@ -10,9 +10,9 @@
 #define Application_hpp
 
 #include "SDL.h"
-#include "opengl.hpp"
-#include "Shader.hpp"
 #include <memory>
+
+#include "Renderer/GraphicsDevice.hpp"
 
 namespace PinkTopaz {
     
@@ -27,6 +27,7 @@ namespace PinkTopaz {
         void run();
         
     private:
+        std::shared_ptr<Renderer::GraphicsDevice> createGraphicsDevice();
         void inner();
         
         SDL_Window *_window;

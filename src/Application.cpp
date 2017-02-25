@@ -10,12 +10,12 @@
 
 #include "SDL.h"
 #include "config.h"
-#include "opengl.hpp"
-#include "glUtilities.hpp"
 #include "FileUtilities.hpp"
 #include "RetinaSupport.h"
 #include "World.hpp"
 #include "WindowSizeChangedEvent.hpp"
+
+#include "Renderer/OpenGL/GraphicsDeviceOpenGL.hpp"
 
 namespace PinkTopaz {
     
@@ -29,20 +29,29 @@ namespace PinkTopaz {
         // Nothing to do
     }
     
+    std::shared_ptr<Renderer::GraphicsDevice> Application::createGraphicsDevice()
+    {
+        assert(_window);
+        SDL_Window &window = *_window;
+        auto concreteGraphicsDevice = std::make_shared<Renderer::OpenGL::GraphicsDeviceOpenGL>(window);
+        auto abstractGraphicsDevice = std::dynamic_pointer_cast<Renderer::GraphicsDevice>(concreteGraphicsDevice);
+        return abstractGraphicsDevice;
+    }
+    
     void Application::inner()
     {
-        auto shader = std::make_shared<Shader>(stringFromFileContents("vert.glsl"),
-                                               stringFromFileContents("frag.glsl"));
-        shader->setUniform("view", glm::mat4(1.0f));
-        shader->setUniform("tex", 0);
+        auto graphicsDevice = createGraphicsDevice();
+
+        auto shader = graphicsDevice->makeShader(stringFromFileContents("vert.glsl"), stringFromFileContents("frag.glsl"));
+        shader->setShaderUniform("view", glm::mat4(1.0f));
+        shader->setShaderUniform("tex", 0);
         
-        auto texture = std::make_shared<TextureArray>("terrain.png");
-        auto vao = std::make_shared<StaticMeshVAO>(StaticMesh("terrain.3d.bin"));
+        auto texture = graphicsDevice->makeTextureArray("terrain.png");
+
+        auto mesh = std::make_shared<Renderer::StaticMesh>("terrain.3d.bin");
+        auto vao = graphicsDevice->makeStaticMeshVao(mesh);
         
-        // Now that setup is complete, check for OpenGL error before entering the game loop.
-        checkGLError();
-        
-        World gameWorld(vao, shader, texture);
+        World gameWorld(graphicsDevice, vao, shader, texture);
         
         // Send an event containing the initial window size and scale factor.
         // This will allow the render system to setup projection matrices and such.
@@ -94,9 +103,7 @@ namespace PinkTopaz {
             entityx::TimeDelta dt = ticksElapsedMs;
             gameWorld.update(dt);
             
-//           	SDL_Log("frame time: %.2f milliseconds", (float)dt);
-
-            SDL_GL_SwapWindow(_window);
+            //SDL_Log("frame time: %.2f milliseconds", (float)dt);
         }
     }
     
@@ -117,35 +124,11 @@ namespace PinkTopaz {
         SDL_LogSetPriority(SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_INFO);
         SDL_LogSetPriority(SDL_LOG_CATEGORY_ERROR, SDL_LOG_PRIORITY_ERROR);
         
-        // Set up the window and OpenGL context.
         _window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600,
                                    SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-        SDL_GL_SetSwapInterval(1);
-        SDL_GLContext glContext = SDL_GL_CreateContext(_window);
-
-        // Check the OpenGL version and log an error if it's not supported.
-        // But we'll try to run anyway.
-        {
-            int major = 0;
-            int minor = 0;
-            glGetIntegerv(GL_MAJOR_VERSION, &major);
-            glGetIntegerv(GL_MINOR_VERSION, &minor);
-            SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "OpenGL version is %d.%d\n", major, minor);
-            
-            if (!(major >= 4 && minor >= 1)) {
-                SDL_LogError(SDL_LOG_CATEGORY_RENDER, "This application requires at least OpenGL 4.1 to run.");
-            }
-        }
-        
-        glClearColor(0.2, 0.4, 0.5, 1.0);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
         
         inner();
 
-        SDL_GL_DeleteContext(glContext);
         SDL_DestroyWindow(_window);
         _window = nullptr;
         SDL_Quit();

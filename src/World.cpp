@@ -6,8 +6,6 @@
 //
 //
 
-#include "SDL.h"
-
 #include "World.hpp"
 #include "Transform.hpp"
 #include "ActiveCamera.hpp"
@@ -16,11 +14,12 @@
 
 namespace PinkTopaz {
     
-    World::World(const std::shared_ptr<StaticMeshVAO> &vao,
-                 const std::shared_ptr<Shader> &shader,
-                 const std::shared_ptr<TextureArray> &texture)
+    World::World(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice,
+                 const std::shared_ptr<Renderer::StaticMeshVao> &vao,
+                 const std::shared_ptr<Renderer::Shader> &shader,
+                 const std::shared_ptr<Renderer::TextureArray> &texture)
     {
-        systems.add<RenderSystem>();
+        systems.add<RenderSystem>(graphicsDevice);
         systems.configure();
         
         // Create an entity to represent the camera.

@@ -6,11 +6,11 @@
 //
 //
 
-#include "glUtilities.hpp"
+#include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
 #include "SDL.h"
 
-namespace PinkTopaz {
+namespace PinkTopaz::Renderer::OpenGL {
 
     const char * stringForOpenGLError(GLenum error)
     {
@@ -47,4 +47,4 @@ namespace PinkTopaz {
         }
     }
     
-} // namespace PinkTopaz
+} // namespace PinkTopaz::Renderer::OpenGL

@@ -10,9 +10,9 @@
 #define RenderableStaticMesh_hpp
 
 #include <memory>
-#include "StaticMesh.hpp"
-#include "Shader.hpp"
-#include "TextureArray.hpp"
+#include "Renderer/StaticMeshVao.hpp"
+#include "Renderer/Shader.hpp"
+#include "Renderer/TextureArray.hpp"
 
 namespace PinkTopaz {
     
@@ -21,18 +21,18 @@ namespace PinkTopaz {
     {
         RenderableStaticMesh() {}
         
-        RenderableStaticMesh(const std::shared_ptr<StaticMeshVAO> &vao,
-                             const std::shared_ptr<Shader> &shader,
-                             const std::shared_ptr<TextureArray> &texture)
+        RenderableStaticMesh(const std::shared_ptr<Renderer::StaticMeshVao> &vao,
+                             const std::shared_ptr<Renderer::Shader> &shader,
+                             const std::shared_ptr<Renderer::TextureArray> &texture)
         {
             this->vao = vao;
             this->shader = shader;
             this->texture = texture;
         }
         
-        std::shared_ptr<StaticMeshVAO> vao;
-        std::shared_ptr<Shader> shader;
-        std::shared_ptr<TextureArray> texture;
+        std::shared_ptr<Renderer::StaticMeshVao> vao;
+        std::shared_ptr<Renderer::Shader> shader;
+        std::shared_ptr<Renderer::TextureArray> texture;
     };
     
 } // namespace PinkTopaz

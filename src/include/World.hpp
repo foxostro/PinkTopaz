@@ -10,9 +10,10 @@
 #define World_hpp
 
 #include <entityx/entityx.h>
-#include "StaticMesh.hpp"
-#include "Shader.hpp"
-#include "TextureArray.hpp"
+#include "Renderer/GraphicsDevice.hpp"
+#include "Renderer/StaticMeshVao.hpp"
+#include "Renderer/Shader.hpp"
+#include "Renderer/TextureArray.hpp"
 
 namespace PinkTopaz {
         
@@ -23,9 +24,10 @@ namespace PinkTopaz {
     class World : public entityx::EntityX
     {
     public:
-        explicit World(const std::shared_ptr<StaticMeshVAO> &vao,
-                       const std::shared_ptr<Shader> &shader,
-                       const std::shared_ptr<TextureArray> &texture);
+        explicit World(const std::shared_ptr<Renderer::GraphicsDevice> &renderer,
+                       const std::shared_ptr<Renderer::StaticMeshVao> &vao,
+                       const std::shared_ptr<Renderer::Shader> &shader,
+                       const std::shared_ptr<Renderer::TextureArray> &texture);
         
         void update(entityx::TimeDelta dt);
     };

@@ -7,7 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "../RetinaSupport.h"
+#import "RetinaSupport.h"
 #import "SDL_syswm.h"
     
 float windowScaleFactor(SDL_Window *window)

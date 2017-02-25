@@ -5,37 +5,49 @@ set(APP_NAME "PinkTopaz")
 set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z")
 
 set(SOURCE_FILES_OPENGL
-    "src/Shader.cpp" "src/Shader.hpp"
-    "src/glUtilities.cpp" "src/glUtilities.hpp"
-    "src/StaticMesh.cpp" "src/StaticMesh.hpp"
-    "src/TextureArray.cpp" "src/TextureArray.hpp"
-    "src/opengl.hpp"
+    "src/include/Renderer/OpenGL/opengl.hpp"
+    "src/Renderer/OpenGL/glUtilities.cpp" "src/include/Renderer/OpenGL/glUtilities.hpp"
+    "src/Renderer/OpenGL/GraphicsDeviceOpenGL.cpp" "src/include/Renderer/OpenGL/GraphicsDeviceOpenGL.hpp"
+    "src/Renderer/OpenGL/CommandQueue.cpp" "src/include/Renderer/OpenGL/CommandQueue.hpp"
+    "src/Renderer/OpenGL/CommandEncoderOpenGL.cpp" "src/include/Renderer/OpenGL/CommandEncoderOpenGL.hpp"
+    "src/include/Renderer/OpenGL/ShaderOpenGL.hpp" "src/Renderer/OpenGL/ShaderOpenGL.cpp"
+    "src/Renderer/OpenGL/TextureArrayOpenGL.cpp" "src/include/Renderer/OpenGL/TextureArrayOpenGL.hpp"
+    "src/Renderer/OpenGL/StaticMeshVaoOpenGL.cpp" "src/include/Renderer/OpenGL/StaticMeshVaoOpenGL.hpp"
+    )
+
+set(SOURCE_FILES_RENDERER
+    "src/Renderer/StaticMesh.cpp" "src/include/Renderer/StaticMesh.hpp"
+    "src/include/Renderer/GraphicsDevice.hpp"
+    "src/include/Renderer/CommandEncoder.hpp"
+    "src/Renderer/Shader.cpp" "src/include/Renderer/Shader.hpp"
+    "src/Renderer/TextureArray.cpp" "src/include/Renderer/TextureArray.hpp"
+    "src/Renderer/StaticMeshVao.cpp" "src/include/Renderer/StaticMeshVao.hpp"
     )
 
 set(SOURCE_FILES_SYSTEMS
-    "src/RenderSystem.cpp" "src/RenderSystem.hpp"
+    "src/RenderSystem.cpp" "src/include/RenderSystem.hpp"
     )
 
 set(SOURCE_FILES_COMPONENTS
-    "src/ActiveCamera.hpp"
-    "src/Transform.hpp"
-    "src/RenderableStaticMesh.hpp"
+    "src/include/ActiveCamera.hpp"
+    "src/include/Transform.hpp"
+    "src/include/RenderableStaticMesh.hpp"
     )
 
 set(SOURCE_FILES_EVENTS
-    "src/WindowSizeChangedEvent.hpp"
+    "src/include/WindowSizeChangedEvent.hpp"
     )
 
 set(SOURCE_FILES_OTHER_ECS
-    "src/World.cpp" "src/World.hpp"
+    "src/World.cpp" "src/include/World.hpp"
     )
 
 set(SOURCE_FILES_MISC
     "src/main.cpp"
-    "src/Application.cpp" "src/Application.hpp"
-    "src/FileUtilities.cpp" "src/FileUtilities.hpp"
-    "src/Exception.cpp" "src/Exception.hpp"
-    "src/RetinaSupport.h"
+    "src/Application.cpp" "src/include/Application.hpp"
+    "src/FileUtilities.cpp" "src/include/FileUtilities.hpp"
+    "src/Exception.cpp" "src/include/Exception.hpp"
+    "src/include/RetinaSupport.h"
     )
 
 set(SOURCE_FILES_TEST
@@ -43,13 +55,14 @@ set(SOURCE_FILES_TEST
     )
 
 if(APPLE)
-    set(SOURCE_FILES_PLATFORM_SUPPORT "src/RetinaSupport.h" "src/osx/RetinaSupport.m")
+    set(SOURCE_FILES_PLATFORM_SUPPORT "src/include/RetinaSupport.h" "src/osx/RetinaSupport.m")
 else()
-    set(SOURCE_FILES_PLATFORM_SUPPORT "src/RetinaSupport.h" "src/linux/RetinaSupport.c")
+    set(SOURCE_FILES_PLATFORM_SUPPORT "src/include/RetinaSupport.h" "src/linux/RetinaSupport.c")
 endif(APPLE)
 
 set(SOURCE_FILES
     ${SOURCE_FILES_OTHER_ECS}
+    ${SOURCE_FILES_RENDERER}
     ${SOURCE_FILES_SYSTEMS}
     ${SOURCE_FILES_COMPONENTS}
     ${SOURCE_FILES_EVENTS}
@@ -62,7 +75,8 @@ source_group("ECS\\Systems" FILES ${SOURCE_FILES_SYSTEMS})
 source_group("ECS\\Components" FILES ${SOURCE_FILES_COMPONENTS})
 source_group("ECS\\Events" FILES ${SOURCE_FILES_EVENTS})
 source_group("ECS\\" FILES ${SOURCE_FILES_OTHER_ECS})
-source_group("OpenGL Wrapper" FILES ${SOURCE_FILES_OPENGL})
+source_group("Renderer" FILES ${SOURCE_FILES_RENDERER})
+source_group("Renderer\\OpenGL" FILES ${SOURCE_FILES_OPENGL})
 source_group("Platform Support" FILES ${SOURCE_FILES_PLATFORM_SUPPORT})
 source_group("Misc" FILES ${SOURCE_FILES_MISC})
 
@@ -91,7 +105,8 @@ find_library(ENTITYX_LIBRARY NAMES entityx
 # Cmake configures a header file with some macros.
 configure_file("${PROJECT_SOURCE_DIR}/src/config.h.in" "${PROJECT_BINARY_DIR}/config.h")
 
-include_directories(${SDL2_INCLUDE_DIR}
+include_directories("${PROJECT_SOURCE_DIR}/src/include"
+                    ${SDL2_INCLUDE_DIR}
                     ${SDL2_IMAGE_INCLUDE_DIR}
                     ${GLM_INCLUDE_DIR}
                     ${OPENGL_INCLUDE_DIRS}

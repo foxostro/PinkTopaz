@@ -7,7 +7,8 @@
 //
 
 #include "RenderSystem.hpp"
-#include "Shader.hpp"
+#include "Renderer/Shader.hpp"
+#include "Renderer/GraphicsDevice.hpp"
 #include "Transform.hpp"
 #include "RenderableStaticMesh.hpp"
 
@@ -16,7 +17,10 @@
 
 namespace PinkTopaz {
     
-    RenderSystem::RenderSystem() {}
+    RenderSystem::RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
+     : _windowSizeChangeEventPending(false),
+       _graphicsDevice(graphicsDevice)
+    {}
     
     void RenderSystem::configure(entityx::EventManager &em)
     {
@@ -32,31 +36,37 @@ namespace PinkTopaz {
             cameraTransform = _activeCamera.component<Transform>()->value;
         }
         
-        std::set<std::shared_ptr<Shader>> shadersEncountered;
+        std::set<std::shared_ptr<Renderer::Shader>> shadersEncountered;
         
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        auto encoder = _graphicsDevice->encoder();
+        
+        if (_windowSizeChangeEventPending) {
+            encoder->setViewport(_viewport);
+        }
+
         auto f = [&](entityx::Entity entity, RenderableStaticMesh &mesh, Transform &transform) {
-            mesh.shader->bind();
+            encoder->setShader(mesh.shader); // TODO: Sort by shader to minimize the number of shader switches.
             
             // If we have a new projection matrix then pass it to each shader used for rendering.
             // Take care to do this only once for each unique shader encountered.
-            if (_projHasBeenUpdated) {
+            if (_windowSizeChangeEventPending) {
                 if (shadersEncountered.find(mesh.shader) == shadersEncountered.end()) {
                     shadersEncountered.insert(mesh.shader);
-                    mesh.shader->setUniform("proj", _proj);
+                    mesh.shader->setShaderUniform("proj", _proj);
                 }
             }
             
-            mesh.shader->setUniform("view", cameraTransform * transform.value);
-            mesh.texture->bind();
-            glBindVertexArray(mesh.vao->getVAO());
-            glDrawArrays(GL_TRIANGLES, 0, mesh.vao->getNumVerts());
-            mesh.shader->unbind();
+            mesh.shader->setShaderUniform("view", cameraTransform * transform.value);
+            encoder->setTexture(mesh.texture);
+            encoder->setVertexArray(mesh.vao);
+            encoder->drawTriangles(0, mesh.vao->getNumVerts());
         };
         es.each<RenderableStaticMesh, Transform>(f);
-        glFlush();
         
-        _projHasBeenUpdated = false;
+        _graphicsDevice->submit(encoder);
+        _graphicsDevice->swapBuffers();
+        
+        _windowSizeChangeEventPending = false;
     }
     
     void RenderSystem::receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)
@@ -77,9 +87,9 @@ namespace PinkTopaz {
         // On the next update, we will pass this matrix to the shaders used to render each object.
         constexpr float znear = 0.1f;
         constexpr float zfar = 100.0f;
-        glViewport(0, 0, event.width * event.windowScaleFactor, event.height * event.windowScaleFactor);
+        _viewport = glm::ivec4(0, 0, event.width * event.windowScaleFactor, event.height * event.windowScaleFactor);
         _proj = glm::perspective(glm::pi<float>() * 0.25f, (float)event.width / event.height, znear, zfar);
-        _projHasBeenUpdated = true;
+        _windowSizeChangeEventPending = true;
     }
     
 } // namespace PinkTopaz

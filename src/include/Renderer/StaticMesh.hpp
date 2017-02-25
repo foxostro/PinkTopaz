@@ -10,18 +10,17 @@
 #define StaticMesh_hpp
 
 #include <vector>
-#include "opengl.hpp"
 
-namespace PinkTopaz {
+namespace PinkTopaz::Renderer {
     
     class StaticMesh
     {
     public:
         struct Vertex
         {
-            GLfloat position[3];
-            GLubyte color[4];
-            GLfloat texCoord[3];
+            float position[3];
+            unsigned char color[4];
+            float texCoord[3];
         };
         
         struct Header
@@ -43,28 +42,6 @@ namespace PinkTopaz {
         std::vector<uint8_t> _bytes;
     };
     
-    // The StaticMeshVAO instance must be used only on the OpenGL thread.
-    class StaticMeshVAO
-    {
-    public:
-        StaticMeshVAO(const StaticMesh &mesh);
-        ~StaticMeshVAO();
-
-        GLuint getVAO() const
-        {
-            return _vao;
-        }
-        
-        GLsizei getNumVerts() const
-        {
-            return _numVerts;
-        }
-
-    private:
-        GLuint _vao;
-        GLsizei _numVerts;
-    };
-    
-} // namespace PinkTopaz
+} // namespace PinkTopaz::Renderer
 
 #endif /* StaticMesh_hpp */

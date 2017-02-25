@@ -14,6 +14,7 @@
 
 #include "ActiveCamera.hpp"
 #include "WindowSizeChangedEvent.hpp"
+#include "Renderer/GraphicsDevice.hpp"
 
 namespace PinkTopaz {
     
@@ -21,7 +22,7 @@ namespace PinkTopaz {
     class RenderSystem : public entityx::System<RenderSystem>, public entityx::Receiver<RenderSystem>
     {
     public:
-        RenderSystem();
+        RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice);
         void configure(entityx::EventManager &em) override;
         void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
         void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
@@ -29,9 +30,11 @@ namespace PinkTopaz {
         void receive(const WindowSizeChangedEvent &event);
         
     private:
-        bool _projHasBeenUpdated;
+        bool _windowSizeChangeEventPending;
+        glm::ivec4 _viewport;
         glm::mat4x4 _proj;
         entityx::Entity _activeCamera;
+        std::shared_ptr<Renderer::GraphicsDevice> _graphicsDevice;
     };
 
 } // namespace PinkTopaz
