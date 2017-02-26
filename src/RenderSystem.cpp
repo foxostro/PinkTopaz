@@ -57,7 +57,7 @@ namespace PinkTopaz {
             }
             
             mesh.shader->setShaderUniform("view", cameraTransform * transform.value);
-            encoder->setTexture(mesh.texture);
+            encoder->setFragmentTexture(mesh.texture, 0);
             encoder->setVertexArray(mesh.vao);
             encoder->drawTriangles(0, mesh.vao->getNumVerts());
         };

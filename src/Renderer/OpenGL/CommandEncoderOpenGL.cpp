@@ -33,11 +33,12 @@ namespace PinkTopaz::Renderer::OpenGL {
         });
     }
     
-    void CommandEncoderOpenGL::setTexture(const std::shared_ptr<TextureArray> &abstractTexture)
+    void CommandEncoderOpenGL::setFragmentTexture(const std::shared_ptr<TextureArray> &abstractTexture, size_t index)
     {
         _commandQueue.enqueue([=]() {
             auto texture = std::dynamic_pointer_cast<TextureArrayOpenGL>(abstractTexture);
             GLuint handle = texture->getHandle();
+            glActiveTexture(GL_TEXTURE0 + index);
             glBindTexture(GL_TEXTURE_2D_ARRAY, handle);
             CHECK_GL_ERROR();
         });

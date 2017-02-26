@@ -31,9 +31,8 @@ namespace PinkTopaz::Renderer {
         // Binds the specified shader program for use.
         virtual void setShader(const std::shared_ptr<Shader> &shader) = 0;
         
-        // Binds the specified texture for use.
-        // TODO: specify a location to bind to.
-        virtual void setTexture(const std::shared_ptr<TextureArray> &texture) = 0;
+        // Use the texture at the specified index in the fragment program.
+        virtual void setFragmentTexture(const std::shared_ptr<TextureArray> &texture, size_t index) = 0;
         
         // Binds the specified VAO for use.
         // TODO: I'm not sure is the right approach. Take a look at the Metal documentation.

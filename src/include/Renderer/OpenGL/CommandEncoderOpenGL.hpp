@@ -26,7 +26,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     public:
         void setViewport(const glm::ivec4 &viewport) override;
         void setShader(const std::shared_ptr<Shader> &shader) override;
-        void setTexture(const std::shared_ptr<TextureArray> &texture) override;
+        void setFragmentTexture(const std::shared_ptr<TextureArray> &texture, size_t index) override;
         void setVertexArray(const std::shared_ptr<StaticMeshVao> &vao) override;
         void drawTriangles(size_t first, size_t count) override;
         
