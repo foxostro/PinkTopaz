@@ -54,10 +54,19 @@ namespace PinkTopaz::Renderer::OpenGL {
         });
     }
     
-    void CommandEncoderOpenGL::drawTriangles(size_t first, size_t count)
+    void CommandEncoderOpenGL::drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances)
     {
         _commandQueue.enqueue([=]() {
-            glDrawArrays(GL_TRIANGLES, first, count);
+            GLenum mode;
+            switch (type) {
+                case Triangles:
+                    mode = GL_TRIANGLES;
+                    break;
+
+                default:
+                    throw Exception("Invalid primitive type %d in call to drawPrimitives.\n", (int)type);
+            }
+            glDrawArrays(mode, first, count);
             CHECK_GL_ERROR();
         });
     }

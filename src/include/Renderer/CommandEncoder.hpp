@@ -18,6 +18,11 @@
 
 namespace PinkTopaz::Renderer {
     
+    enum PrimitiveType
+    {
+        Triangles
+    };
+    
     class CommandEncoder
     {
     public:
@@ -39,7 +44,7 @@ namespace PinkTopaz::Renderer {
         virtual void setVertexArray(const std::shared_ptr<StaticMeshVao> &vao) = 0;
         
         // Draw triangle primitives using the bound buffers and other resources.
-        virtual void drawTriangles(size_t first, size_t count) = 0;
+        virtual void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) = 0;
     };
 
 }; // namespace PinkTopaz::Renderer

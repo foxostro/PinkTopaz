@@ -28,7 +28,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         void setShader(const std::shared_ptr<Shader> &shader) override;
         void setFragmentTexture(const std::shared_ptr<TextureArray> &texture, size_t index) override;
         void setVertexArray(const std::shared_ptr<StaticMeshVao> &vao) override;
-        void drawTriangles(size_t first, size_t count) override;
+        void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) override;
         
         inline CommandQueue& getCommandQueue() { return _commandQueue; }
         
