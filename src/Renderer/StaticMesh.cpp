@@ -11,16 +11,12 @@
 #include "FileUtilities.hpp"
 #include "Exception.hpp"
 #include "Renderer/StaticMesh.hpp"
+#include "Renderer/VertexFormat.hpp"
 
 static const uint32_t GEO_MAGIC = 'moeg';
 static const uint32_t GEO_VERSION = 0;
 
 namespace PinkTopaz::Renderer {
-    
-    StaticMesh::~StaticMesh()
-    {
-        // Do nothing
-    }
     
     StaticMesh::StaticMesh(const char *filePath)
     {
@@ -41,10 +37,47 @@ namespace PinkTopaz::Renderer {
         }
     }
     
-    const StaticMesh::Header *StaticMesh::getHeader() const
+    const StaticMesh::Header* StaticMesh::getHeader() const
     {
         StaticMesh::Header *header = (StaticMesh::Header *)_bytes.data();
         return header;
+    }
+
+    VertexFormat StaticMesh::getVertexFormat() const
+    {
+        VertexFormat format;
+        format.attributes.push_back((AttributeFormat){
+            .size = 3,
+            .type = AttributeTypeFloat,
+            .normalized = false,
+            .stride = sizeof(StaticMesh::Vertex),
+            .offset = offsetof(StaticMesh::Vertex, position)
+        });
+        format.attributes.push_back((AttributeFormat){
+            .size = 3,
+            .type = AttributeTypeFloat,
+            .normalized = false,
+            .stride = sizeof(StaticMesh::Vertex),
+            .offset = offsetof(StaticMesh::Vertex, texCoord)
+        });
+        format.attributes.push_back((AttributeFormat){
+            .size = 4,
+            .type = AttributeTypeUnsignedByte,
+            .normalized = false,
+            .stride = sizeof(StaticMesh::Vertex),
+            .offset = offsetof(StaticMesh::Vertex, color)
+        });
+        return format;
+    }
+    
+    std::vector<uint8_t> StaticMesh::getBufferData() const
+    {
+        const StaticMesh::Header &header = *getHeader();
+        size_t bufferSize = header.numVerts * sizeof(StaticMesh::Vertex);
+        std::vector<uint8_t> bufferData;
+        bufferData.resize(bufferSize);
+        memcpy(&bufferData[0], header.vertices, bufferSize);
+        return bufferData;
     }
 
 } // namespace PinkTopaz::Renderer

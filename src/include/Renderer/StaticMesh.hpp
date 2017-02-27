@@ -10,6 +10,7 @@
 #define StaticMesh_hpp
 
 #include <vector>
+#include "Renderer/VertexFormat.hpp"
 
 namespace PinkTopaz::Renderer {
     
@@ -34,9 +35,17 @@ namespace PinkTopaz::Renderer {
         };
         
         StaticMesh(const char *filePath);
-        ~StaticMesh();
+        ~StaticMesh() = default;
         
         const Header *getHeader() const;
+        VertexFormat getVertexFormat() const;
+        std::vector<uint8_t> getBufferData() const;
+        
+        inline size_t getVertexCount() const
+        {
+            size_t count = getHeader()->numVerts;
+            return count;
+        }
         
     private:
         std::vector<uint8_t> _bytes;

@@ -15,7 +15,8 @@
 #include "Renderer/CommandEncoder.hpp"
 #include "Renderer/StaticMesh.hpp"
 #include "Renderer/Shader.hpp"
-#include "Renderer/StaticMeshVao.hpp"
+#include "Renderer/Buffer.hpp"
+#include "Renderer/VertexFormat.hpp"
 
 namespace PinkTopaz::Renderer {
 
@@ -53,11 +54,12 @@ namespace PinkTopaz::Renderer {
         // TODO: I don't think image loading should be in the graphics device.
         virtual std::shared_ptr<TextureArray> makeTextureArray(const char *fileName) = 0;
         
-        // Creates a new texture array from the specified image file.
-        // TODO: I don't know if Vertex Array Object is the right abstraction.
-        // Also, probably we should just provide API for creating buffers and
-        // filling in buffer data.
-        virtual std::shared_ptr<StaticMeshVao> makeStaticMeshVao(const std::shared_ptr<StaticMesh> &mesh) = 0;
+        // Creates a new GPU buffer object.
+        virtual std::shared_ptr<Buffer>
+        makeBuffer(const VertexFormat &format,
+                   const std::vector<uint8_t> &bufferData,
+                   size_t count,
+                   BufferUsage usage) = 0;
     };
     
 } // namespace PinkTopaz::Renderer

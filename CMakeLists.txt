@@ -10,18 +10,19 @@ set(SOURCE_FILES_OPENGL
     "src/Renderer/OpenGL/GraphicsDeviceOpenGL.cpp" "src/include/Renderer/OpenGL/GraphicsDeviceOpenGL.hpp"
     "src/Renderer/OpenGL/CommandQueue.cpp" "src/include/Renderer/OpenGL/CommandQueue.hpp"
     "src/Renderer/OpenGL/CommandEncoderOpenGL.cpp" "src/include/Renderer/OpenGL/CommandEncoderOpenGL.hpp"
+    "src/Renderer/OpenGL/BufferOpenGL.cpp" "src/include/Renderer/OpenGL/BufferOpenGL.hpp"
     "src/include/Renderer/OpenGL/ShaderOpenGL.hpp" "src/Renderer/OpenGL/ShaderOpenGL.cpp"
     "src/Renderer/OpenGL/TextureArrayOpenGL.cpp" "src/include/Renderer/OpenGL/TextureArrayOpenGL.hpp"
-    "src/Renderer/OpenGL/StaticMeshVaoOpenGL.cpp" "src/include/Renderer/OpenGL/StaticMeshVaoOpenGL.hpp"
     )
 
 set(SOURCE_FILES_RENDERER
     "src/Renderer/StaticMesh.cpp" "src/include/Renderer/StaticMesh.hpp"
     "src/include/Renderer/GraphicsDevice.hpp"
     "src/include/Renderer/CommandEncoder.hpp"
-    "src/Renderer/Shader.cpp" "src/include/Renderer/Shader.hpp"
+    "src/include/Renderer/Shader.hpp"
+    "src/include/Renderer/VertexFormat.hpp"
+    "src/include/Renderer/Buffer.hpp"
     "src/Renderer/TextureArray.cpp" "src/include/Renderer/TextureArray.hpp"
-    "src/Renderer/StaticMeshVao.cpp" "src/include/Renderer/StaticMeshVao.hpp"
     )
 
 set(SOURCE_FILES_SYSTEMS

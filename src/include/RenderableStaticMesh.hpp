@@ -10,7 +10,7 @@
 #define RenderableStaticMesh_hpp
 
 #include <memory>
-#include "Renderer/StaticMeshVao.hpp"
+#include "Renderer/Buffer.hpp"
 #include "Renderer/Shader.hpp"
 #include "Renderer/TextureArray.hpp"
 
@@ -19,18 +19,14 @@ namespace PinkTopaz {
     // Gives the entity a static mesh which is rendered to represent the entity in the world.
     struct RenderableStaticMesh
     {
-        RenderableStaticMesh() {}
+        RenderableStaticMesh() = default;
         
-        RenderableStaticMesh(const std::shared_ptr<Renderer::StaticMeshVao> &vao,
-                             const std::shared_ptr<Renderer::Shader> &shader,
-                             const std::shared_ptr<Renderer::TextureArray> &texture)
-        {
-            this->vao = vao;
-            this->shader = shader;
-            this->texture = texture;
-        }
+        RenderableStaticMesh(const std::shared_ptr<Renderer::Buffer> &b,
+                             const std::shared_ptr<Renderer::Shader> &s,
+                             const std::shared_ptr<Renderer::TextureArray> &t)
+         : buffer(b), shader(s), texture(t) {}
         
-        std::shared_ptr<Renderer::StaticMeshVao> vao;
+        std::shared_ptr<Renderer::Buffer> buffer;
         std::shared_ptr<Renderer::Shader> shader;
         std::shared_ptr<Renderer::TextureArray> texture;
     };

@@ -49,9 +49,12 @@ namespace PinkTopaz {
         auto texture = graphicsDevice->makeTextureArray("terrain.png");
 
         auto mesh = std::make_shared<Renderer::StaticMesh>("terrain.3d.bin");
-        auto vao = graphicsDevice->makeStaticMeshVao(mesh);
+        auto buffer = graphicsDevice->makeBuffer(mesh->getVertexFormat(),
+                                                 mesh->getBufferData(),
+                                                 mesh->getVertexCount(),
+                                                 Renderer::BufferUsageStaticDraw);
         
-        World gameWorld(graphicsDevice, vao, shader, texture);
+        World gameWorld(graphicsDevice, buffer, shader, texture);
         
         // Send an event containing the initial window size and scale factor.
         // This will allow the render system to setup projection matrices and such.

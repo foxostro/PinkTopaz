@@ -10,7 +10,7 @@
 #include "Renderer/OpenGL/CommandEncoderOpenGL.hpp"
 #include "Renderer/OpenGL/ShaderOpenGL.hpp"
 #include "Renderer/OpenGL/TextureArrayOpenGL.hpp"
-#include "Renderer/OpenGL/StaticMeshVaoOpenGL.hpp"
+#include "Renderer/OpenGL/BufferOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
 #include <vector>
@@ -89,10 +89,18 @@ namespace PinkTopaz::Renderer::OpenGL {
         return std::dynamic_pointer_cast<TextureArray>(texture);
     }
     
-    std::shared_ptr<StaticMeshVao> GraphicsDeviceOpenGL::makeStaticMeshVao(const std::shared_ptr<StaticMesh> &mesh)
+    std::shared_ptr<Buffer>
+    GraphicsDeviceOpenGL::makeBuffer(const VertexFormat &format,
+                                     const std::vector<uint8_t> &bufferData,
+                                     size_t count,
+                                     BufferUsage usage)
     {
-        auto vao = std::make_shared<StaticMeshVaoOpenGL>(_commandQueue, mesh);
-        return std::dynamic_pointer_cast<StaticMeshVao>(vao);
+        auto buffer = std::make_shared<BufferOpenGL>(_commandQueue,
+                                                     format,
+                                                     bufferData,
+                                                     count,
+                                                     usage);
+        return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     
 } // namespace PinkTopaz::Renderer::OpenGL

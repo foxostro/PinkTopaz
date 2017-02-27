@@ -52,11 +52,12 @@ namespace PinkTopaz::Renderer::OpenGL {
         // TODO: I don't think image loading should be in the graphics device.
         virtual std::shared_ptr<TextureArray> makeTextureArray(const char *fileName) override;
         
-        // Creates a new texture array from the specified image file.
-        // TODO: I don't know if Vertex Array Object is the right abstraction.
-        // Also, probably we should just provide API for creating buffers and
-        // filling in buffer data.
-        virtual std::shared_ptr<StaticMeshVao> makeStaticMeshVao(const std::shared_ptr<StaticMesh> &mesh) override;
+        // Creates a new GPU buffer object.
+        virtual std::shared_ptr<Buffer>
+        makeBuffer(const VertexFormat &format,
+                   const std::vector<uint8_t> &bufferData,
+                   size_t count,
+                   BufferUsage usage) override;
         
     private:
         SDL_Window &_window;

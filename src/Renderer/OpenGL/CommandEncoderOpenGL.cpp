@@ -10,7 +10,7 @@
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Renderer/OpenGL/ShaderOpenGL.hpp"
 #include "Renderer/OpenGL/TextureArrayOpenGL.hpp"
-#include "Renderer/OpenGL/StaticMeshVaoOpenGL.hpp"
+#include "Renderer/OpenGL/BufferOpenGL.hpp"
 #include "Exception.hpp"
 
 namespace PinkTopaz::Renderer::OpenGL {
@@ -44,11 +44,11 @@ namespace PinkTopaz::Renderer::OpenGL {
         });
     }
     
-    void CommandEncoderOpenGL::setVertexArray(const std::shared_ptr<StaticMeshVao> &abstractVao)
+    void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstractBuffer)
     {
         _commandQueue.enqueue([=]() {
-            auto vao = std::dynamic_pointer_cast<StaticMeshVaoOpenGL>(abstractVao);
-            GLuint handle = vao->getHandle();
+            auto buffer = std::dynamic_pointer_cast<BufferOpenGL>(abstractBuffer);
+            GLuint handle = buffer->getHandle();
             glBindVertexArray(handle);
             CHECK_GL_ERROR();
         });

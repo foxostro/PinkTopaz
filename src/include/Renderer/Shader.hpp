@@ -17,14 +17,14 @@ namespace PinkTopaz::Renderer {
     class Shader
     {
     public:
-        virtual ~Shader();
+        virtual ~Shader() = default;
         
         // TODO: Use uniform buffer objects instead.
         virtual void setShaderUniform(const char *name, const glm::mat4 &value) = 0;
         virtual void setShaderUniform(const char *name, int value) = 0;
         
     protected:
-        Shader();
+        Shader() = default;
     };
 
 } // namespace PinkTopaz::Renderer

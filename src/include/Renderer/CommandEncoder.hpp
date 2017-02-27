@@ -14,7 +14,7 @@
 
 #include "Renderer/Shader.hpp"
 #include "Renderer/TextureArray.hpp"
-#include "Renderer/StaticMeshVao.hpp"
+#include "Renderer/Buffer.hpp"
 
 namespace PinkTopaz::Renderer {
     
@@ -39,9 +39,8 @@ namespace PinkTopaz::Renderer {
         // Use the texture at the specified index in the fragment program.
         virtual void setFragmentTexture(const std::shared_ptr<TextureArray> &texture, size_t index) = 0;
         
-        // Binds the specified VAO for use.
-        // TODO: I'm not sure is the right approach. Take a look at the Metal documentation.
-        virtual void setVertexArray(const std::shared_ptr<StaticMeshVao> &vao) = 0;
+        // Binds the specified buffer for use in the vertex program.
+        virtual void setVertexBuffer(const std::shared_ptr<Buffer> &buffer) = 0;
         
         // Draw triangle primitives using the bound buffers and other resources.
         virtual void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) = 0;

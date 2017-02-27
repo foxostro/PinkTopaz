@@ -11,7 +11,7 @@
 
 #include <entityx/entityx.h>
 #include "Renderer/GraphicsDevice.hpp"
-#include "Renderer/StaticMeshVao.hpp"
+#include "Renderer/Buffer.hpp"
 #include "Renderer/Shader.hpp"
 #include "Renderer/TextureArray.hpp"
 
@@ -25,7 +25,7 @@ namespace PinkTopaz {
     {
     public:
         explicit World(const std::shared_ptr<Renderer::GraphicsDevice> &renderer,
-                       const std::shared_ptr<Renderer::StaticMeshVao> &vao,
+                       const std::shared_ptr<Renderer::Buffer> &buffer,
                        const std::shared_ptr<Renderer::Shader> &shader,
                        const std::shared_ptr<Renderer::TextureArray> &texture);
         

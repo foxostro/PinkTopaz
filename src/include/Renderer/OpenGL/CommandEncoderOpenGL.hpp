@@ -16,7 +16,6 @@
 #include <glm/vec4.hpp>
 
 #include "Renderer/CommandEncoder.hpp"
-#include "Renderer/StaticMeshVao.hpp"
 #include "Renderer/OpenGL/CommandQueue.hpp"
 
 namespace PinkTopaz::Renderer::OpenGL {
@@ -27,7 +26,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         void setViewport(const glm::ivec4 &viewport) override;
         void setShader(const std::shared_ptr<Shader> &shader) override;
         void setFragmentTexture(const std::shared_ptr<TextureArray> &texture, size_t index) override;
-        void setVertexArray(const std::shared_ptr<StaticMeshVao> &vao) override;
+        void setVertexBuffer(const std::shared_ptr<Buffer> &buffer) override;
         void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) override;
         
         inline CommandQueue& getCommandQueue() { return _commandQueue; }
