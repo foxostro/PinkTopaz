@@ -42,7 +42,7 @@ namespace PinkTopaz {
     {
         auto graphicsDevice = createGraphicsDevice();
 
-        auto shader = graphicsDevice->makeShader(stringFromFileContents("vert.glsl"), stringFromFileContents("frag.glsl"));
+        auto shader = graphicsDevice->makeShader("vert", "frag");
         shader->setShaderUniform("view", glm::mat4(1.0f));
         shader->setShaderUniform("tex", 0);
         

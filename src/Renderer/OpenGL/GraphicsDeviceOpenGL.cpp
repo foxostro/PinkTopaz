@@ -13,6 +13,7 @@
 #include "Renderer/OpenGL/BufferOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
+#include "FileUtilities.hpp"
 #include <vector>
 #include <cassert>
 
@@ -77,8 +78,14 @@ namespace PinkTopaz::Renderer::OpenGL {
         SDL_GL_SwapWindow(&_window);
     }
     
-    std::shared_ptr<Shader> GraphicsDeviceOpenGL::makeShader(const std::string &vertexShaderSource, const std::string &fragmentShaderSource)
+    std::shared_ptr<Shader> GraphicsDeviceOpenGL::makeShader(const std::string &vertexProgramName, const std::string &fragmentProgramName)
     {
+        std::string vertexProgramSourceFileName = vertexProgramName + ".glsl";
+        std::string vertexShaderSource = stringFromFileContents(vertexProgramSourceFileName.c_str());
+        
+        std::string fragmentProgramSourceFileName = fragmentProgramName + ".glsl";
+        std::string fragmentShaderSource = stringFromFileContents(fragmentProgramSourceFileName.c_str());
+
         auto shader = std::make_shared<ShaderOpenGL>(_commandQueue, vertexShaderSource, fragmentShaderSource);
         return std::dynamic_pointer_cast<Shader>(shader);
     }

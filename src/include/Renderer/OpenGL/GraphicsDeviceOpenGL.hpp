@@ -42,11 +42,8 @@ namespace PinkTopaz::Renderer::OpenGL {
         // the caller's responsibility call only from method on the main thread.
         virtual void swapBuffers() override;
         
-        // Creates a new shader using the specified GLSL source code strings.
-        // TODO: Add a way to specify the appropriate shader program in a
-        // platform agnostic manner. Maybe use a name for which source can be
-        // looked up for GLSL, or HLSL, or Metal, or whatever.
-        virtual std::shared_ptr<Shader> makeShader(const std::string &vertexShaderSource, const std::string &fragmentShaderSource) override;
+        // Create a new shader using the specified vertex and fragment programs.
+        virtual std::shared_ptr<Shader> makeShader(const std::string &vertexProgramName, const std::string &fragmentProgramName) override;
         
         // Creates a new texture array from the specified image file.
         // TODO: I don't think image loading should be in the graphics device.
