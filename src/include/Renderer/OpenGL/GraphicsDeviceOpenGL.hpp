@@ -46,7 +46,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         virtual std::shared_ptr<Shader> makeShader(const std::string &vertexProgramName, const std::string &fragmentProgramName) override;
         
         // Creates a new texture array from the specified image file.
-        // TODO: I don't think image loading should be in the graphics device.
         virtual std::shared_ptr<TextureArray> makeTextureArray(const char *fileName) override;
         
         // Creates a new GPU buffer object.

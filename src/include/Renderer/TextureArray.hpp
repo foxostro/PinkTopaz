@@ -17,8 +17,6 @@ namespace PinkTopaz::Renderer {
     public:
         virtual ~TextureArray();
         
-        // TODO: Need API for replacing texture data.
-        
     protected:
         TextureArray();
     };

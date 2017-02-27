@@ -19,14 +19,11 @@ namespace PinkTopaz::Renderer::OpenGL {
     class TextureArrayOpenGL : public TextureArray
     {
     public:
-        TextureArrayOpenGL(CommandQueue &commandQueue, const char *fileName); // TODO: Image loading shouldn't be in the concrete OpenGL implementation.
+        TextureArrayOpenGL(CommandQueue &commandQueue, const char *fileName);
         
         virtual ~TextureArrayOpenGL();
 
-        GLuint getHandle() const
-        {
-            return _handle;
-        }
+        inline GLuint getHandle() const { return _handle; }
         
     private:
         GLuint _handle;

@@ -54,7 +54,6 @@ namespace PinkTopaz::Renderer::OpenGL {
     
     std::shared_ptr<CommandEncoder> GraphicsDeviceOpenGL::encoder()
     {
-        // TODO: Use a memory pool or something to avoid malloc every frame for the encoder.
         auto encoder = std::make_shared<CommandEncoderOpenGL>();
         return std::dynamic_pointer_cast<CommandEncoder>(encoder);
     }

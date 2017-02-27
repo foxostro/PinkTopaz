@@ -45,7 +45,7 @@ namespace PinkTopaz {
         }
 
         auto f = [&](entityx::Entity entity, RenderableStaticMesh &mesh, Transform &transform) {
-            encoder->setShader(mesh.shader); // TODO: Sort by shader to minimize the number of shader switches.
+            encoder->setShader(mesh.shader);
             
             // If we have a new projection matrix then pass it to each shader used for rendering.
             // Take care to do this only once for each unique shader encountered.
