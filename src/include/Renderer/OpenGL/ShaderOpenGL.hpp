@@ -9,8 +9,6 @@
 #ifndef ShaderOpenGL_hpp
 #define ShaderOpenGL_hpp
 
-#include <atomic>
-
 #include "Renderer/Shader.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
 #include "Renderer/OpenGL/CommandQueue.hpp"
@@ -32,7 +30,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         inline GLuint getProgram() const { return _program; }
         
     private:
-        std::atomic<GLuint> _program;
+        GLuint _program;
         CommandQueue &_commandQueue;
     };
     

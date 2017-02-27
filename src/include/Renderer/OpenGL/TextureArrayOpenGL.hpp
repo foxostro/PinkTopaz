@@ -9,8 +9,6 @@
 #ifndef TextureArrayOpenGL_hpp
 #define TextureArrayOpenGL_hpp
 
-#include <atomic>
-
 #include "Renderer/TextureArray.hpp"
 #include "Renderer/OpenGL/CommandQueue.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
@@ -31,7 +29,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
         
     private:
-        std::atomic<GLuint> _handle;
+        GLuint _handle;
         CommandQueue &_commandQueue;
     };
     
