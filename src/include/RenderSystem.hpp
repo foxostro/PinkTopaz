@@ -15,6 +15,7 @@
 #include "ActiveCamera.hpp"
 #include "WindowSizeChangedEvent.hpp"
 #include "Renderer/GraphicsDevice.hpp"
+#include "Renderer/StringRenderer.hpp"
 
 namespace PinkTopaz {
     
@@ -35,6 +36,7 @@ namespace PinkTopaz {
         glm::mat4x4 _proj;
         entityx::Entity _activeCamera;
         std::shared_ptr<Renderer::GraphicsDevice> _graphicsDevice;
+        Renderer::StringRenderer _stringRenderer;
     };
 
 } // namespace PinkTopaz

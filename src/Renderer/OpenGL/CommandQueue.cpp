@@ -22,7 +22,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         {
             auto command = std::move(queue.front());
             command();
-            CHECK_GL_ERROR();
             queue.pop();
         }
     }

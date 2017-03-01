@@ -9,8 +9,10 @@
 #include "RenderSystem.hpp"
 #include "Renderer/Shader.hpp"
 #include "Renderer/GraphicsDevice.hpp"
+#include "Renderer/RenderPassDescriptor.hpp"
 #include "Transform.hpp"
 #include "RenderableStaticMesh.hpp"
+#include "Exception.hpp"
 
 #include <glm/vec3.hpp>
 #include <glm/gtc/matrix_transform.hpp> // for lookAt
@@ -19,7 +21,8 @@ namespace PinkTopaz {
     
     RenderSystem::RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
      : _windowSizeChangeEventPending(false),
-       _graphicsDevice(graphicsDevice)
+       _graphicsDevice(graphicsDevice),
+       _stringRenderer(graphicsDevice, "vegur/Vegur-Regular.otf", 24)
     {}
     
     void RenderSystem::configure(entityx::EventManager &em)
@@ -38,11 +41,10 @@ namespace PinkTopaz {
         
         std::set<std::shared_ptr<Renderer::Shader>> shadersEncountered;
         
-        auto encoder = _graphicsDevice->encoder();
+        Renderer::RenderPassDescriptor desc; // default values
+        auto encoder = _graphicsDevice->encoder(desc);
         
-        if (_windowSizeChangeEventPending) {
-            encoder->setViewport(_viewport);
-        }
+        encoder->setViewport(_viewport);
 
         auto f = [&](entityx::Entity entity, RenderableStaticMesh &mesh, Transform &transform) {
             encoder->setShader(mesh.shader);
@@ -67,6 +69,10 @@ namespace PinkTopaz {
         es.each<RenderableStaticMesh, Transform>(f);
         
         _graphicsDevice->submit(encoder);
+        
+        // Draw text strings on the screen last because they blend.
+        _stringRenderer.draw(_viewport);
+
         _graphicsDevice->swapBuffers();
         
         _windowSizeChangeEventPending = false;

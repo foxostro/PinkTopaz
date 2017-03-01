@@ -17,6 +17,7 @@
 #include "Renderer/Shader.hpp"
 #include "Renderer/Buffer.hpp"
 #include "Renderer/VertexFormat.hpp"
+#include "Renderer/RenderPassDescriptor.hpp"
 
 namespace PinkTopaz::Renderer {
 
@@ -31,7 +32,7 @@ namespace PinkTopaz::Renderer {
         // Call this to begin a frame. It returns a command encoder which can be
         // used to encoder graphics commands for submission to the graphics
         // at the end of the frame.
-        virtual std::shared_ptr<CommandEncoder> encoder() = 0;
+        virtual std::shared_ptr<CommandEncoder> encoder(const RenderPassDescriptor &descriptor) = 0;
 
         // Call this to submit commands to the graphics device.
         // This call is garaunteed thread-safe. Commands will be submitted to
@@ -50,11 +51,23 @@ namespace PinkTopaz::Renderer {
         // Creates a new texture array from the specified image file.
         virtual std::shared_ptr<TextureArray> makeTextureArray(const char *fileName) = 0;
         
+        // Creates a new texture from the specified descriptor and data.
+        virtual std::shared_ptr<Texture>
+        makeTexture(const TextureDescriptor &desc,
+                    const void *data) = 0;
+        
         // Creates a new GPU buffer object.
         virtual std::shared_ptr<Buffer>
         makeBuffer(const VertexFormat &format,
                    const std::vector<uint8_t> &bufferData,
-                   size_t count,
+                   size_t elementCount,
+                   BufferUsage usage) = 0;
+        
+        // Creates a new GPU buffer object with indefined contents.
+        virtual std::shared_ptr<Buffer>
+        makeBuffer(const VertexFormat &format,
+                   size_t size,
+                   size_t elementCount,
                    BufferUsage usage) = 0;
     };
     

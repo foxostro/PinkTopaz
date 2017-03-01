@@ -20,22 +20,37 @@ namespace PinkTopaz::Renderer::OpenGL {
     class BufferOpenGL : public Buffer
     {
     public:
-        BufferOpenGL(CommandQueue &queue,
+        BufferOpenGL(const std::shared_ptr<CommandQueue> &queue,
                      const VertexFormat &format,
                      const std::vector<uint8_t> &bufferData,
-                     size_t count,
+                     size_t elementCount,
+                     BufferUsage usage);
+
+        BufferOpenGL(const std::shared_ptr<CommandQueue> &queue,
+                     const VertexFormat &format,
+                     size_t bufferSize,
+                     size_t elementCount,
                      BufferUsage usage);
 
         virtual ~BufferOpenGL();
         
+        // Replace the entire contents of the buffer.
+        void replace(size_t size, const void *data) override;
+        
         virtual size_t getVertexCount() const override { return _count; }
         
-        inline GLuint getHandle() const { return _vao; }
+        inline GLuint getHandleVAO() const { return _vao; }
+        inline GLuint getHandleVBO() const { return _vbo; }
         
     private:
-        GLuint _vao;
+        GLuint _vao, _vbo;
         size_t _count;
-        CommandQueue &_commandQueue;
+        GLenum _usage;
+        std::shared_ptr<CommandQueue> _commandQueue;
+        
+        void internalCreate(const VertexFormat &format,
+                            size_t bufferSize,
+                            void *bufferData);
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

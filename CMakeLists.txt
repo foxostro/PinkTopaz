@@ -13,16 +13,21 @@ set(SOURCE_FILES_OPENGL
     "src/Renderer/OpenGL/BufferOpenGL.cpp" "src/include/Renderer/OpenGL/BufferOpenGL.hpp"
     "src/include/Renderer/OpenGL/ShaderOpenGL.hpp" "src/Renderer/OpenGL/ShaderOpenGL.cpp"
     "src/Renderer/OpenGL/TextureArrayOpenGL.cpp" "src/include/Renderer/OpenGL/TextureArrayOpenGL.hpp"
+    "src/Renderer/OpenGL/TextureOpenGL.cpp" "src/include/Renderer/OpenGL/TextureOpenGL.hpp"
     )
 
 set(SOURCE_FILES_RENDERER
+    "src/Renderer/StringRenderer.cpp" "src/include/Renderer/StringRenderer.hpp"
+    "src/Renderer/String.cpp" "src/include/Renderer/String.hpp"
     "src/Renderer/StaticMesh.cpp" "src/include/Renderer/StaticMesh.hpp"
     "src/include/Renderer/GraphicsDevice.hpp"
     "src/include/Renderer/CommandEncoder.hpp"
     "src/include/Renderer/Shader.hpp"
     "src/include/Renderer/VertexFormat.hpp"
     "src/include/Renderer/Buffer.hpp"
-    "src/Renderer/TextureArray.cpp" "src/include/Renderer/TextureArray.hpp"
+    "src/include/Renderer/RenderPassDescriptor.hpp"
+    "src/include/Renderer/TextureArray.hpp"
+    "src/include/Renderer/Texture.hpp"
     )
 
 set(SOURCE_FILES_SYSTEMS
@@ -88,6 +93,7 @@ find_package(OpenGL REQUIRED)
 find_package(GLM REQUIRED)
 find_package(SDL2_image REQUIRED)
 find_package(SDL2 REQUIRED)
+find_package(Freetype REQUIRED)
 
 # EntityX ECS library.
 find_package(PkgConfig REQUIRED)
@@ -109,6 +115,7 @@ configure_file("${PROJECT_SOURCE_DIR}/src/config.h.in" "${PROJECT_BINARY_DIR}/co
 include_directories("${PROJECT_SOURCE_DIR}/src/include"
                     ${SDL2_INCLUDE_DIR}
                     ${SDL2_IMAGE_INCLUDE_DIR}
+                    ${FREETYPE_INCLUDE_DIR_ft2build}
                     ${GLM_INCLUDE_DIR}
                     ${OPENGL_INCLUDE_DIRS}
                     ${PROJECT_BINARY_DIR}
@@ -117,6 +124,7 @@ include_directories("${PROJECT_SOURCE_DIR}/src/include"
 target_link_libraries(PinkTopaz
                       ${SDL2_LIBRARY}
                       ${SDL2_IMAGE_LIBRARY}
+                      ${FREETYPE_LIBRARY}
                       ${OPENGL_LIBRARIES}
                       ${ENTITYX_LIBRARY}
                       )

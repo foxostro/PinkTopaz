@@ -18,20 +18,21 @@ namespace PinkTopaz::Renderer::OpenGL {
     class ShaderOpenGL : public Shader
     {
     public:
-        ShaderOpenGL(CommandQueue &commandQueue,
+        ShaderOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
                      const std::string &vertexShaderSource,
                      const std::string &fragmentShaderSource);
 
-        virtual ~ShaderOpenGL();
+        ~ShaderOpenGL();
         
-        virtual void setShaderUniform(const char *name, const glm::mat4 &value) override;
-        virtual void setShaderUniform(const char *name, int value) override;
+        void setShaderUniform(const char *name, const glm::mat4 &value) override;
+        void setShaderUniform(const char *name, const glm::vec3 &value) override;
+        void setShaderUniform(const char *name, int value) override;
         
         inline GLuint getProgram() const { return _program; }
         
     private:
         GLuint _program;
-        CommandQueue &_commandQueue;
+        const std::shared_ptr<CommandQueue> &_commandQueue;
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

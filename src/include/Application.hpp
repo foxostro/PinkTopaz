@@ -28,7 +28,7 @@ namespace PinkTopaz {
         
     private:
         std::shared_ptr<Renderer::GraphicsDevice> createGraphicsDevice();
-        void inner();
+        void inner(const std::shared_ptr<Renderer::GraphicsDevice> &);
         
         SDL_Window *_window;
     };

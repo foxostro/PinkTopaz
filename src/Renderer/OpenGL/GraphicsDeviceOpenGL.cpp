@@ -10,17 +10,22 @@
 #include "Renderer/OpenGL/CommandEncoderOpenGL.hpp"
 #include "Renderer/OpenGL/ShaderOpenGL.hpp"
 #include "Renderer/OpenGL/TextureArrayOpenGL.hpp"
+#include "Renderer/OpenGL/TextureOpenGL.hpp"
 #include "Renderer/OpenGL/BufferOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
 #include "FileUtilities.hpp"
+
 #include <vector>
 #include <cassert>
 
 namespace PinkTopaz::Renderer::OpenGL {
     
-    GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(SDL_Window &window) : _window(window)
+    GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(SDL_Window &window)
+     : _window(window)
     {
+        _commandQueue = std::make_shared<CommandQueue>();
+        
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
         SDL_GL_SetSwapInterval(1);
@@ -43,18 +48,21 @@ namespace PinkTopaz::Renderer::OpenGL {
         glClearColor(0.2, 0.4, 0.5, 1.0);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
+        
+        glEnable(GL_CULL_FACE);
 
         CHECK_GL_ERROR();
     }
     
     GraphicsDeviceOpenGL::~GraphicsDeviceOpenGL()
     {
+        _commandQueue->execute();
         SDL_GL_DeleteContext(_glContext);
     }
     
-    std::shared_ptr<CommandEncoder> GraphicsDeviceOpenGL::encoder()
+    std::shared_ptr<CommandEncoder> GraphicsDeviceOpenGL::encoder(const RenderPassDescriptor &desc)
     {
-        auto encoder = std::make_shared<CommandEncoderOpenGL>();
+        auto encoder = std::make_shared<CommandEncoderOpenGL>(desc);
         return std::dynamic_pointer_cast<CommandEncoder>(encoder);
     }
     
@@ -62,19 +70,15 @@ namespace PinkTopaz::Renderer::OpenGL {
     {
         auto concreteEncoder = std::dynamic_pointer_cast<CommandEncoderOpenGL>(abstractEncoder);
         assert(concreteEncoder);
-        _commandQueue.enqueue(concreteEncoder->getCommandQueue());
+        _commandQueue->enqueue(concreteEncoder->getCommandQueue());
     }
     
     void GraphicsDeviceOpenGL::swapBuffers()
     {
         CHECK_GL_ERROR();
-
-        // According to <https://www.khronos.org/opengl/wiki/Common_Mistakes#Swap_Buffers>
-        // it is important to clear all three buffers for best performance.
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-        _commandQueue.execute();
+        _commandQueue->execute();
         SDL_GL_SwapWindow(&_window);
+        CHECK_GL_ERROR();
     }
     
     std::shared_ptr<Shader> GraphicsDeviceOpenGL::makeShader(const std::string &vertexProgramName, const std::string &fragmentProgramName)
@@ -95,16 +99,36 @@ namespace PinkTopaz::Renderer::OpenGL {
         return std::dynamic_pointer_cast<TextureArray>(texture);
     }
     
+    std::shared_ptr<Texture> GraphicsDeviceOpenGL::makeTexture(const TextureDescriptor &desc, const void *data)
+    {
+        auto texture = std::make_shared<TextureOpenGL>(_commandQueue, desc, data);
+        return std::dynamic_pointer_cast<Texture>(texture);
+    }
+    
     std::shared_ptr<Buffer>
     GraphicsDeviceOpenGL::makeBuffer(const VertexFormat &format,
                                      const std::vector<uint8_t> &bufferData,
-                                     size_t count,
+                                     size_t elementCount,
                                      BufferUsage usage)
     {
         auto buffer = std::make_shared<BufferOpenGL>(_commandQueue,
                                                      format,
                                                      bufferData,
-                                                     count,
+                                                     elementCount,
+                                                     usage);
+        return std::dynamic_pointer_cast<Buffer>(buffer);
+    }
+    
+    std::shared_ptr<Buffer>
+    GraphicsDeviceOpenGL::makeBuffer(const VertexFormat &format,
+                                     size_t bufferSize,
+                                     size_t elementCount,
+                                     BufferUsage usage)
+    {
+        auto buffer = std::make_shared<BufferOpenGL>(_commandQueue,
+                                                     format,
+                                                     bufferSize,
+                                                     elementCount,
                                                      usage);
         return std::dynamic_pointer_cast<Buffer>(buffer);
     }

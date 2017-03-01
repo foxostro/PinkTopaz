@@ -19,7 +19,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     class TextureArrayOpenGL : public TextureArray
     {
     public:
-        TextureArrayOpenGL(CommandQueue &commandQueue, const char *fileName);
+        TextureArrayOpenGL(const std::shared_ptr<CommandQueue> &commandQueue, const char *fileName);
         
         virtual ~TextureArrayOpenGL();
 
@@ -27,7 +27,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         
     private:
         GLuint _handle;
-        CommandQueue &_commandQueue;
+        const std::shared_ptr<CommandQueue> &_commandQueue;
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

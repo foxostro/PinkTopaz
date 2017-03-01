@@ -18,6 +18,9 @@ namespace PinkTopaz::Renderer::OpenGL {
     class CommandQueue
     {
     public:
+        CommandQueue() = default;
+        ~CommandQueue() = default;
+
         // Immediately execute all commands in the command queue.
         void execute();
         

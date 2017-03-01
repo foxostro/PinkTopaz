@@ -38,10 +38,8 @@ namespace PinkTopaz {
         return abstractGraphicsDevice;
     }
     
-    void Application::inner()
+    void Application::inner(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
     {
-        auto graphicsDevice = createGraphicsDevice();
-
         auto shader = graphicsDevice->makeShader("vert", "frag");
         shader->setShaderUniform("view", glm::mat4(1.0f));
         shader->setShaderUniform("tex", 0);
@@ -52,7 +50,7 @@ namespace PinkTopaz {
         auto buffer = graphicsDevice->makeBuffer(mesh->getVertexFormat(),
                                                  mesh->getBufferData(),
                                                  mesh->getVertexCount(),
-                                                 Renderer::BufferUsageStaticDraw);
+                                                 Renderer::StaticDraw);
         
         World gameWorld(graphicsDevice, buffer, shader, texture);
         
@@ -142,7 +140,10 @@ namespace PinkTopaz {
         _window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600,
                                    SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
         
-        inner();
+        {
+            auto graphicsDevice = createGraphicsDevice();
+            inner(graphicsDevice);
+        }
 
         SDL_DestroyWindow(_window);
         _window = nullptr;

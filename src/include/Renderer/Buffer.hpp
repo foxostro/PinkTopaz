@@ -10,12 +10,16 @@
 #define Buffer_hpp
 
 #include <cstddef>
+#include <memory>
+#include <vector>
 
 namespace PinkTopaz::Renderer {
     
     enum BufferUsage
     {
-        BufferUsageStaticDraw
+        StaticDraw,
+        DynamicDraw,
+        StreamDraw
     };
     
     // Encapsulates a GPU buffer resource in a platform-agnostic manner.
@@ -23,6 +27,9 @@ namespace PinkTopaz::Renderer {
     {
     public:
         virtual ~Buffer() = default;
+        
+        // Replace the entire contents of the buffer.
+        virtual void replace(size_t size, const void *data) = 0;
         
         // Get the number of vertices contained in the buffer.
         virtual size_t getVertexCount() const = 0;

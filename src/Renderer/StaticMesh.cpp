@@ -46,21 +46,21 @@ namespace PinkTopaz::Renderer {
     VertexFormat StaticMesh::getVertexFormat() const
     {
         VertexFormat format;
-        format.attributes.push_back((AttributeFormat){
+        format.attributes.emplace_back((AttributeFormat){
             .size = 3,
             .type = AttributeTypeFloat,
             .normalized = false,
             .stride = sizeof(StaticMesh::Vertex),
             .offset = offsetof(StaticMesh::Vertex, position)
         });
-        format.attributes.push_back((AttributeFormat){
+        format.attributes.emplace_back((AttributeFormat){
             .size = 3,
             .type = AttributeTypeFloat,
             .normalized = false,
             .stride = sizeof(StaticMesh::Vertex),
             .offset = offsetof(StaticMesh::Vertex, texCoord)
         });
-        format.attributes.push_back((AttributeFormat){
+        format.attributes.emplace_back((AttributeFormat){
             .size = 4,
             .type = AttributeTypeUnsignedByte,
             .normalized = false,

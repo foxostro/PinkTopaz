@@ -21,6 +21,7 @@ namespace PinkTopaz::Renderer {
         
         // TODO: Use uniform buffer objects instead.
         virtual void setShaderUniform(const char *name, const glm::mat4 &value) = 0;
+        virtual void setShaderUniform(const char *name, const glm::vec3 &value) = 0;
         virtual void setShaderUniform(const char *name, int value) = 0;
         
     protected:

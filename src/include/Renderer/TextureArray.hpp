@@ -15,10 +15,10 @@ namespace PinkTopaz::Renderer {
     class TextureArray
     {
     public:
-        virtual ~TextureArray();
+        virtual ~TextureArray() = default;
         
     protected:
-        TextureArray();
+        TextureArray() = default;
     };
     
 } // namespace PinkTopaz::Renderer

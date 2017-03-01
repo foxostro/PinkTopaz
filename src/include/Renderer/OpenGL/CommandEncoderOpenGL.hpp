@@ -17,16 +17,21 @@
 
 #include "Renderer/CommandEncoder.hpp"
 #include "Renderer/OpenGL/CommandQueue.hpp"
+#include "Renderer/RenderPassDescriptor.hpp"
 
 namespace PinkTopaz::Renderer::OpenGL {
     
     class CommandEncoderOpenGL : public CommandEncoder
     {
     public:
+        CommandEncoderOpenGL(const RenderPassDescriptor &desc);
+        
         void setViewport(const glm::ivec4 &viewport) override;
         void setShader(const std::shared_ptr<Shader> &shader) override;
         void setFragmentTexture(const std::shared_ptr<TextureArray> &texture, size_t index) override;
+        void setFragmentTexture(const std::shared_ptr<Texture> &texture, size_t index) override;
         void setVertexBuffer(const std::shared_ptr<Buffer> &buffer) override;
+        void setVertexBytes(const std::shared_ptr<Buffer> &abstractBuffer, size_t size, const void *data) override;
         void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) override;
         
         inline CommandQueue& getCommandQueue() { return _commandQueue; }
