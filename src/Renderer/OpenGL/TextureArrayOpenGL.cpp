@@ -13,12 +13,12 @@
 
 namespace PinkTopaz::Renderer::OpenGL {
     
-    TextureArrayOpenGL::TextureArrayOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+    TextureArrayOpenGL::TextureArrayOpenGL(CommandQueue &commandQueue,
                                            const char *fileName)
      : _handle(0),
        _commandQueue(commandQueue)
     {
-        _commandQueue->enqueue([=]{
+        _commandQueue.enqueue([=]{
             SDL_Surface *surface = IMG_Load(fileName);
             
             // Assume square tiles arranged vertically.
@@ -55,7 +55,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     TextureArrayOpenGL::~TextureArrayOpenGL()
     {
         GLuint handle = _handle;
-        _commandQueue->enqueue([handle]{
+        _commandQueue.enqueue([handle]{
             glDeleteTextures(1, &handle);
             CHECK_GL_ERROR();
         });

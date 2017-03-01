@@ -18,7 +18,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     class ShaderOpenGL : public Shader
     {
     public:
-        ShaderOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+        ShaderOpenGL(CommandQueue &commandQueue,
                      const std::string &vertexShaderSource,
                      const std::string &fragmentShaderSource);
 
@@ -32,7 +32,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         
     private:
         GLuint _program;
-        const std::shared_ptr<CommandQueue> &_commandQueue;
+        CommandQueue &_commandQueue;
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

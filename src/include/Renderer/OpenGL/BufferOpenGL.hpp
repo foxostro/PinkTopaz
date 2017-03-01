@@ -20,13 +20,13 @@ namespace PinkTopaz::Renderer::OpenGL {
     class BufferOpenGL : public Buffer
     {
     public:
-        BufferOpenGL(const std::shared_ptr<CommandQueue> &queue,
+        BufferOpenGL(CommandQueue &queue,
                      const VertexFormat &format,
                      const std::vector<uint8_t> &bufferData,
                      size_t elementCount,
                      BufferUsage usage);
 
-        BufferOpenGL(const std::shared_ptr<CommandQueue> &queue,
+        BufferOpenGL(CommandQueue &queue,
                      const VertexFormat &format,
                      size_t bufferSize,
                      size_t elementCount,
@@ -46,7 +46,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         GLuint _vao, _vbo;
         size_t _count;
         GLenum _usage;
-        std::shared_ptr<CommandQueue> _commandQueue;
+        CommandQueue &_commandQueue;
         
         void internalCreate(const VertexFormat &format,
                             size_t bufferSize,

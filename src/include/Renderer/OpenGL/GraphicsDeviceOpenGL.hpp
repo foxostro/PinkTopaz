@@ -70,7 +70,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     private:
         SDL_Window &_window;
         SDL_GLContext _glContext;
-        std::shared_ptr<CommandQueue> _commandQueue;
+        CommandQueue _commandQueue;
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

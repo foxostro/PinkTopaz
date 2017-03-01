@@ -12,7 +12,7 @@
 
 namespace PinkTopaz::Renderer::OpenGL {
     
-    TextureOpenGL::TextureOpenGL(const std::shared_ptr<CommandQueue> &queue,
+    TextureOpenGL::TextureOpenGL(CommandQueue &queue,
                                  const TextureDescriptor &desc,
                                  const void *data)
      : _commandQueue(queue)
@@ -24,8 +24,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         std::vector<uint8_t> wrappedData(len);
         memcpy(&wrappedData[0], data, len);
         
-        assert(_commandQueue);
-        _commandQueue->enqueue([this, desc, wrappedData]{
+        _commandQueue.enqueue([this, desc, wrappedData]{
             glPixelStorei(GL_UNPACK_ALIGNMENT, desc.unpackAlignment);
 
             GLuint texture;
@@ -56,7 +55,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     TextureOpenGL::~TextureOpenGL()
     {
         GLuint handle = _handle;
-        _commandQueue->enqueue([handle]{
+        _commandQueue.enqueue([handle]{
             glDeleteTextures(1, &handle);
             CHECK_GL_ERROR();
         });

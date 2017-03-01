@@ -18,7 +18,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     class TextureOpenGL : public Texture
     {
     public:
-        TextureOpenGL(const std::shared_ptr<CommandQueue> &queue,
+        TextureOpenGL(CommandQueue &queue,
                       const TextureDescriptor &desc,
                       const void *data);
         
@@ -28,7 +28,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         
     private:
         GLuint _handle;
-        const std::shared_ptr<CommandQueue> &_commandQueue;
+        CommandQueue &_commandQueue;
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

@@ -24,8 +24,6 @@ namespace PinkTopaz::Renderer::OpenGL {
     GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(SDL_Window &window)
      : _window(window)
     {
-        _commandQueue = std::make_shared<CommandQueue>();
-        
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
         SDL_GL_SetSwapInterval(1);
@@ -56,7 +54,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     
     GraphicsDeviceOpenGL::~GraphicsDeviceOpenGL()
     {
-        _commandQueue->execute();
+        _commandQueue.execute();
         SDL_GL_DeleteContext(_glContext);
     }
     
@@ -70,13 +68,13 @@ namespace PinkTopaz::Renderer::OpenGL {
     {
         auto concreteEncoder = std::dynamic_pointer_cast<CommandEncoderOpenGL>(abstractEncoder);
         assert(concreteEncoder);
-        _commandQueue->enqueue(concreteEncoder->getCommandQueue());
+        _commandQueue.enqueue(concreteEncoder->getCommandQueue());
     }
     
     void GraphicsDeviceOpenGL::swapBuffers()
     {
         CHECK_GL_ERROR();
-        _commandQueue->execute();
+        _commandQueue.execute();
         SDL_GL_SwapWindow(&_window);
         CHECK_GL_ERROR();
     }

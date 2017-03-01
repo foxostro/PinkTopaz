@@ -49,13 +49,12 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
     }
 
-    ShaderOpenGL::ShaderOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+    ShaderOpenGL::ShaderOpenGL(CommandQueue &commandQueue,
                                const std::string &vertexShaderSource,
                                const std::string &fragmentShaderSource)
     : _program(0), _commandQueue(commandQueue)
     {
-        assert(_commandQueue);
-        _commandQueue->enqueue([=] {
+        _commandQueue.enqueue([=] {
             const GLchar *vert = (const GLchar *)vertexShaderSource.c_str();
             const GLchar *frag = (const GLchar *)fragmentShaderSource.c_str();
             
@@ -89,7 +88,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     ShaderOpenGL::~ShaderOpenGL()
     {
         GLuint program = _program;
-        _commandQueue->enqueue([program]{
+        _commandQueue.enqueue([program]{
             glDeleteProgram(program);
             CHECK_GL_ERROR();
         });
@@ -97,7 +96,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     
     void ShaderOpenGL::setShaderUniform(const char *name, const glm::mat4 &value)
     {
-        _commandQueue->enqueue([=]() {
+        _commandQueue.enqueue([=]() {
             GLuint program = this->_program;
             GLint loc = glGetUniformLocation(program, name);
             glProgramUniformMatrix4fv(program, loc, 1, GL_FALSE, glm::value_ptr(value));
@@ -107,7 +106,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     
     void ShaderOpenGL::setShaderUniform(const char *name, const glm::vec3 &value)
     {
-        _commandQueue->enqueue([=]() {
+        _commandQueue.enqueue([=]() {
             GLuint program = this->_program;
             GLint loc = glGetUniformLocation(program, name);
             glProgramUniform3f(program, loc, value.x, value.y, value.z);
@@ -117,7 +116,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     
     void ShaderOpenGL::setShaderUniform(const char *name, int value)
     {
-        _commandQueue->enqueue([=]() {
+        _commandQueue.enqueue([=]() {
             GLuint program = this->_program;
             GLint loc = glGetUniformLocation(program, name);
             glProgramUniform1i(program, loc, value);
