@@ -34,6 +34,7 @@ namespace PinkTopaz::Renderer {
                        unsigned fontSize);
         ~StringRenderer() = default;
         
+        // Draws all registered strings.
         void draw(const glm::ivec4 &viewport);
         
         // Add a string to be rendered.
@@ -65,9 +66,9 @@ namespace PinkTopaz::Renderer {
         std::shared_ptr<TextureSampler> _sampler;
         std::shared_ptr<Buffer> _buffer;
         RenderPassDescriptor _renderPassDescriptor;
-        
-        const glm::ivec2 _canvasSize;
         std::list<String> _strings;
+        glm::ivec2 _canvasSize;
+        glm::ivec4 _viewport;
     };
     
 } // namespace PinkTopaz::Renderer

@@ -14,6 +14,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include "SDL.h"
+
 namespace PinkTopaz::Renderer {
     
     StringRenderer::StringRenderer(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
@@ -103,6 +105,16 @@ namespace PinkTopaz::Renderer {
     
     void StringRenderer::draw(const glm::ivec4 &viewport)
     {
+        if (_viewport != viewport) {
+            _viewport = viewport;
+            
+            glm::mat4 projection = glm::ortho((float)viewport.x,
+                                              (float)viewport.x + viewport.z,
+                                              (float)viewport.y,
+                                              (float)viewport.y + viewport.w);
+            _shader->setShaderUniform("projection", projection);
+        }
+        
         auto encoder = _graphicsDevice->encoder(_renderPassDescriptor);
         encoder->setViewport(viewport);
         encoder->setShader(_shader);

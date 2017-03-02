@@ -24,13 +24,13 @@ namespace PinkTopaz {
     RenderSystem::RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
      : _windowSizeChangeEventPending(false),
        _graphicsDevice(graphicsDevice),
-       _stringRenderer(graphicsDevice, "vegur/Vegur-Regular.otf", 24),
+       _stringRenderer(graphicsDevice, "vegur/Vegur-Regular.otf", 48),
        _timeAccum(0),
        _countDown(0),
        _framesBetweenReport(60)
     {
         _fps = _stringRenderer.add(Renderer::String("Frame Time: XX.XX ms",
-                                                    glm::vec2(15.0f, 570.0f)));
+                                                    glm::vec2(30.0f, 1140.0f)));
     }
     
     void RenderSystem::configure(entityx::EventManager &em)
