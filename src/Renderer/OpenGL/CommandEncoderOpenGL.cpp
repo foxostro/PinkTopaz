@@ -9,7 +9,6 @@
 #include "Renderer/OpenGL/CommandEncoderOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Renderer/OpenGL/ShaderOpenGL.hpp"
-#include "Renderer/OpenGL/TextureArrayOpenGL.hpp"
 #include "Renderer/OpenGL/TextureOpenGL.hpp"
 #include "Renderer/OpenGL/BufferOpenGL.hpp"
 #include "Exception.hpp"
@@ -59,18 +58,6 @@ namespace PinkTopaz::Renderer::OpenGL {
             auto shader = std::dynamic_pointer_cast<ShaderOpenGL>(abstractShader);
             GLuint program = shader->getProgram();
             glUseProgram(program);
-            CHECK_GL_ERROR();
-        });
-    }
-    
-    void CommandEncoderOpenGL::setFragmentTexture(const std::shared_ptr<TextureArray> &abstractTexture, size_t index)
-    {
-        assert(abstractTexture);
-        _commandQueue.enqueue([=]() {
-            auto texture = std::dynamic_pointer_cast<TextureArrayOpenGL>(abstractTexture);
-            GLuint handle = texture->getHandle();
-            glActiveTexture(GL_TEXTURE0 + (GLenum)index);
-            glBindTexture(GL_TEXTURE_2D_ARRAY, handle);
             CHECK_GL_ERROR();
         });
     }

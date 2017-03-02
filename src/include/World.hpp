@@ -13,7 +13,7 @@
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/Buffer.hpp"
 #include "Renderer/Shader.hpp"
-#include "Renderer/TextureArray.hpp"
+#include "Renderer/Texture.hpp"
 
 namespace PinkTopaz {
         

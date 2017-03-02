@@ -9,7 +9,6 @@
 #include "Renderer/OpenGL/GraphicsDeviceOpenGL.hpp"
 #include "Renderer/OpenGL/CommandEncoderOpenGL.hpp"
 #include "Renderer/OpenGL/ShaderOpenGL.hpp"
-#include "Renderer/OpenGL/TextureArrayOpenGL.hpp"
 #include "Renderer/OpenGL/TextureOpenGL.hpp"
 #include "Renderer/OpenGL/BufferOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
@@ -89,12 +88,6 @@ namespace PinkTopaz::Renderer::OpenGL {
 
         auto shader = std::make_shared<ShaderOpenGL>(_commandQueue, vertexShaderSource, fragmentShaderSource);
         return std::dynamic_pointer_cast<Shader>(shader);
-    }
-    
-    std::shared_ptr<TextureArray> GraphicsDeviceOpenGL::makeTextureArray(const char *fileName)
-    {
-        auto texture = std::make_shared<TextureArrayOpenGL>(_commandQueue, fileName);
-        return std::dynamic_pointer_cast<TextureArray>(texture);
     }
     
     std::shared_ptr<Texture> GraphicsDeviceOpenGL::makeTexture(const TextureDescriptor &desc, const void *data)

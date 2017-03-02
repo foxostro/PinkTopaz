@@ -14,7 +14,6 @@
 #include <glm/vec4.hpp>
 
 #include "Renderer/Shader.hpp"
-#include "Renderer/TextureArray.hpp"
 #include "Renderer/Texture.hpp"
 #include "Renderer/Buffer.hpp"
 
@@ -37,9 +36,6 @@ namespace PinkTopaz::Renderer {
         
         // Binds the specified shader program for use.
         virtual void setShader(const std::shared_ptr<Shader> &shader) = 0;
-        
-        // Use the texture at the specified index in the fragment program.
-        virtual void setFragmentTexture(const std::shared_ptr<TextureArray> &texture, size_t index) = 0;
         
         // Use the texture at the specified index in the fragment program.
         virtual void setFragmentTexture(const std::shared_ptr<Texture> &texture, size_t index) = 0;

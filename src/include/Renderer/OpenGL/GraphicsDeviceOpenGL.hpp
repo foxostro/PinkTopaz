@@ -45,9 +45,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         // Create a new shader using the specified vertex and fragment programs.
         virtual std::shared_ptr<Shader> makeShader(const std::string &vertexProgramName, const std::string &fragmentProgramName) override;
         
-        // Creates a new texture array from the specified image file.
-        virtual std::shared_ptr<TextureArray> makeTextureArray(const char *fileName) override;
-        
         // Creates a new texture from the specified descriptor and data.
         virtual std::shared_ptr<Texture>
         makeTexture(const TextureDescriptor &desc,
