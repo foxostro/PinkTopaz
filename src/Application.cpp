@@ -9,6 +9,7 @@
 #include "Application.hpp"
 
 #include "SDL.h"
+#include "SDL_image.h"
 #include "config.h"
 #include "FileUtilities.hpp"
 #include "RetinaSupport.h"
@@ -44,7 +45,22 @@ namespace PinkTopaz {
         shader->setShaderUniform("view", glm::mat4(1.0f));
         shader->setShaderUniform("tex", 0);
         
-        auto texture = graphicsDevice->makeTextureArray("terrain.png");
+        // Load terrain texture array from a single image.
+        // TODO: create a TextureArrayLoader class to encapsulate tex loading.
+        SDL_Surface *surface = IMG_Load("terrain.png");
+        Renderer::TextureDescriptor desc;
+        desc.type = Renderer::Texture2DArray;
+        desc.format = Renderer::BGRA8;
+        desc.width = surface->w;
+        desc.height = surface->w;
+        desc.depth = surface->h / surface->w;
+        desc.unpackAlignment = 4;
+        desc.wrapS = Renderer::Repeat;
+        desc.wrapT = Renderer::Repeat;
+        desc.minFilter = Renderer::NearestMipMapNearest;
+        desc.maxFilter = Renderer::Linear;
+        desc.generateMipMaps = true;
+        auto texture = graphicsDevice->makeTexture(desc, surface->pixels);
 
         auto mesh = std::make_shared<Renderer::StaticMesh>("terrain.3d.bin");
         auto buffer = graphicsDevice->makeBuffer(mesh->getVertexFormat(),

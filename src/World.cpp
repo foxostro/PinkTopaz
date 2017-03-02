@@ -17,7 +17,7 @@ namespace PinkTopaz {
     World::World(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice,
                  const std::shared_ptr<Renderer::Buffer> &buffer,
                  const std::shared_ptr<Renderer::Shader> &shader,
-                 const std::shared_ptr<Renderer::TextureArray> &texture)
+                 const std::shared_ptr<Renderer::Texture> &texture)
     {
         systems.add<RenderSystem>(graphicsDevice);
         systems.configure();

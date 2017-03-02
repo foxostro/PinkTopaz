@@ -23,12 +23,12 @@ namespace PinkTopaz {
         
         RenderableStaticMesh(const std::shared_ptr<Renderer::Buffer> &b,
                              const std::shared_ptr<Renderer::Shader> &s,
-                             const std::shared_ptr<Renderer::TextureArray> &t)
+                             const std::shared_ptr<Renderer::Texture> &t)
          : buffer(b), shader(s), texture(t) {}
         
         std::shared_ptr<Renderer::Buffer> buffer;
         std::shared_ptr<Renderer::Shader> shader;
-        std::shared_ptr<Renderer::TextureArray> texture;
+        std::shared_ptr<Renderer::Texture> texture;
     };
     
 } // namespace PinkTopaz

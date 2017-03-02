@@ -24,12 +24,25 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
     }
     
-    GLint textureFormat(TextureFormat format)
+    GLint textureExternalFormat(TextureFormat format)
     {
         switch (format)
         {
             case R8: return GL_RED;
             case RGBA8: return GL_RGBA;
+            case BGRA8: return GL_BGRA;
+            default:
+                throw Exception("Unsupported texture type.");
+        }
+    }
+    
+    GLint textureInternalFormat(TextureFormat format)
+    {
+        switch (format)
+        {
+            case R8: return GL_RED;
+            case RGBA8: return GL_RGBA;
+            case BGRA8: return GL_RGBA;
             default:
                 throw Exception("Unsupported texture type.");
         }
@@ -41,6 +54,19 @@ namespace PinkTopaz::Renderer::OpenGL {
         {
             case R8: return GL_UNSIGNED_BYTE;
             case RGBA8: return GL_UNSIGNED_BYTE;
+            case BGRA8: return GL_UNSIGNED_BYTE;
+            default:
+                throw Exception("Unsupported texture format.");
+        }
+    }
+    
+    size_t textureDataTypeSize(TextureFormat format)
+    {
+        switch (format)
+        {
+            case R8: return 1;
+            case RGBA8: return 4;
+            case BGRA8: return 4;
             default:
                 throw Exception("Unsupported texture format.");
         }
@@ -74,15 +100,15 @@ namespace PinkTopaz::Renderer::OpenGL {
                                  const void *data)
      : _commandQueue(queue)
     {
-        const size_t len = desc.width * desc.height;
+        const size_t len = desc.width * desc.height * desc.depth * textureDataTypeSize(desc.format);
         std::vector<uint8_t> wrappedData(len);
         memcpy(&wrappedData[0], data, len);
         
         const GLenum target = _target = textureTargetEnum(desc.type);
         constexpr GLint level = 0;
-        const GLint internalFormat = textureFormat(desc.format);
+        const GLint internalFormat = textureInternalFormat(desc.format);
         constexpr GLint border = 0;
-        const GLint format = internalFormat;
+        const GLint externalFormat = textureExternalFormat(desc.format);
         const GLint dataType = textureDataType(desc.format);
         
         _commandQueue.enqueue([=]{
@@ -103,12 +129,12 @@ namespace PinkTopaz::Renderer::OpenGL {
             {
                 case GL_TEXTURE_2D:
                     glTexImage2D(target, level, internalFormat, desc.width,
-                                 desc.height, border, format, dataType, bytes);
+                                 desc.height, border, externalFormat, dataType, bytes);
                     break;
                     
                 case GL_TEXTURE_2D_ARRAY:
                     glTexImage3D(target, level, internalFormat, desc.width,
-                                 desc.height, desc.depth, border, format,
+                                 desc.height, desc.depth, border, externalFormat,
                                  dataType, bytes);
                     break;
             }
@@ -123,6 +149,8 @@ namespace PinkTopaz::Renderer::OpenGL {
             glTexParameteri(target, GL_TEXTURE_MAG_FILTER, maxFilter);
             
             glBindTexture(target, 0);
+            
+            CHECK_GL_ERROR();
             
             this->_handle = texture;
         });

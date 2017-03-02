@@ -22,7 +22,8 @@ namespace PinkTopaz::Renderer {
     enum TextureFormat
     {
         R8,
-        RGBA8
+        RGBA8,
+        BGRA8
     };
     
     enum TextureWrapMode
@@ -53,7 +54,7 @@ namespace PinkTopaz::Renderer {
            format(RGBA8),
            width(0),
            height(0),
-           depth(0),
+           depth(1),
            unpackAlignment(4),
            wrapS(Repeat),
            wrapT(Repeat),
