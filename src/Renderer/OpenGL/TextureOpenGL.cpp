@@ -63,6 +63,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         {
             case Nearest: return GL_NEAREST;
             case Linear: return GL_LINEAR;
+            case NearestMipMapNearest: return GL_NEAREST_MIPMAP_NEAREST;
             default:
                 throw Exception("Unsupported texture format.");
         }
@@ -112,7 +113,9 @@ namespace PinkTopaz::Renderer::OpenGL {
                     break;
             }
             
-            glGenerateMipmap(target);
+            if (desc.generateMipMaps) {
+                glGenerateMipmap(target);
+            }
             
             glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
             glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapT);

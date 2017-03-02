@@ -34,7 +34,8 @@ namespace PinkTopaz::Renderer {
     enum TextureFilter
     {
         Nearest,
-        Linear
+        Linear,
+        NearestMipMapNearest
     };
     
     struct TextureDescriptor
@@ -45,6 +46,7 @@ namespace PinkTopaz::Renderer {
         int unpackAlignment;
         TextureWrapMode wrapS, wrapT;
         TextureFilter minFilter, maxFilter;
+        bool generateMipMaps;
         
         TextureDescriptor()
          : type(Texture2D),
@@ -55,8 +57,9 @@ namespace PinkTopaz::Renderer {
            unpackAlignment(4),
            wrapS(Repeat),
            wrapT(Repeat),
-           minFilter(Linear),
-           maxFilter(Linear)
+           minFilter(NearestMipMapNearest),
+           maxFilter(Linear),
+           generateMipMaps(true)
         {}
     };
     
