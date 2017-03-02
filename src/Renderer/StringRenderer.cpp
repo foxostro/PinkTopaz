@@ -48,10 +48,14 @@ namespace PinkTopaz::Renderer {
             
             TextureDescriptor desc;
             desc.type = Texture2D;
-            desc.format = Red;
+            desc.format = R8;
             desc.width = face->glyph->bitmap.width;
             desc.height = face->glyph->bitmap.rows;
             desc.unpackAlignment = 1;
+            desc.wrapS = ClampToEdge;
+            desc.wrapT = ClampToEdge;
+            desc.minFilter = Linear;
+            desc.maxFilter = Linear;
             auto texture = _graphicsDevice->makeTexture(desc, face->glyph->bitmap.buffer);
             
             // Now store character for later use

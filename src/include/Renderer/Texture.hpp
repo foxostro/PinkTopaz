@@ -15,27 +15,48 @@ namespace PinkTopaz::Renderer {
     
     enum TextureType
     {
-        Texture2D
+        Texture2D,
+        Texture2DArray
     };
     
     enum TextureFormat
     {
-        Red,
+        R8,
+        RGBA8
+    };
+    
+    enum TextureWrapMode
+    {
+        Repeat,
+        ClampToEdge
+    };
+    
+    enum TextureFilter
+    {
+        Nearest,
+        Linear
     };
     
     struct TextureDescriptor
     {
         TextureType type;
         TextureFormat format;
-        size_t width, height;
+        size_t width, height, depth;
         int unpackAlignment;
+        TextureWrapMode wrapS, wrapT;
+        TextureFilter minFilter, maxFilter;
         
         TextureDescriptor()
          : type(Texture2D),
-           format(Red),
+           format(RGBA8),
            width(0),
            height(0),
-           unpackAlignment(4)
+           depth(0),
+           unpackAlignment(4),
+           wrapS(Repeat),
+           wrapT(Repeat),
+           minFilter(Linear),
+           maxFilter(Linear)
         {}
     };
     

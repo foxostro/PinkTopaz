@@ -15,6 +15,10 @@
 
 namespace PinkTopaz::Renderer::OpenGL {
     
+    GLenum textureTargetEnum(TextureType type);
+    GLint textureFormat(TextureFormat format);
+    GLint textureDataType(TextureFormat format);
+    
     class TextureOpenGL : public Texture
     {
     public:
@@ -25,8 +29,10 @@ namespace PinkTopaz::Renderer::OpenGL {
         virtual ~TextureOpenGL();
         
         inline GLuint getHandle() const { return _handle; }
+        inline GLenum getTarget() const { return _target; }
         
     private:
+        GLenum _target;
         GLuint _handle;
         CommandQueue &_commandQueue;
     };

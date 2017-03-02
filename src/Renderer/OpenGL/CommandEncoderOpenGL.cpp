@@ -82,7 +82,7 @@ namespace PinkTopaz::Renderer::OpenGL {
             auto texture = std::dynamic_pointer_cast<TextureOpenGL>(abstractTexture);
             GLuint handle = texture->getHandle();
             glActiveTexture(GL_TEXTURE0 + (GLenum)index);
-            glBindTexture(GL_TEXTURE_2D, handle);
+            glBindTexture(texture->getTarget(), handle);
             CHECK_GL_ERROR();
         });
     }
