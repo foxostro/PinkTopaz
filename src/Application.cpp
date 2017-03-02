@@ -48,20 +48,24 @@ namespace PinkTopaz {
         // Load terrain texture array from a single image.
         // TODO: create a TextureArrayLoader class to encapsulate tex loading.
         SDL_Surface *surface = IMG_Load("terrain.png");
-        Renderer::TextureDescriptor desc = {
+        Renderer::TextureDescriptor texDesc = {
             .type = Renderer::Texture2DArray,
             .format = Renderer::BGRA8,
             .width = static_cast<size_t>(surface->w),
             .height = static_cast<size_t>(surface->w),
             .depth = static_cast<size_t>(surface->h / surface->w),
             .unpackAlignment = 4,
-            .addressS = Renderer::Repeat,
-            .addressT = Renderer::Repeat,
-            .minFilter = Renderer::NearestMipMapNearest,
-            .maxFilter = Renderer::Linear,
             .generateMipMaps = true,
         };
-        auto texture = graphicsDevice->makeTexture(desc, surface->pixels);
+        auto texture = graphicsDevice->makeTexture(texDesc, surface->pixels);
+        
+        Renderer::TextureSamplerDescriptor samplerDesc = {
+            .addressS = Renderer::ClampToEdge,
+            .addressT = Renderer::ClampToEdge,
+            .minFilter = Renderer::Nearest,
+            .maxFilter = Renderer::Nearest
+        };
+        auto sampler = graphicsDevice->makeTextureSampler(samplerDesc);
 
         auto mesh = std::make_shared<Renderer::StaticMesh>("terrain.3d.bin");
         auto buffer = graphicsDevice->makeBuffer(mesh->getVertexFormat(),
@@ -69,7 +73,7 @@ namespace PinkTopaz {
                                                  mesh->getVertexCount(),
                                                  Renderer::StaticDraw);
         
-        World gameWorld(graphicsDevice, buffer, shader, texture);
+        World gameWorld(graphicsDevice, buffer, shader, texture, sampler);
         
         // Send an event containing the initial window size and scale factor.
         // This will allow the render system to setup projection matrices and such.

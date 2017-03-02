@@ -29,40 +29,44 @@ namespace PinkTopaz::Renderer::OpenGL {
         // Call this to begin a frame. It returns a command encoder which can be
         // used to encoder graphics commands for submission to the graphics
         // at the end of the frame.
-        virtual std::shared_ptr<CommandEncoder> encoder(const RenderPassDescriptor &desc) override;
+        std::shared_ptr<CommandEncoder>
+        encoder(const RenderPassDescriptor &desc) override;
         
         // Call this to submit commands to the graphics device.
         // This call is garaunteed thread-safe. Commands will be submitted to
         // GPU in the order of call to this method; however, commands may not
         // be flushed until the next call to swapBuffers().
-        virtual void submit(const std::shared_ptr<CommandEncoder> &encoder) override;
+        void submit(const std::shared_ptr<CommandEncoder> &encoder) override;
         
         // Flushes commands and swaps buffers. Some underlying graphics APIs
         // have restrictions about which threads they can be used on. So, it's
         // the caller's responsibility call only from method on the main thread.
-        virtual void swapBuffers() override;
+        void swapBuffers() override;
         
         // Create a new shader using the specified vertex and fragment programs.
-        virtual std::shared_ptr<Shader> makeShader(const std::string &vertexProgramName, const std::string &fragmentProgramName) override;
+        std::shared_ptr<Shader>
+        makeShader(const std::string &vertexProgramName,
+                   const std::string &fragmentProgramName) override;
         
         // Creates a new texture from the specified descriptor and data.
-        virtual std::shared_ptr<Texture>
-        makeTexture(const TextureDescriptor &desc,
-                    const void *data) override;
+        std::shared_ptr<Texture> makeTexture(const TextureDescriptor &desc,
+                                             const void *data) override;
+        
+        // Creates a new texture sampler from the specified descriptor.
+        std::shared_ptr<TextureSampler>
+        makeTextureSampler(const TextureSamplerDescriptor &desc) override;
         
         // Creates a new GPU buffer object.
-        virtual std::shared_ptr<Buffer>
-        makeBuffer(const VertexFormat &format,
-                   const std::vector<uint8_t> &bufferData,
-                   size_t elementCount,
-                   BufferUsage usage) override;
+        std::shared_ptr<Buffer> makeBuffer(const VertexFormat &format,
+                                           const std::vector<uint8_t> &data,
+                                           size_t elementCount,
+                                           BufferUsage usage) override;
         
         // Creates a new GPU buffer object with undefined contents.
-        virtual std::shared_ptr<Buffer>
-        makeBuffer(const VertexFormat &format,
-                   size_t size,
-                   size_t elementCount,
-                   BufferUsage usage) override;
+        std::shared_ptr<Buffer> makeBuffer(const VertexFormat &format,
+                                           size_t size,
+                                           size_t elementCount,
+                                           BufferUsage usage) override;
         
     private:
         SDL_Window &_window;

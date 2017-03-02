@@ -13,6 +13,7 @@
 #include "Renderer/Buffer.hpp"
 #include "Renderer/Shader.hpp"
 #include "Renderer/Texture.hpp"
+#include "Renderer/TextureSampler.hpp"
 
 namespace PinkTopaz {
     
@@ -23,12 +24,15 @@ namespace PinkTopaz {
         
         RenderableStaticMesh(const std::shared_ptr<Renderer::Buffer> &b,
                              const std::shared_ptr<Renderer::Shader> &s,
-                             const std::shared_ptr<Renderer::Texture> &t)
-         : buffer(b), shader(s), texture(t) {}
+                             const std::shared_ptr<Renderer::Texture> &t,
+                             const std::shared_ptr<Renderer::TextureSampler> &sampler)
+         : buffer(b), shader(s), texture(t), textureSampler(sampler)
+        {}
         
         std::shared_ptr<Renderer::Buffer> buffer;
         std::shared_ptr<Renderer::Shader> shader;
         std::shared_ptr<Renderer::Texture> texture;
+        std::shared_ptr<Renderer::TextureSampler> textureSampler;
     };
     
 } // namespace PinkTopaz

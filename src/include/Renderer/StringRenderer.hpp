@@ -11,6 +11,7 @@
 
 #include "Renderer/String.hpp"
 #include "Renderer/Texture.hpp"
+#include "Renderer/TextureSampler.hpp"
 #include "Renderer/Buffer.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 
@@ -49,6 +50,7 @@ namespace PinkTopaz::Renderer {
         std::shared_ptr<GraphicsDevice> _graphicsDevice;
         std::map<char, Glyph> _glyphs;
         std::shared_ptr<Shader> _shader;
+        std::shared_ptr<TextureSampler> _sampler;
         std::shared_ptr<Buffer> _buffer;
         RenderPassDescriptor _renderPassDescriptor;
         

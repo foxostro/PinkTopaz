@@ -37,12 +37,6 @@ namespace PinkTopaz::Renderer::OpenGL {
     // to be four bytes.
     size_t textureDataTypeSize(TextureFormat format);
     
-    // The OpenGL address mode to use when sampling, as implied by `mode'.
-    GLint textureAddressModeEnum(TextureAddressMode mode);
-    
-    // The OpenGL texture filter to use when sampling, as implied by `filter'.
-    GLint textureFilterEnum(TextureFilter filter);
-    
     // Encapsulates a single OpenGL texture resource.
     class TextureOpenGL : public Texture
     {

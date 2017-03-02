@@ -26,27 +26,12 @@ namespace PinkTopaz::Renderer {
         BGRA8
     };
     
-    enum TextureAddressMode
-    {
-        Repeat,
-        ClampToEdge
-    };
-    
-    enum TextureFilter
-    {
-        Nearest,
-        Linear,
-        NearestMipMapNearest
-    };
-    
     struct TextureDescriptor
     {
         TextureType type;
         TextureFormat format;
         size_t width, height, depth;
         int unpackAlignment;
-        TextureAddressMode addressS, addressT;
-        TextureFilter minFilter, maxFilter;
         bool generateMipMaps;
     };
     

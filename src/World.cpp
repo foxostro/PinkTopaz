@@ -17,7 +17,8 @@ namespace PinkTopaz {
     World::World(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice,
                  const std::shared_ptr<Renderer::Buffer> &buffer,
                  const std::shared_ptr<Renderer::Shader> &shader,
-                 const std::shared_ptr<Renderer::Texture> &texture)
+                 const std::shared_ptr<Renderer::Texture> &texture,
+                 const std::shared_ptr<Renderer::TextureSampler> &sampler)
     {
         systems.add<RenderSystem>(graphicsDevice);
         systems.configure();
@@ -33,7 +34,7 @@ namespace PinkTopaz {
         
         // Create an entity to represent the terrain.
         entityx::Entity terrain = entities.create();
-        terrain.assign<RenderableStaticMesh>(buffer, shader, texture);
+        terrain.assign<RenderableStaticMesh>(buffer, shader, texture, sampler);
         terrain.assign<Transform>(glm::mat4x4());
     }
     

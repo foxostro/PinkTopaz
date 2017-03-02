@@ -10,6 +10,7 @@
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Renderer/OpenGL/ShaderOpenGL.hpp"
 #include "Renderer/OpenGL/TextureOpenGL.hpp"
+#include "Renderer/OpenGL/TextureSamplerOpenGL.hpp"
 #include "Renderer/OpenGL/BufferOpenGL.hpp"
 #include "Exception.hpp"
 
@@ -70,6 +71,17 @@ namespace PinkTopaz::Renderer::OpenGL {
             GLuint handle = texture->getHandle();
             glActiveTexture(GL_TEXTURE0 + (GLenum)index);
             glBindTexture(texture->getTarget(), handle);
+            CHECK_GL_ERROR();
+        });
+    }
+    
+    void CommandEncoderOpenGL::setFragmentSampler(const std::shared_ptr<TextureSampler> &abstractSampler, size_t index)
+    {
+        assert(abstractSampler);
+        _commandQueue.enqueue([=]() {
+            auto sampler = std::dynamic_pointer_cast<TextureSamplerOpenGL>(abstractSampler);
+            GLuint handle = sampler->getHandle();
+            glBindSampler(index, handle);
             CHECK_GL_ERROR();
         });
     }

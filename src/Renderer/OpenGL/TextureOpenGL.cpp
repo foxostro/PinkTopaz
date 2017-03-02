@@ -72,33 +72,12 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
     }
     
-    GLint textureAddressModeEnum(TextureAddressMode mode)
-    {
-        switch (mode)
-        {
-            case Repeat: return GL_REPEAT;
-            case ClampToEdge: return GL_CLAMP_TO_EDGE;
-            default:
-                throw Exception("Unsupported texture format.");
-        }
-    }
-    
-    GLint textureFilterEnum(TextureFilter filter)
-    {
-        switch (filter)
-        {
-            case Nearest: return GL_NEAREST;
-            case Linear: return GL_LINEAR;
-            case NearestMipMapNearest: return GL_NEAREST_MIPMAP_NEAREST;
-            default:
-                throw Exception("Unsupported texture format.");
-        }
-    }
-    
     TextureOpenGL::TextureOpenGL(CommandQueue &queue,
                                  const TextureDescriptor &desc,
                                  const void *data)
-     : _commandQueue(queue)
+     : _target(0),
+       _handle(0),
+       _commandQueue(queue)
     {
         const size_t len = desc.width * desc.height * desc.depth * textureDataTypeSize(desc.format);
         std::vector<uint8_t> wrappedData(len);
@@ -113,11 +92,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         
         _commandQueue.enqueue([=]{
             const void *bytes = &wrappedData[0];
-            
-            const GLint addressS = textureAddressModeEnum(desc.addressS);
-            const GLint addressT = textureAddressModeEnum(desc.addressT);
-            const GLint minFilter = textureFilterEnum(desc.minFilter);
-            const GLint maxFilter = textureFilterEnum(desc.maxFilter);
             
             glPixelStorei(GL_UNPACK_ALIGNMENT, desc.unpackAlignment);
 
@@ -143,13 +117,7 @@ namespace PinkTopaz::Renderer::OpenGL {
                 glGenerateMipmap(target);
             }
             
-            glTexParameteri(target, GL_TEXTURE_WRAP_S, addressS);
-            glTexParameteri(target, GL_TEXTURE_WRAP_T, addressT);
-            glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilter);
-            glTexParameteri(target, GL_TEXTURE_MAG_FILTER, maxFilter);
-            
             glBindTexture(target, 0);
-            
             CHECK_GL_ERROR();
             
             this->_handle = texture;

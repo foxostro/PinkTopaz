@@ -27,7 +27,8 @@ namespace PinkTopaz {
         explicit World(const std::shared_ptr<Renderer::GraphicsDevice> &renderer,
                        const std::shared_ptr<Renderer::Buffer> &buffer,
                        const std::shared_ptr<Renderer::Shader> &shader,
-                       const std::shared_ptr<Renderer::Texture> &texture);
+                       const std::shared_ptr<Renderer::Texture> &texture,
+                       const std::shared_ptr<Renderer::TextureSampler> &sampler);
         
         void update(entityx::TimeDelta dt);
     };

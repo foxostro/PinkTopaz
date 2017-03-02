@@ -46,20 +46,16 @@ namespace PinkTopaz::Renderer {
                 throw Exception("Failed to load the glyph %c.", (char)c);
             }
             
-            TextureDescriptor desc = {
+            TextureDescriptor texDesc = {
                 .type = Texture2D,
                 .format = R8,
                 .width = face->glyph->bitmap.width,
                 .height = face->glyph->bitmap.rows,
                 .depth = 1,
                 .unpackAlignment = 1,
-                .addressS = ClampToEdge,
-                .addressT = ClampToEdge,
-                .minFilter = Nearest,
-                .maxFilter = Nearest,
                 .generateMipMaps = false
             };
-            auto texture = _graphicsDevice->makeTexture(desc, face->glyph->bitmap.buffer);
+            auto texture = _graphicsDevice->makeTexture(texDesc, face->glyph->bitmap.buffer);
             
             // Now store character for later use
             Glyph glyph = {
@@ -95,6 +91,14 @@ namespace PinkTopaz::Renderer {
                                               vertexSize * vertexCount,
                                               vertexCount,
                                               DynamicDraw);
+        
+        TextureSamplerDescriptor samplerDesc = {
+            .addressS = Renderer::ClampToEdge,
+            .addressT = Renderer::ClampToEdge,
+            .minFilter = Renderer::Nearest,
+            .maxFilter = Renderer::Nearest
+        };
+        _sampler = _graphicsDevice->makeTextureSampler(samplerDesc);
     }
     
     void StringRenderer::draw(const glm::ivec4 &viewport)
@@ -102,6 +106,7 @@ namespace PinkTopaz::Renderer {
         auto encoder = _graphicsDevice->encoder(_renderPassDescriptor);
         encoder->setViewport(viewport);
         encoder->setShader(_shader);
+        encoder->setFragmentSampler(_sampler, 0);
         drawString(encoder,
                    "Pink Topaz / Ardent Storm",
                    glm::vec2(25.0f, 550.0f),

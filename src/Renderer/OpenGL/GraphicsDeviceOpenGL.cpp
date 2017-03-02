@@ -10,6 +10,7 @@
 #include "Renderer/OpenGL/CommandEncoderOpenGL.hpp"
 #include "Renderer/OpenGL/ShaderOpenGL.hpp"
 #include "Renderer/OpenGL/TextureOpenGL.hpp"
+#include "Renderer/OpenGL/TextureSamplerOpenGL.hpp"
 #include "Renderer/OpenGL/BufferOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
@@ -94,6 +95,13 @@ namespace PinkTopaz::Renderer::OpenGL {
     {
         auto texture = std::make_shared<TextureOpenGL>(_commandQueue, desc, data);
         return std::dynamic_pointer_cast<Texture>(texture);
+    }
+    
+    std::shared_ptr<TextureSampler>
+    GraphicsDeviceOpenGL::makeTextureSampler(const TextureSamplerDescriptor &desc)
+    {
+        auto sampler = std::make_shared<TextureSamplerOpenGL>(_commandQueue, desc);
+        return std::dynamic_pointer_cast<TextureSampler>(sampler);
     }
     
     std::shared_ptr<Buffer>

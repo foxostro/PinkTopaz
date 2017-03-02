@@ -60,6 +60,7 @@ namespace PinkTopaz {
             
             mesh.shader->setShaderUniform("view", cameraTransform * transform.value);
 
+            encoder->setFragmentSampler(mesh.textureSampler, 0);
             encoder->setFragmentTexture(mesh.texture, 0);
             encoder->setVertexBuffer(mesh.buffer);
             
