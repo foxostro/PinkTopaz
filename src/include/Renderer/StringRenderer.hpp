@@ -44,7 +44,6 @@ namespace PinkTopaz::Renderer {
         void drawString(const std::shared_ptr<CommandEncoder> &encoder,
                         const std::string &text,
                         glm::vec2 basePos,
-                        float scale,
                         const glm::vec3 &color);
         
         std::shared_ptr<GraphicsDevice> _graphicsDevice;

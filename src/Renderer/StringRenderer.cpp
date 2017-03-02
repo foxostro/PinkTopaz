@@ -98,15 +98,13 @@ namespace PinkTopaz::Renderer {
         drawString(encoder,
                    "Pink Topaz / Ardent Storm",
                    glm::vec2(25.0f, 550.0f),
-                   1.0f,
-                   glm::vec3(1.0, 0.3f, 0.0f));
+                   glm::vec3(0.0f, 0.0f, 0.0f));
         _graphicsDevice->submit(encoder);
     }
     
     void StringRenderer::drawString(const std::shared_ptr<CommandEncoder> &encoder,
                                     const std::string &text,
                                     glm::vec2 basePos,
-                                    float scale,
                                     const glm::vec3 &color)
     {
         _shader->setShaderUniform("textColor", color);
@@ -117,9 +115,9 @@ namespace PinkTopaz::Renderer {
         {
             const Glyph &glyph = _glyphs[*c];
             
-            glm::vec2 offset(glyph.bearing.x * scale, (glyph.size.y - glyph.bearing.y) * -scale);
+            glm::vec2 offset(glyph.bearing.x, glyph.bearing.y - glyph.size.y);
             glm::vec2 pos = basePos + offset;
-            glm::vec2 size(glyph.size.x * scale, glyph.size.y * scale);
+            glm::vec2 size(glyph.size.x, glyph.size.y);
             
             // Update the vertex buffer for each glyph.
             const size_t numVertices = 6;
@@ -137,7 +135,7 @@ namespace PinkTopaz::Renderer {
             encoder->drawPrimitives(Triangles, 0, numVertices, 1);
             
             // Advance to the next glyph.
-            basePos.x += (glyph.advance >> 6) * scale;
+            basePos.x += glyph.advance / 64.0f;
         }
     }
     

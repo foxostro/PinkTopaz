@@ -35,7 +35,7 @@ namespace PinkTopaz::Renderer {
            format(Red),
            width(0),
            height(0),
-           unpackAlignment(1)
+           unpackAlignment(4)
         {}
     };
     
