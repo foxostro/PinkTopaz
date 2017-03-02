@@ -17,20 +17,20 @@ namespace PinkTopaz::Renderer {
     class String
     {
     public:
-        String(const std::string &contents,
-               const glm::vec2 &position,
-               float scale);
+        String(const std::string &contents, const glm::vec2 &position)
+         : _contents(contents),
+           _position(position)
+        {}
         
         ~String() = default;
         
+        inline void setContents(const std::string &s) { _contents = s; }
         inline const std::string &getContents() const { return _contents; }
         inline const glm::vec2 &getPosition() const { return _position; }
-        inline float getScale() const { return _scale; }
         
     private:
-        const std::string _contents;
+        std::string _contents;
         const glm::vec2 _position;
-        const float _scale;
     };
     
 } // namespace PinkTopaz::Renderer

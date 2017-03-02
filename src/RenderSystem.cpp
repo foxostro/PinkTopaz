@@ -14,16 +14,24 @@
 #include "RenderableStaticMesh.hpp"
 #include "Exception.hpp"
 
+#include "SDL.h"
 #include <glm/vec3.hpp>
 #include <glm/gtc/matrix_transform.hpp> // for lookAt
+#include <sstream>
 
 namespace PinkTopaz {
     
     RenderSystem::RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
      : _windowSizeChangeEventPending(false),
        _graphicsDevice(graphicsDevice),
-       _stringRenderer(graphicsDevice, "vegur/Vegur-Regular.otf", 24)
-    {}
+       _stringRenderer(graphicsDevice, "vegur/Vegur-Regular.otf", 24),
+       _timeAccum(0),
+       _countDown(0),
+       _framesBetweenReport(60)
+    {
+        _fps = _stringRenderer.add(Renderer::String("Frame Time: XX.XX ms",
+                                                    glm::vec2(15.0f, 570.0f)));
+    }
     
     void RenderSystem::configure(entityx::EventManager &em)
     {
@@ -34,6 +42,8 @@ namespace PinkTopaz {
     
     void RenderSystem::update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt)
     {
+        unsigned ticksBeginMs = SDL_GetTicks();
+        
         glm::mat4x4 cameraTransform;
         if (_activeCamera.valid()) {
             cameraTransform = _activeCamera.component<Transform>()->value;
@@ -77,6 +87,25 @@ namespace PinkTopaz {
         _graphicsDevice->swapBuffers();
         
         _windowSizeChangeEventPending = false;
+        
+        unsigned ticksEndMs = SDL_GetTicks();
+        unsigned ticksElapsedMs = ticksEndMs - ticksBeginMs;
+        _timeAccum += ticksElapsedMs;
+        
+        if (_countDown == 0) {
+            float frameTime = (float)_timeAccum / (float)_framesBetweenReport;
+            
+            std::stringstream ss;
+            ss.precision(2);
+            ss << std::fixed << frameTime;
+            std::string s(ss.str());
+            
+            _stringRenderer.replaceContents(_fps, "Frame Time: " + s + " ms");
+            _countDown = _framesBetweenReport;
+            _timeAccum = 0;
+        } else {
+            --_countDown;
+        }
     }
     
     void RenderSystem::receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)

@@ -20,18 +20,30 @@
 
 #include <memory>
 #include <map>
+#include <list>
 
 namespace PinkTopaz::Renderer {
     
     class StringRenderer
     {
     public:
+        typedef std::list<String>::iterator StringHandle;
+        
         StringRenderer(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                        const std::string &fontName,
                        unsigned fontSize);
         ~StringRenderer() = default;
         
         void draw(const glm::ivec4 &viewport);
+        
+        // Add a string to be rendered.
+        StringHandle add(const String &string);
+        
+        // Remove a string that was previously added.
+        void remove(StringHandle &handle);
+        
+        // Change the contents of a string that was previously added.
+        void replaceContents(StringHandle &handle, const std::string &contents);
         
     private:
         struct Glyph
@@ -55,6 +67,7 @@ namespace PinkTopaz::Renderer {
         RenderPassDescriptor _renderPassDescriptor;
         
         const glm::ivec2 _canvasSize;
+        std::list<String> _strings;
     };
     
 } // namespace PinkTopaz::Renderer

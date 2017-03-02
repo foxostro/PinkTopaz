@@ -107,10 +107,15 @@ namespace PinkTopaz::Renderer {
         encoder->setViewport(viewport);
         encoder->setShader(_shader);
         encoder->setFragmentSampler(_sampler, 0);
-        drawString(encoder,
-                   "Pink Topaz / Ardent Storm",
-                   glm::vec2(25.0f, 550.0f),
-                   glm::vec3(0.0f, 0.0f, 0.0f));
+        
+        for (auto &string : _strings)
+        {
+            drawString(encoder,
+                       string.getContents(),
+                       string.getPosition(),
+                       glm::vec3(0.0f, 0.0f, 0.0f));
+        }
+
         _graphicsDevice->submit(encoder);
     }
     
@@ -149,6 +154,25 @@ namespace PinkTopaz::Renderer {
             // Advance to the next glyph.
             basePos.x += glyph.advance / 64.0f;
         }
+    }
+    
+    StringRenderer::StringHandle StringRenderer::add(const String &string)
+    {
+        _strings.push_back(string);
+        auto iter = _strings.end();
+        --iter;
+        return iter;
+    }
+    
+    void StringRenderer::remove(StringRenderer::StringHandle &handle)
+    {
+        _strings.erase(handle);
+    }
+    
+    void StringRenderer::replaceContents(StringHandle &handle, const std::string &contents)
+    {
+        String &string = *handle;
+        string.setContents(contents);
     }
     
 } // namespace PinkTopaz::Renderer

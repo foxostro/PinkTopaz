@@ -87,9 +87,6 @@ namespace PinkTopaz {
         bool quit = false;
         
         unsigned ticksBeginMs = SDL_GetTicks();
-        unsigned timeAccum = 0;
-        unsigned framesBetweenFpsReport = 60;
-        unsigned countDown = framesBetweenFpsReport;
         
         while(!quit)
         {
@@ -124,18 +121,8 @@ namespace PinkTopaz {
             
             unsigned ticksEndMs = SDL_GetTicks();
             unsigned ticksElapsedMs = ticksEndMs - ticksBeginMs;
-            timeAccum += ticksElapsedMs;
             ticksBeginMs = ticksEndMs;
             entityx::TimeDelta dt = ticksElapsedMs;
-            
-            if (countDown == 0) {
-                float frameTime = (float)timeAccum / (float)framesBetweenFpsReport;
-                SDL_Log("frame time: %.3f ms", frameTime);
-                countDown = framesBetweenFpsReport;
-                timeAccum = 0;
-            } else {
-                countDown--;
-            }
 
             gameWorld.update(dt);
         }
