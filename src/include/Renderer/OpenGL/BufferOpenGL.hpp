@@ -43,6 +43,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         inline GLuint getHandleVBO() const { return _vbo; }
         
     private:
+        std::mutex lock;
         GLuint _vao, _vbo;
         size_t _count;
         GLenum _usage;
