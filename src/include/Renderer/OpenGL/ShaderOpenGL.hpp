@@ -31,7 +31,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         inline GLuint getProgram() const { return _program; }
         
     private:
-        GLuint _program;
+        std::atomic<GLuint> _program;
         CommandQueue &_commandQueue;
     };
     

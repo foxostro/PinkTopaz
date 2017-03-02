@@ -26,7 +26,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         inline GLuint getHandle() const { return _handle; }
         
     private:
-        GLuint _handle;
+        std::atomic<GLuint> _handle;
         CommandQueue &_commandQueue;
     };
     

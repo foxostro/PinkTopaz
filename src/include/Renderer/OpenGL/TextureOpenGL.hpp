@@ -33,7 +33,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         
     private:
         GLenum _target;
-        GLuint _handle;
+        std::atomic<GLuint> _handle;
         CommandQueue &_commandQueue;
     };
     
