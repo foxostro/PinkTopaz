@@ -26,7 +26,7 @@ namespace PinkTopaz::Renderer {
         BGRA8
     };
     
-    enum TextureWrapMode
+    enum TextureAddressMode
     {
         Repeat,
         ClampToEdge
@@ -45,23 +45,9 @@ namespace PinkTopaz::Renderer {
         TextureFormat format;
         size_t width, height, depth;
         int unpackAlignment;
-        TextureWrapMode wrapS, wrapT;
+        TextureAddressMode addressS, addressT;
         TextureFilter minFilter, maxFilter;
         bool generateMipMaps;
-        
-        TextureDescriptor()
-         : type(Texture2D),
-           format(RGBA8),
-           width(0),
-           height(0),
-           depth(1),
-           unpackAlignment(4),
-           wrapS(Repeat),
-           wrapT(Repeat),
-           minFilter(NearestMipMapNearest),
-           maxFilter(Linear),
-           generateMipMaps(true)
-        {}
     };
     
     // Encapsulates a Texture resource in a platform-agnostic manner.

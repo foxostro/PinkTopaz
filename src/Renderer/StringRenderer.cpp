@@ -46,14 +46,19 @@ namespace PinkTopaz::Renderer {
                 throw Exception("Failed to load the glyph %c.", (char)c);
             }
             
-            TextureDescriptor desc;
-            desc.type = Texture2D;
-            desc.format = R8;
-            desc.width = face->glyph->bitmap.width;
-            desc.height = face->glyph->bitmap.rows;
-            desc.unpackAlignment = 1;
-            desc.wrapS = ClampToEdge;
-            desc.wrapT = ClampToEdge;
+            TextureDescriptor desc = {
+                .type = Texture2D,
+                .format = R8,
+                .width = face->glyph->bitmap.width,
+                .height = face->glyph->bitmap.rows,
+                .depth = 1,
+                .unpackAlignment = 1,
+                .addressS = ClampToEdge,
+                .addressT = ClampToEdge,
+                .minFilter = Nearest,
+                .maxFilter = Nearest,
+                .generateMipMaps = false
+            };
             auto texture = _graphicsDevice->makeTexture(desc, face->glyph->bitmap.buffer);
             
             // Now store character for later use

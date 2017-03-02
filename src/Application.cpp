@@ -48,18 +48,19 @@ namespace PinkTopaz {
         // Load terrain texture array from a single image.
         // TODO: create a TextureArrayLoader class to encapsulate tex loading.
         SDL_Surface *surface = IMG_Load("terrain.png");
-        Renderer::TextureDescriptor desc;
-        desc.type = Renderer::Texture2DArray;
-        desc.format = Renderer::BGRA8;
-        desc.width = surface->w;
-        desc.height = surface->w;
-        desc.depth = surface->h / surface->w;
-        desc.unpackAlignment = 4;
-        desc.wrapS = Renderer::Repeat;
-        desc.wrapT = Renderer::Repeat;
-        desc.minFilter = Renderer::NearestMipMapNearest;
-        desc.maxFilter = Renderer::Linear;
-        desc.generateMipMaps = true;
+        Renderer::TextureDescriptor desc = {
+            .type = Renderer::Texture2DArray,
+            .format = Renderer::BGRA8,
+            .width = static_cast<size_t>(surface->w),
+            .height = static_cast<size_t>(surface->w),
+            .depth = static_cast<size_t>(surface->h / surface->w),
+            .unpackAlignment = 4,
+            .addressS = Renderer::Repeat,
+            .addressT = Renderer::Repeat,
+            .minFilter = Renderer::NearestMipMapNearest,
+            .maxFilter = Renderer::Linear,
+            .generateMipMaps = true,
+        };
         auto texture = graphicsDevice->makeTexture(desc, surface->pixels);
 
         auto mesh = std::make_shared<Renderer::StaticMesh>("terrain.3d.bin");

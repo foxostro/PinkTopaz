@@ -72,9 +72,9 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
     }
     
-    GLint textureWrapModeEnum(TextureWrapMode wrap)
+    GLint textureAddressModeEnum(TextureAddressMode mode)
     {
-        switch (wrap)
+        switch (mode)
         {
             case Repeat: return GL_REPEAT;
             case ClampToEdge: return GL_CLAMP_TO_EDGE;
@@ -114,8 +114,8 @@ namespace PinkTopaz::Renderer::OpenGL {
         _commandQueue.enqueue([=]{
             const void *bytes = &wrappedData[0];
             
-            const GLint wrapS = textureWrapModeEnum(desc.wrapS);
-            const GLint wrapT = textureWrapModeEnum(desc.wrapT);
+            const GLint addressS = textureAddressModeEnum(desc.addressS);
+            const GLint addressT = textureAddressModeEnum(desc.addressT);
             const GLint minFilter = textureFilterEnum(desc.minFilter);
             const GLint maxFilter = textureFilterEnum(desc.maxFilter);
             
@@ -143,8 +143,8 @@ namespace PinkTopaz::Renderer::OpenGL {
                 glGenerateMipmap(target);
             }
             
-            glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
-            glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapT);
+            glTexParameteri(target, GL_TEXTURE_WRAP_S, addressS);
+            glTexParameteri(target, GL_TEXTURE_WRAP_T, addressT);
             glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilter);
             glTexParameteri(target, GL_TEXTURE_MAG_FILTER, maxFilter);
             
