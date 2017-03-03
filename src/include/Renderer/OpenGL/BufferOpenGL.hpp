@@ -35,6 +35,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         virtual ~BufferOpenGL();
         
         // Replace the entire contents of the buffer.
+        void replace(std::vector<uint8_t> &&wrappedData) override;
         void replace(size_t size, const void *data) override;
         
         virtual size_t getVertexCount() const override { return _count; }

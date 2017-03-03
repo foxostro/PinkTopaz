@@ -31,8 +31,7 @@ namespace PinkTopaz {
     {
         const glm::vec3 color(0.2f, 0.2f, 0.2f);
         const glm::vec2 position(30.0f, 1140.0f);
-        _fps = _stringRenderer.add(Renderer::String("Frame Time: XX.XX ms",
-                                                    position, color));
+        _fps = _stringRenderer.add("Frame Time: XX.XX ms", position, color);
     }
     
     void RenderSystem::configure(entityx::EventManager &em)

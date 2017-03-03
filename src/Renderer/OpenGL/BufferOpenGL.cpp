@@ -111,19 +111,16 @@ namespace PinkTopaz::Renderer::OpenGL {
         CHECK_GL_ERROR();
     }
     
-    void BufferOpenGL::replace(size_t size, const void *data)
+    void BufferOpenGL::replace(std::vector<uint8_t> &&wrappedData)
     {
-        std::vector<uint8_t> wrappedData(size);
-        memcpy(&wrappedData[0], data, size);
-
-        _commandQueue.enqueue([=]{
+        _commandQueue.enqueue([data{std::move(wrappedData)}, this]{
             lock.lock();
             GLuint vao = _vao;
             GLuint vbo = _vbo;
             lock.unlock();
             
-            size_t n = wrappedData.size();
-            const void *p = (const void *)&wrappedData[0];
+            size_t n = data.size();
+            const void *p = (const void *)&data[0];
             
             glBindVertexArray(vao);
             glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -132,6 +129,13 @@ namespace PinkTopaz::Renderer::OpenGL {
             glBindVertexArray(0);
             CHECK_GL_ERROR();
         });
+    }
+    
+    void BufferOpenGL::replace(size_t size, const void *data)
+    {
+        std::vector<uint8_t> wrappedData(size);
+        memcpy(&wrappedData[0], data, size);
+        replace(std::move(wrappedData));
     }
     
     BufferOpenGL::~BufferOpenGL()

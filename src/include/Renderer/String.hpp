@@ -13,6 +13,8 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
+#include "Renderer/Buffer.hpp"
+
 namespace PinkTopaz::Renderer {
     
     class String
@@ -29,6 +31,8 @@ namespace PinkTopaz::Renderer {
         std::string contents;
         glm::vec2 position;
         glm::vec3 color;
+
+        std::shared_ptr<Buffer> buffer;
     };
     
 } // namespace PinkTopaz::Renderer

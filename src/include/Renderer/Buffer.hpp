@@ -10,7 +10,6 @@
 #define Buffer_hpp
 
 #include <cstddef>
-#include <memory>
 #include <vector>
 
 namespace PinkTopaz::Renderer {
@@ -29,6 +28,7 @@ namespace PinkTopaz::Renderer {
         virtual ~Buffer() = default;
         
         // Replace the entire contents of the buffer.
+        virtual void replace(std::vector<uint8_t> &&data) = 0;
         virtual void replace(size_t size, const void *data) = 0;
         
         // Get the number of vertices contained in the buffer.

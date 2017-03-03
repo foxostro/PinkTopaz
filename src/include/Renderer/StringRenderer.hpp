@@ -43,7 +43,9 @@ namespace PinkTopaz::Renderer {
         void draw(const glm::ivec4 &viewport);
         
         // Add a string to be rendered.
-        StringHandle add(const String &string);
+        StringHandle add(const std::string &contents,
+                         const glm::vec2 &position,
+                         const glm::vec3 &color);
         
         // Remove a string that was previously added.
         void remove(StringHandle &handle);
@@ -71,16 +73,14 @@ namespace PinkTopaz::Renderer {
         SDL_Surface* makeTextureAtlas(FT_Face &face, size_t atlasSize);
         std::shared_ptr<Texture> makeTextureAtlas(const std::string &fontName,
                                                   unsigned fontSize);
-        
-        void drawString(const std::shared_ptr<CommandEncoder> &encoder,
-                        const String &string);
+        void rebuildBuffer(String &string);
         
         std::shared_ptr<GraphicsDevice> _graphicsDevice;
         std::shared_ptr<Texture> _textureAtlas;
         std::map<char, Glyph> _glyphs;
         std::shared_ptr<Shader> _shader;
         std::shared_ptr<TextureSampler> _sampler;
-        std::shared_ptr<Buffer> _buffer;
+        VertexFormat _vertexFormat;
         RenderPassDescriptor _renderPassDescriptor;
         std::list<String> _strings;
         glm::ivec2 _canvasSize;

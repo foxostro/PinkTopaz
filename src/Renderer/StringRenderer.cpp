@@ -231,21 +231,13 @@ namespace PinkTopaz::Renderer {
         _shader->setShaderUniform("projection", projection);
         _shader->setShaderUniform("tex", 0);
         
-        const size_t vertexSize = sizeof(float) * 4;
-        const size_t vertexCount = 6;
-        
-        VertexFormat format;
-        format.attributes.emplace_back((AttributeFormat){
+        _vertexFormat.attributes.emplace_back((AttributeFormat){
             .size = 4,
             .type = AttributeTypeFloat,
             .normalized = false,
-            .stride = vertexSize,
+            .stride = sizeof(float) * 4,
             .offset = 0
         });
-        _buffer = _graphicsDevice->makeBuffer(format,
-                                              vertexSize * vertexCount,
-                                              vertexCount,
-                                              DynamicDraw);
         
         TextureSamplerDescriptor samplerDesc = {
             .addressS = Renderer::ClampToEdge,
@@ -276,35 +268,42 @@ namespace PinkTopaz::Renderer {
         
         for (auto &string : _strings)
         {
-            drawString(encoder, string);
+            // TODO: this will not work when two different strings use different colors
+            _shader->setShaderUniform("textColor", string.color);
+            
+            encoder->setVertexBuffer(string.buffer);
+            encoder->drawPrimitives(Triangles, 0, string.buffer->getVertexCount(), 1);
         }
 
         _graphicsDevice->submit(encoder);
     }
     
-    void StringRenderer::drawString(const std::shared_ptr<CommandEncoder> &enc,
-                                    const String &string)
+    void StringRenderer::rebuildBuffer(String &string)
     {
-        _shader->setShaderUniform("textColor", string.color);
-        
         const std::string &text = string.contents;
-        glm::vec2 basePos = string.position;
+        const size_t glyphCount = text.size();
+        const size_t bytesPerVertex = sizeof(float) * 4;
+        const size_t verticesPerGlyph = 6;
+        const size_t vertexCount = verticesPerGlyph * glyphCount;
+        const size_t bufferSize = bytesPerVertex * vertexCount;
+        
+        std::vector<uint8_t> vertexData(bufferSize);
+        uint8_t* dst = (uint8_t *)&vertexData[0];
         
         // Iterate through all characters
+        glm::vec2 basePos = string.position;
         std::string::const_iterator c;
         for (c = text.begin(); c != text.end(); c++)
         {
             const Glyph &glyph = _glyphs[*c];
-            
-            glm::vec2 offset(glyph.bearing.x, glyph.bearing.y - glyph.size.y);
-            glm::vec2 pos = basePos + offset;
-            glm::vec2 size(glyph.size.x, glyph.size.y);
+            const glm::vec2 offset(glyph.bearing.x, glyph.bearing.y - glyph.size.y);
+            const glm::vec2 pos = basePos + offset;
+            const glm::vec2 size(glyph.size.x, glyph.size.y);
             const glm::vec2 &uvo = glyph.uvOrigin;
             const glm::vec2 &uve = glyph.uvExtent;
             
-            // Update the vertex buffer for each glyph.
-            const size_t numVertices = 6;
-            float vertexBytes[numVertices][4] = {
+            // Add a quad to the buffer for each glyph.
+            float vertexBytes[verticesPerGlyph][4] = {
                 { pos.x,          pos.y + size.y,   uvo.x,         uvo.y         },
                 { pos.x,          pos.y,            uvo.x,         uvo.y + uve.y },
                 { pos.x + size.x, pos.y,            uvo.x + uve.x, uvo.y + uve.y },
@@ -313,20 +312,39 @@ namespace PinkTopaz::Renderer {
                 { pos.x + size.x, pos.y,            uvo.x + uve.x, uvo.y + uve.y },
                 { pos.x + size.x, pos.y + size.y,   uvo.x + uve.x, uvo.y         }
             };
-            enc->setVertexBytes(_buffer, sizeof(vertexBytes), vertexBytes);
-            enc->drawPrimitives(Triangles, 0, numVertices, 1);
+            memcpy(dst, vertexBytes, sizeof(vertexBytes));
             
             // Advance to the next glyph.
             basePos.x += glyph.advance / 64.0f;
+            dst += sizeof(vertexBytes);
         }
+        
+        string.buffer->replace(std::move(vertexData));
     }
     
-    StringRenderer::StringHandle StringRenderer::add(const String &string)
+    StringRenderer::StringHandle StringRenderer::add(const std::string &str,
+                                                     const glm::vec2 &position,
+                                                     const glm::vec3 &color)
     {
-        _strings.push_back(string);
-        auto iter = _strings.end();
-        --iter;
-        return iter;
+        _strings.emplace_back(String(str, position, color));
+        auto handle = _strings.end();
+        --handle;
+        
+        const std::string &text = handle->contents;
+        const size_t glyphCount = text.size();
+        const size_t bytesPerVertex = sizeof(float) * 4;
+        const size_t verticesPerGlyph = 6;
+        const size_t vertexCount = verticesPerGlyph * glyphCount;
+        const size_t bufferSize = bytesPerVertex * vertexCount;
+        
+        handle->buffer = _graphicsDevice->makeBuffer(_vertexFormat,
+                                                     bufferSize,
+                                                     vertexCount,
+                                                     DynamicDraw);
+        
+        rebuildBuffer(*handle);
+        
+        return handle;
     }
     
     void StringRenderer::remove(StringRenderer::StringHandle &handle)
@@ -337,8 +355,8 @@ namespace PinkTopaz::Renderer {
     void StringRenderer::replaceContents(StringHandle &handle,
                                          const std::string &contents)
     {
-        String &string = *handle;
-        string.contents = contents;
+        handle->contents = contents;
+        rebuildBuffer(*handle);
     }
     
 } // namespace PinkTopaz::Renderer
