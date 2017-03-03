@@ -161,6 +161,22 @@ namespace PinkTopaz::Renderer {
         return atlasSurface;
     }
     
+    SDL_Surface* StringRenderer::atlasSearch(FT_Face &face, unsigned fontSize)
+    {
+        constexpr size_t initialAtlasSize = 256;
+        constexpr size_t maxAtlasSize = 4096;
+        size_t atlasSize;
+        SDL_Surface *atlasSurface = nullptr;
+        
+        for(atlasSize = initialAtlasSize; !atlasSurface && atlasSize < maxAtlasSize; atlasSize += 32)
+        {
+            SDL_Log("Trying to create texture atlas of size %d", (int)atlasSize);
+            atlasSurface = makeTextureAtlas(face, atlasSize);
+        }
+        
+        return atlasSurface;
+    }
+    
     std::shared_ptr<Texture>
     StringRenderer::makeTextureAtlas(const std::string &fontName,
                                      unsigned fontSize)
@@ -179,16 +195,7 @@ namespace PinkTopaz::Renderer {
             throw Exception("Failed to set the font size.");
         }
         
-        constexpr size_t initialAtlasSize = 256;
-        constexpr size_t maxAtlasSize = 4096;
-        size_t atlasSize;
-        SDL_Surface *atlasSurface = nullptr;
-        
-        for(atlasSize = initialAtlasSize; !atlasSurface && atlasSize < maxAtlasSize; atlasSize += 32)
-        {
-            SDL_Log("Trying to create texture atlas of size %d", (int)atlasSize);
-            atlasSurface = makeTextureAtlas(face, atlasSize);
-        }
+        SDL_Surface *atlasSurface = atlasSearch(face, fontSize);
         
         FT_Done_Face(face);
         FT_Done_FreeType(ft);

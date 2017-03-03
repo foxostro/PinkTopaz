@@ -70,6 +70,7 @@ namespace PinkTopaz::Renderer {
                                std::map<char, Glyph> &glyphs,
                                glm::ivec2 &cursor,
                                size_t &rowHeight);
+        SDL_Surface* atlasSearch(FT_Face &face, unsigned fontSize);
         SDL_Surface* makeTextureAtlas(FT_Face &face, size_t atlasSize);
         std::shared_ptr<Texture> makeTextureAtlas(const std::string &fontName,
                                                   unsigned fontSize);
