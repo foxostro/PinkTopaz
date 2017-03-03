@@ -9,7 +9,6 @@
 #include "Renderer/OpenGL/TextureSamplerOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
-#include <cassert>
 
 namespace PinkTopaz::Renderer::OpenGL {
     

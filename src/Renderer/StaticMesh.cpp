@@ -6,7 +6,6 @@
 //
 //
 
-#include <cassert>
 #include "SDL.h"
 #include "FileUtilities.hpp"
 #include "Exception.hpp"

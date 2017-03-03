@@ -18,7 +18,6 @@
 #include "FileUtilities.hpp"
 
 #include <vector>
-#include <cassert>
 
 namespace PinkTopaz::Renderer::OpenGL {
     
