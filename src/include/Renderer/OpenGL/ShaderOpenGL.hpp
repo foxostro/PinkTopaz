@@ -13,6 +13,8 @@
 #include "Renderer/OpenGL/opengl.hpp"
 #include "Renderer/OpenGL/CommandQueue.hpp"
 
+#include <map>
+
 namespace PinkTopaz::Renderer::OpenGL {
     
     class ShaderOpenGL : public Shader
@@ -31,8 +33,11 @@ namespace PinkTopaz::Renderer::OpenGL {
         inline GLuint getProgram() const { return _program; }
         
     private:
+        GLint getUniformLocation(GLuint program, const char *name);
+        
         std::atomic<GLuint> _program;
         CommandQueue &_commandQueue;
+        std::map<const char *, GLint> _loc;
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

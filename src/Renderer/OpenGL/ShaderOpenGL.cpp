@@ -94,11 +94,24 @@ namespace PinkTopaz::Renderer::OpenGL {
         });
     }
     
+    GLint ShaderOpenGL::getUniformLocation(GLuint program, const char *name)
+    {
+        GLint loc;
+        auto iter = _loc.find(name);
+        if (iter == _loc.end()) {
+            loc = glGetUniformLocation(program, name);
+            _loc.insert(std::make_pair(name, loc));
+        } else {
+            loc = iter->second;
+        }
+        return loc;
+    }
+    
     void ShaderOpenGL::setShaderUniform(const char *name, const glm::mat4 &value)
     {
         _commandQueue.enqueue([=]() {
             GLuint program = this->_program;
-            GLint loc = glGetUniformLocation(program, name);
+            GLint loc = getUniformLocation(program, name);
             glProgramUniformMatrix4fv(program, loc, 1, GL_FALSE, glm::value_ptr(value));
             CHECK_GL_ERROR();
         });
@@ -108,7 +121,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     {
         _commandQueue.enqueue([=]() {
             GLuint program = this->_program;
-            GLint loc = glGetUniformLocation(program, name);
+            GLint loc = getUniformLocation(program, name);
             glProgramUniform3f(program, loc, value.x, value.y, value.z);
             CHECK_GL_ERROR();
         });
@@ -118,7 +131,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     {
         _commandQueue.enqueue([=]() {
             GLuint program = this->_program;
-            GLint loc = glGetUniformLocation(program, name);
+            GLint loc = getUniformLocation(program, name);
             glProgramUniform1i(program, loc, value);
             CHECK_GL_ERROR();
         });
