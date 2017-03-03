@@ -47,9 +47,6 @@ namespace PinkTopaz::Renderer {
         // Binds the specified buffer for use in the vertex program.
         virtual void setVertexBuffer(const std::shared_ptr<Buffer> &buffer) = 0;
         
-        // Sets a block of data for the vertex shader.
-        virtual void setVertexBytes(const std::shared_ptr<Buffer> &abstractBuffer, size_t size, const void *data) = 0;
-        
         // Draw triangle primitives using the bound buffers and other resources.
         virtual void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) = 0;
     };

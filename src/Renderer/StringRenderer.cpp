@@ -271,7 +271,9 @@ namespace PinkTopaz::Renderer {
         
         for (auto &string : _strings)
         {
-            // TODO: this will not work when two different strings use different colors
+            // TODO: This will not work when two different strings use different
+            // colors. The solution is to use uniform buffer objects and allow
+            // each string to bind a different set of uniforms.
             _shader->setShaderUniform("textColor", string.color);
             
             encoder->setVertexBuffer(string.buffer);
