@@ -73,6 +73,9 @@ namespace PinkTopaz::Renderer::OpenGL {
                                            size_t elementCount,
                                            BufferUsage usage) override;
         
+        // Creates a new GPU fence object.
+        std::shared_ptr<Fence> makeFence() override;
+        
     private:
         SDL_Window &_window;
         SDL_GLContext _glContext;

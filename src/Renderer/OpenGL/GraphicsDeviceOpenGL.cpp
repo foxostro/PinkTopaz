@@ -12,6 +12,7 @@
 #include "Renderer/OpenGL/TextureOpenGL.hpp"
 #include "Renderer/OpenGL/TextureSamplerOpenGL.hpp"
 #include "Renderer/OpenGL/BufferOpenGL.hpp"
+#include "Renderer/OpenGL/FenceOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
 #include "FileUtilities.hpp"
@@ -135,6 +136,12 @@ namespace PinkTopaz::Renderer::OpenGL {
                                                      elementCount,
                                                      usage);
         return std::dynamic_pointer_cast<Buffer>(buffer);
+    }
+    
+    std::shared_ptr<Fence> GraphicsDeviceOpenGL::makeFence()
+    {
+        auto fence = std::make_shared<FenceOpenGL>(_commandQueue);
+        return std::dynamic_pointer_cast<Fence>(fence);
     }
     
 } // namespace PinkTopaz::Renderer::OpenGL

@@ -14,6 +14,7 @@ set(SOURCE_FILES_OPENGL
     "src/include/Renderer/OpenGL/ShaderOpenGL.hpp" "src/Renderer/OpenGL/ShaderOpenGL.cpp"
     "src/Renderer/OpenGL/TextureOpenGL.cpp" "src/include/Renderer/OpenGL/TextureOpenGL.hpp"
     "src/Renderer/OpenGL/TextureSamplerOpenGL.cpp" "src/include/Renderer/OpenGL/TextureSamplerOpenGL.hpp"
+    "src/Renderer/OpenGL/FenceOpenGL.cpp" "src/include/Renderer/OpenGL/FenceOpenGL.hpp"
     )
 
 set(SOURCE_FILES_RENDERER
@@ -27,6 +28,7 @@ set(SOURCE_FILES_RENDERER
     "src/include/Renderer/RenderPassDescriptor.hpp"
     "src/include/Renderer/Texture.hpp"
     "src/include/Renderer/TextureSampler.hpp"
+    "src/include/Renderer/Fence.hpp"
     )
 
 set(SOURCE_FILES_SYSTEMS

@@ -20,6 +20,7 @@
 #include "Renderer/RenderPassDescriptor.hpp"
 #include "Renderer/Texture.hpp"
 #include "Renderer/TextureSampler.hpp"
+#include "Renderer/Fence.hpp"
 
 namespace PinkTopaz::Renderer {
 
@@ -74,12 +75,15 @@ namespace PinkTopaz::Renderer {
                    size_t elementCount,
                    BufferUsage usage) = 0;
         
-        // Creates a new GPU buffer object with indefined contents.
+        // Creates a new GPU buffer object with undefined contents.
         virtual std::shared_ptr<Buffer>
         makeBuffer(const VertexFormat &format,
                    size_t size,
                    size_t elementCount,
                    BufferUsage usage) = 0;
+        
+        // Creates a new GPU fence object.
+        virtual std::shared_ptr<Fence> makeFence() = 0;
     };
     
 } // namespace PinkTopaz::Renderer

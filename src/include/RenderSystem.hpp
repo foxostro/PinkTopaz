@@ -38,6 +38,8 @@ namespace PinkTopaz {
         std::shared_ptr<Renderer::GraphicsDevice> _graphicsDevice;
         Renderer::StringRenderer _stringRenderer;
         Renderer::StringRenderer::StringHandle _frameTimeLabel;
+        std::shared_ptr<Renderer::Fence> _frameTimeFence;
+        bool _frameTimingEnabled;
         unsigned _timeAccum;
         unsigned _countDown;
         const unsigned _framesBetweenReport;

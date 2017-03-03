@@ -26,6 +26,9 @@ namespace PinkTopaz::Renderer::OpenGL {
         void setFragmentSampler(const std::shared_ptr<TextureSampler> &sampler, size_t index) override;
         void setVertexBuffer(const std::shared_ptr<Buffer> &buffer) override;
         void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) override;
+        void updateFence(const std::shared_ptr<Fence> &fence) override;
+        void waitForFence(const std::shared_ptr<Fence> &fence,
+                          std::function<void()> &&completionHandler) override;
         
         inline CommandQueue& getCommandQueue() { return _commandQueue; }
         
