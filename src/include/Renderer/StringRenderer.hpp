@@ -82,19 +82,46 @@ namespace PinkTopaz::Renderer {
             unsigned advance; // Given in 1/64 points.
         };
         
-        static std::vector<uint8_t> getGrayScaleImageBytes(SDL_Surface *surface);
+        // Gets the image bytes from the specified surface. The image data
+        // comes from only the RED components of the specified surface. All
+        // other components are discarded.
+        static std::vector<uint8_t> getGrayScaleImageBytes(SDL_Surface *surf);
         static bool placeGlyph(FT_Face &face,
                                FT_ULong c,
                                SDL_Surface *atlasSurface,
                                std::map<char, Glyph> &glyphs,
                                glm::ivec2 &cursor,
                                size_t &rowHeight);
+        
+        // Returns a sorted list of pairs where each pair is made of a character
+        // that belongs in the font texture atlas, and it's height.
+        std::vector<std::pair<char, unsigned>> getCharSet(FT_Face &f);
+        
+        // Creates a font texture atlas with the specified character set.
+        // The atlas size is directly specified. Though, this method will return
+        // false if it is not possible to pack all characters into a surface of
+        // this size.
+        SDL_Surface*
+        makeTextureAtlas(FT_Face &face,
+                         const std::vector<std::pair<char, unsigned>> &chars,
+                         size_t atlasSize);
+        
+        // Searches for, and returns, the smallest font texture atlas that can
+        // accomodate the specified font at the specified font size.
+        // When this method returns, `_glyphs' will contain valid glyph metrics.
         SDL_Surface* atlasSearch(FT_Face &face, unsigned fontSize);
+        
+        // Returns a font texture atlas for the specified font and size.
         SDL_Surface* genTextureAtlas(const std::string &fontName,
                                      unsigned fontSize);
-        SDL_Surface* makeTextureAtlas(FT_Face &face, size_t atlasSize);
+        
+        // Returns a texture which holds the font texture atlas for the
+        // specified font and specified font size.
         std::shared_ptr<Texture> makeTextureAtlas(const std::string &fontName,
                                                   unsigned fontSize);
+        
+        // Rebuilds the internal vertex buffer for a string. This is useful
+        // when string contents have changed, for example.
         void rebuildBuffer(String &string);
         
         std::shared_ptr<GraphicsDevice> _graphicsDevice;

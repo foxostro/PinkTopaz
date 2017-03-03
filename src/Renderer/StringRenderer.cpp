@@ -155,7 +155,10 @@ namespace PinkTopaz::Renderer {
         return true;
     }
     
-    SDL_Surface* StringRenderer::makeTextureAtlas(FT_Face &face, size_t size)
+    SDL_Surface*
+    StringRenderer::makeTextureAtlas(FT_Face &face,
+                                     const std::vector<std::pair<char, unsigned>> &characters,
+                                     size_t size)
     {
         _glyphs.clear();
         
@@ -170,8 +173,9 @@ namespace PinkTopaz::Renderer {
                                                          0x00ff0000,
                                                          0xff000000);
         
-        for (FT_ULong c = 32; c < 127; c++)
+        for (auto &character : characters)
         {
+            char c = character.first;
             if (!placeGlyph(face, c, atlasSurface, _glyphs,
                             cursor, rowHeight)) {
                 SDL_FreeSurface(atlasSurface);
@@ -184,6 +188,30 @@ namespace PinkTopaz::Renderer {
         return atlasSurface;
     }
     
+    std::vector<std::pair<char, unsigned>>
+    StringRenderer::getCharSet(FT_Face &face)
+    {
+        std::vector<std::pair<char, unsigned>> characters;
+        
+        for (FT_ULong c = 32; c < 127; c++)
+        {
+            if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+                throw Exception("Failed to load the glyph %c.", (char)c);
+            }
+            
+            unsigned height = face->glyph->bitmap.rows;
+            characters.emplace_back(std::make_pair((char)c, height));
+        }
+        
+        std::sort(characters.begin(), characters.end(),
+                  [](const std::pair<char, int> &left,
+                     const std::pair<char, int> &right) -> bool {
+                      return (left.second < right.second);
+                  });
+        
+        return characters;
+    }
+    
     SDL_Surface* StringRenderer::atlasSearch(FT_Face &face, unsigned fontSize)
     {
         constexpr size_t initialAtlasSize = 256;
@@ -191,10 +219,12 @@ namespace PinkTopaz::Renderer {
         size_t atlasSize;
         SDL_Surface *atlasSurface = nullptr;
         
+        auto chars = getCharSet(face);
+        
         for(atlasSize = initialAtlasSize; !atlasSurface && atlasSize < maxAtlasSize; atlasSize += 32)
         {
             SDL_Log("Trying to create texture atlas of size %d", (int)atlasSize);
-            atlasSurface = makeTextureAtlas(face, atlasSize);
+            atlasSurface = makeTextureAtlas(face, chars, atlasSize);
         }
         
         return atlasSurface;

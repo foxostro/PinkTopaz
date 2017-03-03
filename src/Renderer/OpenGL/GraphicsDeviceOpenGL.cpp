@@ -54,7 +54,6 @@ namespace PinkTopaz::Renderer::OpenGL {
     
     GraphicsDeviceOpenGL::~GraphicsDeviceOpenGL()
     {
-        _commandQueue.execute();
         SDL_GL_DeleteContext(_glContext);
     }
     
