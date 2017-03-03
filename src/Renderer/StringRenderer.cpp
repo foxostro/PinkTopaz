@@ -17,6 +17,8 @@ namespace PinkTopaz::Renderer {
     {
         const size_t w = surface->w;
         const size_t h = surface->h;
+        const uint32_t mask = surface->format->Rmask;
+        const uint8_t shift = surface->format->Rshift;
         
         // We only want to store the RED components in the GPU texture.
         std::vector<uint8_t> atlasPixels(w * h);
@@ -32,7 +34,8 @@ namespace PinkTopaz::Renderer {
             for(size_t x = 0; x < w; ++x)
             {
                 uint32_t pixel = srcRow[x];
-                dstRow[x] = pixel & 0x000000ff;
+                uint8_t component = (pixel & mask) >> shift;
+                dstRow[x] = component;
             }
             
             srcRow += surface->pitch / surface->format->BytesPerPixel;
@@ -79,9 +82,18 @@ namespace PinkTopaz::Renderer {
         
         // Convert grayscale image to RGBA so we can use SDL_Surface.
         std::vector<uint32_t> pixels(n);
+        const uint8_t rshift = atlasSurface->format->Rshift;
+        const uint8_t gshift = atlasSurface->format->Gshift;
+        const uint8_t bshift = atlasSurface->format->Bshift;
+        const uint8_t ashift = atlasSurface->format->Ashift;
         for(size_t i = 0; i < n; ++i)
         {
-            pixels[i] = 0xff000000 | (uint8_t)glyphBytes[i];
+            uint32_t component = glyphBytes[i];
+            constexpr uint8_t alpha = 0xff;
+            pixels[i] = (alpha << ashift)
+                      | (component << rshift)
+                      | (component << gshift)
+                      | (component << bshift);
         }
         
         // Create a surface with the glpyh image.
