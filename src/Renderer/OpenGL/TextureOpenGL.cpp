@@ -150,8 +150,10 @@ namespace PinkTopaz::Renderer::OpenGL {
     {
         GLuint handle = _handle;
         _commandQueue.enqueue([handle]{
-            glDeleteTextures(1, &handle);
-            CHECK_GL_ERROR();
+            if (handle) {
+                glDeleteTextures(1, &handle);
+                CHECK_GL_ERROR();
+            }
         });
     }
     

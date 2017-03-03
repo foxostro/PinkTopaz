@@ -25,19 +25,33 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
     }
     
+    GLenum getBufferTypeEnum(BufferType type)
+    {
+        switch (type)
+        {
+            case ArrayBuffer:   return GL_ARRAY_BUFFER;
+            case UniformBuffer: return GL_UNIFORM_BUFFER;
+                
+            default:
+                throw Exception("Unsupported buffer type %d\n", (int)type);
+        }
+    }
+    
     BufferOpenGL::BufferOpenGL(CommandQueue &queue,
                                const VertexFormat &format,
                                const std::vector<uint8_t> &bufferData,
                                size_t elementCount,
-                               BufferUsage usage)
+                               BufferUsage usage,
+                               BufferType bufferType)
      : _vao(0),
        _vbo(0),
        _count(elementCount),
        _usage(getUsageEnum(usage)),
+       _bufferType(bufferType),
        _commandQueue(queue)
     {
         _commandQueue.enqueue([=]{
-            internalCreate(format, bufferData.size(), (void *)&bufferData[0]);
+            internalCreate(&format, bufferData.size(), (void *)&bufferData[0]);
         });
     }
     
@@ -45,31 +59,56 @@ namespace PinkTopaz::Renderer::OpenGL {
                                const VertexFormat &format,
                                size_t bufferSize,
                                size_t elementCount,
-                               BufferUsage usage)
+                               BufferUsage usage,
+                               BufferType bufferType)
      : _vao(0),
        _vbo(0),
        _count(elementCount),
        _usage(getUsageEnum(usage)),
+       _bufferType(bufferType),
        _commandQueue(queue)
     {
         _commandQueue.enqueue([=]{
-            internalCreate(format, bufferSize, nullptr);
+            internalCreate(&format, bufferSize, nullptr);
         });
     }
     
-    void BufferOpenGL::internalCreate(const VertexFormat &format,
-                                      size_t bufferSize,
-                                      void *bufferData)
+    BufferOpenGL::BufferOpenGL(CommandQueue &queue,
+                               size_t bufferSize,
+                               BufferUsage usage,
+                               BufferType bufferType)
+     : _vao(0),
+       _vbo(0),
+       _count(0),
+       _usage(getUsageEnum(usage)),
+       _bufferType(bufferType),
+       _commandQueue(queue)
     {
-        GLuint vao, vbo;
-        
-        glGenVertexArrays(1, &vao);
-        glBindVertexArray(vao);
-        
-        glGenBuffers(1, &vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        
-        glBufferData(GL_ARRAY_BUFFER, bufferSize, bufferData, _usage);
+        _commandQueue.enqueue([=]{
+            internalCreate(nullptr, bufferSize, nullptr);
+        });
+    }
+
+    BufferOpenGL::BufferOpenGL(CommandQueue &queue,
+                               const std::vector<uint8_t> &bufferData,
+                               BufferUsage usage,
+                               BufferType bufferType)
+     : _vao(0),
+       _vbo(0),
+       _count(0),
+       _usage(getUsageEnum(usage)),
+       _bufferType(bufferType),
+       _commandQueue(queue)
+    {
+        _commandQueue.enqueue([=]{
+            internalCreate(nullptr, bufferData.size(), (void *)&bufferData[0]);
+        });
+    }
+    
+    void BufferOpenGL::setupVertexAttributes(const VertexFormat &format)
+    {
+        // We're already holding the lock coming into this method.
+        // Buffers are already bound coming into this method.
         
         for (size_t i = 0; i < format.attributes.size(); ++i)
         {
@@ -97,34 +136,67 @@ namespace PinkTopaz::Renderer::OpenGL {
                                   (GLsizei)attr.stride,
                                   (const GLvoid *)attr.offset);
             glEnableVertexAttribArray((GLuint)i);
-            
-            lock.lock();
-            _vao = vao;
-            _vbo = vbo;
-            lock.unlock();
+        }
+    }
+    
+    void BufferOpenGL::internalCreate(const VertexFormat *pformat,
+                                      size_t bufferSize,
+                                      void *bufferData)
+    {
+        std::lock_guard<std::mutex> lock(_lock);
+        
+        GLuint vao = 0, vbo = 0;
+        GLenum target = getTargetEnum();
+        
+        if (_bufferType == ArrayBuffer) {
+            glGenVertexArrays(1, &vao);
+            glBindVertexArray(vao);
         }
         
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
+        glGenBuffers(1, &vbo);
+        glBindBuffer(target, vbo);
+        glBufferData(target, bufferSize, bufferData, _usage);
+        
+        if (pformat) {
+            const VertexFormat &format = *pformat;
+            setupVertexAttributes(format);
+        }
+        
+        glBindBuffer(target, 0);
+        
+        if (_bufferType == ArrayBuffer) {
+            glBindVertexArray(0);
+        }
+        
+        _vao = vao;
+        _vbo = vbo;
         
         CHECK_GL_ERROR();
     }
     
     void BufferOpenGL::internalReplace(const void *p, size_t n, size_t count)
     {
-        lock.lock();
+        std::lock_guard<std::mutex> lock(_lock);
+        
         GLuint vao = _vao;
         GLuint vbo = _vbo;
         _count = count;
         GLenum usage = _usage;
-        lock.unlock();
+        GLenum target = getTargetEnum();
         
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, n, nullptr, usage); // Orphan the buffer.
-        glBufferData(GL_ARRAY_BUFFER, n, p, usage);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
+        if (_bufferType == ArrayBuffer) {
+            glBindVertexArray(vao);
+        }
+        
+        glBindBuffer(target, vbo);
+        glBufferData(target, n, nullptr, usage); // Orphan the buffer.
+        glBufferData(target, n, p, usage);
+        glBindBuffer(target, 0);
+        
+        if (_bufferType == ArrayBuffer) {
+            glBindVertexArray(0);
+        }
+        
         CHECK_GL_ERROR();
     }
     
@@ -155,14 +227,22 @@ namespace PinkTopaz::Renderer::OpenGL {
     
     BufferOpenGL::~BufferOpenGL()
     {
-        lock.lock();
-        GLuint vao = _vao;
-        GLuint vbo = _vbo;
-        lock.unlock();
-
+        GLuint vao, vbo;
+        
+        {
+            std::lock_guard<std::mutex> lock(_lock);
+            vao = _vao;
+            vbo = _vbo;
+        }
+        
         _commandQueue.enqueue([vao, vbo]{
-            glDeleteBuffers(1, &vbo);
-            glDeleteVertexArrays(1, &vao);
+            if (vbo) {
+                glDeleteBuffers(1, &vbo);
+            }
+            
+            if (vao) {
+                glDeleteVertexArrays(1, &vao);
+            }
         });
     }
     

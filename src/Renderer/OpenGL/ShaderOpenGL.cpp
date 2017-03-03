@@ -89,8 +89,10 @@ namespace PinkTopaz::Renderer::OpenGL {
     {
         GLuint program = _program;
         _commandQueue.enqueue([program]{
-            glDeleteProgram(program);
-            CHECK_GL_ERROR();
+            if (program) {
+                glDeleteProgram(program);
+                CHECK_GL_ERROR();
+            }
         });
     }
     

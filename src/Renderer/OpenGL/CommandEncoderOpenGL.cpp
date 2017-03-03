@@ -87,13 +87,18 @@ namespace PinkTopaz::Renderer::OpenGL {
         });
     }
     
-    void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstractBuffer)
+    void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
     {
         assert(abstractBuffer);
         _commandQueue.enqueue([=]() {
             auto buffer = std::dynamic_pointer_cast<BufferOpenGL>(abstractBuffer);
-            GLuint handle = buffer->getHandleVAO();
-            glBindVertexArray(handle);
+            
+            GLuint vao = buffer->getHandleVAO();
+            GLuint vbo = buffer->getHandleVBO();
+            GLenum target = buffer->getTargetEnum();
+            
+            glBindVertexArray(vao);
+            glBindBufferBase(target, index, vbo);
             CHECK_GL_ERROR();
         });
     }

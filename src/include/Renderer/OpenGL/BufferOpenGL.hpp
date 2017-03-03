@@ -16,6 +16,8 @@
 
 namespace PinkTopaz::Renderer::OpenGL {
     
+    GLenum getBufferTypeEnum(BufferType type);
+    
     // Encapsulates a GPU buffer resource in a platform-agnostic manner.
     class BufferOpenGL : public Buffer
     {
@@ -24,13 +26,25 @@ namespace PinkTopaz::Renderer::OpenGL {
                      const VertexFormat &format,
                      const std::vector<uint8_t> &bufferData,
                      size_t elementCount,
-                     BufferUsage usage);
+                     BufferUsage usage,
+                     BufferType bufferType);
 
         BufferOpenGL(CommandQueue &queue,
                      const VertexFormat &format,
                      size_t bufferSize,
                      size_t elementCount,
-                     BufferUsage usage);
+                     BufferUsage usage,
+                     BufferType bufferType);
+        
+        BufferOpenGL(CommandQueue &queue,
+                     size_t bufferSize,
+                     BufferUsage usage,
+                     BufferType bufferType);
+        
+        BufferOpenGL(CommandQueue &queue,
+                     const std::vector<uint8_t> &data,
+                     BufferUsage usage,
+                     BufferType bufferType);
 
         virtual ~BufferOpenGL();
         
@@ -44,14 +58,25 @@ namespace PinkTopaz::Renderer::OpenGL {
         inline GLuint getHandleVAO() const { return _vao; }
         inline GLuint getHandleVBO() const { return _vbo; }
         
+        inline GLenum getTargetEnum() const
+        {
+            return getBufferTypeEnum(_bufferType);
+        }
+        
+        // Gets the type of the buffer.
+        BufferType getType() const override { return _bufferType; }
+        
     private:
-        std::mutex lock;
+        std::mutex _lock;
         GLuint _vao, _vbo;
         size_t _count;
         GLenum _usage;
+        const BufferType _bufferType;
         CommandQueue &_commandQueue;
         
-        void internalCreate(const VertexFormat &format,
+        void setupVertexAttributes(const VertexFormat &format);
+        
+        void internalCreate(const VertexFormat *format, // optional
                             size_t bufferSize,
                             void *bufferData);
         

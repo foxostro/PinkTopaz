@@ -21,6 +21,12 @@ namespace PinkTopaz::Renderer {
         StreamDraw
     };
     
+    enum BufferType
+    {
+        ArrayBuffer,
+        UniformBuffer
+    };
+    
     // Encapsulates a GPU buffer resource in a platform-agnostic manner.
     class Buffer
     {
@@ -34,6 +40,9 @@ namespace PinkTopaz::Renderer {
         
         // Get the number of vertices contained in the buffer.
         virtual size_t getVertexCount() const = 0;
+        
+        // Gets the type of the buffer.
+        virtual BufferType getType() const = 0;
         
     protected:
         Buffer() = default;

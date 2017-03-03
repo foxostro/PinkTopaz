@@ -341,7 +341,7 @@ namespace PinkTopaz::Renderer {
             // each string to bind a different set of uniforms.
             _shader->setShaderUniform("textColor", string.color);
             
-            encoder->setVertexBuffer(string.buffer);
+            encoder->setVertexBuffer(string.buffer, 0);
             encoder->drawPrimitives(Triangles, 0, string.buffer->getVertexCount(), 1);
         }
 

@@ -73,6 +73,15 @@ namespace PinkTopaz::Renderer::OpenGL {
                                            size_t elementCount,
                                            BufferUsage usage) override;
         
+        // Creates a new GPU uniform buffer object.
+        std::shared_ptr<Buffer>
+        makeUniformBuffer(const std::vector<uint8_t> &bufferData,
+                          BufferUsage usage) override;
+        
+        // Creates a new GPU uniform buffer object with undefined contents.
+        std::shared_ptr<Buffer>
+        makeUniformBuffer(size_t size, BufferUsage usage) override;
+        
         // Creates a new GPU fence object.
         std::shared_ptr<Fence> makeFence() override;
         

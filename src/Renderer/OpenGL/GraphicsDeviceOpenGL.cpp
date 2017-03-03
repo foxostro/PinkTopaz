@@ -119,7 +119,8 @@ namespace PinkTopaz::Renderer::OpenGL {
                                                      format,
                                                      bufferData,
                                                      elementCount,
-                                                     usage);
+                                                     usage,
+                                                     ArrayBuffer);
         return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     
@@ -133,7 +134,29 @@ namespace PinkTopaz::Renderer::OpenGL {
                                                      format,
                                                      bufferSize,
                                                      elementCount,
-                                                     usage);
+                                                     usage,
+                                                     ArrayBuffer);
+        return std::dynamic_pointer_cast<Buffer>(buffer);
+    }
+    
+    std::shared_ptr<Buffer>
+    GraphicsDeviceOpenGL::makeUniformBuffer(const std::vector<uint8_t> &data,
+                                            BufferUsage usage)
+    {
+        auto buffer = std::make_shared<BufferOpenGL>(_commandQueue,
+                                                     data,
+                                                     usage,
+                                                     UniformBuffer);
+        return std::dynamic_pointer_cast<Buffer>(buffer);
+    }
+    
+    std::shared_ptr<Buffer>
+    GraphicsDeviceOpenGL::makeUniformBuffer(size_t size, BufferUsage usage)
+    {
+        auto buffer = std::make_shared<BufferOpenGL>(_commandQueue,
+                                                     size,
+                                                     usage,
+                                                     UniformBuffer);
         return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     
