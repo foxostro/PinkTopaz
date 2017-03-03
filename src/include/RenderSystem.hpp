@@ -37,10 +37,11 @@ namespace PinkTopaz {
         entityx::Entity _activeCamera;
         std::shared_ptr<Renderer::GraphicsDevice> _graphicsDevice;
         Renderer::StringRenderer _stringRenderer;
-        Renderer::StringRenderer::StringHandle _fps;
+        Renderer::StringRenderer::StringHandle _frameTimeLabel;
         unsigned _timeAccum;
         unsigned _countDown;
         const unsigned _framesBetweenReport;
+        bool _firstReportingPeriod;
     };
 
 } // namespace PinkTopaz

@@ -26,13 +26,10 @@ namespace PinkTopaz {
        _graphicsDevice(dev),
        _stringRenderer(dev, "vegur/Vegur-Regular.otf", 48),
        _timeAccum(0),
-       _countDown(0),
-       _framesBetweenReport(60)
-    {
-        const glm::vec3 color(0.2f, 0.2f, 0.2f);
-        const glm::vec2 position(30.0f, 1140.0f);
-        _fps = _stringRenderer.add("Frame Time: XX.XX ms", position, color);
-    }
+       _countDown(60),
+       _framesBetweenReport(60),
+       _firstReportingPeriod(true)
+    {}
     
     void RenderSystem::configure(entityx::EventManager &em)
     {
@@ -104,8 +101,17 @@ namespace PinkTopaz {
             ss.precision(2);
             ss << std::fixed << frameTime;
             std::string s(ss.str());
+            std::string string = "Frame Time: " + s + " ms";
+        
+            if (_firstReportingPeriod) {
+                _firstReportingPeriod = false;
+                const glm::vec3 color(0.2f, 0.2f, 0.2f);
+                const glm::vec2 position(30.0f, 1140.0f);
+                _frameTimeLabel = _stringRenderer.add(string, position, color);
+            } else {
+                _stringRenderer.replaceContents(_frameTimeLabel, string);
+            }
             
-            _stringRenderer.replaceContents(_fps, "Frame Time: " + s + " ms");
             _countDown = _framesBetweenReport;
             _timeAccum = 0;
         } else {
