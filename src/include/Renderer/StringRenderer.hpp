@@ -103,7 +103,6 @@ namespace PinkTopaz::Renderer {
         VertexFormat _vertexFormat;
         RenderPassDescriptor _renderPassDescriptor;
         std::list<String> _strings;
-        glm::ivec2 _canvasSize;
         glm::ivec4 _viewport;
     };
     

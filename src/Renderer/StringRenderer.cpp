@@ -223,8 +223,7 @@ namespace PinkTopaz::Renderer {
     StringRenderer::StringRenderer(const std::shared_ptr<GraphicsDevice> &dev,
                                    const std::string &fontName,
                                    unsigned fontSize)
-     : _graphicsDevice(dev),
-       _canvasSize(800, 600)
+     : _graphicsDevice(dev)
     {
         _renderPassDescriptor.blend = true;
         _renderPassDescriptor.depthTest = false;
@@ -233,9 +232,6 @@ namespace PinkTopaz::Renderer {
         _textureAtlas = makeTextureAtlas(fontName, fontSize);
         
         _shader = _graphicsDevice->makeShader("text_vert", "text_frag");
-        glm::mat4 projection = glm::ortho(0.0f, (float)_canvasSize.x,
-                                          0.0f, (float)_canvasSize.y);
-        _shader->setShaderUniform("projection", projection);
         _shader->setShaderUniform("tex", 0);
         
         _vertexFormat.attributes.emplace_back((AttributeFormat){
