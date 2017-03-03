@@ -319,7 +319,7 @@ namespace PinkTopaz::Renderer {
             dst += sizeof(vertexBytes);
         }
         
-        string.buffer->replace(std::move(vertexData));
+        string.buffer->replace(std::move(vertexData), vertexCount);
     }
     
     StringRenderer::StringHandle StringRenderer::add(const std::string &str,
