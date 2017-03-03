@@ -9,12 +9,6 @@
 #ifndef CommandEncoderOpenGL_hpp
 #define CommandEncoderOpenGL_hpp
 
-#include <memory>
-#include <string>
-#include <mutex>
-#include <queue>
-#include <glm/vec4.hpp>
-
 #include "Renderer/CommandEncoder.hpp"
 #include "Renderer/OpenGL/CommandQueue.hpp"
 #include "Renderer/RenderPassDescriptor.hpp"
