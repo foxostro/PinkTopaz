@@ -46,6 +46,92 @@ namespace PinkTopaz::Renderer {
         return atlasPixels;
     }
     
+    bool StringRenderer::placeGlyph(FT_Face &face,
+                                    FT_ULong c,
+                                    SDL_Surface *atlasSurface,
+                                    std::map<char, Glyph> &glyphs,
+                                    glm::ivec2 &cursor,
+                                    size_t &rowHeight)
+    {
+        if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+            throw Exception("Failed to load the glyph %c.", (char)c);
+        }
+        
+        const size_t width = face->glyph->bitmap.width;
+        const size_t height = face->glyph->bitmap.rows;
+        const size_t n = width * height;
+        const uint8_t *glyphBytes = face->glyph->bitmap.buffer;
+        
+        rowHeight = std::max(rowHeight, height);
+        
+        // Validate the cursor. Can the glyph fit on this row?
+        if ((cursor.x + width) >= atlasSurface->w) {
+            // Go to the next row.
+            cursor.x = 0;
+            cursor.y += rowHeight;
+            rowHeight = height;
+            
+            // Have we run out of rows? If so then try a bigger atlas.
+            if ((cursor.y + height) >= atlasSurface->h) {
+                return false;
+            }
+        }
+        
+        // Convert grayscale image to RGBA so we can use SDL_Surface.
+        std::vector<uint32_t> pixels(n);
+        for(size_t i = 0; i < n; ++i)
+        {
+            pixels[i] = 0xff000000 | (uint8_t)glyphBytes[i];
+        }
+        
+        // Create a surface with the glpyh image.
+        SDL_Surface *glyphSurface = SDL_CreateRGBSurfaceFrom(&pixels[0],
+                                                             width,
+                                                             height,
+                                                             sizeof(uint32_t) * 8,
+                                                             width * sizeof(uint32_t),
+                                                             0x000000ff,
+                                                             0x0000ff00,
+                                                             0x00ff0000,
+                                                             0xff000000);
+        
+        // Blit the glyph into the texture atlas at the cursor position.
+        SDL_Rect src = {
+            .x = 0,
+            .y = 0,
+            .w = (int)width,
+            .h = (int)height,
+        };
+        
+        SDL_Rect dst = {
+            .x = cursor.x,
+            .y = cursor.y,
+            .w = (int)width,
+            .h = (int)height,
+        };
+        
+        SDL_BlitSurface(glyphSurface, &src, atlasSurface, &dst);
+        SDL_FreeSurface(glyphSurface);
+        
+        // Now store the glyph for later use.
+        Glyph glyph = {
+            .uvOrigin = glm::vec2((float)cursor.x / atlasSurface->w,
+                                  (float)cursor.y / atlasSurface->w),
+            .uvExtent = glm::vec2((float)width / atlasSurface->h,
+                                  (float)height / atlasSurface->h),
+            .size = glm::ivec2(width, height),
+            .bearing = glm::ivec2(face->glyph->bitmap_left,
+                                  face->glyph->bitmap_top),
+            .advance = (unsigned)face->glyph->advance.x
+        };
+        glyphs.insert(std::pair<char, Glyph>((char)c, glyph));
+        
+        // Increment the cursor. We've already validated for this glyph.
+        cursor.x += width;
+        
+        return true;
+    }
+    
     SDL_Surface* StringRenderer::makeTextureAtlas(FT_Face &face, size_t size)
     {
         _glyphs.clear();
@@ -63,83 +149,15 @@ namespace PinkTopaz::Renderer {
         
         for (FT_ULong c = 0; c < 128; c++)
         {
-            if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
-                throw Exception("Failed to load the glyph %c.", (char)c);
+            if (!placeGlyph(face, c, atlasSurface, _glyphs,
+                            cursor, rowHeight)) {
+                SDL_FreeSurface(atlasSurface);
+                atlasSurface = nullptr;
+                _glyphs.clear();
+                break;
             }
-            
-            const size_t width = face->glyph->bitmap.width;
-            const size_t height = face->glyph->bitmap.rows;
-            const size_t n = width * height;
-            const uint8_t *glyphBytes = face->glyph->bitmap.buffer;
-            
-            rowHeight = std::max(rowHeight, height);
-            
-            // Validate the cursor. Can the glyph fit on this row?
-            if ((cursor.x + width) >= size) {
-                // Go to the next row.
-                cursor.x = 0;
-                cursor.y += rowHeight;
-                rowHeight = height;
-                
-                // Have we run out of rows? If so then try a bigger atlas.
-                if ((cursor.y + height) >= size) {
-                    SDL_FreeSurface(atlasSurface);
-                    _glyphs.clear();
-                    return nullptr;
-                }
-            }
-            
-            // Convert grayscale image to RGBA so we can use SDL_Surface.
-            std::vector<uint32_t> pixels(n);
-            for(size_t i = 0; i < n; ++i)
-            {
-                pixels[i] = 0xff000000 | (uint8_t)glyphBytes[i];
-            }
-            
-            // Create a surface with the glpyh image.
-            SDL_Surface *glyphSurface = SDL_CreateRGBSurfaceFrom(&pixels[0],
-                                                                 width,
-                                                                 height,
-                                                                 sizeof(uint32_t) * 8,
-                                                                 width * sizeof(uint32_t),
-                                                                 0x000000ff,
-                                                                 0x0000ff00,
-                                                                 0x00ff0000,
-                                                                 0xff000000);
-            
-            // Blit the glyph into the texture atlas at the cursor position.
-            SDL_Rect src = {
-                .x = 0,
-                .y = 0,
-                .w = (int)width,
-                .h = (int)height,
-            };
-            
-            SDL_Rect dst = {
-                .x = cursor.x,
-                .y = cursor.y,
-                .w = (int)width,
-                .h = (int)height,
-            };
-            
-            SDL_BlitSurface(glyphSurface, &src, atlasSurface, &dst);
-            SDL_FreeSurface(glyphSurface);
-            
-            // Now store the glyph for later use.
-            Glyph glyph = {
-                .uvOrigin = glm::vec2((float)cursor.x / size, (float)cursor.y / size),
-                .uvExtent = glm::vec2((float)width / size, (float)height / size),
-                .size = glm::ivec2(width, height),
-                .bearing = glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-                .advance = (unsigned)face->glyph->advance.x
-            };
-            _glyphs.insert(std::pair<char, Glyph>((char)c, glyph));
-            
-            // Increment the cursor. We've already validated for this glyph.
-            cursor.x += width;
         }
         
-        // We managed to fit everything into the atlas.
         return atlasSurface;
     }
     
@@ -162,7 +180,7 @@ namespace PinkTopaz::Renderer {
         }
         
         constexpr size_t initialAtlasSize = 256;
-        constexpr size_t maxAtlasSize = 4096; // TODO: look up texture caps
+        constexpr size_t maxAtlasSize = 4096;
         size_t atlasSize;
         SDL_Surface *atlasSurface = nullptr;
         
@@ -174,6 +192,10 @@ namespace PinkTopaz::Renderer {
         
         FT_Done_Face(face);
         FT_Done_FreeType(ft);
+        
+        if (!atlasSurface) {
+            throw Exception("Failed to generate font texture atlas.");
+        }
         
         // We only want to store the RED components in the GPU texture.
         std::vector<uint8_t> atlasPixels = getGrayScaleImageBytes(atlasSurface);

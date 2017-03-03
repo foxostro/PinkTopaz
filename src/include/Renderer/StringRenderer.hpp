@@ -61,7 +61,13 @@ namespace PinkTopaz::Renderer {
             unsigned advance; // Given in 1/64 points.
         };
         
-        std::vector<uint8_t> getGrayScaleImageBytes(SDL_Surface *surface);
+        static std::vector<uint8_t> getGrayScaleImageBytes(SDL_Surface *surface);
+        static bool placeGlyph(FT_Face &face,
+                               FT_ULong c,
+                               SDL_Surface *atlasSurface,
+                               std::map<char, Glyph> &glyphs,
+                               glm::ivec2 &cursor,
+                               size_t &rowHeight);
         SDL_Surface* makeTextureAtlas(FT_Face &face, size_t atlasSize);
         std::shared_ptr<Texture> makeTextureAtlas(const std::string &fontName,
                                                   unsigned fontSize);
