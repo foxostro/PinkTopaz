@@ -111,24 +111,39 @@ namespace PinkTopaz::Renderer::OpenGL {
         CHECK_GL_ERROR();
     }
     
+    void BufferOpenGL::internalReplace(const void *p, size_t n, size_t count)
+    {
+        lock.lock();
+        GLuint vao = _vao;
+        GLuint vbo = _vbo;
+        _count = count;
+        GLenum usage = _usage;
+        lock.unlock();
+        
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, n, nullptr, usage); // Orphan the buffer.
+        glBufferData(GL_ARRAY_BUFFER, n, p, usage);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+        CHECK_GL_ERROR();
+    }
+    
+    void BufferOpenGL::replace(const std::vector<uint8_t> &wrappedData, size_t count)
+    {
+        _commandQueue.enqueue([wrappedData, count, this]{
+            size_t n = wrappedData.size();
+            const void *p = (const void *)&wrappedData[0];
+            internalReplace(p, n, count);
+        });
+    }
+    
     void BufferOpenGL::replace(std::vector<uint8_t> &&wrappedData, size_t count)
     {
         _commandQueue.enqueue([data{std::move(wrappedData)}, count, this]{
-            lock.lock();
-            GLuint vao = _vao;
-            GLuint vbo = _vbo;
-            _count = count;
-            lock.unlock();
-            
             size_t n = data.size();
             const void *p = (const void *)&data[0];
-            
-            glBindVertexArray(vao);
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            glBufferData(GL_ARRAY_BUFFER, n, p, _usage);
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glBindVertexArray(0);
-            CHECK_GL_ERROR();
+            internalReplace(p, n, count);
         });
     }
     

@@ -28,6 +28,7 @@ namespace PinkTopaz::Renderer {
         virtual ~Buffer() = default;
         
         // Replace the entire contents of the buffer.
+        virtual void replace(const std::vector<uint8_t> &data, size_t elementCount) = 0;
         virtual void replace(std::vector<uint8_t> &&data, size_t elementCount) = 0;
         virtual void replace(size_t size, const void *data, size_t elementCount) = 0;
         
