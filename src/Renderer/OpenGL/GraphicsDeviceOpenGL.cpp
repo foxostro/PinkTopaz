@@ -97,6 +97,12 @@ namespace PinkTopaz::Renderer::OpenGL {
         return std::dynamic_pointer_cast<Texture>(texture);
     }
     
+    std::shared_ptr<Texture> GraphicsDeviceOpenGL::makeTexture(const TextureDescriptor &desc, const std::vector<uint8_t> &data)
+    {
+        auto texture = std::make_shared<TextureOpenGL>(_commandQueue, desc, data);
+        return std::dynamic_pointer_cast<Texture>(texture);
+    }
+    
     std::shared_ptr<TextureSampler>
     GraphicsDeviceOpenGL::makeTextureSampler(const TextureSamplerDescriptor &desc)
     {

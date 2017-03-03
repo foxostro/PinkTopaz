@@ -58,6 +58,11 @@ namespace PinkTopaz::Renderer {
         makeTexture(const TextureDescriptor &desc,
                     const void *data) = 0;
         
+        // Creates a new texture from the specified descriptor and data.
+        virtual std::shared_ptr<Texture>
+        makeTexture(const TextureDescriptor &desc,
+                    const std::vector<uint8_t> &data) = 0;
+        
         // Creates a new texture sampler from the specified descriptor.
         virtual std::shared_ptr<TextureSampler>
         makeTextureSampler(const TextureSamplerDescriptor &desc) = 0;

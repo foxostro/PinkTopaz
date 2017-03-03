@@ -13,6 +13,8 @@
 #include "Renderer/OpenGL/CommandQueue.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
 
+#include <vector>
+
 namespace PinkTopaz::Renderer::OpenGL {
     
     // The OpenGL texture target implied by the texture type in `type'.
@@ -54,12 +56,18 @@ namespace PinkTopaz::Renderer::OpenGL {
                       const TextureDescriptor &desc,
                       const void *data);
         
+        TextureOpenGL(CommandQueue &queue,
+                      const TextureDescriptor &desc,
+                      const std::vector<uint8_t> &data);
+        
         virtual ~TextureOpenGL();
         
         inline GLuint getHandle() const { return _handle; }
         inline GLenum getTarget() const { return _target; }
         
     private:
+        void commonInit(const TextureDescriptor &desc, const std::vector<uint8_t> &data);
+        
         GLenum _target;
         std::atomic<GLuint> _handle;
         CommandQueue &_commandQueue;

@@ -52,6 +52,11 @@ namespace PinkTopaz::Renderer::OpenGL {
         std::shared_ptr<Texture> makeTexture(const TextureDescriptor &desc,
                                              const void *data) override;
         
+        // Creates a new texture from the specified descriptor and data.
+        std::shared_ptr<Texture>
+        makeTexture(const TextureDescriptor &desc,
+                    const std::vector<uint8_t> &data) override;
+        
         // Creates a new texture sampler from the specified descriptor.
         std::shared_ptr<TextureSampler>
         makeTextureSampler(const TextureSamplerDescriptor &desc) override;

@@ -11,26 +11,24 @@
 
 #include <string>
 #include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 namespace PinkTopaz::Renderer {
     
     class String
     {
     public:
-        String(const std::string &contents, const glm::vec2 &position)
-         : _contents(contents),
-           _position(position)
+        String(const std::string &str, const glm::vec2 &p, const glm::vec3 &c)
+         : contents(str),
+           position(p),
+           color(c)
         {}
         
         ~String() = default;
         
-        inline void setContents(const std::string &s) { _contents = s; }
-        inline const std::string &getContents() const { return _contents; }
-        inline const glm::vec2 &getPosition() const { return _position; }
-        
-    private:
-        std::string _contents;
-        const glm::vec2 _position;
+        std::string contents;
+        glm::vec2 position;
+        glm::vec3 color;
     };
     
 } // namespace PinkTopaz::Renderer

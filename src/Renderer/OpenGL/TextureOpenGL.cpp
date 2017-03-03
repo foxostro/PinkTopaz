@@ -83,6 +83,29 @@ namespace PinkTopaz::Renderer::OpenGL {
         std::vector<uint8_t> wrappedData(len);
         memcpy(&wrappedData[0], data, len);
         
+        commonInit(desc, wrappedData);
+    }
+    
+    TextureOpenGL::TextureOpenGL(CommandQueue &queue,
+                                 const TextureDescriptor &desc,
+                                 const std::vector<uint8_t> &data)
+     : _target(0),
+       _handle(0),
+       _commandQueue(queue)
+    {
+        const size_t expectedLen = desc.width * desc.height * desc.depth * textureDataTypeSize(desc.format);
+        const size_t dataLen = data.size();
+        if (expectedLen != dataLen) {
+            throw Exception("`data' is not the right size");
+        }
+        
+        commonInit(desc, data);
+    }
+    
+    void TextureOpenGL::commonInit(const TextureDescriptor &desc,
+                                   const std::vector<uint8_t> &data)
+    {
+        
         const GLenum target = _target = textureTargetEnum(desc.type);
         constexpr GLint level = 0;
         const GLint internalFormat = textureInternalFormat(desc.format);
@@ -91,10 +114,10 @@ namespace PinkTopaz::Renderer::OpenGL {
         const GLint dataType = textureDataType(desc.format);
         
         _commandQueue.enqueue([=]{
-            const void *bytes = &wrappedData[0];
+            const void *bytes = &data[0];
             
             glPixelStorei(GL_UNPACK_ALIGNMENT, desc.unpackAlignment);
-
+            
             GLuint texture;
             glGenTextures(1, &texture);
             glBindTexture(target, texture);

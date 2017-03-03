@@ -11,36 +11,55 @@
 
 #include <glm/gtc/matrix_transform.hpp> // for glm::ortho
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
-
-#include "SDL.h"
-
 namespace PinkTopaz::Renderer {
     
-    StringRenderer::StringRenderer(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
-                                   const std::string &fontName,
-                                   unsigned fontSize)
-     : _graphicsDevice(graphicsDevice),
-       _canvasSize(800, 600)
+    std::vector<uint8_t> StringRenderer::getGrayScaleImageBytes(SDL_Surface *surface)
     {
-        _renderPassDescriptor.blend = true;
-        _renderPassDescriptor.depthTest = false;
-        _renderPassDescriptor.clear = false;
+        const size_t w = surface->w;
+        const size_t h = surface->h;
         
-        FT_Library ft;
-        if (FT_Init_FreeType(&ft)) {
-            throw Exception("Failed to initialize Freetype.");
+        // We only want to store the RED components in the GPU texture.
+        std::vector<uint8_t> atlasPixels(w * h);
+        
+        if (SDL_MUSTLOCK(surface)) {
+            SDL_LockSurface(surface);
         }
         
-        FT_Face face;
-        if (FT_New_Face(ft, fontName.c_str(), 0, &face)) {
-            throw Exception("Failed to load the Vegur font.");
+        uint32_t *srcRow = (uint32_t *)surface->pixels;
+        uint8_t *dstRow = (uint8_t *)&atlasPixels[0];
+        for(size_t y = 0; y < h; ++y)
+        {
+            for(size_t x = 0; x < w; ++x)
+            {
+                uint32_t pixel = srcRow[x];
+                dstRow[x] = pixel & 0x000000ff;
+            }
+            
+            srcRow += surface->pitch / surface->format->BytesPerPixel;
+            dstRow += w;
         }
         
-        if (FT_Set_Pixel_Sizes(face, 0, fontSize)) {
-            throw Exception("Failed to set the font size.");
+        if (SDL_MUSTLOCK(surface)) {
+            SDL_UnlockSurface(surface);
         }
+        
+        return atlasPixels;
+    }
+    
+    SDL_Surface* StringRenderer::makeTextureAtlas(FT_Face &face, size_t size)
+    {
+        _glyphs.clear();
+        
+        size_t rowHeight = 0;
+        glm::ivec2 cursor(0, 0);
+        
+        SDL_Surface *atlasSurface = SDL_CreateRGBSurface(0,
+                                                         size, size,
+                                                         sizeof(uint32_t) * 8,
+                                                         0x000000ff,
+                                                         0x0000ff00,
+                                                         0x00ff0000,
+                                                         0xff000000);
         
         for (FT_ULong c = 0; c < 128; c++)
         {
@@ -48,29 +67,141 @@ namespace PinkTopaz::Renderer {
                 throw Exception("Failed to load the glyph %c.", (char)c);
             }
             
-            TextureDescriptor texDesc = {
-                .type = Texture2D,
-                .format = R8,
-                .width = face->glyph->bitmap.width,
-                .height = face->glyph->bitmap.rows,
-                .depth = 1,
-                .unpackAlignment = 1,
-                .generateMipMaps = false
-            };
-            auto texture = _graphicsDevice->makeTexture(texDesc, face->glyph->bitmap.buffer);
+            const size_t width = face->glyph->bitmap.width;
+            const size_t height = face->glyph->bitmap.rows;
+            const size_t n = width * height;
+            const uint8_t *glyphBytes = face->glyph->bitmap.buffer;
             
-            // Now store character for later use
+            rowHeight = std::max(rowHeight, height);
+            
+            // Validate the cursor. Can the glyph fit on this row?
+            if ((cursor.x + width) >= size) {
+                // Go to the next row.
+                cursor.x = 0;
+                cursor.y += rowHeight;
+                rowHeight = height;
+                
+                // Have we run out of rows? If so then try a bigger atlas.
+                if ((cursor.y + height) >= size) {
+                    SDL_FreeSurface(atlasSurface);
+                    _glyphs.clear();
+                    return nullptr;
+                }
+            }
+            
+            // Convert grayscale image to RGBA so we can use SDL_Surface.
+            std::vector<uint32_t> pixels(n);
+            for(size_t i = 0; i < n; ++i)
+            {
+                pixels[i] = 0xff000000 | (uint8_t)glyphBytes[i];
+            }
+            
+            // Create a surface with the glpyh image.
+            SDL_Surface *glyphSurface = SDL_CreateRGBSurfaceFrom(&pixels[0],
+                                                                 width,
+                                                                 height,
+                                                                 sizeof(uint32_t) * 8,
+                                                                 width * sizeof(uint32_t),
+                                                                 0x000000ff,
+                                                                 0x0000ff00,
+                                                                 0x00ff0000,
+                                                                 0xff000000);
+            
+            // Blit the glyph into the texture atlas at the cursor position.
+            SDL_Rect src = {
+                .x = 0,
+                .y = 0,
+                .w = (int)width,
+                .h = (int)height,
+            };
+            
+            SDL_Rect dst = {
+                .x = cursor.x,
+                .y = cursor.y,
+                .w = (int)width,
+                .h = (int)height,
+            };
+            
+            SDL_BlitSurface(glyphSurface, &src, atlasSurface, &dst);
+            SDL_FreeSurface(glyphSurface);
+            
+            // Now store the glyph for later use.
             Glyph glyph = {
-                texture,
-                glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-                glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-                (unsigned)face->glyph->advance.x
+                .uvOrigin = glm::vec2((float)cursor.x / size, (float)cursor.y / size),
+                .uvExtent = glm::vec2((float)width / size, (float)height / size),
+                .size = glm::ivec2(width, height),
+                .bearing = glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+                .advance = (unsigned)face->glyph->advance.x
             };
             _glyphs.insert(std::pair<char, Glyph>((char)c, glyph));
+            
+            // Increment the cursor. We've already validated for this glyph.
+            cursor.x += width;
+        }
+        
+        // We managed to fit everything into the atlas.
+        return atlasSurface;
+    }
+    
+    std::shared_ptr<Texture>
+    StringRenderer::makeTextureAtlas(const std::string &fontName,
+                                     unsigned fontSize)
+    {
+        FT_Library ft;
+        if (FT_Init_FreeType(&ft)) {
+            throw Exception("Failed to initialize Freetype.");
+        }
+        
+        FT_Face face;
+        if (FT_New_Face(ft, fontName.c_str(), 0, &face)) {
+            throw Exception("Failed to load the font: %s", fontName.c_str());
+        }
+        
+        if (FT_Set_Pixel_Sizes(face, 0, fontSize)) {
+            throw Exception("Failed to set the font size.");
+        }
+        
+        constexpr size_t initialAtlasSize = 256;
+        constexpr size_t maxAtlasSize = 4096; // TODO: look up texture caps
+        size_t atlasSize;
+        SDL_Surface *atlasSurface = nullptr;
+        
+        for(atlasSize = initialAtlasSize; !atlasSurface && atlasSize < maxAtlasSize; atlasSize += 32)
+        {
+            SDL_Log("Trying to create texture atlas of size %d", (int)atlasSize);
+            atlasSurface = makeTextureAtlas(face, atlasSize);
         }
         
         FT_Done_Face(face);
         FT_Done_FreeType(ft);
+        
+        // We only want to store the RED components in the GPU texture.
+        std::vector<uint8_t> atlasPixels = getGrayScaleImageBytes(atlasSurface);
+        TextureDescriptor texDesc = {
+            .type = Texture2D,
+            .format = R8,
+            .width = (size_t)atlasSurface->w,
+            .height = (size_t)atlasSurface->h,
+            .depth = 1,
+            .unpackAlignment = 1,
+            .generateMipMaps = false
+        };
+        SDL_FreeSurface(atlasSurface);
+        
+        return _graphicsDevice->makeTexture(texDesc, atlasPixels);
+    }
+
+    StringRenderer::StringRenderer(const std::shared_ptr<GraphicsDevice> &dev,
+                                   const std::string &fontName,
+                                   unsigned fontSize)
+     : _graphicsDevice(dev),
+       _canvasSize(800, 600)
+    {
+        _renderPassDescriptor.blend = true;
+        _renderPassDescriptor.depthTest = false;
+        _renderPassDescriptor.clear = false;
+        
+        _textureAtlas = makeTextureAtlas(fontName, fontSize);
         
         _shader = _graphicsDevice->makeShader("text_vert", "text_frag");
         glm::mat4 projection = glm::ortho(0.0f, (float)_canvasSize.x,
@@ -119,24 +250,23 @@ namespace PinkTopaz::Renderer {
         encoder->setViewport(viewport);
         encoder->setShader(_shader);
         encoder->setFragmentSampler(_sampler, 0);
+        encoder->setFragmentTexture(_textureAtlas, 0);
         
         for (auto &string : _strings)
         {
-            drawString(encoder,
-                       string.getContents(),
-                       string.getPosition(),
-                       glm::vec3(0.0f, 0.0f, 0.0f));
+            drawString(encoder, string);
         }
 
         _graphicsDevice->submit(encoder);
     }
     
-    void StringRenderer::drawString(const std::shared_ptr<CommandEncoder> &encoder,
-                                    const std::string &text,
-                                    glm::vec2 basePos,
-                                    const glm::vec3 &color)
+    void StringRenderer::drawString(const std::shared_ptr<CommandEncoder> &enc,
+                                    const String &string)
     {
-        _shader->setShaderUniform("textColor", color);
+        _shader->setShaderUniform("textColor", string.color);
+        
+        const std::string &text = string.contents;
+        glm::vec2 basePos = string.position;
         
         // Iterate through all characters
         std::string::const_iterator c;
@@ -147,21 +277,22 @@ namespace PinkTopaz::Renderer {
             glm::vec2 offset(glyph.bearing.x, glyph.bearing.y - glyph.size.y);
             glm::vec2 pos = basePos + offset;
             glm::vec2 size(glyph.size.x, glyph.size.y);
+            const glm::vec2 &uvo = glyph.uvOrigin;
+            const glm::vec2 &uve = glyph.uvExtent;
             
             // Update the vertex buffer for each glyph.
             const size_t numVertices = 6;
             float vertexBytes[numVertices][4] = {
-                { pos.x,          pos.y + size.y,   0.0, 0.0 },
-                { pos.x,          pos.y,            0.0, 1.0 },
-                { pos.x + size.x, pos.y,            1.0, 1.0 },
+                { pos.x,          pos.y + size.y,   uvo.x,         uvo.y         },
+                { pos.x,          pos.y,            uvo.x,         uvo.y + uve.y },
+                { pos.x + size.x, pos.y,            uvo.x + uve.x, uvo.y + uve.y },
                 
-                { pos.x,          pos.y + size.y,   0.0, 0.0 },
-                { pos.x + size.x, pos.y,            1.0, 1.0 },
-                { pos.x + size.x, pos.y + size.y,   1.0, 0.0 }
+                { pos.x,          pos.y + size.y,   uvo.x,         uvo.y         },
+                { pos.x + size.x, pos.y,            uvo.x + uve.x, uvo.y + uve.y },
+                { pos.x + size.x, pos.y + size.y,   uvo.x + uve.x, uvo.y         }
             };
-            encoder->setVertexBytes(_buffer, sizeof(vertexBytes), vertexBytes);
-            encoder->setFragmentTexture(glyph.texture, 0);
-            encoder->drawPrimitives(Triangles, 0, numVertices, 1);
+            enc->setVertexBytes(_buffer, sizeof(vertexBytes), vertexBytes);
+            enc->drawPrimitives(Triangles, 0, numVertices, 1);
             
             // Advance to the next glyph.
             basePos.x += glyph.advance / 64.0f;
@@ -181,10 +312,11 @@ namespace PinkTopaz::Renderer {
         _strings.erase(handle);
     }
     
-    void StringRenderer::replaceContents(StringHandle &handle, const std::string &contents)
+    void StringRenderer::replaceContents(StringHandle &handle,
+                                         const std::string &contents)
     {
         String &string = *handle;
-        string.setContents(contents);
+        string.contents = contents;
     }
     
 } // namespace PinkTopaz::Renderer

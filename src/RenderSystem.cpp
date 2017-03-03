@@ -21,16 +21,18 @@
 
 namespace PinkTopaz {
     
-    RenderSystem::RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
+    RenderSystem::RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &dev)
      : _windowSizeChangeEventPending(false),
-       _graphicsDevice(graphicsDevice),
-       _stringRenderer(graphicsDevice, "vegur/Vegur-Regular.otf", 48),
+       _graphicsDevice(dev),
+       _stringRenderer(dev, "vegur/Vegur-Regular.otf", 48),
        _timeAccum(0),
        _countDown(0),
        _framesBetweenReport(60)
     {
+        const glm::vec3 color(0.2f, 0.2f, 0.2f);
+        const glm::vec2 position(30.0f, 1140.0f);
         _fps = _stringRenderer.add(Renderer::String("Frame Time: XX.XX ms",
-                                                    glm::vec2(30.0f, 1140.0f)));
+                                                    position, color));
     }
     
     void RenderSystem::configure(entityx::EventManager &em)
@@ -40,7 +42,9 @@ namespace PinkTopaz {
         em.subscribe<WindowSizeChangedEvent>(*this);
     }
     
-    void RenderSystem::update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt)
+    void RenderSystem::update(entityx::EntityManager &es,
+                              entityx::EventManager &events,
+                              entityx::TimeDelta dt)
     {
         unsigned ticksBeginMs = SDL_GetTicks();
         
@@ -56,7 +60,9 @@ namespace PinkTopaz {
         
         encoder->setViewport(_viewport);
 
-        auto f = [&](entityx::Entity entity, RenderableStaticMesh &mesh, Transform &transform) {
+        auto f = [&](entityx::Entity entity,
+                     RenderableStaticMesh &mesh,
+                     Transform &transform) {
             encoder->setShader(mesh.shader);
             
             // If we have a new projection matrix then pass it to each shader used for rendering.
@@ -85,9 +91,9 @@ namespace PinkTopaz {
         _stringRenderer.draw(_viewport);
 
         _graphicsDevice->swapBuffers();
-        
         _windowSizeChangeEventPending = false;
         
+        // Keep track of the time we spent rendering.
         unsigned ticksEndMs = SDL_GetTicks();
         unsigned ticksElapsedMs = ticksEndMs - ticksBeginMs;
         _timeAccum += ticksElapsedMs;
