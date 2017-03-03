@@ -21,7 +21,9 @@ namespace PinkTopaz::Renderer {
     {
         Nearest,
         Linear,
-        NearestMipMapNearest
+        NearestMipMapNearest,
+        LinearMipMapNearest,
+        LinearMipMapLinear
     };
     
     struct TextureSamplerDescriptor

@@ -62,7 +62,7 @@ namespace PinkTopaz {
         Renderer::TextureSamplerDescriptor samplerDesc = {
             .addressS = Renderer::ClampToEdge,
             .addressT = Renderer::ClampToEdge,
-            .minFilter = Renderer::Nearest,
+            .minFilter = Renderer::NearestMipMapNearest,
             .maxFilter = Renderer::Nearest
         };
         auto sampler = graphicsDevice->makeTextureSampler(samplerDesc);

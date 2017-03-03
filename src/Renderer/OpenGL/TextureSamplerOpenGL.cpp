@@ -31,6 +31,8 @@ namespace PinkTopaz::Renderer::OpenGL {
             case Nearest: return GL_NEAREST;
             case Linear: return GL_LINEAR;
             case NearestMipMapNearest: return GL_NEAREST_MIPMAP_NEAREST;
+            case LinearMipMapNearest: return GL_LINEAR_MIPMAP_NEAREST;
+            case LinearMipMapLinear: return GL_LINEAR_MIPMAP_LINEAR;
             default:
                 throw Exception("Unsupported texture format.");
         }
