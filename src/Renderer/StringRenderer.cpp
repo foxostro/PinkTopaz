@@ -11,7 +11,18 @@
 
 #include <glm/gtc/matrix_transform.hpp> // for glm::ortho
 
+#include "SDL.h"
+#include "SDL_image.h"
+
 namespace PinkTopaz::Renderer {
+    
+    static std::string getPrefPath()
+    {
+        char *s = SDL_GetPrefPath("foxostro", "PinkTopaz");
+        std::string prefPath(s);
+        SDL_free(s);
+        return prefPath;
+    }
     
     std::vector<uint8_t> StringRenderer::getGrayScaleImageBytes(SDL_Surface *surface)
     {
@@ -189,9 +200,8 @@ namespace PinkTopaz::Renderer {
         return atlasSurface;
     }
     
-    std::shared_ptr<Texture>
-    StringRenderer::makeTextureAtlas(const std::string &fontName,
-                                     unsigned fontSize)
+    SDL_Surface* StringRenderer::genTextureAtlas(const std::string &fontName,
+                                                 unsigned fontSize)
     {
         FT_Library ft;
         if (FT_Init_FreeType(&ft)) {
@@ -215,6 +225,19 @@ namespace PinkTopaz::Renderer {
         if (!atlasSurface) {
             throw Exception("Failed to generate font texture atlas.");
         }
+        
+        return atlasSurface;
+    }
+    
+    std::shared_ptr<Texture>
+    StringRenderer::makeTextureAtlas(const std::string &fontName,
+                                     unsigned fontSize)
+    {
+        // Font texture atlas is cached between runs of the game.
+        std::string atlasFileName = getPrefPath() + "font" + std::to_string(fontSize) + ".png";
+        SDL_Surface *atlasSurface = genTextureAtlas(fontName, fontSize);
+        IMG_SavePNG(atlasSurface, atlasFileName.c_str());
+        SDL_Log("Saving font texture atlas to file: %s", atlasFileName.c_str());
         
         // We only want to store the RED components in the GPU texture.
         std::vector<uint8_t> atlasPixels = getGrayScaleImageBytes(atlasSurface);
