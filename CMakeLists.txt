@@ -18,7 +18,6 @@ set(SOURCE_FILES_OPENGL
 
 set(SOURCE_FILES_RENDERER
     "src/Renderer/StringRenderer.cpp" "src/include/Renderer/StringRenderer.hpp"
-    "src/include/Renderer/String.hpp"
     "src/Renderer/StaticMesh.cpp" "src/include/Renderer/StaticMesh.hpp"
     "src/include/Renderer/GraphicsDevice.hpp"
     "src/include/Renderer/CommandEncoder.hpp"

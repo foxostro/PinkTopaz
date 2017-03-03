@@ -9,7 +9,6 @@
 #ifndef StringRenderer_hpp
 #define StringRenderer_hpp
 
-#include "Renderer/String.hpp"
 #include "Renderer/Texture.hpp"
 #include "Renderer/TextureSampler.hpp"
 #include "Renderer/Buffer.hpp"
@@ -32,6 +31,26 @@ namespace PinkTopaz::Renderer {
     class StringRenderer
     {
     public:
+        class String
+        {
+        public:
+            String(const std::string &str,
+                   const glm::vec2 &p,
+                   const glm::vec3 &c)
+            : contents(str),
+            position(p),
+            color(c)
+            {}
+            
+            ~String() = default;
+            
+            std::string contents;
+            glm::vec2 position;
+            glm::vec3 color;
+            
+            std::shared_ptr<Buffer> buffer;
+        };
+        
         typedef std::list<String>::iterator StringHandle;
         
         StringRenderer(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
