@@ -159,7 +159,7 @@ namespace PinkTopaz::Renderer {
                                                          0x00ff0000,
                                                          0xff000000);
         
-        for (FT_ULong c = 0; c < 128; c++)
+        for (FT_ULong c = 32; c < 127; c++)
         {
             if (!placeGlyph(face, c, atlasSurface, _glyphs,
                             cursor, rowHeight)) {
