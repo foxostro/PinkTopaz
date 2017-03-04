@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef osxSupport_h
-#define osxSupport_h
+#ifndef RetinaSupport_h
+#define RetinaSupport_h
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,4 +21,4 @@ float windowScaleFactor(SDL_Window *window);
 }
 #endif
 
-#endif /* osxSupport_h */
+#endif /* RetinaSupport_h */

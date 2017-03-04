@@ -1,0 +1,102 @@
+//
+//  GraphicsDeviceMetal.h
+//  PinkTopaz
+//
+//  Created by Andrew Fox on 7/8/16.
+//
+//
+
+#ifndef GraphicsDeviceMetal_hpp
+#define GraphicsDeviceMetal_hpp
+
+#ifndef __OBJC__
+#error "GraphiscDeviceMetal.h is an Objective-C++ header."
+#endif
+
+#include "Renderer/GraphicsDevice.hpp"
+#include "Renderer/CommandEncoder.hpp"
+
+#include <mutex>
+#include <queue>
+#include <memory>
+
+#include "SDL.h"
+#import <QuartzCore/QuartzCore.h>
+
+namespace PinkTopaz::Renderer::Metal {
+    
+    class GraphicsDeviceMetal : public GraphicsDevice
+    {
+    public:
+        GraphicsDeviceMetal(SDL_Window &window);
+        virtual ~GraphicsDeviceMetal();
+        
+        // Call this to begin a frame. It returns a command encoder which can be
+        // used to encoder graphics commands for submission to the graphics
+        // at the end of the frame.
+        std::shared_ptr<CommandEncoder>
+        encoder(const RenderPassDescriptor &desc) override;
+        
+        // Call this to submit commands to the graphics device.
+        // This call is garaunteed thread-safe. Commands will be submitted to
+        // GPU in the order of call to this method; however, commands may not
+        // be flushed until the next call to swapBuffers().
+        void submit(const std::shared_ptr<CommandEncoder> &encoder) override;
+        
+        // Flushes commands and swaps buffers. Some underlying graphics APIs
+        // have restrictions about which threads they can be used on. So, it's
+        // the caller's responsibility call only from method on the main thread.
+        void swapBuffers() override;
+        
+        // Create a new shader using the specified vertex and fragment programs.
+        std::shared_ptr<Shader>
+        makeShader(const std::string &vertexProgramName,
+                   const std::string &fragmentProgramName) override;
+        
+        // Creates a new texture from the specified descriptor and data.
+        std::shared_ptr<Texture>
+        makeTexture(const TextureDescriptor &desc,
+                    const void *data) override;
+        
+        // Creates a new texture from the specified descriptor and data.
+        std::shared_ptr<Texture>
+        makeTexture(const TextureDescriptor &desc,
+                    const std::vector<uint8_t> &data) override;
+        
+        // Creates a new texture sampler from the specified descriptor.
+        std::shared_ptr<TextureSampler>
+        makeTextureSampler(const TextureSamplerDescriptor &desc) override;
+        
+        // Creates a new GPU buffer object.
+        std::shared_ptr<Buffer>
+        makeBuffer(const VertexFormat &format,
+                   const std::vector<uint8_t> &data,
+                   size_t elementCount,
+                   BufferUsage usage) override;
+        
+        // Creates a new GPU buffer object with undefined contents.
+        std::shared_ptr<Buffer>
+        makeBuffer(const VertexFormat &format,
+                   size_t size,
+                   size_t elementCount,
+                   BufferUsage usage) override;
+        
+        // Creates a new GPU uniform buffer object.
+        std::shared_ptr<Buffer>
+        makeUniformBuffer(const std::vector<uint8_t> &bufferData,
+                          BufferUsage usage) override;
+        
+        // Creates a new GPU uniform buffer object with undefined contents.
+        std::shared_ptr<Buffer>
+        makeUniformBuffer(size_t size, BufferUsage usage) override;
+        
+        // Creates a new GPU fence object.
+        std::shared_ptr<Fence> makeFence() override;
+        
+    private:
+        CAMetalLayer *_metalLayer;
+    };
+    
+} // namespace PinkTopaz::Renderer::Metal
+
+#endif /* GraphicsDeviceMetal_hpp */

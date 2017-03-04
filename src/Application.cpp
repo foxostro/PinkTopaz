@@ -16,28 +16,7 @@
 #include "World.hpp"
 #include "WindowSizeChangedEvent.hpp"
 
-#include "Renderer/OpenGL/GraphicsDeviceOpenGL.hpp"
-
 namespace PinkTopaz {
-    
-    Application::Application() : _window(nullptr)
-    {
-        // Nothing to do
-    }
-    
-    Application::~Application()
-    {
-        // Nothing to do
-    }
-    
-    std::shared_ptr<Renderer::GraphicsDevice> Application::createGraphicsDevice()
-    {
-        assert(_window);
-        SDL_Window &window = *_window;
-        auto concreteGraphicsDevice = std::make_shared<Renderer::OpenGL::GraphicsDeviceOpenGL>(window);
-        auto abstractGraphicsDevice = std::dynamic_pointer_cast<Renderer::GraphicsDevice>(concreteGraphicsDevice);
-        return abstractGraphicsDevice;
-    }
     
     void Application::inner(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
     {
@@ -148,10 +127,7 @@ namespace PinkTopaz {
         _window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600,
                                    SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
         
-        {
-            auto graphicsDevice = createGraphicsDevice();
-            inner(graphicsDevice);
-        }
+        inner(Renderer::createDefaultGraphicsDevice(*_window));
 
         SDL_DestroyWindow(_window);
         _window = nullptr;

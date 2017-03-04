@@ -9,9 +9,6 @@
 #ifndef GraphicsDevice_hpp
 #define GraphicsDevice_hpp
 
-#include <memory>
-#include <string>
-
 #include "Renderer/CommandEncoder.hpp"
 #include "Renderer/StaticMesh.hpp"
 #include "Renderer/Shader.hpp"
@@ -21,6 +18,11 @@
 #include "Renderer/Texture.hpp"
 #include "Renderer/TextureSampler.hpp"
 #include "Renderer/Fence.hpp"
+
+#include <memory>
+#include <string>
+
+#include "SDL.h"
 
 namespace PinkTopaz::Renderer {
 
@@ -94,6 +96,9 @@ namespace PinkTopaz::Renderer {
         // Creates a new GPU fence object.
         virtual std::shared_ptr<Fence> makeFence() = 0;
     };
+    
+    // Create a default graphics device for the system.
+    std::shared_ptr<GraphicsDevice> createDefaultGraphicsDevice(SDL_Window &w);
     
 } // namespace PinkTopaz::Renderer
 

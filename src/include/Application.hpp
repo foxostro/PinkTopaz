@@ -20,14 +20,13 @@ namespace PinkTopaz {
     class Application
     {
     public:
-        Application();
-        ~Application();
+        Application() = default;
+        ~Application() = default;
 
         // Runs the game loop on the current thread and returns when the game has ended.
         void run();
         
     private:
-        std::shared_ptr<Renderer::GraphicsDevice> createGraphicsDevice();
         void inner(const std::shared_ptr<Renderer::GraphicsDevice> &);
         
         SDL_Window *_window;

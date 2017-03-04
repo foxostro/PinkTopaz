@@ -11,11 +11,20 @@ set(SOURCE_FILES_OPENGL
     "src/Renderer/OpenGL/CommandQueue.cpp" "src/include/Renderer/OpenGL/CommandQueue.hpp"
     "src/Renderer/OpenGL/CommandEncoderOpenGL.cpp" "src/include/Renderer/OpenGL/CommandEncoderOpenGL.hpp"
     "src/Renderer/OpenGL/BufferOpenGL.cpp" "src/include/Renderer/OpenGL/BufferOpenGL.hpp"
-    "src/include/Renderer/OpenGL/ShaderOpenGL.hpp" "src/Renderer/OpenGL/ShaderOpenGL.cpp"
+    "src/Renderer/OpenGL/ShaderOpenGL.cpp" "src/include/Renderer/OpenGL/ShaderOpenGL.hpp"
     "src/Renderer/OpenGL/TextureOpenGL.cpp" "src/include/Renderer/OpenGL/TextureOpenGL.hpp"
     "src/Renderer/OpenGL/TextureSamplerOpenGL.cpp" "src/include/Renderer/OpenGL/TextureSamplerOpenGL.hpp"
     "src/Renderer/OpenGL/FenceOpenGL.cpp" "src/include/Renderer/OpenGL/FenceOpenGL.hpp"
     )
+
+if(APPLE)
+    set(SOURCE_FILES_METAL
+        "src/Renderer/Metal/GraphicsDeviceMetal.mm" "src/include/Renderer/Metal/GraphicsDeviceMetal.h"
+        "src/osx/GraphicsDeviceFactory.mm"
+        )
+else()
+    set(SOURCE_FILES_METAL "")
+endif(APPLE)
 
 set(SOURCE_FILES_RENDERER
     "src/Renderer/StringRenderer.cpp" "src/include/Renderer/StringRenderer.hpp"
@@ -63,9 +72,15 @@ set(SOURCE_FILES_TEST
     )
 
 if(APPLE)
-    set(SOURCE_FILES_PLATFORM_SUPPORT "src/include/RetinaSupport.h" "src/osx/RetinaSupport.m")
+    set(SOURCE_FILES_PLATFORM_SUPPORT
+        "src/include/RetinaSupport.h" "src/osx/RetinaSupport.m"
+        "src/osx/GraphicsDeviceFactory.mm"
+        )
 else()
-    set(SOURCE_FILES_PLATFORM_SUPPORT "src/include/RetinaSupport.h" "src/linux/RetinaSupport.c")
+    set(SOURCE_FILES_PLATFORM_SUPPORT
+        "src/include/RetinaSupport.h" "src/linux/RetinaSupport.c"
+        "src/linux/GraphicsDeviceFactory.cpp"
+        )
 endif(APPLE)
 
 set(SOURCE_FILES
@@ -75,6 +90,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_COMPONENTS}
     ${SOURCE_FILES_EVENTS}
     ${SOURCE_FILES_OPENGL}
+    ${SOURCE_FILES_METAL}
     ${SOURCE_FILES_PLATFORM_SUPPORT}
     ${SOURCE_FILES_MISC}
     )
@@ -96,6 +112,28 @@ find_package(GLM REQUIRED)
 find_package(SDL2_image REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(Freetype REQUIRED)
+
+# Apple's "Metal" graphics library.
+if(APPLE)
+    find_library(METAL_LIBRARY Metal)
+    FIND_PATH(METAL_INCLUDE_DIR Metal/Metal.h)
+
+    find_library(QUARTZ_CORE_LIBRARY QuartzCore)
+    FIND_PATH(QUARTZ_CORE_INCLUDE_DIR QuartzCore/QuartzCore.h)
+
+    set(MACOS_LIBRARIES
+        ${METAL_LIBRARY}
+        ${QUARTZ_CORE_LIBRARY}
+        )
+        
+    set(MACOS_INCLUDE_DIRS
+        ${METAL_INCLUDE_DIR}
+        ${QUARTZ_CORE_INCLUDE_DIR}
+        )
+else()
+    set(MACOS_LIBRARIES "")
+    set(MACOS_INCLUDE_DIRS "")
+endif(APPLE)
 
 # EntityX ECS library.
 find_package(PkgConfig REQUIRED)
@@ -122,6 +160,7 @@ include_directories("${PROJECT_SOURCE_DIR}/src/include"
                     ${OPENGL_INCLUDE_DIRS}
                     ${PROJECT_BINARY_DIR}
                     ${ENTITYX_INCLUDE_DIR}
+                    ${MACOS_INCLUDE_DIRS}
                     )
 target_link_libraries(PinkTopaz
                       ${SDL2_LIBRARY}
@@ -129,6 +168,7 @@ target_link_libraries(PinkTopaz
                       ${FREETYPE_LIBRARY}
                       ${OPENGL_LIBRARIES}
                       ${ENTITYX_LIBRARY}
+                      ${MACOS_LIBRARIES}
                       )
 
 if(APPLE)
