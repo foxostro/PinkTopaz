@@ -45,7 +45,16 @@ namespace PinkTopaz::Renderer::Metal {
     }
     
     void CommandEncoderMetal::setViewport(const glm::ivec4 &viewport)
-    {}
+    {
+        [_encoder setViewport:(MTLViewport) {
+            .originX    = (double)viewport.x,
+            .originY    = (double)viewport.y,
+            .width      = (double)viewport.z,
+            .height     = (double)viewport.w,
+            .znear      = -0.1,
+            .zfar       = 100.0
+        }];
+    }
     
     void CommandEncoderMetal::setShader(const std::shared_ptr<Shader> &abstractShader)
     {}
