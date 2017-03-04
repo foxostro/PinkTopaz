@@ -138,16 +138,5 @@ namespace PinkTopaz::Renderer::OpenGL {
             CHECK_GL_ERROR();
         });
     }
-    
-    void ShaderOpenGL::getUniformBlockIndex(const char *pszName, std::function<void(size_t)> &&completionHandler)
-    {
-        std::string name(pszName);
-        _commandQueue.enqueue([=]() {
-            GLuint program = this->_program;
-            size_t index = glGetUniformBlockIndex(program, name.c_str());
-            CHECK_GL_ERROR();
-            completionHandler(index);
-        });
-    }
 
 } // namespace PinkTopaz::Renderer::OpenGL

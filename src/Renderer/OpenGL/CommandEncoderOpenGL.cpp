@@ -91,21 +91,28 @@ namespace PinkTopaz::Renderer::OpenGL {
     {
         // OpenGL doesn't make a distinction between slots for fragment programs
         // and slots for vertex programs?
-        setVertexBuffer(buffer, index);
+        assert(false);
     }
     
-    void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
+    void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstractBuffer)
     {
         assert(abstractBuffer);
         _commandQueue.enqueue([=]() {
             auto buffer = std::dynamic_pointer_cast<BufferOpenGL>(abstractBuffer);
-            
             GLuint vao = buffer->getHandleVAO();
-            GLuint vbo = buffer->getHandleVBO();
-            GLenum target = buffer->getTargetEnum();
-            
             glBindVertexArray(vao);
-            glBindBufferBase(target, index, vbo);
+            CHECK_GL_ERROR();
+        });
+    }
+    
+    void CommandEncoderOpenGL::setUniformBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
+    {
+        assert(abstractBuffer);
+        _commandQueue.enqueue([=]() {
+            auto buffer = std::dynamic_pointer_cast<BufferOpenGL>(abstractBuffer);
+            assert(buffer->getTargetEnum() == GL_UNIFORM_BUFFER);
+            GLuint vbo = buffer->getHandleVBO();
+            glBindBufferBase(GL_UNIFORM_BUFFER, index, vbo);
             CHECK_GL_ERROR();
         });
     }

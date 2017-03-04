@@ -297,10 +297,6 @@ namespace PinkTopaz::Renderer {
         _textureAtlas = makeTextureAtlas(fontName, fontSize);
         
         _shader = _graphicsDevice->makeShader("text_vert", "text_frag");
-        _shader->setShaderUniform("tex", 0);
-        _shader->getUniformBlockIndex("TextUniforms", [](size_t index) {
-            SDL_Log("MyUniforms is at %d", (int)index);
-        });
         
         _vertexFormat.attributes.emplace_back((AttributeFormat){
             .size = 4,
@@ -319,28 +315,30 @@ namespace PinkTopaz::Renderer {
         _sampler = _graphicsDevice->makeTextureSampler(samplerDesc);
     }
     
-    void StringRenderer::draw(const glm::ivec4 &viewport)
+    void StringRenderer::draw(const glm::ivec4 &vp)
     {
-        if (_viewport != viewport) {
-            _viewport = viewport;
-            
-            glm::mat4 projection = glm::ortho((float)viewport.x,
-                                              (float)viewport.x + viewport.z,
-                                              (float)viewport.y,
-                                              (float)viewport.y + viewport.w);
-            _shader->setShaderUniform("projection", projection);
-        }
+        bool projectionValid = false;
+        glm::mat4 projection;
         
         auto encoder = _graphicsDevice->encoder(_renderPassDescriptor);
-        encoder->setViewport(viewport);
+        encoder->setViewport(vp);
         encoder->setShader(_shader);
         encoder->setFragmentSampler(_sampler, 0);
         encoder->setFragmentTexture(_textureAtlas, 0);
         
         for (auto &string : _strings)
         {
-            encoder->setFragmentBuffer(string.uniforms, 0);
-            encoder->setVertexBuffer(string.buffer, 0);
+            if (string.viewport != vp) {
+                if (!projectionValid) {
+                    projectionValid = true;
+                    projection = glm::ortho((float)vp.x, (float)vp.x + vp.z,
+                                            (float)vp.y, (float)vp.y + vp.w);
+                }
+                rebuildUniformBuffer(string, projection);
+            }
+            
+            encoder->setVertexBuffer(string.buffer);
+            encoder->setUniformBuffer(string.uniforms, 0);
             encoder->drawPrimitives(Triangles, 0, string.buffer->getVertexCount(), 1);
         }
 
@@ -391,11 +389,28 @@ namespace PinkTopaz::Renderer {
         string.buffer->replace(std::move(vertexData), vertexCount);
     }
     
+    void StringRenderer::rebuildUniformBuffer(String &string,
+                                              const glm::mat4x4 &projection)
+    {
+        StringUniforms uniforms = {
+            .color = string.color,
+            .projection = projection
+        };
+        string.uniforms->replace(sizeof(uniforms), &uniforms);
+    }
+    
     StringRenderer::StringHandle StringRenderer::add(const std::string &str,
                                                      const glm::vec2 &position,
-                                                     const glm::vec3 &color)
+                                                     const glm::vec4 &color)
     {
-        _strings.emplace_back(String(str, position, color));
+        _strings.emplace_back((String){
+            .contents = str,
+            .position = position,
+            .color = color,
+            .viewport = glm::ivec4(),
+            .buffer = nullptr,
+            .uniforms = nullptr
+        });
         auto handle = _strings.end();
         --handle;
         
@@ -410,16 +425,10 @@ namespace PinkTopaz::Renderer {
                                                      bufferSize,
                                                      vertexCount,
                                                      DynamicDraw);
-        
         rebuildVertexBuffer(*handle);
         
-        // Create a uniform buffer containing the text color.
-        StringUniforms uniforms = {
-            .color = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f)
-        };
-        std::vector<uint8_t> uniformData(sizeof(uniforms));
-        memcpy(&uniformData[0], &uniforms, sizeof(uniforms));
-        handle->uniforms = _graphicsDevice->makeUniformBuffer(uniformData, StaticDraw);
+        handle->uniforms = _graphicsDevice->makeUniformBuffer(sizeof(StringUniforms), StaticDraw);
+        rebuildUniformBuffer(*handle, glm::mat4x4());
         
         return handle;
     }

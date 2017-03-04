@@ -15,7 +15,7 @@
 #include "Renderer/GraphicsDevice.hpp"
 
 #include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 #include <memory>
 #include <map>
@@ -31,26 +31,19 @@ namespace PinkTopaz::Renderer {
     class StringRenderer
     {
     public:
+        // Alignment requirements come from OpenGL's std140 layout.
         struct StringUniforms
         {
-            glm::vec4 color;
+            glm::vec4 color __attribute__ ((aligned (16)));
+            glm::mat4 projection __attribute__ ((aligned (16)));
         };
         
-        class String
+        struct String
         {
-        public:
-            String(const std::string &str,
-                   const glm::vec2 &p,
-                   const glm::vec3 &c)
-             : contents(str), position(p), color(c)
-            {}
-            
-            ~String() = default;
-            
             std::string contents;
             glm::vec2 position;
-            glm::vec3 color;
-            
+            glm::vec4 color;
+            glm::ivec4 viewport;
             std::shared_ptr<Buffer> buffer;
             std::shared_ptr<Buffer> uniforms;
         };
@@ -68,7 +61,7 @@ namespace PinkTopaz::Renderer {
         // Add a string to be rendered.
         StringHandle add(const std::string &contents,
                          const glm::vec2 &position,
-                         const glm::vec3 &color);
+                         const glm::vec4 &color);
         
         // Remove a string that was previously added.
         void remove(StringHandle &handle);
@@ -128,6 +121,10 @@ namespace PinkTopaz::Renderer {
         // when string contents have changed, for example.
         void rebuildVertexBuffer(String &string);
         
+        // Rebuilds the internal uniform buffer for a string. This is useful
+        // when the projection changes, or the color changes, for example.
+        void rebuildUniformBuffer(String &string, const glm::mat4x4 &proj);
+        
         std::shared_ptr<GraphicsDevice> _graphicsDevice;
         std::shared_ptr<Texture> _textureAtlas;
         std::map<char, Glyph> _glyphs;
@@ -136,7 +133,6 @@ namespace PinkTopaz::Renderer {
         VertexFormat _vertexFormat;
         RenderPassDescriptor _renderPassDescriptor;
         std::list<String> _strings;
-        glm::ivec4 _viewport;
     };
     
 } // namespace PinkTopaz::Renderer

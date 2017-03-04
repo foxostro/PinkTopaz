@@ -30,8 +30,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         void setShaderUniform(const char *name, const glm::vec3 &value) override;
         void setShaderUniform(const char *name, int value) override;
         
-        void getUniformBlockIndex(const char *name, std::function<void(size_t)> &&completionHandler) override;
-        
         inline GLuint getProgram() const { return _program; }
         
     private:

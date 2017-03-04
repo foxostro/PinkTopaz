@@ -81,7 +81,7 @@ namespace PinkTopaz {
 
             encoder->setFragmentSampler(mesh.textureSampler, 0);
             encoder->setFragmentTexture(mesh.texture, 0);
-            encoder->setVertexBuffer(mesh.buffer, 0);
+            encoder->setVertexBuffer(mesh.buffer);
             
             size_t count = mesh.buffer->getVertexCount();
             encoder->drawPrimitives(Renderer::Triangles, 0, count, 1);
@@ -129,7 +129,7 @@ namespace PinkTopaz {
                 
                 if (_firstReportingPeriod) {
                     _firstReportingPeriod = false;
-                    const glm::vec3 color(0.2f, 0.2f, 0.2f);
+                    const glm::vec4 color(0.2f, 0.2f, 0.2f, 1.0f);
                     const glm::vec2 position(30.0f, 1140.0f);
                     _frameTimeLabel = _stringRenderer.add(s, position, color);
                 } else {

@@ -25,8 +25,6 @@ namespace PinkTopaz::Renderer {
         virtual void setShaderUniform(const char *name, const glm::vec3 &value) = 0;
         virtual void setShaderUniform(const char *name, int value) = 0;
         
-        virtual void getUniformBlockIndex(const char *name, std::function<void(size_t)> &&completionHandler) = 0;
-        
     protected:
         Shader() = default;
     };
