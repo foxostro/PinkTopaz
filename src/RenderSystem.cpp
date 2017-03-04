@@ -17,22 +17,17 @@
 #include "SDL.h"
 #include <glm/vec3.hpp>
 #include <glm/gtc/matrix_transform.hpp> // for lookAt
-#include <sstream>
 
-#define FRAME_TIMING_ENABLED_BY_DEFAULT (true)
+constexpr const char *FONT_NAME = "vegur/Vegur-Regular.otf";
+constexpr unsigned FONT_SIZE = 48;
 
 namespace PinkTopaz {
     
     RenderSystem::RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &dev)
      : _windowSizeChangeEventPending(false),
        _graphicsDevice(dev),
-       _stringRenderer(dev, "vegur/Vegur-Regular.otf", 48),
-       _frameTimeFence(dev->makeFence()),
-       _frameTimingEnabled(FRAME_TIMING_ENABLED_BY_DEFAULT),
-       _timeAccum(0),
-       _countDown(30),
-       _framesBetweenReport(30),
-       _firstReportingPeriod(true)
+       _stringRenderer(dev, FONT_NAME, FONT_SIZE),
+       _frameTimer(*dev, _stringRenderer)
     {}
     
     void RenderSystem::configure(entityx::EventManager &em)
@@ -46,11 +41,7 @@ namespace PinkTopaz {
                               entityx::EventManager &events,
                               entityx::TimeDelta dt)
     {
-        unsigned ticksBeginMs = 0, ticksEndMs = 0;
-        
-        if (_frameTimingEnabled) {
-            ticksBeginMs = SDL_GetTicks();
-        }
+        _frameTimer.beginFrame();
         
         glm::mat4x4 cameraTransform;
         if (_activeCamera.valid()) {
@@ -92,58 +83,12 @@ namespace PinkTopaz {
         
         // Draw text strings on the screen last because they blend.
         _stringRenderer.draw(_viewport);
-        
-        // Measure the time it takes for all GPU work to complete.
-        // We do this by issuing a GPU fence in a new encoder and waiting for
-        // it to complete.
-        if (_frameTimingEnabled) {
-            Renderer::RenderPassDescriptor desc;
-            desc.blend = false;
-            desc.clear = false;
-            desc.depthTest = false;
-            auto encoder = _graphicsDevice->encoder(desc);
-            
-            encoder->updateFence(_frameTimeFence);
-            encoder->waitForFence(_frameTimeFence, [&ticksEndMs]{
-                ticksEndMs = SDL_GetTicks();
-            });
-            _graphicsDevice->submit(encoder);
-        }
 
-        // The completion handler for the above fence will have definitely
-        // executed by the time swapBuffers() returns.
+        _frameTimer.endFrame();
         _graphicsDevice->swapBuffers();
+        _frameTimer.afterFrame();
         
-        // Report the average time between frames.
-        if (_frameTimingEnabled) {
-            unsigned ticksElapsedMs = ticksEndMs - ticksBeginMs;
-            _timeAccum += ticksElapsedMs;
-            
-            if (_countDown == 0) {
-                float frameTime = (float)_timeAccum / _framesBetweenReport;
-                
-                std::stringstream ss;
-                ss.precision(2);
-                ss << "Frame Time: " << std::fixed << frameTime << " ms";
-                std::string s(ss.str());
-                
-                if (_firstReportingPeriod) {
-                    _firstReportingPeriod = false;
-                    const glm::vec4 color(0.2f, 0.2f, 0.2f, 1.0f);
-                    const glm::vec2 position(30.0f, 1140.0f);
-                    _frameTimeLabel = _stringRenderer.add(s, position, color);
-                } else {
-                    _stringRenderer.replaceContents(_frameTimeLabel, s);
-                }
-                
-                _countDown = _framesBetweenReport;
-                _timeAccum = 0;
-            } else {
-                --_countDown;
-            }
-            
-            _windowSizeChangeEventPending = false;
-        }
+        _windowSizeChangeEventPending = false;
     }
     
     void RenderSystem::receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)

@@ -16,6 +16,7 @@
 #include "WindowSizeChangedEvent.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/StringRenderer.hpp"
+#include "FrameTimer.hpp"
 
 namespace PinkTopaz {
     
@@ -37,13 +38,7 @@ namespace PinkTopaz {
         entityx::Entity _activeCamera;
         std::shared_ptr<Renderer::GraphicsDevice> _graphicsDevice;
         Renderer::StringRenderer _stringRenderer;
-        Renderer::StringRenderer::StringHandle _frameTimeLabel;
-        std::shared_ptr<Renderer::Fence> _frameTimeFence;
-        bool _frameTimingEnabled;
-        unsigned _timeAccum;
-        unsigned _countDown;
-        const unsigned _framesBetweenReport;
-        bool _firstReportingPeriod;
+        FrameTimer _frameTimer;
     };
 
 } // namespace PinkTopaz

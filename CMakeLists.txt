@@ -55,6 +55,7 @@ set(SOURCE_FILES_MISC
     "src/FileUtilities.cpp" "src/include/FileUtilities.hpp"
     "src/Exception.cpp" "src/include/Exception.hpp"
     "src/include/RetinaSupport.h"
+    "src/FrameTimer.cpp" "src/include/FrameTimer.hpp"
     )
 
 set(SOURCE_FILES_TEST
