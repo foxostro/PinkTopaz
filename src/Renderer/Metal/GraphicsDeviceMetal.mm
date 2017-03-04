@@ -11,6 +11,7 @@
 #import "Renderer/Metal/ShaderMetal.h"
 #import "Renderer/Metal/TextureMetal.h"
 #import "Renderer/Metal/TextureSamplerMetal.h"
+#import "Renderer/Metal/BufferMetal.h"
 #import "Exception.hpp"
 
 #import "SDL_syswm.h"
@@ -99,9 +100,9 @@ namespace PinkTopaz::Renderer::Metal {
     }
     
     std::shared_ptr<TextureSampler>
-    GraphicsDeviceMetal::makeTextureSampler(const TextureSamplerDescriptor &desc)
+    GraphicsDeviceMetal::makeTextureSampler(const TextureSamplerDescriptor &d)
     {
-        auto sampler = std::make_shared<TextureSamplerMetal>(desc);
+        auto sampler = std::make_shared<TextureSamplerMetal>(d);
         return std::dynamic_pointer_cast<TextureSampler>(sampler);
     }
     
@@ -111,7 +112,10 @@ namespace PinkTopaz::Renderer::Metal {
                                     size_t elementCount,
                                     BufferUsage usage)
     {
-        throw Exception("unimplemented");
+        auto buffer = std::make_shared<BufferMetal>(format, bufferData,
+                                                    elementCount, usage,
+                                                    ArrayBuffer);
+        return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     
     std::shared_ptr<Buffer>
@@ -120,20 +124,25 @@ namespace PinkTopaz::Renderer::Metal {
                                     size_t elementCount,
                                     BufferUsage usage)
     {
-        throw Exception("unimplemented");
+        auto buffer = std::make_shared<BufferMetal>(format, bufferSize,
+                                                    elementCount, usage,
+                                                    ArrayBuffer);
+        return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     
     std::shared_ptr<Buffer>
     GraphicsDeviceMetal::makeUniformBuffer(const std::vector<uint8_t> &data,
                                            BufferUsage usage)
     {
-        throw Exception("unimplemented");
+        auto buffer = std::make_shared<BufferMetal>(data, usage, UniformBuffer);
+        return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     
     std::shared_ptr<Buffer>
     GraphicsDeviceMetal::makeUniformBuffer(size_t size, BufferUsage usage)
     {
-        throw Exception("unimplemented");
+        auto buffer = std::make_shared<BufferMetal>(size, usage, UniformBuffer);
+        return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     
     std::shared_ptr<Fence> GraphicsDeviceMetal::makeFence()
