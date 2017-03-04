@@ -133,6 +133,7 @@ namespace PinkTopaz::Renderer {
         RenderPassDescriptor _renderPassDescriptor;
         std::list<String> _strings;
         glm::ivec4 _viewport;
+        std::shared_ptr<Buffer> _uniforms;
     };
     
 } // namespace PinkTopaz::Renderer

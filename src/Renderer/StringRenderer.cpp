@@ -298,6 +298,9 @@ namespace PinkTopaz::Renderer {
         
         _shader = _graphicsDevice->makeShader("text_vert", "text_frag");
         _shader->setShaderUniform("tex", 0);
+        _shader->getUniformBlockIndex("TextUniforms", [](size_t index) {
+            SDL_Log("MyUniforms is at %d", (int)index);
+        });
         
         _vertexFormat.attributes.emplace_back((AttributeFormat){
             .size = 4,
@@ -314,6 +317,12 @@ namespace PinkTopaz::Renderer {
             .maxFilter = Renderer::Nearest
         };
         _sampler = _graphicsDevice->makeTextureSampler(samplerDesc);
+        
+        // Create a uniform buffer containing the text color.
+        std::vector<uint8_t> uniformData(sizeof(glm::vec4));
+        glm::vec4 *textColor = (glm::vec4 *)&uniformData[0];
+        *textColor = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
+        _uniforms = _graphicsDevice->makeUniformBuffer(uniformData, StaticDraw);
     }
     
     void StringRenderer::draw(const glm::ivec4 &viewport)
@@ -333,14 +342,10 @@ namespace PinkTopaz::Renderer {
         encoder->setShader(_shader);
         encoder->setFragmentSampler(_sampler, 0);
         encoder->setFragmentTexture(_textureAtlas, 0);
+        encoder->setFragmentBuffer(_uniforms, 0);
         
         for (auto &string : _strings)
         {
-            // TODO: This will not work when two different strings use different
-            // colors. The solution is to use uniform buffer objects and allow
-            // each string to bind a different set of uniforms.
-            _shader->setShaderUniform("textColor", string.color);
-            
             encoder->setVertexBuffer(string.buffer, 0);
             encoder->drawPrimitives(Triangles, 0, string.buffer->getVertexCount(), 1);
         }

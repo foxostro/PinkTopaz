@@ -45,6 +45,9 @@ namespace PinkTopaz::Renderer {
         // Use the texture sampler at the specified index in the fragment program.
         virtual void setFragmentSampler(const std::shared_ptr<TextureSampler> &sampler, size_t index) = 0;
         
+        // Binds the specified buffer for use in the fragment program.
+        virtual void setFragmentBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) = 0;
+        
         // Binds the specified buffer for use in the vertex program.
         virtual void setVertexBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) = 0;
         

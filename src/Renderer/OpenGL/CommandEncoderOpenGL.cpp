@@ -87,6 +87,13 @@ namespace PinkTopaz::Renderer::OpenGL {
         });
     }
     
+    void CommandEncoderOpenGL::setFragmentBuffer(const std::shared_ptr<Buffer> &buffer, size_t index)
+    {
+        // OpenGL doesn't make a distinction between slots for fragment programs
+        // and slots for vertex programs?
+        setVertexBuffer(buffer, index);
+    }
+    
     void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
     {
         assert(abstractBuffer);
