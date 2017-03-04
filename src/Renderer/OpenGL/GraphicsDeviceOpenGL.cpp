@@ -166,4 +166,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         return std::dynamic_pointer_cast<Fence>(fence);
     }
     
+    void GraphicsDeviceOpenGL::windowSizeChanged() {}
+    
 } // namespace PinkTopaz::Renderer::OpenGL

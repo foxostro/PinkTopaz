@@ -85,6 +85,10 @@ namespace PinkTopaz::Renderer::OpenGL {
         // Creates a new GPU fence object.
         std::shared_ptr<Fence> makeFence() override;
         
+        // Call this when the window size changes. This provides the opportunity
+        // to update the underlying context or layers as needed.
+        void windowSizeChanged() override;
+        
     private:
         SDL_Window &_window;
         SDL_GLContext _glContext;

@@ -6,14 +6,21 @@
 //
 //
 
-#include "Renderer/GraphicsDevice.hpp"
-#include "Renderer/OpenGL/GraphicsDeviceOpenGL.hpp"
+#import "Renderer/GraphicsDevice.hpp"
+
+#if 0
+#import "Renderer/Metal/GraphicsDeviceMetal.h"
+#define DEVICE_TYPE Metal::GraphicsDeviceMetal
+#else
+#import "Renderer/OpenGL/GraphicsDeviceOpenGL.hpp"
+#define DEVICE_TYPE OpenGL::GraphicsDeviceOpenGL
+#endif
 
 namespace PinkTopaz::Renderer {
     
     std::shared_ptr<GraphicsDevice> createDefaultGraphicsDevice(SDL_Window &w)
     {
-        auto concrete = std::make_shared<OpenGL::GraphicsDeviceOpenGL>(w);
+        auto concrete = std::make_shared<DEVICE_TYPE>(w);
         auto abstract = std::dynamic_pointer_cast<GraphicsDevice>(concrete);
         return abstract;
     }

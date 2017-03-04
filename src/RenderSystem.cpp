@@ -112,6 +112,7 @@ namespace PinkTopaz {
         _viewport = glm::ivec4(0, 0, event.width * event.windowScaleFactor, event.height * event.windowScaleFactor);
         _proj = glm::perspective(glm::pi<float>() * 0.25f, (float)event.width / event.height, znear, zfar);
         _windowSizeChangeEventPending = true;
+        _graphicsDevice->windowSizeChanged();
     }
     
 } // namespace PinkTopaz

@@ -7,12 +7,10 @@
 //
 
 #import "Renderer/Metal/GraphicsDeviceMetal.h"
+#import "Renderer/Metal/CommandEncoderMetal.h"
 #import "Exception.hpp"
 
 #import "SDL_syswm.h"
-
-#import <Cocoa/Cocoa.h>
-#import <Metal/Metal.h>
 
 namespace PinkTopaz::Renderer::Metal {
     
@@ -33,42 +31,45 @@ namespace PinkTopaz::Renderer::Metal {
         CGFloat contentsScale = sdlLayer.contentsScale;
         NSSize layerSize = sdlLayer.frame.size;
         
-        CAMetalLayer *metalLayer = [CAMetalLayer layer];
-        metalLayer.contentsScale = contentsScale;
-        metalLayer.drawableSize = NSMakeSize(layerSize.width * contentsScale,
+        _metalLayer = [[CAMetalLayer layer] retain];
+        _metalLayer.contentsScale = contentsScale;
+        _metalLayer.drawableSize = NSMakeSize(layerSize.width * contentsScale,
                                              layerSize.height * contentsScale);
-        metalLayer.device = MTLCreateSystemDefaultDevice();
-        metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-        metalLayer.frame = sdlLayer.frame;
-        metalLayer.framebufferOnly = true;
+        _metalLayer.device = MTLCreateSystemDefaultDevice();
+        _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+        _metalLayer.frame = sdlLayer.frame;
+        _metalLayer.framebufferOnly = true;
         
-        [sdlLayer addSublayer:metalLayer];
+        [sdlLayer addSublayer:_metalLayer];
         
-        _metalLayer = [metalLayer retain];
+        _commandQueue = [_metalLayer.device newCommandQueue];
     }
     
     GraphicsDeviceMetal::~GraphicsDeviceMetal()
     {
+        [_commandQueue release];
+        
         [_metalLayer removeFromSuperlayer];
         [_metalLayer release];
-        _metalLayer = nil;
     }
     
     std::shared_ptr<CommandEncoder>
     GraphicsDeviceMetal::encoder(const RenderPassDescriptor &desc)
     {
-        throw Exception("unimplemented");
+        id <CAMetalDrawable> drawable = [_metalLayer nextDrawable];
+        
+        auto encoder = std::make_shared<CommandEncoderMetal>(desc, _commandQueue, drawable);
+        return std::dynamic_pointer_cast<CommandEncoder>(encoder);
     }
     
-    void GraphicsDeviceMetal::submit(const std::shared_ptr<CommandEncoder> &enc)
+    void GraphicsDeviceMetal::submit(const std::shared_ptr<CommandEncoder> &abstractEncoder)
     {
-        throw Exception("unimplemented");
+        auto concreteEncoder = std::dynamic_pointer_cast<CommandEncoderMetal>(abstractEncoder);
+        assert(concreteEncoder);
+        concreteEncoder->onSubmit();
     }
     
-    void GraphicsDeviceMetal::swapBuffers()
-    {
-        throw Exception("unimplemented");
-    }
+    void GraphicsDeviceMetal::swapBuffers() {}
     
     std::shared_ptr<Shader>
     GraphicsDeviceMetal::makeShader(const std::string &vertexProgramName,
@@ -131,6 +132,12 @@ namespace PinkTopaz::Renderer::Metal {
     std::shared_ptr<Fence> GraphicsDeviceMetal::makeFence()
     {
         throw Exception("unimplemented");
+    }
+    
+    void GraphicsDeviceMetal::windowSizeChanged()
+    {
+        // Resize the layer when the window resizes.
+        _metalLayer.frame = _metalLayer.superlayer.frame;
     }
     
 } // namespace PinkTopaz::Renderer::Metal

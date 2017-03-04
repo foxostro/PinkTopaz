@@ -20,7 +20,7 @@ set(SOURCE_FILES_OPENGL
 if(APPLE)
     set(SOURCE_FILES_METAL
         "src/Renderer/Metal/GraphicsDeviceMetal.mm" "src/include/Renderer/Metal/GraphicsDeviceMetal.h"
-        "src/osx/GraphicsDeviceFactory.mm"
+        "src/Renderer/Metal/CommandEncoderMetal.mm" "src/include/Renderer/Metal/CommandEncoderMetal.h"
         )
 else()
     set(SOURCE_FILES_METAL "")

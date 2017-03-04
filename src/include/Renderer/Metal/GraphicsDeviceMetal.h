@@ -13,15 +13,17 @@
 #error "GraphiscDeviceMetal.h is an Objective-C++ header."
 #endif
 
-#include "Renderer/GraphicsDevice.hpp"
-#include "Renderer/CommandEncoder.hpp"
+#import "Renderer/GraphicsDevice.hpp"
+#import "Renderer/CommandEncoder.hpp"
 
-#include <mutex>
-#include <queue>
-#include <memory>
+#import <mutex>
+#import <queue>
+#import <memory>
 
-#include "SDL.h"
+#import "SDL.h"
+#import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
+#import <Metal/Metal.h>
 
 namespace PinkTopaz::Renderer::Metal {
     
@@ -93,8 +95,13 @@ namespace PinkTopaz::Renderer::Metal {
         // Creates a new GPU fence object.
         std::shared_ptr<Fence> makeFence() override;
         
+        // Call this when the window size changes. This provides the opportunity
+        // to update the underlying context or layers as needed.
+        void windowSizeChanged() override;
+        
     private:
         CAMetalLayer *_metalLayer;
+        id <MTLCommandQueue> _commandQueue;
     };
     
 } // namespace PinkTopaz::Renderer::Metal

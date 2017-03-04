@@ -95,6 +95,10 @@ namespace PinkTopaz::Renderer {
         
         // Creates a new GPU fence object.
         virtual std::shared_ptr<Fence> makeFence() = 0;
+        
+        // Call this when the window size changes. This provides the opportunity
+        // to update the underlying context or layers as needed.
+        virtual void windowSizeChanged() = 0;
     };
     
     // Create a default graphics device for the system.
