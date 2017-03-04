@@ -9,6 +9,10 @@
 #ifndef CommandEncoderMetal_hpp
 #define CommandEncoderMetal_hpp
 
+#ifndef __OBJC__
+#error "This is an Objective-C++ header."
+#endif
+
 #import "Renderer/CommandEncoder.hpp"
 #import "Renderer/RenderPassDescriptor.hpp"
 

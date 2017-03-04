@@ -21,6 +21,7 @@ if(APPLE)
     set(SOURCE_FILES_METAL
         "src/Renderer/Metal/GraphicsDeviceMetal.mm" "src/include/Renderer/Metal/GraphicsDeviceMetal.h"
         "src/Renderer/Metal/CommandEncoderMetal.mm" "src/include/Renderer/Metal/CommandEncoderMetal.h"
+        "src/Renderer/Metal/ShaderMetal.mm" "src/include/Renderer/Metal/ShaderMetal.h"
         )
 else()
     set(SOURCE_FILES_METAL "")

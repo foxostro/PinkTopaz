@@ -2,7 +2,7 @@
 //  GraphicsDeviceMetal.h
 //  PinkTopaz
 //
-//  Created by Andrew Fox on 7/8/16.
+//  Created by Andrew Fox on 3/4/17.
 //
 //
 
@@ -10,7 +10,7 @@
 #define GraphicsDeviceMetal_hpp
 
 #ifndef __OBJC__
-#error "GraphiscDeviceMetal.h is an Objective-C++ header."
+#error "This is an Objective-C++ header."
 #endif
 
 #import "Renderer/GraphicsDevice.hpp"

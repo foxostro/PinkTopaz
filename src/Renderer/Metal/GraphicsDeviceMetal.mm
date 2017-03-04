@@ -2,12 +2,13 @@
 //  GraphicsDeviceMetal.mm
 //  PinkTopaz
 //
-//  Created by Andrew Fox on 7/8/16.
+//  Created by Andrew Fox on 3/4/17.
 //
 //
 
 #import "Renderer/Metal/GraphicsDeviceMetal.h"
 #import "Renderer/Metal/CommandEncoderMetal.h"
+#import "Renderer/Metal/ShaderMetal.h"
 #import "Exception.hpp"
 
 #import "SDL_syswm.h"
@@ -72,10 +73,11 @@ namespace PinkTopaz::Renderer::Metal {
     void GraphicsDeviceMetal::swapBuffers() {}
     
     std::shared_ptr<Shader>
-    GraphicsDeviceMetal::makeShader(const std::string &vertexProgramName,
-                                    const std::string &fragmentProgramName)
+    GraphicsDeviceMetal::makeShader(const std::string &vert,
+                                    const std::string &frag)
     {
-        throw Exception("unimplemented");
+        auto shader = std::make_shared<ShaderMetal>(vert, frag);
+        return std::dynamic_pointer_cast<Shader>(shader);
     }
     
     std::shared_ptr<Texture>
