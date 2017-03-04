@@ -23,6 +23,7 @@ if(APPLE)
         "src/Renderer/Metal/CommandEncoderMetal.mm" "src/include/Renderer/Metal/CommandEncoderMetal.h"
         "src/Renderer/Metal/ShaderMetal.mm" "src/include/Renderer/Metal/ShaderMetal.h"
         "src/Renderer/Metal/TextureMetal.mm" "src/include/Renderer/Metal/TextureMetal.h"
+        "src/Renderer/Metal/TextureSamplerMetal.mm" "src/include/Renderer/Metal/TextureSamplerMetal.h"
         )
 else()
     set(SOURCE_FILES_METAL "")

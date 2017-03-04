@@ -10,6 +10,7 @@
 #import "Renderer/Metal/CommandEncoderMetal.h"
 #import "Renderer/Metal/ShaderMetal.h"
 #import "Renderer/Metal/TextureMetal.h"
+#import "Renderer/Metal/TextureSamplerMetal.h"
 #import "Exception.hpp"
 
 #import "SDL_syswm.h"
@@ -100,7 +101,8 @@ namespace PinkTopaz::Renderer::Metal {
     std::shared_ptr<TextureSampler>
     GraphicsDeviceMetal::makeTextureSampler(const TextureSamplerDescriptor &desc)
     {
-        throw Exception("unimplemented");
+        auto sampler = std::make_shared<TextureSamplerMetal>(desc);
+        return std::dynamic_pointer_cast<TextureSampler>(sampler);
     }
     
     std::shared_ptr<Buffer>
