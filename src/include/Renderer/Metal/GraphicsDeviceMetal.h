@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef GraphicsDeviceMetal_hpp
-#define GraphicsDeviceMetal_hpp
+#ifndef GraphicsDeviceMetal_h
+#define GraphicsDeviceMetal_h
 
 #ifndef __OBJC__
 #error "This is an Objective-C++ header."
@@ -106,4 +106,4 @@ namespace PinkTopaz::Renderer::Metal {
     
 } // namespace PinkTopaz::Renderer::Metal
 
-#endif /* GraphicsDeviceMetal_hpp */
+#endif /* GraphicsDeviceMetal_h */

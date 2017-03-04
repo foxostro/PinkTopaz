@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef BufferMetal_hpp
-#define BufferMetal_hpp
+#ifndef BufferMetal_h
+#define BufferMetal_h
 
 #ifndef __OBJC__
 #error "This is an Objective-C++ header."
@@ -63,4 +63,4 @@ namespace PinkTopaz::Renderer::Metal {
     
 } // namespace PinkTopaz::Renderer::Metal
 
-#endif /* BufferMetal_hpp */
+#endif /* BufferMetal_h */

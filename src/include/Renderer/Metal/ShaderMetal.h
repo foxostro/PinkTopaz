@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef ShaderMetal_hpp
-#define ShaderMetal_hpp
+#ifndef ShaderMetal_h
+#define ShaderMetal_h
 
 #ifndef __OBJC__
 #error "This is an Objective-C++ header."
@@ -26,4 +26,4 @@ namespace PinkTopaz::Renderer::Metal {
     
 } // namespace PinkTopaz::Renderer::Metal
 
-#endif /* ShaderMetal_hpp */
+#endif /* ShaderMetal_h */

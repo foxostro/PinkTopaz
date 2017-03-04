@@ -12,6 +12,7 @@
 #import "Renderer/Metal/TextureMetal.h"
 #import "Renderer/Metal/TextureSamplerMetal.h"
 #import "Renderer/Metal/BufferMetal.h"
+#import "Renderer/Metal/FenceMetal.h"
 #import "Exception.hpp"
 
 #import "SDL_syswm.h"
@@ -147,7 +148,8 @@ namespace PinkTopaz::Renderer::Metal {
     
     std::shared_ptr<Fence> GraphicsDeviceMetal::makeFence()
     {
-        throw Exception("unimplemented");
+        // Note that MTLFence is currently unavailable on macOS.
+        return std::dynamic_pointer_cast<Fence>(std::make_shared<FenceMetal>());
     }
     
     void GraphicsDeviceMetal::windowSizeChanged()

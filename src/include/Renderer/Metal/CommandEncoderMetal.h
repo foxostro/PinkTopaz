@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef CommandEncoderMetal_hpp
-#define CommandEncoderMetal_hpp
+#ifndef CommandEncoderMetal_h
+#define CommandEncoderMetal_h
 
 #ifndef __OBJC__
 #error "This is an Objective-C++ header."
@@ -55,4 +55,4 @@ namespace PinkTopaz::Renderer::Metal {
     
 }; // namespace PinkTopaz::Renderer::Metal
 
-#endif /* CommandEncoderMetal_hpp */
+#endif /* CommandEncoderMetal_h */

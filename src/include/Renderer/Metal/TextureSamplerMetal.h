@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef TextureSamplerMetal_hpp
-#define TextureSamplerMetal_hpp
+#ifndef TextureSamplerMetal_h
+#define TextureSamplerMetal_h
 
 #ifndef __OBJC__
 #error "This is an Objective-C++ header."
@@ -26,4 +26,4 @@ namespace PinkTopaz::Renderer::Metal {
     
 } // namespace PinkTopaz::Renderer::Metal
 
-#endif /* TextureSamplerMetal_hpp */
+#endif /* TextureSamplerMetal_h */

@@ -6,8 +6,8 @@
 //
 //
 
-#ifndef TextureMetal_hpp
-#define TextureMetal_hpp
+#ifndef TextureMetal_h
+#define TextureMetal_h
 
 #ifndef __OBJC__
 #error "This is an Objective-C++ header."
@@ -29,4 +29,4 @@ namespace PinkTopaz::Renderer::Metal {
     
 } // namespace PinkTopaz::Renderer::Metal
 
-#endif /* TextureMetal_hpp */
+#endif /* TextureMetal_h */

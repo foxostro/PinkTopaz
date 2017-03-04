@@ -25,6 +25,7 @@ if(APPLE)
         "src/Renderer/Metal/TextureMetal.mm" "src/include/Renderer/Metal/TextureMetal.h"
         "src/Renderer/Metal/TextureSamplerMetal.mm" "src/include/Renderer/Metal/TextureSamplerMetal.h"
         "src/Renderer/Metal/BufferMetal.mm" "src/include/Renderer/Metal/BufferMetal.h"
+        "src/Renderer/Metal/FenceMetal.mm" "src/include/Renderer/Metal/FenceMetal.h"
         )
 else()
     set(SOURCE_FILES_METAL "")

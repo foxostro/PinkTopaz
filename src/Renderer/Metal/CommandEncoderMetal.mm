@@ -45,49 +45,31 @@ namespace PinkTopaz::Renderer::Metal {
     }
     
     void CommandEncoderMetal::setViewport(const glm::ivec4 &viewport)
-    {
-        throw Exception("unimplemented");
-    }
+    {}
     
     void CommandEncoderMetal::setShader(const std::shared_ptr<Shader> &abstractShader)
-    {
-        throw Exception("unimplemented");
-    }
+    {}
     
     void CommandEncoderMetal::setFragmentTexture(const std::shared_ptr<Texture> &abstractTexture, size_t index)
-    {
-        throw Exception("unimplemented");
-    }
+    {}
     
     void CommandEncoderMetal::setFragmentSampler(const std::shared_ptr<TextureSampler> &abstractSampler, size_t index)
-    {
-        throw Exception("unimplemented");
-    }
+    {}
     
     void CommandEncoderMetal::setVertexBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
-    {
-        throw Exception("unimplemented");
-    }
+    {}
     
     void CommandEncoderMetal::setFragmentBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
-    {
-        throw Exception("unimplemented");
-    }
+    {}
     
     void CommandEncoderMetal::drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances)
-    {
-        throw Exception("unimplemented");
-    }
+    {}
     
     void CommandEncoderMetal::updateFence(const std::shared_ptr<Fence> &fence)
-    {
-        throw Exception("unimplemented");
-    }
+    {}
     
     void CommandEncoderMetal::waitForFence(const std::shared_ptr<Fence> &fence, std::function<void()> &&callback)
-    {
-        throw Exception("unimplemented");
-    }
+    {}
     
     void CommandEncoderMetal::onSubmit()
     {
