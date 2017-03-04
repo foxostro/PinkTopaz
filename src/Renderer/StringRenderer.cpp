@@ -317,12 +317,6 @@ namespace PinkTopaz::Renderer {
             .maxFilter = Renderer::Nearest
         };
         _sampler = _graphicsDevice->makeTextureSampler(samplerDesc);
-        
-        // Create a uniform buffer containing the text color.
-        std::vector<uint8_t> uniformData(sizeof(glm::vec4));
-        glm::vec4 *textColor = (glm::vec4 *)&uniformData[0];
-        *textColor = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f);
-        _uniforms = _graphicsDevice->makeUniformBuffer(uniformData, StaticDraw);
     }
     
     void StringRenderer::draw(const glm::ivec4 &viewport)
@@ -342,10 +336,10 @@ namespace PinkTopaz::Renderer {
         encoder->setShader(_shader);
         encoder->setFragmentSampler(_sampler, 0);
         encoder->setFragmentTexture(_textureAtlas, 0);
-        encoder->setFragmentBuffer(_uniforms, 0);
         
         for (auto &string : _strings)
         {
+            encoder->setFragmentBuffer(string.uniforms, 0);
             encoder->setVertexBuffer(string.buffer, 0);
             encoder->drawPrimitives(Triangles, 0, string.buffer->getVertexCount(), 1);
         }
@@ -353,7 +347,7 @@ namespace PinkTopaz::Renderer {
         _graphicsDevice->submit(encoder);
     }
     
-    void StringRenderer::rebuildBuffer(String &string)
+    void StringRenderer::rebuildVertexBuffer(String &string)
     {
         const std::string &text = string.contents;
         const size_t glyphCount = text.size();
@@ -417,7 +411,15 @@ namespace PinkTopaz::Renderer {
                                                      vertexCount,
                                                      DynamicDraw);
         
-        rebuildBuffer(*handle);
+        rebuildVertexBuffer(*handle);
+        
+        // Create a uniform buffer containing the text color.
+        StringUniforms uniforms = {
+            .color = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f)
+        };
+        std::vector<uint8_t> uniformData(sizeof(uniforms));
+        memcpy(&uniformData[0], &uniforms, sizeof(uniforms));
+        handle->uniforms = _graphicsDevice->makeUniformBuffer(uniformData, StaticDraw);
         
         return handle;
     }
@@ -431,7 +433,7 @@ namespace PinkTopaz::Renderer {
                                          const std::string &contents)
     {
         handle->contents = contents;
-        rebuildBuffer(*handle);
+        rebuildVertexBuffer(*handle);
     }
     
 } // namespace PinkTopaz::Renderer

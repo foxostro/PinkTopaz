@@ -31,15 +31,18 @@ namespace PinkTopaz::Renderer {
     class StringRenderer
     {
     public:
+        struct StringUniforms
+        {
+            glm::vec4 color;
+        };
+        
         class String
         {
         public:
             String(const std::string &str,
                    const glm::vec2 &p,
                    const glm::vec3 &c)
-            : contents(str),
-            position(p),
-            color(c)
+             : contents(str), position(p), color(c)
             {}
             
             ~String() = default;
@@ -49,6 +52,7 @@ namespace PinkTopaz::Renderer {
             glm::vec3 color;
             
             std::shared_ptr<Buffer> buffer;
+            std::shared_ptr<Buffer> uniforms;
         };
         
         typedef std::list<String>::iterator StringHandle;
@@ -122,7 +126,7 @@ namespace PinkTopaz::Renderer {
         
         // Rebuilds the internal vertex buffer for a string. This is useful
         // when string contents have changed, for example.
-        void rebuildBuffer(String &string);
+        void rebuildVertexBuffer(String &string);
         
         std::shared_ptr<GraphicsDevice> _graphicsDevice;
         std::shared_ptr<Texture> _textureAtlas;
@@ -133,7 +137,6 @@ namespace PinkTopaz::Renderer {
         RenderPassDescriptor _renderPassDescriptor;
         std::list<String> _strings;
         glm::ivec4 _viewport;
-        std::shared_ptr<Buffer> _uniforms;
     };
     
 } // namespace PinkTopaz::Renderer
