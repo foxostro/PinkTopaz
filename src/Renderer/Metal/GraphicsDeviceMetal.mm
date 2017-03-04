@@ -9,6 +9,7 @@
 #import "Renderer/Metal/GraphicsDeviceMetal.h"
 #import "Renderer/Metal/CommandEncoderMetal.h"
 #import "Renderer/Metal/ShaderMetal.h"
+#import "Renderer/Metal/TextureMetal.h"
 #import "Exception.hpp"
 
 #import "SDL_syswm.h"
@@ -84,14 +85,16 @@ namespace PinkTopaz::Renderer::Metal {
     GraphicsDeviceMetal::makeTexture(const TextureDescriptor &desc,
                                      const void *data)
     {
-        throw Exception("unimplemented");
+        auto texture = std::make_shared<TextureMetal>(desc, data);
+        return std::dynamic_pointer_cast<Texture>(texture);
     }
     
     std::shared_ptr<Texture>
     GraphicsDeviceMetal::makeTexture(const TextureDescriptor &desc,
                                      const std::vector<uint8_t> &data)
     {
-        throw Exception("unimplemented");
+        auto texture = std::make_shared<TextureMetal>(desc, data);
+        return std::dynamic_pointer_cast<Texture>(texture);
     }
     
     std::shared_ptr<TextureSampler>
