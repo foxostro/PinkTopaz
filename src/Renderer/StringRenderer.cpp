@@ -337,8 +337,8 @@ namespace PinkTopaz::Renderer {
                 rebuildUniformBuffer(string, projection);
             }
             
-            encoder->setVertexBuffer(string.buffer);
-            encoder->setUniformBuffer(string.uniforms, 0);
+            encoder->setVertexBuffer(string.buffer, 0);
+            encoder->setVertexBuffer(string.uniforms, 0);
             encoder->drawPrimitives(Triangles, 0, string.buffer->getVertexCount(), 1);
         }
 
@@ -424,7 +424,7 @@ namespace PinkTopaz::Renderer {
         handle->buffer = _graphicsDevice->makeBuffer(_vertexFormat,
                                                      bufferSize,
                                                      vertexCount,
-                                                     DynamicDraw);
+                                                     StaticDraw);
         rebuildVertexBuffer(*handle);
         
         handle->uniforms = _graphicsDevice->makeUniformBuffer(sizeof(StringUniforms), StaticDraw);

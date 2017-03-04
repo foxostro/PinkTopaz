@@ -87,33 +87,21 @@ namespace PinkTopaz::Renderer::OpenGL {
         });
     }
     
-    void CommandEncoderOpenGL::setFragmentBuffer(const std::shared_ptr<Buffer> &buffer, size_t index)
-    {
-        // OpenGL doesn't make a distinction between slots for fragment programs
-        // and slots for vertex programs?
-        assert(false);
-    }
-    
-    void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstractBuffer)
+    void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
     {
         assert(abstractBuffer);
         _commandQueue.enqueue([=]() {
             auto buffer = std::dynamic_pointer_cast<BufferOpenGL>(abstractBuffer);
-            GLuint vao = buffer->getHandleVAO();
-            glBindVertexArray(vao);
-            CHECK_GL_ERROR();
-        });
-    }
-    
-    void CommandEncoderOpenGL::setUniformBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
-    {
-        assert(abstractBuffer);
-        _commandQueue.enqueue([=]() {
-            auto buffer = std::dynamic_pointer_cast<BufferOpenGL>(abstractBuffer);
-            assert(buffer->getTargetEnum() == GL_UNIFORM_BUFFER);
-            GLuint vbo = buffer->getHandleVBO();
-            glBindBufferBase(GL_UNIFORM_BUFFER, index, vbo);
-            CHECK_GL_ERROR();
+            
+            if (UniformBuffer == buffer->getType()) {
+                GLuint vbo = buffer->getHandleVBO();
+                glBindBufferBase(GL_UNIFORM_BUFFER, index, vbo);
+                CHECK_GL_ERROR();
+            } else {
+                GLuint vao = buffer->getHandleVAO();
+                glBindVertexArray(vao);
+                CHECK_GL_ERROR();
+            }
         });
     }
     
