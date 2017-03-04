@@ -31,6 +31,7 @@ namespace PinkTopaz::Renderer::Metal {
         void setFragmentTexture(const std::shared_ptr<Texture> &texture, size_t index) override;
         void setFragmentSampler(const std::shared_ptr<TextureSampler> &sampler, size_t index) override;
         void setVertexBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) override;
+        void setFragmentBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) override;
         void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) override;
         void updateFence(const std::shared_ptr<Fence> &fence) override;
         void waitForFence(const std::shared_ptr<Fence> &fence,

@@ -7,7 +7,10 @@ layout (location=2) in vec4 vc;
 out vec3 texCoord;
 out vec4 color;
 
-uniform mat4 view, proj;
+layout (std140) uniform TerrainUniforms
+{
+    mat4 view, proj;
+};
 
 void main()
 {

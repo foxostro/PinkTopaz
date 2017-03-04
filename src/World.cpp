@@ -14,18 +14,20 @@
 
 namespace PinkTopaz {
     
-    World::World(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice,
-                 const std::shared_ptr<Renderer::Buffer> &buffer,
+    World::World(const std::shared_ptr<Renderer::GraphicsDevice> &device,
+                 const std::shared_ptr<Renderer::Buffer> &vertexBuffer,
+                 const std::shared_ptr<Renderer::Buffer> &uniforms,
                  const std::shared_ptr<Renderer::Shader> &shader,
                  const std::shared_ptr<Renderer::Texture> &texture,
                  const std::shared_ptr<Renderer::TextureSampler> &sampler)
     {
-        systems.add<RenderSystem>(graphicsDevice);
+        systems.add<RenderSystem>(device);
         systems.configure();
         
         // Create an entity to represent the camera.
-        // Render systems will know by the ActiveCamera that this is the camera. They will retrieve the entity's
-        // transformation and take it into account when rendering their stuff.
+        // Render systems will know by the ActiveCamera that this is the camera.
+        // They will retrieve the entity's transformation and take it into
+        // account when rendering their stuff.
         entityx::Entity camera = entities.create();
         camera.assign<Transform>(glm::vec3(85.1, 16.1, 140.1),
                                  glm::vec3(80.1, 20.1, 130.1),
@@ -34,7 +36,8 @@ namespace PinkTopaz {
         
         // Create an entity to represent the terrain.
         entityx::Entity terrain = entities.create();
-        terrain.assign<RenderableStaticMesh>(buffer, shader, texture, sampler);
+        terrain.assign<RenderableStaticMesh>(vertexBuffer, uniforms, shader,
+                                             texture, sampler);
         terrain.assign<Transform>(glm::mat4x4());
     }
     

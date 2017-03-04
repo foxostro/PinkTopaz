@@ -24,8 +24,9 @@ namespace PinkTopaz {
     class World : public entityx::EntityX
     {
     public:
-        explicit World(const std::shared_ptr<Renderer::GraphicsDevice> &renderer,
-                       const std::shared_ptr<Renderer::Buffer> &buffer,
+        explicit World(const std::shared_ptr<Renderer::GraphicsDevice> &dev,
+                       const std::shared_ptr<Renderer::Buffer> &vertexBuffer,
+                       const std::shared_ptr<Renderer::Buffer> &uniforms,
                        const std::shared_ptr<Renderer::Shader> &shader,
                        const std::shared_ptr<Renderer::Texture> &texture,
                        const std::shared_ptr<Renderer::TextureSampler> &sampler);

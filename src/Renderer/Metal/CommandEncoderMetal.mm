@@ -69,6 +69,11 @@ namespace PinkTopaz::Renderer::Metal {
         throw Exception("unimplemented");
     }
     
+    void CommandEncoderMetal::setFragmentBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
+    {
+        throw Exception("unimplemented");
+    }
+    
     void CommandEncoderMetal::drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances)
     {
         throw Exception("unimplemented");

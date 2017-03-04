@@ -9,8 +9,10 @@
 #ifndef StaticMesh_hpp
 #define StaticMesh_hpp
 
-#include <vector>
 #include "Renderer/VertexFormat.hpp"
+
+#include <vector>
+#include <glm/mat4x4.hpp>
 
 namespace PinkTopaz::Renderer {
     
@@ -32,6 +34,11 @@ namespace PinkTopaz::Renderer {
             int32_t numVerts;
             uint32_t len;
             Vertex vertices[0];
+        };
+        
+        struct Uniforms
+        {
+            glm::mat4 view, proj;
         };
         
         StaticMesh(const char *filePath);

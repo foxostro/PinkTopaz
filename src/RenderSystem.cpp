@@ -24,8 +24,7 @@ constexpr unsigned FONT_SIZE = 48;
 namespace PinkTopaz {
     
     RenderSystem::RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &dev)
-     : _windowSizeChangeEventPending(false),
-       _graphicsDevice(dev),
+     : _graphicsDevice(dev),
        _stringRenderer(dev, FONT_NAME, FONT_SIZE),
        _frameTimer(*dev, _stringRenderer)
     {}
@@ -48,36 +47,34 @@ namespace PinkTopaz {
             cameraTransform = _activeCamera.component<Transform>()->value;
         }
         
-        std::set<std::shared_ptr<Renderer::Shader>> shadersEncountered;
+        // Update the uniform buffers so they include the most recent matrices.
+        auto f = [&](entityx::Entity entity,
+                     RenderableStaticMesh &mesh,
+                     Transform &transform) {
+            Renderer::StaticMesh::Uniforms uniforms = {
+                .view = cameraTransform * transform.value,
+                .proj = _proj,
+            };
+            mesh.uniforms->replace(sizeof(uniforms), &uniforms);
+        };
+        es.each<RenderableStaticMesh, Transform>(f);
         
         Renderer::RenderPassDescriptor desc; // default values
         auto encoder = _graphicsDevice->encoder(desc);
         encoder->setViewport(_viewport);
 
-        auto f = [&](entityx::Entity entity,
+        // Render all meshes.
+        auto g = [&](entityx::Entity entity,
                      RenderableStaticMesh &mesh,
                      Transform &transform) {
             encoder->setShader(mesh.shader);
-            
-            // If we have a new projection matrix then pass it to each shader used for rendering.
-            // Take care to do this only once for each unique shader encountered.
-            if (_windowSizeChangeEventPending) {
-                if (shadersEncountered.find(mesh.shader) == shadersEncountered.end()) {
-                    shadersEncountered.insert(mesh.shader);
-                    mesh.shader->setShaderUniform("proj", _proj);
-                }
-            }
-            
-            mesh.shader->setShaderUniform("view", cameraTransform * transform.value);
-
             encoder->setFragmentSampler(mesh.textureSampler, 0);
             encoder->setFragmentTexture(mesh.texture, 0);
             encoder->setVertexBuffer(mesh.buffer, 0);
-            
-            size_t count = mesh.buffer->getVertexCount();
-            encoder->drawPrimitives(Renderer::Triangles, 0, count, 1);
+            encoder->setFragmentBuffer(mesh.uniforms, 0);
+            encoder->drawPrimitives(Renderer::Triangles, 0, mesh.buffer->getVertexCount(), 1);
         };
-        es.each<RenderableStaticMesh, Transform>(f);
+        es.each<RenderableStaticMesh, Transform>(g);
         
         _graphicsDevice->submit(encoder);
         
@@ -87,8 +84,6 @@ namespace PinkTopaz {
         _frameTimer.endFrame();
         _graphicsDevice->swapBuffers();
         _frameTimer.afterFrame();
-        
-        _windowSizeChangeEventPending = false;
     }
     
     void RenderSystem::receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)
@@ -111,7 +106,6 @@ namespace PinkTopaz {
         constexpr float zfar = 100.0f;
         _viewport = glm::ivec4(0, 0, event.width * event.windowScaleFactor, event.height * event.windowScaleFactor);
         _proj = glm::perspective(glm::pi<float>() * 0.25f, (float)event.width / event.height, znear, zfar);
-        _windowSizeChangeEventPending = true;
         _graphicsDevice->windowSizeChanged();
     }
     

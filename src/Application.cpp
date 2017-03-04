@@ -8,21 +8,20 @@
 
 #include "Application.hpp"
 
-#include "SDL.h"
-#include "SDL_image.h"
 #include "config.h"
 #include "FileUtilities.hpp"
 #include "RetinaSupport.h"
 #include "World.hpp"
 #include "WindowSizeChangedEvent.hpp"
 
+#include "SDL.h"
+#include "SDL_image.h"
+
 namespace PinkTopaz {
     
     void Application::inner(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
     {
         auto shader = graphicsDevice->makeShader("vert", "frag");
-        shader->setShaderUniform("view", glm::mat4(1.0f));
-        shader->setShaderUniform("tex", 0);
         
         // Load terrain texture array from a single image.
         // TODO: create a TextureArrayLoader class to encapsulate tex loading.
@@ -47,12 +46,16 @@ namespace PinkTopaz {
         auto sampler = graphicsDevice->makeTextureSampler(samplerDesc);
 
         auto mesh = std::make_shared<Renderer::StaticMesh>("terrain.3d.bin");
-        auto buffer = graphicsDevice->makeBuffer(mesh->getVertexFormat(),
-                                                 mesh->getBufferData(),
-                                                 mesh->getVertexCount(),
-                                                 Renderer::StaticDraw);
+        auto vertexBuffer = graphicsDevice->makeBuffer(mesh->getVertexFormat(),
+                                                       mesh->getBufferData(),
+                                                       mesh->getVertexCount(),
+                                                       Renderer::StaticDraw);
         
-        World gameWorld(graphicsDevice, buffer, shader, texture, sampler);
+        Renderer::StaticMesh::Uniforms uniforms;
+        auto uniformBuffer = graphicsDevice->makeUniformBuffer(sizeof(uniforms), Renderer::DynamicDraw);
+        uniformBuffer->replace(sizeof(uniforms), &uniforms);
+        
+        World gameWorld(graphicsDevice, vertexBuffer, uniformBuffer, shader, texture, sampler);
         
         // Send an event containing the initial window size and scale factor.
         // This will allow the render system to setup projection matrices and such.

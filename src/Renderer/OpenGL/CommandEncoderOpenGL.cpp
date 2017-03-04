@@ -105,6 +105,13 @@ namespace PinkTopaz::Renderer::OpenGL {
         });
     }
     
+    void CommandEncoderOpenGL::setFragmentBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
+    {
+        // OpenGL does not reserve separate namespaces for fragment buffer
+        // indices and vertex buffer indices?
+        setVertexBuffer(abstractBuffer, index);
+    }
+    
     void CommandEncoderOpenGL::drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances)
     {
         _commandQueue.enqueue([=]() {

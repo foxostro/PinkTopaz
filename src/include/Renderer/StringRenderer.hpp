@@ -16,6 +16,7 @@
 
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 
 #include <memory>
 #include <map>
@@ -31,11 +32,10 @@ namespace PinkTopaz::Renderer {
     class StringRenderer
     {
     public:
-        // Alignment requirements come from OpenGL's std140 layout.
         struct StringUniforms
         {
-            glm::vec4 color __attribute__ ((aligned (16)));
-            glm::mat4 projection __attribute__ ((aligned (16)));
+            glm::vec4 color;
+            glm::mat4 projection;
         };
         
         struct String

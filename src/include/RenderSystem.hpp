@@ -32,7 +32,6 @@ namespace PinkTopaz {
         void receive(const WindowSizeChangedEvent &event);
         
     private:
-        bool _windowSizeChangeEventPending;
         glm::ivec4 _viewport;
         glm::mat4x4 _proj;
         entityx::Entity _activeCamera;
