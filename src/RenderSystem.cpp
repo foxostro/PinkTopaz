@@ -47,6 +47,7 @@ namespace PinkTopaz {
             cameraTransform = _activeCamera.component<Transform>()->value;
         }
         
+#if 0
         // Update the uniform buffers so they include the most recent matrices.
         auto f = [&](entityx::Entity entity,
                      RenderableStaticMesh &mesh,
@@ -80,6 +81,7 @@ namespace PinkTopaz {
             _graphicsDevice->submit(encoder);
         };
         es.each<RenderableStaticMesh, Transform>(g);
+#endif
         
         // Draw text strings on the screen last because they blend.
         _stringRenderer.draw(_viewport);

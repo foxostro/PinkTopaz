@@ -1,3 +1,4 @@
+#include <metal_stdlib>
 #include <simd/simd.h>
 
 using namespace metal;
@@ -72,8 +73,11 @@ vertex TextProjectedVertex text_vert(TextVertex inVert [[stage_in]],
     return outVert;
 }
 
-fragment float4 text_frag(TextProjectedVertex vert [[stage_in]])
+fragment float4 text_frag(TextProjectedVertex vert [[stage_in]],
+                          texture2d<float> diffuseTexture [[texture(0)]],
+                          sampler textureSampler [[sampler(0)]])
 {
-    // TODO: need texturing for partity with GLSL
-    return vert.vertexColor;
+    float r = diffuseTexture.sample(textureSampler, vert.texCoord).r;
+    float4 texel = float4(r * vert.vertexColor.xyz, 1.0);
+    return texel;
 }

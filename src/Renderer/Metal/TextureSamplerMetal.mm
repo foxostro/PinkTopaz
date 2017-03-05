@@ -32,9 +32,9 @@ namespace PinkTopaz::Renderer::Metal {
         {
             case Nearest:               return MTLSamplerMipFilterNotMipmapped;
             case Linear:                return MTLSamplerMipFilterNotMipmapped;
-            case NearestMipMapNearest:  return MTLSamplerMipFilterNearest;
-            case LinearMipMapNearest:   return MTLSamplerMipFilterNearest;
-            case LinearMipMapLinear:    return MTLSamplerMipFilterLinear;
+            case NearestMipMapNearest:  return MTLSamplerMipFilterNotMipmapped; //MTLSamplerMipFilterNearest;
+            case LinearMipMapNearest:   return MTLSamplerMipFilterNotMipmapped; //MTLSamplerMipFilterNearest;
+            case LinearMipMapLinear:    return MTLSamplerMipFilterNotMipmapped; //MTLSamplerMipFilterLinear;
                 
             default:
                 throw Exception("Unsupported texture mip filter.");
