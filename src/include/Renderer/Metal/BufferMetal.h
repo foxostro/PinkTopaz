@@ -29,6 +29,12 @@ namespace PinkTopaz::Renderer::Metal {
                     BufferType bufferType);
         
         BufferMetal(id <MTLDevice> device,
+                    size_t size,
+                    const void *data,
+                    BufferUsage usage,
+                    BufferType bufferType);
+        
+        BufferMetal(id <MTLDevice> device,
                     size_t bufferSize,
                     BufferUsage usage,
                     BufferType bufferType);

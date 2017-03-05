@@ -48,6 +48,18 @@ namespace PinkTopaz::Renderer::OpenGL {
     }
     
     BufferOpenGL::BufferOpenGL(size_t bufferSize,
+                               const void *bufferData,
+                               BufferUsage usage,
+                               BufferType bufferType)
+     : _vao(0),
+       _vbo(0),
+       _usage(getUsageEnum(usage)),
+       _bufferType(bufferType)
+    {
+        internalCreate(bufferSize, bufferData);
+    }
+    
+    BufferOpenGL::BufferOpenGL(size_t bufferSize,
                                BufferUsage usage,
                                BufferType bufferType)
      : _vao(0),
@@ -58,7 +70,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         internalCreate(bufferSize, nullptr);
     }
     
-    void BufferOpenGL::internalCreate(size_t bufferSize, void *bufferData)
+    void BufferOpenGL::internalCreate(size_t bufferSize, const void *bufferData)
     {
         GLuint vao = 0, vbo = 0;
         GLenum target = getTargetEnum();
@@ -83,7 +95,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         CHECK_GL_ERROR();
     }
     
-    void BufferOpenGL::internalReplace(const void *p, size_t n)
+    void BufferOpenGL::internalReplace(size_t bufferSize, const void *bufferData)
     {
         GLuint vao = _vao;
         GLuint vbo = _vbo;
@@ -95,8 +107,8 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
         
         glBindBuffer(target, vbo);
-        glBufferData(target, n, nullptr, usage); // Orphan the buffer.
-        glBufferData(target, n, p, usage);
+        glBufferData(target, bufferSize, nullptr, usage); // Orphan the buffer.
+        glBufferData(target, bufferSize, bufferData, usage);
         glBindBuffer(target, 0);
         
         if (_bufferType == ArrayBuffer) {
@@ -106,25 +118,19 @@ namespace PinkTopaz::Renderer::OpenGL {
         CHECK_GL_ERROR();
     }
     
-    void BufferOpenGL::replace(const std::vector<uint8_t> &wrappedData)
+    void BufferOpenGL::replace(const std::vector<uint8_t> &data)
     {
-        size_t n = wrappedData.size();
-        const void *p = (const void *)&wrappedData[0];
-        internalReplace(p, n);
+        internalReplace(data.size(), &data[0]);
     }
     
     void BufferOpenGL::replace(std::vector<uint8_t> &&data)
     {
-        size_t n = data.size();
-        const void *p = (const void *)&data[0];
-        internalReplace(p, n);
+        internalReplace(data.size(), &data[0]);
     }
     
     void BufferOpenGL::replace(size_t size, const void *data)
     {
-        std::vector<uint8_t> wrappedData(size);
-        memcpy(&wrappedData[0], data, size);
-        replace(std::move(wrappedData));
+        internalReplace(size, data);
     }
     
     BufferOpenGL::~BufferOpenGL()

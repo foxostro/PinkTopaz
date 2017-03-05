@@ -23,6 +23,11 @@ namespace PinkTopaz::Renderer::OpenGL {
         BufferOpenGL(const std::vector<uint8_t> &bufferData,
                      BufferUsage usage,
                      BufferType bufferType);
+        
+        BufferOpenGL(size_t bufferSize,
+                     const void *bufferData,
+                     BufferUsage usage,
+                     BufferType bufferType);
 
         BufferOpenGL(size_t bufferSize,
                      BufferUsage usage,
@@ -51,8 +56,8 @@ namespace PinkTopaz::Renderer::OpenGL {
         GLenum _usage;
         const BufferType _bufferType;
         
-        void internalCreate(size_t bufferSize, void *bufferData);
-        void internalReplace(const void *p, size_t n);
+        void internalCreate(size_t bufferSize, const void *bufferData);
+        void internalReplace(size_t bufferSize, const void *bufferData);
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

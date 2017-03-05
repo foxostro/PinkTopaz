@@ -65,6 +65,13 @@ namespace PinkTopaz::Renderer::OpenGL {
                    BufferUsage usage,
                    BufferType bufferType) override;
         
+        // Creates a new GPU buffer object.
+        std::shared_ptr<Buffer>
+        makeBuffer(size_t size,
+                   const void *data,
+                   BufferUsage usage,
+                   BufferType bufferType) override;
+        
         // Creates a new GPU buffer object with undefined contents.
         std::shared_ptr<Buffer>
         makeBuffer(size_t size,

@@ -110,13 +110,22 @@ namespace PinkTopaz::Renderer::OpenGL {
     }
     
     std::shared_ptr<Buffer>
-    GraphicsDeviceOpenGL::makeBuffer(const std::vector<uint8_t> &bufferData,
+    GraphicsDeviceOpenGL::makeBuffer(const std::vector<uint8_t> &data,
                                      BufferUsage usage,
                                      BufferType bufferType)
     {
-        auto buffer = std::make_shared<BufferOpenGL>(bufferData,
-                                                     usage,
-                                                     bufferType);
+        auto buffer = std::make_shared<BufferOpenGL>(data, usage, bufferType);
+        return std::dynamic_pointer_cast<Buffer>(buffer);
+    }
+    
+    std::shared_ptr<Buffer>
+    GraphicsDeviceOpenGL::makeBuffer(size_t bufferSize,
+                                     const void *bufferData,
+                                     BufferUsage usage,
+                                     BufferType bufferType)
+    {
+        auto buffer = std::make_shared<BufferOpenGL>(bufferSize, bufferData,
+                                                     usage, bufferType);
         return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     

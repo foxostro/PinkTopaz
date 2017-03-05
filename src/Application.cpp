@@ -51,11 +51,10 @@ namespace PinkTopaz {
                                                        Renderer::ArrayBuffer);
         
         Renderer::StaticMesh::Uniforms uniforms;
-        // TODO: Need API to specify buffer contents as a raw pointer in makeBuffer().
         auto uniformBuffer = graphicsDevice->makeBuffer(sizeof(uniforms),
+                                                        &uniforms,
                                                         Renderer::DynamicDraw,
                                                         Renderer::UniformBuffer);
-        uniformBuffer->replace(sizeof(uniforms), &uniforms);
         
         RenderableStaticMesh meshContainer = {
             .vertexCount = mesh->getVertexCount(),

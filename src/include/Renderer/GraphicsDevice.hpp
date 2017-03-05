@@ -76,6 +76,13 @@ namespace PinkTopaz::Renderer {
                    BufferUsage usage,
                    BufferType bufferType) = 0;
         
+        // Creates a new GPU buffer object.
+        virtual std::shared_ptr<Buffer>
+        makeBuffer(size_t size,
+                   const void *data,
+                   BufferUsage usage,
+                   BufferType bufferType) = 0;
+        
         // Creates a new GPU buffer object with undefined contents.
         virtual std::shared_ptr<Buffer>
         makeBuffer(size_t size,
