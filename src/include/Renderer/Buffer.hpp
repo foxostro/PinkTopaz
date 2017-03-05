@@ -17,8 +17,7 @@ namespace PinkTopaz::Renderer {
     enum BufferUsage
     {
         StaticDraw,
-        DynamicDraw,
-        StreamDraw
+        DynamicDraw
     };
     
     enum BufferType

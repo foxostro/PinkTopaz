@@ -18,7 +18,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         {
             case StaticDraw:    return GL_STATIC_DRAW;
             case DynamicDraw:   return GL_DYNAMIC_DRAW;
-            case StreamDraw:    return GL_STREAM_DRAW;
                 
             default:
                 throw Exception("Unsupported buffer usage %d\n", (int)usage);

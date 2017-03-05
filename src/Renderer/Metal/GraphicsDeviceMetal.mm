@@ -21,45 +21,40 @@ namespace PinkTopaz::Renderer::Metal {
     
     GraphicsDeviceMetal::GraphicsDeviceMetal(SDL_Window &window)
     {
-        @autoreleasepool {
-            SDL_SysWMinfo windowManagerInfo;
-            SDL_VERSION(&windowManagerInfo.version);
-            SDL_GetWindowWMInfo(&window, &windowManagerInfo);
-            
-            // Create a metal layer and add it to the view that SDL created.
-            NSView *sdlView = windowManagerInfo.info.cocoa.window.contentView;
-            sdlView.wantsLayer = YES;
-            CALayer *sdlLayer = sdlView.layer;
-            
-            NSArray <id<MTLDevice>> *devices = MTLCopyAllDevices();
-            NSLog(@"devices: %@", devices);
-            
-            CGFloat contentsScale = sdlLayer.contentsScale;
-            NSSize layerSize = sdlLayer.frame.size;
-            
-            _metalLayer = [[CAMetalLayer layer] retain];
-            _metalLayer.contentsScale = contentsScale;
-            _metalLayer.drawableSize = NSMakeSize(layerSize.width * contentsScale,
-                                                 layerSize.height * contentsScale);
-            _metalLayer.device = MTLCreateSystemDefaultDevice();
-            _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-            _metalLayer.frame = sdlLayer.frame;
-            _metalLayer.framebufferOnly = true;
-            
-            [sdlLayer addSublayer:_metalLayer];
-            
-            // We need a command queue in order to control the GPU.
-            _commandQueue = [_metalLayer.device newCommandQueue];
-            
-            // Load the shader library.
-            NSError *error = nil;
-            NSString *libraryName = @"Library.metallib";
-            _library = [_metalLayer.device newLibraryWithFile:libraryName error:&error];
-            if (!_library) {
-                NSString *errorDesc = [error localizedDescription];
-                throw Exception("Failed to create Metal shader library \"%s\": %s",
-                                libraryName.UTF8String, errorDesc.UTF8String);
-            }
+        SDL_SysWMinfo windowManagerInfo;
+        SDL_VERSION(&windowManagerInfo.version);
+        SDL_GetWindowWMInfo(&window, &windowManagerInfo);
+        
+        // Create a metal layer and add it to the view that SDL created.
+        NSView *sdlView = windowManagerInfo.info.cocoa.window.contentView;
+        sdlView.wantsLayer = YES;
+        CALayer *sdlLayer = sdlView.layer;
+        
+        CGFloat contentsScale = sdlLayer.contentsScale;
+        NSSize layerSize = sdlLayer.frame.size;
+        
+        _metalLayer = [[CAMetalLayer layer] retain];
+        _metalLayer.contentsScale = contentsScale;
+        _metalLayer.drawableSize = NSMakeSize(layerSize.width * contentsScale,
+                                             layerSize.height * contentsScale);
+        _metalLayer.device = MTLCreateSystemDefaultDevice();
+        _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+        _metalLayer.frame = sdlLayer.frame;
+        _metalLayer.framebufferOnly = true;
+        
+        [sdlLayer addSublayer:_metalLayer];
+        
+        // We need a command queue in order to control the GPU.
+        _commandQueue = [_metalLayer.device newCommandQueue];
+        
+        // Load the shader library.
+        NSError *error = nil;
+        NSString *libraryName = @"Library.metallib";
+        _library = [_metalLayer.device newLibraryWithFile:libraryName error:&error];
+        if (!_library) {
+            NSString *errorDesc = [error localizedDescription];
+            throw Exception("Failed to create Metal shader library \"%s\": %s",
+                            libraryName.UTF8String, errorDesc.UTF8String);
         }
     }
     
@@ -128,7 +123,8 @@ namespace PinkTopaz::Renderer::Metal {
                                     size_t elementCount,
                                     BufferUsage usage)
     {
-        auto buffer = std::make_shared<BufferMetal>(format, bufferData,
+        auto buffer = std::make_shared<BufferMetal>(_metalLayer.device,
+                                                    format, bufferData,
                                                     elementCount, usage,
                                                     ArrayBuffer);
         return std::dynamic_pointer_cast<Buffer>(buffer);
@@ -140,7 +136,8 @@ namespace PinkTopaz::Renderer::Metal {
                                     size_t elementCount,
                                     BufferUsage usage)
     {
-        auto buffer = std::make_shared<BufferMetal>(format, bufferSize,
+        auto buffer = std::make_shared<BufferMetal>(_metalLayer.device,
+                                                    format, bufferSize,
                                                     elementCount, usage,
                                                     ArrayBuffer);
         return std::dynamic_pointer_cast<Buffer>(buffer);
@@ -150,20 +147,23 @@ namespace PinkTopaz::Renderer::Metal {
     GraphicsDeviceMetal::makeUniformBuffer(const std::vector<uint8_t> &data,
                                            BufferUsage usage)
     {
-        auto buffer = std::make_shared<BufferMetal>(data, usage, UniformBuffer);
+        auto buffer = std::make_shared<BufferMetal>(_metalLayer.device,
+                                                    data, usage, UniformBuffer);
         return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     
     std::shared_ptr<Buffer>
     GraphicsDeviceMetal::makeUniformBuffer(size_t size, BufferUsage usage)
     {
-        auto buffer = std::make_shared<BufferMetal>(size, usage, UniformBuffer);
+        auto buffer = std::make_shared<BufferMetal>(_metalLayer.device,
+                                                    size, usage, UniformBuffer);
         return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     
     std::shared_ptr<Fence> GraphicsDeviceMetal::makeFence()
     {
         // Note that MTLFence is currently unavailable on macOS.
+        // TODO: find a different way to measure frame times.
         return std::dynamic_pointer_cast<Fence>(std::make_shared<FenceMetal>());
     }
     
