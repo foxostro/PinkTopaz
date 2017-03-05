@@ -1,32 +1,79 @@
+#include <simd/simd.h>
+
 using namespace metal;
 
-struct Vertex
+
+
+
+
+struct TerrainVertex
 {
-    float4 position [[position]];
+    float3 vp [[attribute(0)]];
+    float3 vt [[attribute(1)]];
+    float4 vc [[attribute(2)]];
 };
 
-vertex Vertex vert(constant float4 *position [[buffer(0)]],
-                   uint vid [[vertex_id]])
+struct TerrainProjectedVertex
 {
-    Vertex vert;
-    vert.position = position[vid];
-    return vert;
+    float4 position [[position]];
+    float3 texCoord;
+    float4 color;
+};
+
+struct TerrainUniforms
+{
+    float4x4 view, proj;
+};
+
+vertex TerrainProjectedVertex vert(TerrainVertex inVert [[stage_in]],
+                                   constant TerrainUniforms &u [[buffer(1)]])
+{
+    TerrainProjectedVertex outVert;
+    outVert.position = u.proj * u.view * float4(inVert.vp, 1.0);
+    outVert.texCoord = inVert.vt;
+    outVert.color = inVert.vc;
+    return outVert;
 }
 
-fragment float4 frag(Vertex vert [[stage_in]])
+fragment float4 frag(TerrainProjectedVertex vert [[stage_in]])
 {
-    return float4(1.0, 0.3, 0.0, 1.0);
+    return vert.color; // TODO: need texturing and fog for parity with GLSL
 }
 
-vertex Vertex text_vert(constant float4 *position [[buffer(0)]],
-                        uint vid [[vertex_id]])
+
+
+
+
+struct TextVertex
 {
-    Vertex vert;
-    vert.position = position[vid];
-    return vert;
+    float4 packed [[attribute(0)]]; // <vec2 pos, vec2 tex>
+};
+
+struct TextProjectedVertex
+{
+    float4 position [[position]];
+    float2 texCoord;
+    float4 vertexColor;
+};
+
+struct TextUniforms
+{
+    float4 textColor;
+    float4x4 projection;
+};
+
+vertex TextProjectedVertex text_vert(TextVertex inVert [[stage_in]],
+                                     constant TextUniforms &u [[buffer(1)]])
+{
+    TextProjectedVertex outVert;
+    outVert.position = u.projection * float4(inVert.packed.xy, 0.0, 1.0);
+    outVert.texCoord = inVert.packed.zw;
+    outVert.vertexColor = u.textColor;
+    return outVert;
 }
 
-fragment float4 text_frag(Vertex vert [[stage_in]])
+fragment float4 text_frag(TextProjectedVertex vert [[stage_in]])
 {
-    return float4(1.0, 1.0, 1.0, 1.0);
+    // TODO: need texturing for partity with GLSL
+    return vert.vertexColor;
 }
