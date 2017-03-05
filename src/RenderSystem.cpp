@@ -75,7 +75,7 @@ namespace PinkTopaz {
             encoder->setFragmentSampler(mesh.textureSampler, 0);
             encoder->setFragmentTexture(mesh.texture, 0);
             encoder->setVertexBuffer(mesh.buffer, 0);
-            encoder->setFragmentBuffer(mesh.uniforms, 0);
+            encoder->setVertexBuffer(mesh.uniforms, 1);
             encoder->drawPrimitives(Renderer::Triangles, 0, mesh.vertexCount, 1);
             _graphicsDevice->submit(encoder);
         };

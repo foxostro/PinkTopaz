@@ -8,6 +8,9 @@
 
 #import "Renderer/Metal/CommandEncoderMetal.h"
 #import "Renderer/Metal/ShaderMetal.h"
+#import "Renderer/Metal/BufferMetal.h"
+#import "Renderer/Metal/TextureMetal.h"
+#import "Renderer/Metal/TextureSamplerMetal.h"
 #import "Exception.hpp"
 
 namespace PinkTopaz::Renderer::Metal {
@@ -33,6 +36,9 @@ namespace PinkTopaz::Renderer::Metal {
         }
         
         _encoder = [[_commandBuffer renderCommandEncoderWithDescriptor:_renderPassDesc] retain];
+        
+        [_encoder setFrontFacingWinding:MTLWindingCounterClockwise];
+        [_encoder setCullMode:MTLCullModeBack];
     }
     
     CommandEncoderMetal::~CommandEncoderMetal()
@@ -65,19 +71,48 @@ namespace PinkTopaz::Renderer::Metal {
     }
     
     void CommandEncoderMetal::setFragmentTexture(const std::shared_ptr<Texture> &abstractTexture, size_t index)
-    {}
+    {
+        auto concreteTexture = std::dynamic_pointer_cast<TextureMetal>(abstractTexture);
+        id <MTLTexture> metalTexture = concreteTexture->getMetalTexture();
+        [_encoder setFragmentTexture:metalTexture atIndex:index];
+    }
     
     void CommandEncoderMetal::setFragmentSampler(const std::shared_ptr<TextureSampler> &abstractSampler, size_t index)
-    {}
+    {
+        auto concreteSampler = std::dynamic_pointer_cast<TextureSamplerMetal>(abstractSampler);
+        id <MTLSamplerState> metalSampler = concreteSampler->getMetalSampler();
+        [_encoder setFragmentSamplerState:metalSampler atIndex:index];
+    }
     
     void CommandEncoderMetal::setVertexBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
-    {}
+    {
+        auto concreteBuffer = std::dynamic_pointer_cast<BufferMetal>(abstractBuffer);
+        id <MTLBuffer> metalBuffer = concreteBuffer->getMetalBuffer();
+        [_encoder setVertexBuffer:metalBuffer offset:0 atIndex:index];
+    }
     
     void CommandEncoderMetal::setFragmentBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
-    {}
+    {
+        auto concreteBuffer = std::dynamic_pointer_cast<BufferMetal>(abstractBuffer);
+        id <MTLBuffer> metalBuffer = concreteBuffer->getMetalBuffer();
+        [_encoder setFragmentBuffer:metalBuffer
+                             offset:0
+                            atIndex:index];
+    }
     
-    void CommandEncoderMetal::drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances)
-    {}
+    void CommandEncoderMetal::drawPrimitives(PrimitiveType type, size_t first,
+                                             size_t count, size_t numInstances)
+    {
+        if (type != Triangles) {
+            throw Exception("Unsupported primitive type in drawPrimitives().");
+        }
+        
+        [_encoder drawPrimitives:MTLPrimitiveTypeTriangle
+                     vertexStart:first
+                     vertexCount:count
+                   instanceCount:numInstances
+                    baseInstance:0];
+    }
     
     void CommandEncoderMetal::onSubmit()
     {

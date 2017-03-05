@@ -11,7 +11,14 @@
 
 namespace PinkTopaz::Renderer::Metal {
     
-    TextureSamplerMetal::TextureSamplerMetal(const TextureSamplerDescriptor &desc) {}
-    TextureSamplerMetal::~TextureSamplerMetal() {}
+    TextureSamplerMetal::TextureSamplerMetal(const TextureSamplerDescriptor &desc)
+    {
+        _sampler = nil;
+    }
+    
+    TextureSamplerMetal::~TextureSamplerMetal()
+    {
+        [_sampler release];
+    }
     
 } // namespace PinkTopaz::Renderer::Metal

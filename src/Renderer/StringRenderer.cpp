@@ -338,7 +338,7 @@ namespace PinkTopaz::Renderer {
             }
             
             encoder->setVertexBuffer(string.buffer, 0);
-            encoder->setVertexBuffer(string.uniforms, 0);
+            encoder->setVertexBuffer(string.uniforms, 1);
             encoder->drawPrimitives(Triangles, 0, string.vertexCount, 1);
         }
 

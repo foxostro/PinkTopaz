@@ -15,6 +15,8 @@
 
 #include "Renderer/TextureSampler.hpp"
 
+#include <Metal/Metal.h>
+
 namespace PinkTopaz::Renderer::Metal {
     
     class TextureSamplerMetal : public TextureSampler
@@ -22,6 +24,11 @@ namespace PinkTopaz::Renderer::Metal {
     public:
         TextureSamplerMetal(const TextureSamplerDescriptor &desc);
         virtual ~TextureSamplerMetal();
+        
+        inline id <MTLSamplerState> getMetalSampler() const { return _sampler; }
+        
+    private:
+        id <MTLSamplerState> _sampler;
     };
     
 } // namespace PinkTopaz::Renderer::Metal

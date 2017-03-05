@@ -15,16 +15,22 @@
 
 #include "Renderer/Texture.hpp"
 
-#include <vector>
+#include <Metal/Metal.h>
 
 namespace PinkTopaz::Renderer::Metal {
     
     class TextureMetal : public Texture
     {
     public:
-        TextureMetal(const TextureDescriptor &desc, const void *data);
-        TextureMetal(const TextureDescriptor &desc, const std::vector<uint8_t> &data);
+        TextureMetal(id <MTLDevice> device,
+                     const TextureDescriptor &desc,
+                     const void *data);
         virtual ~TextureMetal();
+        
+        inline id <MTLTexture> getMetalTexture() const { return _texture; }
+        
+    private:
+        id <MTLTexture> _texture;
     };
     
 } // namespace PinkTopaz::Renderer::Metal

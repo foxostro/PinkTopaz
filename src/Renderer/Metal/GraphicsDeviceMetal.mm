@@ -99,7 +99,8 @@ namespace PinkTopaz::Renderer::Metal {
     GraphicsDeviceMetal::makeTexture(const TextureDescriptor &desc,
                                      const void *data)
     {
-        auto texture = std::make_shared<TextureMetal>(desc, data);
+        auto texture = std::make_shared<TextureMetal>(_metalLayer.device,
+                                                      desc, data);
         return std::dynamic_pointer_cast<Texture>(texture);
     }
     
@@ -107,8 +108,7 @@ namespace PinkTopaz::Renderer::Metal {
     GraphicsDeviceMetal::makeTexture(const TextureDescriptor &desc,
                                      const std::vector<uint8_t> &data)
     {
-        auto texture = std::make_shared<TextureMetal>(desc, data);
-        return std::dynamic_pointer_cast<Texture>(texture);
+        return makeTexture(desc, &data[0]);
     }
     
     std::shared_ptr<TextureSampler>
@@ -119,14 +119,11 @@ namespace PinkTopaz::Renderer::Metal {
     }
     
     std::shared_ptr<Buffer>
-    GraphicsDeviceMetal::makeBuffer(const std::vector<uint8_t> &bufferData,
+    GraphicsDeviceMetal::makeBuffer(const std::vector<uint8_t> &data,
                                     BufferUsage usage,
                                     BufferType bufferType)
     {
-        auto buffer = std::make_shared<BufferMetal>(_metalLayer.device,
-                                                    bufferData, usage,
-                                                    bufferType);
-        return std::dynamic_pointer_cast<Buffer>(buffer);
+        return makeBuffer(data.size(), &data[0], usage, bufferType);
     }
     
     std::shared_ptr<Buffer>

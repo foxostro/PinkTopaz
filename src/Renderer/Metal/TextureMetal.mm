@@ -11,13 +11,16 @@
 
 namespace PinkTopaz::Renderer::Metal {
 
-    TextureMetal::TextureMetal(const TextureDescriptor &desc, const void *data)
-    {}
-    
-    TextureMetal::TextureMetal(const TextureDescriptor &desc, const std::vector<uint8_t> &data)
-    {}
+    TextureMetal::TextureMetal(id <MTLDevice> device,
+                               const TextureDescriptor &desc,
+                               const void *data)
+    {
+        _texture = nil;
+    }
     
     TextureMetal::~TextureMetal()
-    {}
+    {
+        [_texture release];
+    }
 
 } // namespace PinkTopaz::Renderer::Metal

@@ -24,18 +24,13 @@ namespace PinkTopaz::Renderer::Metal {
     {
     public:
         BufferMetal(id <MTLDevice> device,
-                    const std::vector<uint8_t> &bufferData,
-                    BufferUsage usage,
-                    BufferType bufferType);
-        
-        BufferMetal(id <MTLDevice> device,
                     size_t size,
                     const void *data,
                     BufferUsage usage,
                     BufferType bufferType);
         
         BufferMetal(id <MTLDevice> device,
-                    size_t bufferSize,
+                    size_t size,
                     BufferUsage usage,
                     BufferType bufferType);
         
@@ -46,8 +41,9 @@ namespace PinkTopaz::Renderer::Metal {
         void replace(std::vector<uint8_t> &&data)  override;
         void replace(size_t size, const void *data) override;
         
-        // Gets the type of the buffer.
         BufferType getType() const override;
+        
+        inline id <MTLBuffer> getMetalBuffer() const { return _buffer; }
         
     private:
         const BufferType _bufferType;
