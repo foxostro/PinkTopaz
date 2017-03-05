@@ -82,6 +82,6 @@ fragment float4 text_frag(TextProjectedVertex vert [[stage_in]],
                           sampler textureSampler [[sampler(0)]])
 {
     float r = diffuseTexture.sample(textureSampler, vert.texCoord).r;
-    float4 texel = float4(r * vert.vertexColor.xyz, 1.0);
+    float4 texel = float4(vert.vertexColor.xyz, r);
     return texel;
 }

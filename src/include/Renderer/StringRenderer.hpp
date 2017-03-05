@@ -57,7 +57,8 @@ namespace PinkTopaz::Renderer {
         ~StringRenderer() = default;
         
         // Draws all registered strings.
-        void draw(const glm::ivec4 &viewport);
+        void draw(const std::shared_ptr<CommandEncoder> &encoder,
+                  const glm::ivec4 &viewport);
         
         // Add a string to be rendered.
         StringHandle add(const std::string &contents,

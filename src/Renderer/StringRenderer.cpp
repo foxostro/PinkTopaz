@@ -316,12 +316,12 @@ namespace PinkTopaz::Renderer {
         _sampler = _graphicsDevice->makeTextureSampler(samplerDesc);
     }
     
-    void StringRenderer::draw(const glm::ivec4 &vp)
+    void StringRenderer::draw(const std::shared_ptr<CommandEncoder> &encoder,
+                              const glm::ivec4 &vp)
     {
         bool projectionValid = false;
         glm::mat4 projection;
         
-        auto encoder = _graphicsDevice->encoder(_renderPassDescriptor);
         encoder->setViewport(vp);
         encoder->setShader(_shader);
         encoder->setFragmentSampler(_sampler, 0);
@@ -342,8 +342,6 @@ namespace PinkTopaz::Renderer {
             encoder->setVertexBuffer(string.uniforms, 1);
             encoder->drawPrimitives(Triangles, 0, string.vertexCount, 1);
         }
-
-        encoder->commit();
     }
     
     void StringRenderer::rebuildVertexBuffer(String &string)

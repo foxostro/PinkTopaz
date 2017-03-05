@@ -77,10 +77,11 @@ namespace PinkTopaz {
             encoder->drawPrimitives(Renderer::Triangles, 0, mesh.vertexCount, 1);
         };
         es.each<RenderableStaticMesh, Transform>(g);
-        encoder->commit();
         
         // Draw text strings on the screen last because they blend.
-        _stringRenderer.draw(_viewport);
+        _stringRenderer.draw(encoder, _viewport);
+        
+        encoder->commit();
 
         _frameTimer.endFrame();
         _graphicsDevice->swapBuffers();
