@@ -40,14 +40,9 @@ namespace PinkTopaz::Renderer {
         encoder(const RenderPassDescriptor &descriptor) = 0;
 
         // Call this to submit commands to the graphics device.
-        // This call is garaunteed thread-safe. Commands will be submitted to
-        // GPU in the order of call to this method; however, commands may not
-        // be flushed until the next call to swapBuffers().
         virtual void submit(const std::shared_ptr<CommandEncoder> &encoder) = 0;
         
-        // Flushes commands and swaps buffers. Some underlying graphics APIs
-        // have restrictions about which threads they can be used on. So, it's
-        // the caller's responsibility call only from method on the main thread.
+        // Flushes commands and swaps buffers.
         virtual void swapBuffers() = 0;
         
         // Create a new shader using the specified vertex and fragment programs.
