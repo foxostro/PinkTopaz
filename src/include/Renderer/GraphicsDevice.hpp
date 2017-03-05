@@ -17,7 +17,6 @@
 #include "Renderer/RenderPassDescriptor.hpp"
 #include "Renderer/Texture.hpp"
 #include "Renderer/TextureSampler.hpp"
-#include "Renderer/Fence.hpp"
 
 #include <memory>
 #include <string>
@@ -88,9 +87,6 @@ namespace PinkTopaz::Renderer {
         makeBuffer(size_t size,
                    BufferUsage usage,
                    BufferType bufferType) = 0;
-        
-        // Creates a new GPU fence object.
-        virtual std::shared_ptr<Fence> makeFence() = 0;
         
         // Call this when the window size changes. This provides the opportunity
         // to update the underlying context or layers as needed.

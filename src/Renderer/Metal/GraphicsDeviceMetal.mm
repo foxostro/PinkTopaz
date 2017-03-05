@@ -12,7 +12,6 @@
 #import "Renderer/Metal/TextureMetal.h"
 #import "Renderer/Metal/TextureSamplerMetal.h"
 #import "Renderer/Metal/BufferMetal.h"
-#import "Renderer/Metal/FenceMetal.h"
 #import "Exception.hpp"
 
 #import "SDL_syswm.h"
@@ -149,13 +148,6 @@ namespace PinkTopaz::Renderer::Metal {
                                                     bufferSize, usage,
                                                     bufferType);
         return std::dynamic_pointer_cast<Buffer>(buffer);
-    }
-    
-    std::shared_ptr<Fence> GraphicsDeviceMetal::makeFence()
-    {
-        // Note that MTLFence is currently unavailable on macOS.
-        // TODO: find a different way to measure frame times.
-        return std::dynamic_pointer_cast<Fence>(std::make_shared<FenceMetal>());
     }
     
     void GraphicsDeviceMetal::windowSizeChanged()

@@ -9,7 +9,6 @@
 #ifndef FrameTimer_hpp
 #define FrameTimer_hpp
 
-#include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/StringRenderer.hpp"
 
 namespace PinkTopaz {
@@ -18,8 +17,7 @@ namespace PinkTopaz {
     class FrameTimer
     {
     public:
-        FrameTimer(Renderer::GraphicsDevice &graphicsDevice,
-                   Renderer::StringRenderer &stringRenderer);
+        FrameTimer(Renderer::StringRenderer &stringRenderer);
         
         // Call at the beginning of the frame to start timing.
         void beginFrame();
@@ -31,12 +29,10 @@ namespace PinkTopaz {
         void afterFrame();
         
     private:
-        //Renderer::GraphicsDevice &_graphicsDevice;
         Renderer::StringRenderer &_stringRenderer;
         const unsigned _framesBetweenReport;
         
         Renderer::StringRenderer::StringHandle _frameTimeLabel;
-        std::shared_ptr<Renderer::Fence> _frameTimeFence;
         unsigned _timeAccum;
         unsigned _countDown;
         bool _firstReportingPeriod;

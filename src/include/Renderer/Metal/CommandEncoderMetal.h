@@ -37,9 +37,6 @@ namespace PinkTopaz::Renderer::Metal {
         void setVertexBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) override;
         void setFragmentBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) override;
         void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) override;
-        void updateFence(const std::shared_ptr<Fence> &fence) override;
-        void waitForFence(const std::shared_ptr<Fence> &fence,
-                          std::function<void()> &&completionHandler) override;
         
         // Called by the graphics device when the encoder is submitted.
         void onSubmit();

@@ -12,7 +12,6 @@
 #include "Renderer/OpenGL/TextureOpenGL.hpp"
 #include "Renderer/OpenGL/TextureSamplerOpenGL.hpp"
 #include "Renderer/OpenGL/BufferOpenGL.hpp"
-#include "Renderer/OpenGL/FenceOpenGL.hpp"
 #include "Exception.hpp"
 #include "SDL.h"
 
@@ -121,19 +120,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         
         glDrawArrays(mode, (GLint)first, (GLsizei)count);
         CHECK_GL_ERROR();
-    }
-    
-    void CommandEncoderOpenGL::updateFence(const std::shared_ptr<Fence> &fence) {}
-
-    void CommandEncoderOpenGL::waitForFence(const std::shared_ptr<Fence> &f,
-                                            std::function<void()> &&callback)
-    {
-        auto fence = std::dynamic_pointer_cast<FenceOpenGL>(f);
-        GLsync object = fence->getObject();
-        constexpr GLuint64 timeout = ~0;
-        glClientWaitSync(object, GL_SYNC_FLUSH_COMMANDS_BIT, timeout);
-        CHECK_GL_ERROR();
-        callback();
     }
     
     void CommandEncoderOpenGL::setupVertexAttributes(const VertexFormat &format)

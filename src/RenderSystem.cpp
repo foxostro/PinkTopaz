@@ -26,7 +26,7 @@ namespace PinkTopaz {
     RenderSystem::RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &dev)
      : _graphicsDevice(dev),
        _stringRenderer(dev, FONT_NAME, FONT_SIZE),
-       _frameTimer(*dev, _stringRenderer)
+       _frameTimer(_stringRenderer)
     {}
     
     void RenderSystem::configure(entityx::EventManager &em)

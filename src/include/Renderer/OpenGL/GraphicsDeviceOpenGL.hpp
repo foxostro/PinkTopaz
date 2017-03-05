@@ -78,9 +78,6 @@ namespace PinkTopaz::Renderer::OpenGL {
                    BufferUsage usage,
                    BufferType bufferType) override;
         
-        // Creates a new GPU fence object.
-        std::shared_ptr<Fence> makeFence() override;
-        
         // Call this when the window size changes. This provides the opportunity
         // to update the underlying context or layers as needed.
         void windowSizeChanged() override;

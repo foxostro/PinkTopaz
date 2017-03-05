@@ -13,7 +13,6 @@ set(SOURCE_FILES_OPENGL
     "src/Renderer/OpenGL/ShaderOpenGL.cpp" "src/include/Renderer/OpenGL/ShaderOpenGL.hpp"
     "src/Renderer/OpenGL/TextureOpenGL.cpp" "src/include/Renderer/OpenGL/TextureOpenGL.hpp"
     "src/Renderer/OpenGL/TextureSamplerOpenGL.cpp" "src/include/Renderer/OpenGL/TextureSamplerOpenGL.hpp"
-    "src/Renderer/OpenGL/FenceOpenGL.cpp" "src/include/Renderer/OpenGL/FenceOpenGL.hpp"
     )
 
 if(APPLE)
@@ -24,7 +23,6 @@ if(APPLE)
         "src/Renderer/Metal/TextureMetal.mm" "src/include/Renderer/Metal/TextureMetal.h"
         "src/Renderer/Metal/TextureSamplerMetal.mm" "src/include/Renderer/Metal/TextureSamplerMetal.h"
         "src/Renderer/Metal/BufferMetal.mm" "src/include/Renderer/Metal/BufferMetal.h"
-        "src/Renderer/Metal/FenceMetal.mm" "src/include/Renderer/Metal/FenceMetal.h"
         "src/Library.metal"
         )
 else()
@@ -42,7 +40,6 @@ set(SOURCE_FILES_RENDERER
     "src/include/Renderer/RenderPassDescriptor.hpp"
     "src/include/Renderer/Texture.hpp"
     "src/include/Renderer/TextureSampler.hpp"
-    "src/include/Renderer/Fence.hpp"
     )
 
 set(SOURCE_FILES_SYSTEMS

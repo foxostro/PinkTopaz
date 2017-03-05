@@ -79,12 +79,6 @@ namespace PinkTopaz::Renderer::Metal {
     void CommandEncoderMetal::drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances)
     {}
     
-    void CommandEncoderMetal::updateFence(const std::shared_ptr<Fence> &fence)
-    {}
-    
-    void CommandEncoderMetal::waitForFence(const std::shared_ptr<Fence> &fence, std::function<void()> &&callback)
-    {}
-    
     void CommandEncoderMetal::onSubmit()
     {
         [_encoder endEncoding];

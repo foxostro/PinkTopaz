@@ -17,7 +17,6 @@
 #include "Renderer/Texture.hpp"
 #include "Renderer/TextureSampler.hpp"
 #include "Renderer/Buffer.hpp"
-#include "Renderer/Fence.hpp"
 
 namespace PinkTopaz::Renderer {
     
@@ -53,13 +52,6 @@ namespace PinkTopaz::Renderer {
         
         // Draw triangle primitives using the bound buffers and other resources.
         virtual void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) = 0;
-        
-        // Updates the specified fence.
-        virtual void updateFence(const std::shared_ptr<Fence> &fence) = 0;
-        
-        // Prevents further execution of GPU work until the fence is reached.
-        // Calls the completion handler when the fence has been reached.
-        virtual void waitForFence(const std::shared_ptr<Fence> &fence, std::function<void()> &&completionHandler) = 0;
     };
 
 } // namespace PinkTopaz::Renderer

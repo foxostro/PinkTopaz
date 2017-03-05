@@ -12,13 +12,10 @@
 
 namespace PinkTopaz {
     
-    FrameTimer::FrameTimer(Renderer::GraphicsDevice &graphicsDevice,
-                           Renderer::StringRenderer &stringRenderer)
-     : //_graphicsDevice(graphicsDevice),
-       _stringRenderer(stringRenderer),
+    FrameTimer::FrameTimer(Renderer::StringRenderer &stringRenderer)
+     : _stringRenderer(stringRenderer),
        _framesBetweenReport(100),
        _frameTimeLabel(),
-       _frameTimeFence(graphicsDevice.makeFence()),
        _timeAccum(0),
        _countDown(0),
        _firstReportingPeriod(true),
