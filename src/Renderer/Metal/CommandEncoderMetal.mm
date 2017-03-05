@@ -7,6 +7,7 @@
 //
 
 #import "Renderer/Metal/CommandEncoderMetal.h"
+#import "Renderer/Metal/ShaderMetal.h"
 #import "Exception.hpp"
 
 namespace PinkTopaz::Renderer::Metal {
@@ -23,13 +24,13 @@ namespace PinkTopaz::Renderer::Metal {
         _renderPassDesc = [[MTLRenderPassDescriptor renderPassDescriptor] retain];
         
         MTLRenderPassColorAttachmentDescriptor *colorAttachment = _renderPassDesc.colorAttachments[0];
-        
-        // Clear to a red-orange color when beginning the render pass.
-        colorAttachment.clearColor  = MTLClearColorMake(1.0, 0.3, 0.0, 1.0);
-        colorAttachment.loadAction  = MTLLoadActionClear;
+        colorAttachment.texture = _drawable.texture;
         colorAttachment.storeAction = MTLStoreActionStore;
         
-        colorAttachment.texture = _drawable.texture;
+        if (desc.clear) {
+            colorAttachment.clearColor  = MTLClearColorMake(0.2, 0.4, 0.5, 1.0);
+            colorAttachment.loadAction  = MTLLoadActionClear;
+        }
         
         _encoder = [[_commandBuffer renderCommandEncoderWithDescriptor:_renderPassDesc] retain];
     }
@@ -57,7 +58,11 @@ namespace PinkTopaz::Renderer::Metal {
     }
     
     void CommandEncoderMetal::setShader(const std::shared_ptr<Shader> &abstractShader)
-    {}
+    {
+        auto shader = std::dynamic_pointer_cast<ShaderMetal>(abstractShader);
+        id <MTLRenderPipelineState> pipelineState = shader->getPipelineState();
+        [_encoder setRenderPipelineState:pipelineState];
+    }
     
     void CommandEncoderMetal::setFragmentTexture(const std::shared_ptr<Texture> &abstractTexture, size_t index)
     {}

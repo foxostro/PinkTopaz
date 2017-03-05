@@ -21,40 +21,54 @@ namespace PinkTopaz::Renderer::Metal {
     
     GraphicsDeviceMetal::GraphicsDeviceMetal(SDL_Window &window)
     {
-        SDL_SysWMinfo windowManagerInfo;
-        SDL_VERSION(&windowManagerInfo.version);
-        SDL_GetWindowWMInfo(&window, &windowManagerInfo);
-        
-        // Create a metal layer and add it to the view that SDL created.
-        NSView *sdlView = windowManagerInfo.info.cocoa.window.contentView;
-        sdlView.wantsLayer = YES;
-        CALayer *sdlLayer = sdlView.layer;
-        
-        NSArray <id<MTLDevice>> *devices = MTLCopyAllDevices();
-        NSLog(@"devices: %@", devices);
-        
-        CGFloat contentsScale = sdlLayer.contentsScale;
-        NSSize layerSize = sdlLayer.frame.size;
-        
-        _metalLayer = [[CAMetalLayer layer] retain];
-        _metalLayer.contentsScale = contentsScale;
-        _metalLayer.drawableSize = NSMakeSize(layerSize.width * contentsScale,
-                                             layerSize.height * contentsScale);
-        _metalLayer.device = MTLCreateSystemDefaultDevice();
-        _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-        _metalLayer.frame = sdlLayer.frame;
-        _metalLayer.framebufferOnly = true;
-        
-        [sdlLayer addSublayer:_metalLayer];
-        
-        _commandQueue = [_metalLayer.device newCommandQueue];
+        @autoreleasepool {
+            SDL_SysWMinfo windowManagerInfo;
+            SDL_VERSION(&windowManagerInfo.version);
+            SDL_GetWindowWMInfo(&window, &windowManagerInfo);
+            
+            // Create a metal layer and add it to the view that SDL created.
+            NSView *sdlView = windowManagerInfo.info.cocoa.window.contentView;
+            sdlView.wantsLayer = YES;
+            CALayer *sdlLayer = sdlView.layer;
+            
+            NSArray <id<MTLDevice>> *devices = MTLCopyAllDevices();
+            NSLog(@"devices: %@", devices);
+            
+            CGFloat contentsScale = sdlLayer.contentsScale;
+            NSSize layerSize = sdlLayer.frame.size;
+            
+            _metalLayer = [[CAMetalLayer layer] retain];
+            _metalLayer.contentsScale = contentsScale;
+            _metalLayer.drawableSize = NSMakeSize(layerSize.width * contentsScale,
+                                                 layerSize.height * contentsScale);
+            _metalLayer.device = MTLCreateSystemDefaultDevice();
+            _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+            _metalLayer.frame = sdlLayer.frame;
+            _metalLayer.framebufferOnly = true;
+            
+            [sdlLayer addSublayer:_metalLayer];
+            
+            // We need a command queue in order to control the GPU.
+            _commandQueue = [_metalLayer.device newCommandQueue];
+            
+            // Load the shader library.
+            NSError *error = nil;
+            NSString *libraryName = @"Library.metallib";
+            _library = [_metalLayer.device newLibraryWithFile:libraryName error:&error];
+            if (!_library) {
+                NSString *errorDesc = [error localizedDescription];
+                throw Exception("Failed to create Metal shader library \"%s\": %s",
+                                libraryName.UTF8String, errorDesc.UTF8String);
+            }
+        }
     }
     
     GraphicsDeviceMetal::~GraphicsDeviceMetal()
     {
-        [_commandQueue release];
-        
         [_metalLayer removeFromSuperlayer];
+        
+        [_library release];
+        [_commandQueue release];
         [_metalLayer release];
     }
     
@@ -80,7 +94,8 @@ namespace PinkTopaz::Renderer::Metal {
     GraphicsDeviceMetal::makeShader(const std::string &vert,
                                     const std::string &frag)
     {
-        auto shader = std::make_shared<ShaderMetal>(vert, frag);
+        auto shader = std::make_shared<ShaderMetal>(_metalLayer.device,
+                                                    _library, vert, frag);
         return std::dynamic_pointer_cast<Shader>(shader);
     }
     

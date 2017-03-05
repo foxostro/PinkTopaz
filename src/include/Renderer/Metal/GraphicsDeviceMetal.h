@@ -102,6 +102,7 @@ namespace PinkTopaz::Renderer::Metal {
     private:
         CAMetalLayer *_metalLayer;
         id <MTLCommandQueue> _commandQueue;
+        id <MTLLibrary> _library;
     };
     
 } // namespace PinkTopaz::Renderer::Metal

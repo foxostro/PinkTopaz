@@ -26,6 +26,7 @@ if(APPLE)
         "src/Renderer/Metal/TextureSamplerMetal.mm" "src/include/Renderer/Metal/TextureSamplerMetal.h"
         "src/Renderer/Metal/BufferMetal.mm" "src/include/Renderer/Metal/BufferMetal.h"
         "src/Renderer/Metal/FenceMetal.mm" "src/include/Renderer/Metal/FenceMetal.h"
+        "src/Library.metal"
         )
 else()
     set(SOURCE_FILES_METAL "")
@@ -182,15 +183,20 @@ if(APPLE)
 	set_target_properties(PinkTopaz PROPERTIES MACOSX_BUNDLE_INFO_PLIST src/MacOSXBundleInfo.plist.in)
 	set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.foxostro.pinktopaz")
 
+    add_custom_command(TARGET PinkTopaz POST_BUILD
+                       COMMAND xcrun -sdk macosx metal src/Library.metal -o /tmp/PinkTopaz.Library.air
+                       COMMAND xcrun -sdk macosx metallib /tmp/PinkTopaz.Library.air -o res/Library.metallib
+                       )
+
 	# On Mac OS, copy the SDL framework into the app bundle. Important for redistributing the game.
 	add_custom_command(TARGET PinkTopaz POST_BUILD
-	                   COMMAND ${CMAKE_COMMAND} -E copy_directory
-	                   ${SDL2_LIBRARY} $<TARGET_FILE_DIR:PinkTopaz>/../Frameworks/SDL2.framework)
+	                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${SDL2_LIBRARY} $<TARGET_FILE_DIR:PinkTopaz>/../Frameworks/SDL2.framework
+                       )
 
 	# On Mac OS, copy the resources directory into the app bundle. Important for redistributing the game.
 	add_custom_command(TARGET PinkTopaz POST_BUILD
-	                   COMMAND ${CMAKE_COMMAND} -E copy_directory
-	                   "./res" $<TARGET_FILE_DIR:PinkTopaz>/../Resources)
+	                   COMMAND ${CMAKE_COMMAND} -E copy_directory "./res" $<TARGET_FILE_DIR:PinkTopaz>/../Resources
+                       )
 endif(APPLE)
 
 # Set up unit test support.
