@@ -37,7 +37,6 @@ namespace PinkTopaz {
         unsigned _countDown;
         bool _firstReportingPeriod;
         unsigned _ticksBeginMs, _ticksEndMs;
-        Renderer::RenderPassDescriptor _renderPass;
     };
     
 } // namespace PinkTopaz

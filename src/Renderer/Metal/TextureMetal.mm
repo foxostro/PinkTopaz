@@ -73,13 +73,14 @@ namespace PinkTopaz::Renderer::Metal {
         m.cpuCacheMode      = MTLCPUCacheModeDefaultCache;
         m.storageMode       = MTLStorageModeManaged;
         m.usage             = MTLTextureUsageShaderRead;
+        
         _texture = [device newTextureWithDescriptor:m];
-        [m release];
         
         MTLRegion region = MTLRegionMake2D(0, 0, desc.width, desc.height);
         NSUInteger c = textureDataTypeSize(desc.format);
         NSUInteger pitch = c * desc.width;
         NSUInteger imageStride = c * desc.width * desc.height;
+        
         for (size_t i = 0, n = m.arrayLength; i < n; ++i)
         {
             [_texture replaceRegion:region
@@ -89,6 +90,8 @@ namespace PinkTopaz::Renderer::Metal {
                         bytesPerRow:pitch
                       bytesPerImage:0];
         }
+        
+        [m release];
     }
 
     TextureMetal::TextureMetal(id <MTLDevice> device,
@@ -99,7 +102,7 @@ namespace PinkTopaz::Renderer::Metal {
             switch (desc.type)
             {
                 case Texture2D: initTexture2D(device, desc, data); break;
-                case Texture2DArray: initTexture2D(device, desc, data); break;
+                case Texture2DArray: initTexture2DArray(device, desc, data); break;
                 default: throw Exception("Unsupported texture type.");
             }
         }

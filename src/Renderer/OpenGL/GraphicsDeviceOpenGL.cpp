@@ -62,9 +62,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         return std::dynamic_pointer_cast<CommandEncoder>(encoder);
     }
     
-    void GraphicsDeviceOpenGL::submit(const std::shared_ptr<CommandEncoder> &abstractEncoder)
-    {}
-    
     void GraphicsDeviceOpenGL::swapBuffers()
     {
         CHECK_GL_ERROR();
@@ -74,7 +71,8 @@ namespace PinkTopaz::Renderer::OpenGL {
     std::shared_ptr<Shader>
     GraphicsDeviceOpenGL::makeShader(const VertexFormat &vertexFormat,
                                      const std::string &vertexProgramName,
-                                     const std::string &fragmentProgramName)
+                                     const std::string &fragmentProgramName,
+                                     bool blending)
     {
         std::string vertexProgramSourceFileName = vertexProgramName + ".glsl";
         std::string vertexShaderSource = stringFromFileContents(vertexProgramSourceFileName.c_str());
@@ -84,7 +82,8 @@ namespace PinkTopaz::Renderer::OpenGL {
 
         auto shader = std::make_shared<ShaderOpenGL>(vertexFormat,
                                                      vertexShaderSource,
-                                                     fragmentShaderSource);
+                                                     fragmentShaderSource,
+                                                     blending);
         return std::dynamic_pointer_cast<Shader>(shader);
     }
     

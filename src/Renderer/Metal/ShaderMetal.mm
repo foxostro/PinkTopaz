@@ -58,7 +58,9 @@ namespace PinkTopaz::Renderer::Metal {
                              id <MTLDevice> device,
                              id<MTLLibrary> library,
                              const std::string &vert,
-                             const std::string &frag)
+                             const std::string &frag,
+                             bool blending)
+    : _blending(blending)
     {
         @autoreleasepool {
             NSError *error;
@@ -66,8 +68,19 @@ namespace PinkTopaz::Renderer::Metal {
             MTLRenderPipelineDescriptor *desc = [[MTLRenderPipelineDescriptor alloc] init];
             desc.vertexFunction = [library newFunctionWithName:[NSString stringWithUTF8String:vert.c_str()]];
             desc.fragmentFunction = [library newFunctionWithName:[NSString stringWithUTF8String:frag.c_str()]];
-            desc.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
             desc.vertexDescriptor = getVertexDescriptor(vertexFormat);
+            
+            MTLRenderPipelineColorAttachmentDescriptor *colorAttachment = desc.colorAttachments[0];
+            colorAttachment.pixelFormat = MTLPixelFormatBGRA8Unorm;
+            if (blending) {
+                colorAttachment.blendingEnabled = YES;
+                colorAttachment.rgbBlendOperation = MTLBlendOperationAdd;
+                colorAttachment.alphaBlendOperation = MTLBlendOperationAdd;
+                colorAttachment.sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+                colorAttachment.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
+                colorAttachment.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+                colorAttachment.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+            }
             
             error = nil;
             _pipelineState = [device newRenderPipelineStateWithDescriptor:desc error:&error];

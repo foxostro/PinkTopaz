@@ -54,7 +54,9 @@ namespace PinkTopaz {
                                                         Renderer::DynamicDraw,
                                                         Renderer::UniformBuffer);
         
-        auto shader = graphicsDevice->makeShader(mesh->getVertexFormat(), "vert", "frag");
+        auto shader = graphicsDevice->makeShader(mesh->getVertexFormat(),
+                                                 "vert", "frag",
+                                                 false);
         
         RenderableStaticMesh meshContainer = {
             .vertexCount = mesh->getVertexCount(),

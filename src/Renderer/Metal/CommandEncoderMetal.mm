@@ -20,22 +20,21 @@ namespace PinkTopaz::Renderer::Metal {
                                              id <CAMetalDrawable> drawable)
     {
         _pool = [[NSAutoreleasePool alloc] init];
-        
         _commandQueue = [commandQueue retain];
         _drawable = [drawable retain];
         _commandBuffer = [[commandQueue commandBuffer] retain];
-        _renderPassDesc = [[MTLRenderPassDescriptor renderPassDescriptor] retain];
+        _metalRenderPassDesc = [[MTLRenderPassDescriptor renderPassDescriptor] retain];
         
-        MTLRenderPassColorAttachmentDescriptor *colorAttachment = _renderPassDesc.colorAttachments[0];
+        MTLRenderPassColorAttachmentDescriptor *colorAttachment = _metalRenderPassDesc.colorAttachments[0];
         colorAttachment.texture = _drawable.texture;
         colorAttachment.storeAction = MTLStoreActionStore;
         
         if (desc.clear) {
             colorAttachment.clearColor  = MTLClearColorMake(0.2, 0.4, 0.5, 1.0);
-            colorAttachment.loadAction  = MTLLoadActionClear;
+            colorAttachment.loadAction  = desc.clear ? MTLLoadActionClear : MTLLoadActionLoad;
         }
         
-        _encoder = [[_commandBuffer renderCommandEncoderWithDescriptor:_renderPassDesc] retain];
+        _encoder = [[_commandBuffer renderCommandEncoderWithDescriptor:_metalRenderPassDesc] retain];
         
         [_encoder setFrontFacingWinding:MTLWindingCounterClockwise];
         [_encoder setCullMode:MTLCullModeBack];
@@ -45,10 +44,9 @@ namespace PinkTopaz::Renderer::Metal {
     {
         [_commandQueue release];
         [_commandBuffer release];
-        [_renderPassDesc release];
+        [_metalRenderPassDesc release];
         [_drawable release];
         [_encoder release];
-        [_pool release];
     }
     
     void CommandEncoderMetal::setViewport(const glm::ivec4 &viewport)
@@ -68,6 +66,7 @@ namespace PinkTopaz::Renderer::Metal {
         auto shader = std::dynamic_pointer_cast<ShaderMetal>(abstractShader);
         id <MTLRenderPipelineState> pipelineState = shader->getPipelineState();
         [_encoder setRenderPipelineState:pipelineState];
+        _currentShader = shader;
     }
     
     void CommandEncoderMetal::setFragmentTexture(const std::shared_ptr<Texture> &abstractTexture, size_t index)
@@ -114,11 +113,14 @@ namespace PinkTopaz::Renderer::Metal {
                     baseInstance:0];
     }
     
-    void CommandEncoderMetal::onSubmit()
+    void CommandEncoderMetal::commit()
     {
         [_encoder endEncoding];
         [_commandBuffer presentDrawable:_drawable];
         [_commandBuffer commit];
+        
+        [_pool release];
+        _pool = nil;
     }
     
 } // namespace PinkTopaz::Renderer::Metal

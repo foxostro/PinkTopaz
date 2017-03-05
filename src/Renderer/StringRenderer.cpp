@@ -290,7 +290,6 @@ namespace PinkTopaz::Renderer {
                                    unsigned fontSize)
      : _graphicsDevice(dev)
     {
-        _renderPassDescriptor.blend = true;
         _renderPassDescriptor.depthTest = false;
         _renderPassDescriptor.clear = false;
         
@@ -302,7 +301,9 @@ namespace PinkTopaz::Renderer {
             .stride = sizeof(float) * 4,
             .offset = 0
         });
-        _shader = _graphicsDevice->makeShader(vertexFormat, "text_vert", "text_frag");
+        _shader = _graphicsDevice->makeShader(vertexFormat,
+                                              "text_vert", "text_frag",
+                                              true);
         
         _textureAtlas = makeTextureAtlas(fontName, fontSize);
         
@@ -342,7 +343,7 @@ namespace PinkTopaz::Renderer {
             encoder->drawPrimitives(Triangles, 0, string.vertexCount, 1);
         }
 
-        _graphicsDevice->submit(encoder);
+        encoder->commit();
     }
     
     void StringRenderer::rebuildVertexBuffer(String &string)

@@ -20,6 +20,8 @@ namespace PinkTopaz::Renderer::Metal {
     
     GraphicsDeviceMetal::GraphicsDeviceMetal(SDL_Window &window)
     {
+        _pool = [[NSAutoreleasePool alloc] init];
+        
         SDL_SysWMinfo windowManagerInfo;
         SDL_VERSION(&windowManagerInfo.version);
         SDL_GetWindowWMInfo(&window, &windowManagerInfo);
@@ -64,6 +66,7 @@ namespace PinkTopaz::Renderer::Metal {
         [_library release];
         [_commandQueue release];
         [_metalLayer release];
+        [_pool release];
     }
     
     std::shared_ptr<CommandEncoder>
@@ -75,23 +78,18 @@ namespace PinkTopaz::Renderer::Metal {
         return std::dynamic_pointer_cast<CommandEncoder>(encoder);
     }
     
-    void GraphicsDeviceMetal::submit(const std::shared_ptr<CommandEncoder> &abstractEncoder)
-    {
-        auto concreteEncoder = std::dynamic_pointer_cast<CommandEncoderMetal>(abstractEncoder);
-        assert(concreteEncoder);
-        concreteEncoder->onSubmit();
-    }
-    
     void GraphicsDeviceMetal::swapBuffers() {}
     
     std::shared_ptr<Shader>
     GraphicsDeviceMetal::makeShader(const VertexFormat &vertexFormat,
                                     const std::string &vert,
-                                    const std::string &frag)
+                                    const std::string &frag,
+                                    bool blending)
     {
         auto shader = std::make_shared<ShaderMetal>(vertexFormat,
                                                     _metalLayer.device,
-                                                    _library, vert, frag);
+                                                    _library, vert, frag,
+                                                    blending);
         return std::dynamic_pointer_cast<Shader>(shader);
     }
     

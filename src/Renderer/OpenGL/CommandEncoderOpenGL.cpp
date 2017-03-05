@@ -19,13 +19,6 @@ namespace PinkTopaz::Renderer::OpenGL {
     
     CommandEncoderOpenGL::CommandEncoderOpenGL(const RenderPassDescriptor &desc)
     {
-        if (desc.blend) {
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        } else {
-            glDisable(GL_BLEND);
-        }
-        
         if (desc.depthTest) {
             glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_LESS);
@@ -55,7 +48,16 @@ namespace PinkTopaz::Renderer::OpenGL {
         auto shader = std::dynamic_pointer_cast<ShaderOpenGL>(abstractShader);
         GLuint program = shader->getProgram();
         glUseProgram(program);
+        
+        if (shader->getBlending()) {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        } else {
+            glDisable(GL_BLEND);
+        }
+        
         CHECK_GL_ERROR();
+        
         _currentShader = shader;
     }
     
@@ -91,7 +93,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         const GLenum target = buffer->getTargetEnum();
         
         if (UniformBuffer == buffer->getType()) {
-            glBindBufferBase(target, index, vbo);
+            glBindBufferBase(target, 0, vbo);
         } else {
             GLuint vao = buffer->getHandleVAO();
             glBindVertexArray(vao);
@@ -161,5 +163,7 @@ namespace PinkTopaz::Renderer::OpenGL {
             glEnableVertexAttribArray((GLuint)i);
         }
     }
+    
+    void CommandEncoderOpenGL::commit() {}
     
 } // namespace PinkTopaz::Renderer::OpenGL

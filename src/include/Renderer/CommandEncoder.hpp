@@ -52,6 +52,9 @@ namespace PinkTopaz::Renderer {
         
         // Draw triangle primitives using the bound buffers and other resources.
         virtual void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) = 0;
+        
+        // Call when finished encoding to submit to the GPU.
+        virtual void commit() = 0;
     };
 
 } // namespace PinkTopaz::Renderer

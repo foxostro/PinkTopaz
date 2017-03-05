@@ -36,9 +36,13 @@ vertex TerrainProjectedVertex vert(TerrainVertex inVert [[stage_in]],
     return outVert;
 }
 
-fragment float4 frag(TerrainProjectedVertex vert [[stage_in]])
+fragment float4 frag(TerrainProjectedVertex vert [[stage_in]],
+                     texture2d_array<float> diffuseTexture [[texture(0)]],
+                     sampler textureSampler [[sampler(0)]])
 {
-    return vert.color; // TODO: need texturing and fog for parity with GLSL
+    return vert.color * diffuseTexture.sample(textureSampler,
+                                              vert.texCoord.xy,
+                                              vert.texCoord.z);
 }
 
 

@@ -15,7 +15,6 @@ namespace PinkTopaz::Renderer {
     
     struct RenderPassDescriptor
     {
-        bool blend;
         bool depthTest;
         bool clear;
     };

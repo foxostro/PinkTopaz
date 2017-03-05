@@ -38,9 +38,6 @@ namespace PinkTopaz::Renderer {
         // at the end of the frame.
         virtual std::shared_ptr<CommandEncoder>
         encoder(const RenderPassDescriptor &descriptor) = 0;
-
-        // Call this to submit commands to the graphics device.
-        virtual void submit(const std::shared_ptr<CommandEncoder> &encoder) = 0;
         
         // Flushes commands and swaps buffers.
         virtual void swapBuffers() = 0;
@@ -49,7 +46,8 @@ namespace PinkTopaz::Renderer {
         virtual std::shared_ptr<Shader>
         makeShader(const VertexFormat &vertexFormat,
                    const std::string &vertexProgramName,
-                   const std::string &fragmentProgramName) = 0;
+                   const std::string &fragmentProgramName,
+                   bool blending) = 0;
         
         // Creates a new texture from the specified descriptor and data.
         virtual std::shared_ptr<Texture>

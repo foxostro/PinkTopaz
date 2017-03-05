@@ -30,12 +30,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         std::shared_ptr<CommandEncoder>
         encoder(const RenderPassDescriptor &desc) override;
         
-        // Call this to submit commands to the graphics device.
-        // This call is garaunteed thread-safe. Commands will be submitted to
-        // GPU in the order of call to this method; however, commands may not
-        // be flushed until the next call to swapBuffers().
-        void submit(const std::shared_ptr<CommandEncoder> &encoder) override;
-        
         // Flushes commands and swaps buffers. Some underlying graphics APIs
         // have restrictions about which threads they can be used on. So, it's
         // the caller's responsibility call only from method on the main thread.
@@ -45,7 +39,8 @@ namespace PinkTopaz::Renderer::OpenGL {
         std::shared_ptr<Shader>
         makeShader(const VertexFormat &vertexFormat,
                    const std::string &vertexProgramName,
-                   const std::string &fragmentProgramName) override;
+                   const std::string &fragmentProgramName,
+                   bool blending) override;
         
         // Creates a new texture from the specified descriptor and data.
         std::shared_ptr<Texture> makeTexture(const TextureDescriptor &desc,

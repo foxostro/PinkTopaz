@@ -20,16 +20,19 @@ namespace PinkTopaz::Renderer::OpenGL {
     public:
         ShaderOpenGL(const VertexFormat &vertexFormat,
                      const std::string &vertexShaderSource,
-                     const std::string &fragmentShaderSource);
+                     const std::string &fragmentShaderSource,
+                     bool blending);
 
         ~ShaderOpenGL();
         
         inline GLuint getProgram() const { return _program; }
         inline const VertexFormat& getVertexFormat() const { return _vertexFormat; }
+        inline bool getBlending() const { return _blending; }
         
     private:
         GLuint _program;
         VertexFormat _vertexFormat;
+        bool _blending;
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

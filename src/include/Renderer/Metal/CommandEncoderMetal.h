@@ -15,7 +15,9 @@
 
 #import "Renderer/CommandEncoder.hpp"
 #import "Renderer/RenderPassDescriptor.hpp"
+#import "Renderer/Metal/ShaderMetal.h"
 
+#import <memory>
 #import <QuartzCore/QuartzCore.h>
 #import <Metal/Metal.h>
 
@@ -37,17 +39,16 @@ namespace PinkTopaz::Renderer::Metal {
         void setVertexBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) override;
         void setFragmentBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) override;
         void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) override;
-        
-        // Called by the graphics device when the encoder is submitted.
-        void onSubmit();
+        void commit() override;
         
     private:
         id <MTLCommandQueue> _commandQueue;
         id <MTLCommandBuffer> _commandBuffer;
-        MTLRenderPassDescriptor *_renderPassDesc;
+        MTLRenderPassDescriptor *_metalRenderPassDesc;
         id <CAMetalDrawable> _drawable;
         id <MTLRenderCommandEncoder> _encoder;
         NSAutoreleasePool *_pool;
+        std::shared_ptr<ShaderMetal> _currentShader;
     };
     
 } // namespace PinkTopaz::Renderer::Metal
