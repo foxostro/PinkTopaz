@@ -22,7 +22,7 @@ namespace PinkTopaz::Renderer::Metal {
     class TextureSamplerMetal : public TextureSampler
     {
     public:
-        TextureSamplerMetal(const TextureSamplerDescriptor &desc);
+        TextureSamplerMetal(id <MTLDevice> device, const TextureSamplerDescriptor &desc);
         virtual ~TextureSamplerMetal();
         
         inline id <MTLSamplerState> getMetalSampler() const { return _sampler; }

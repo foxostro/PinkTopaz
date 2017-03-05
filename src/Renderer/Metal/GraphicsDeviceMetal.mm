@@ -112,9 +112,9 @@ namespace PinkTopaz::Renderer::Metal {
     }
     
     std::shared_ptr<TextureSampler>
-    GraphicsDeviceMetal::makeTextureSampler(const TextureSamplerDescriptor &d)
+    GraphicsDeviceMetal::makeTextureSampler(const TextureSamplerDescriptor &desc)
     {
-        auto sampler = std::make_shared<TextureSamplerMetal>(d);
+        auto sampler = std::make_shared<TextureSamplerMetal>(_metalLayer.device, desc);
         return std::dynamic_pointer_cast<TextureSampler>(sampler);
     }
     
