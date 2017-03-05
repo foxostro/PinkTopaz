@@ -30,6 +30,14 @@ namespace PinkTopaz::Renderer::Metal {
         inline id <MTLTexture> getMetalTexture() const { return _texture; }
         
     private:
+        void initTexture2D(id <MTLDevice> device,
+                           const TextureDescriptor &desc,
+                           const void *data);
+        
+        void initTexture2DArray(id <MTLDevice> device,
+                                const TextureDescriptor &desc,
+                                const void *data);
+        
         id <MTLTexture> _texture;
     };
     
