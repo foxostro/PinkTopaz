@@ -14,7 +14,6 @@
 #endif
 
 #include "Renderer/Buffer.hpp"
-#include "Renderer/VertexFormat.hpp"
 
 #include <vector>
 #include <Metal/Metal.h>
@@ -25,24 +24,12 @@ namespace PinkTopaz::Renderer::Metal {
     {
     public:
         BufferMetal(id <MTLDevice> device,
-                    const VertexFormat &format,
                     const std::vector<uint8_t> &bufferData,
                     BufferUsage usage,
                     BufferType bufferType);
         
         BufferMetal(id <MTLDevice> device,
-                    const VertexFormat &format,
                     size_t bufferSize,
-                    BufferUsage usage,
-                    BufferType bufferType);
-        
-        BufferMetal(id <MTLDevice> device,
-                    size_t bufferSize,
-                    BufferUsage usage,
-                    BufferType bufferType);
-        
-        BufferMetal(id <MTLDevice> device,
-                    const std::vector<uint8_t> &data,
                     BufferUsage usage,
                     BufferType bufferType);
         

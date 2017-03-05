@@ -59,24 +59,28 @@ namespace PinkTopaz {
         };
         es.each<RenderableStaticMesh, Transform>(f);
         
-        Renderer::RenderPassDescriptor desc; // default values
-        auto encoder = _graphicsDevice->encoder(desc);
-        encoder->setViewport(_viewport);
-
         // Render all meshes.
         auto g = [&](entityx::Entity entity,
                      RenderableStaticMesh &mesh,
                      Transform &transform) {
+            // TODO: Probably want a single render pass for all such meshes...
+            Renderer::RenderPassDescriptor desc = {
+                .blend = false,
+                .depthTest = true,
+                .clear = true,
+                .vertexFormat = mesh.vertexFormat
+            };
+            auto encoder = _graphicsDevice->encoder(desc);
+            encoder->setViewport(_viewport);
             encoder->setShader(mesh.shader);
             encoder->setFragmentSampler(mesh.textureSampler, 0);
             encoder->setFragmentTexture(mesh.texture, 0);
             encoder->setVertexBuffer(mesh.buffer, 0);
             encoder->setFragmentBuffer(mesh.uniforms, 0);
             encoder->drawPrimitives(Renderer::Triangles, 0, mesh.vertexCount, 1);
+            _graphicsDevice->submit(encoder);
         };
         es.each<RenderableStaticMesh, Transform>(g);
-        
-        _graphicsDevice->submit(encoder);
         
         // Draw text strings on the screen last because they blend.
         _stringRenderer.draw(_viewport);

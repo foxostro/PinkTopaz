@@ -118,41 +118,24 @@ namespace PinkTopaz::Renderer::Metal {
     }
     
     std::shared_ptr<Buffer>
-    GraphicsDeviceMetal::makeBuffer(const VertexFormat &format,
-                                    const std::vector<uint8_t> &bufferData,
-                                    BufferUsage usage)
+    GraphicsDeviceMetal::makeBuffer(const std::vector<uint8_t> &bufferData,
+                                    BufferUsage usage,
+                                    BufferType bufferType)
     {
         auto buffer = std::make_shared<BufferMetal>(_metalLayer.device,
-                                                    format, bufferData,
-                                                    usage, ArrayBuffer);
+                                                    bufferData, usage,
+                                                    bufferType);
         return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     
     std::shared_ptr<Buffer>
-    GraphicsDeviceMetal::makeBuffer(const VertexFormat &format,
-                                    size_t bufferSize,
-                                    BufferUsage usage)
+    GraphicsDeviceMetal::makeBuffer(size_t bufferSize,
+                                    BufferUsage usage,
+                                    BufferType bufferType)
     {
         auto buffer = std::make_shared<BufferMetal>(_metalLayer.device,
-                                                    format, bufferSize,
-                                                    usage, ArrayBuffer);
-        return std::dynamic_pointer_cast<Buffer>(buffer);
-    }
-    
-    std::shared_ptr<Buffer>
-    GraphicsDeviceMetal::makeUniformBuffer(const std::vector<uint8_t> &data,
-                                           BufferUsage usage)
-    {
-        auto buffer = std::make_shared<BufferMetal>(_metalLayer.device,
-                                                    data, usage, UniformBuffer);
-        return std::dynamic_pointer_cast<Buffer>(buffer);
-    }
-    
-    std::shared_ptr<Buffer>
-    GraphicsDeviceMetal::makeUniformBuffer(size_t size, BufferUsage usage)
-    {
-        auto buffer = std::make_shared<BufferMetal>(_metalLayer.device,
-                                                    size, usage, UniformBuffer);
+                                                    bufferSize, usage,
+                                                    bufferType);
         return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     

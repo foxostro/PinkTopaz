@@ -25,4 +25,4 @@ namespace PinkTopaz::Renderer {
         return abstract;
     }
     
-}; // namespace PinkTopaz::Renderer
+} // namespace PinkTopaz::Renderer

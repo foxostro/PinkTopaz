@@ -62,6 +62,6 @@ namespace PinkTopaz::Renderer {
         virtual void waitForFence(const std::shared_ptr<Fence> &fence, std::function<void()> &&completionHandler) = 0;
     };
 
-}; // namespace PinkTopaz::Renderer
+} // namespace PinkTopaz::Renderer
 
 #endif /* CommandEncoder_hpp */

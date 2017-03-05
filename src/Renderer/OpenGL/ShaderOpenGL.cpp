@@ -10,6 +10,7 @@
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
 #include <glm/gtc/type_ptr.hpp>
+#include <vector>
 
 namespace PinkTopaz::Renderer::OpenGL {
     
@@ -49,51 +50,48 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
     }
 
-    ShaderOpenGL::ShaderOpenGL(CommandQueue &commandQueue,
-                               const std::string &vertexShaderSource,
+    ShaderOpenGL::ShaderOpenGL(const std::string &vertexShaderSource,
                                const std::string &fragmentShaderSource)
-    : _program(0), _commandQueue(commandQueue)
+    : _program(0)
     {
-        _commandQueue.enqueue([=] {
-            const GLchar *vert = (const GLchar *)vertexShaderSource.c_str();
-            const GLchar *frag = (const GLchar *)fragmentShaderSource.c_str();
+        const GLchar *vert = (const GLchar *)vertexShaderSource.c_str();
+        const GLchar *frag = (const GLchar *)fragmentShaderSource.c_str();
+        
+        std::vector<std::pair<GLenum, const GLchar *> > shaderType = {
+            std::make_pair(GL_VERTEX_SHADER, vert),
+            std::make_pair(GL_FRAGMENT_SHADER, frag),
+        };
+        
+        GLuint program = glCreateProgram();
+        this->_program = program;
+        
+        for(auto p : shaderType)
+        {
+            GLuint shaderObject = glCreateShader(p.first);
+            glShaderSource(shaderObject, 1, &p.second, NULL);
             
-            std::vector<std::pair<GLenum, const GLchar *> > shaderType = {
-                std::make_pair(GL_VERTEX_SHADER, vert),
-                std::make_pair(GL_FRAGMENT_SHADER, frag),
-            };
+            glCompileShader(shaderObject);
+            checkShaderCompileStatus(shaderObject);
             
-            GLuint program = glCreateProgram();
-            this->_program = program;
-            
-            for(auto p : shaderType)
-            {
-                GLuint shaderObject = glCreateShader(p.first);
-                glShaderSource(shaderObject, 1, &p.second, NULL);
-                
-                glCompileShader(shaderObject);
-                checkShaderCompileStatus(shaderObject);
-                
-                glAttachShader(program, shaderObject);
-                glDeleteShader(shaderObject); // We can delete the shader as soon as the program has a reference to it.
-            }
-            
-            glLinkProgram(program);
-            checkProgramLinkStatus(program);
-            
-            CHECK_GL_ERROR();
-        });
+            glAttachShader(program, shaderObject);
+            glDeleteShader(shaderObject); // We can delete the shader as soon as the program has a reference to it.
+        }
+        
+        glLinkProgram(program);
+        checkProgramLinkStatus(program);
+        
+        CHECK_GL_ERROR();
     }
     
     ShaderOpenGL::~ShaderOpenGL()
     {
         GLuint program = _program;
-        _commandQueue.enqueue([program]{
+//        _commandQueue.enqueue([program]{
             if (program) {
                 glDeleteProgram(program);
                 CHECK_GL_ERROR();
             }
-        });
+//        });
     }
 
 } // namespace PinkTopaz::Renderer::OpenGL

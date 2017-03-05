@@ -10,8 +10,6 @@
 #define BufferOpenGL_hpp
 
 #include "Renderer/Buffer.hpp"
-#include "Renderer/VertexFormat.hpp"
-#include "Renderer/OpenGL/CommandQueue.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
 
 namespace PinkTopaz::Renderer::OpenGL {
@@ -22,25 +20,11 @@ namespace PinkTopaz::Renderer::OpenGL {
     class BufferOpenGL : public Buffer
     {
     public:
-        BufferOpenGL(CommandQueue &queue,
-                     const VertexFormat &format,
-                     const std::vector<uint8_t> &bufferData,
+        BufferOpenGL(const std::vector<uint8_t> &bufferData,
                      BufferUsage usage,
                      BufferType bufferType);
 
-        BufferOpenGL(CommandQueue &queue,
-                     const VertexFormat &format,
-                     size_t bufferSize,
-                     BufferUsage usage,
-                     BufferType bufferType);
-        
-        BufferOpenGL(CommandQueue &queue,
-                     size_t bufferSize,
-                     BufferUsage usage,
-                     BufferType bufferType);
-        
-        BufferOpenGL(CommandQueue &queue,
-                     const std::vector<uint8_t> &data,
+        BufferOpenGL(size_t bufferSize,
                      BufferUsage usage,
                      BufferType bufferType);
 
@@ -63,18 +47,11 @@ namespace PinkTopaz::Renderer::OpenGL {
         BufferType getType() const override { return _bufferType; }
         
     private:
-        std::mutex _lock;
         GLuint _vao, _vbo;
         GLenum _usage;
         const BufferType _bufferType;
-        CommandQueue &_commandQueue;
         
-        void setupVertexAttributes(const VertexFormat &format);
-        
-        void internalCreate(const VertexFormat *format, // optional
-                            size_t bufferSize,
-                            void *bufferData);
-        
+        void internalCreate(size_t bufferSize, void *bufferData);
         void internalReplace(const void *p, size_t n);
     };
     

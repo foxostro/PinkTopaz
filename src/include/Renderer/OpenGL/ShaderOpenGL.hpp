@@ -11,7 +11,6 @@
 
 #include "Renderer/Shader.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
-#include "Renderer/OpenGL/CommandQueue.hpp"
 
 #include <map>
 
@@ -20,8 +19,7 @@ namespace PinkTopaz::Renderer::OpenGL {
     class ShaderOpenGL : public Shader
     {
     public:
-        ShaderOpenGL(CommandQueue &commandQueue,
-                     const std::string &vertexShaderSource,
+        ShaderOpenGL(const std::string &vertexShaderSource,
                      const std::string &fragmentShaderSource);
 
         ~ShaderOpenGL();
@@ -29,8 +27,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         inline GLuint getProgram() const { return _program; }
         
     private:
-        std::atomic<GLuint> _program;
-        CommandQueue &_commandQueue;
+        GLuint _program;
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

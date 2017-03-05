@@ -72,24 +72,15 @@ namespace PinkTopaz::Renderer {
         
         // Creates a new GPU buffer object.
         virtual std::shared_ptr<Buffer>
-        makeBuffer(const VertexFormat &format,
-                   const std::vector<uint8_t> &bufferData,
-                   BufferUsage usage) = 0;
+        makeBuffer(const std::vector<uint8_t> &bufferData,
+                   BufferUsage usage,
+                   BufferType bufferType) = 0;
         
         // Creates a new GPU buffer object with undefined contents.
         virtual std::shared_ptr<Buffer>
-        makeBuffer(const VertexFormat &format,
-                   size_t size,
-                   BufferUsage usage) = 0;
-        
-        // Creates a new GPU uniform buffer object.
-        virtual std::shared_ptr<Buffer>
-        makeUniformBuffer(const std::vector<uint8_t> &bufferData,
-                          BufferUsage usage) = 0;
-        
-        // Creates a new GPU uniform buffer object with undefined contents.
-        virtual std::shared_ptr<Buffer>
-        makeUniformBuffer(size_t size, BufferUsage usage) = 0;
+        makeBuffer(size_t size,
+                   BufferUsage usage,
+                   BufferType bufferType) = 0;
         
         // Creates a new GPU fence object.
         virtual std::shared_ptr<Fence> makeFence() = 0;

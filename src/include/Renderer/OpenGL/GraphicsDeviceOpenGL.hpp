@@ -9,14 +9,12 @@
 #ifndef GraphicsDeviceOpenGL_hpp
 #define GraphicsDeviceOpenGL_hpp
 
-#include <mutex>
 #include <queue>
 #include <memory>
 
 #include "SDL.h"
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/CommandEncoder.hpp"
-#include "Renderer/OpenGL/CommandQueue.hpp"
 
 namespace PinkTopaz::Renderer::OpenGL {
     
@@ -62,23 +60,16 @@ namespace PinkTopaz::Renderer::OpenGL {
         makeTextureSampler(const TextureSamplerDescriptor &desc) override;
         
         // Creates a new GPU buffer object.
-        std::shared_ptr<Buffer> makeBuffer(const VertexFormat &format,
-                                           const std::vector<uint8_t> &data,
-                                           BufferUsage usage) override;
+        std::shared_ptr<Buffer>
+        makeBuffer(const std::vector<uint8_t> &bufferData,
+                   BufferUsage usage,
+                   BufferType bufferType) override;
         
         // Creates a new GPU buffer object with undefined contents.
-        std::shared_ptr<Buffer> makeBuffer(const VertexFormat &format,
-                                           size_t size,
-                                           BufferUsage usage) override;
-        
-        // Creates a new GPU uniform buffer object.
         std::shared_ptr<Buffer>
-        makeUniformBuffer(const std::vector<uint8_t> &bufferData,
-                          BufferUsage usage) override;
-        
-        // Creates a new GPU uniform buffer object with undefined contents.
-        std::shared_ptr<Buffer>
-        makeUniformBuffer(size_t size, BufferUsage usage) override;
+        makeBuffer(size_t size,
+                   BufferUsage usage,
+                   BufferType bufferType) override;
         
         // Creates a new GPU fence object.
         std::shared_ptr<Fence> makeFence() override;
@@ -90,7 +81,6 @@ namespace PinkTopaz::Renderer::OpenGL {
     private:
         SDL_Window &_window;
         SDL_GLContext _glContext;
-        CommandQueue _commandQueue;
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

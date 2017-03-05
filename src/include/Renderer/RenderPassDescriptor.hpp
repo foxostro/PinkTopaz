@@ -9,6 +9,8 @@
 #ifndef RenderPassDescriptor_hpp
 #define RenderPassDescriptor_hpp
 
+#include "Renderer/VertexFormat.hpp"
+
 namespace PinkTopaz::Renderer {
     
     struct RenderPassDescriptor
@@ -16,12 +18,7 @@ namespace PinkTopaz::Renderer {
         bool blend;
         bool depthTest;
         bool clear;
-        
-        RenderPassDescriptor()
-         : blend(false),
-           depthTest(true),
-           clear(true)
-        {}
+        VertexFormat vertexFormat;
     };
     
 } // namespace PinkTopaz::Renderer

@@ -53,6 +53,6 @@ namespace PinkTopaz::Renderer::Metal {
         NSAutoreleasePool *_pool;
     };
     
-}; // namespace PinkTopaz::Renderer::Metal
+} // namespace PinkTopaz::Renderer::Metal
 
 #endif /* CommandEncoderMetal_h */

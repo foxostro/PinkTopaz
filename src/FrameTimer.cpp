@@ -14,7 +14,7 @@ namespace PinkTopaz {
     
     FrameTimer::FrameTimer(Renderer::GraphicsDevice &graphicsDevice,
                            Renderer::StringRenderer &stringRenderer)
-     : _graphicsDevice(graphicsDevice),
+     : //_graphicsDevice(graphicsDevice),
        _stringRenderer(stringRenderer),
        _framesBetweenReport(100),
        _frameTimeLabel(),
@@ -38,6 +38,7 @@ namespace PinkTopaz {
     
     void FrameTimer::endFrame()
     {
+#if 0
         // Measure the time it takes for all GPU work to complete.
         // We do this by issuing a GPU fence in a new encoder and waiting for
         // it to complete.
@@ -52,6 +53,9 @@ namespace PinkTopaz {
         });
         
         _graphicsDevice.submit(encoder);
+#else
+        _ticksEndMs = SDL_GetTicks();
+#endif
     }
     
     void FrameTimer::afterFrame()

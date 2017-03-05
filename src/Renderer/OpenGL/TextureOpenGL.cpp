@@ -71,12 +71,9 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
     }
     
-    TextureOpenGL::TextureOpenGL(CommandQueue &queue,
-                                 const TextureDescriptor &desc,
+    TextureOpenGL::TextureOpenGL(const TextureDescriptor &desc,
                                  const void *data)
-     : _target(0),
-       _handle(0),
-       _commandQueue(queue)
+     : _target(0), _handle(0)
     {
         const size_t len = desc.width * desc.height * desc.depth * textureDataTypeSize(desc.format);
         std::vector<uint8_t> wrappedData(len);
@@ -85,12 +82,9 @@ namespace PinkTopaz::Renderer::OpenGL {
         commonInit(desc, wrappedData);
     }
     
-    TextureOpenGL::TextureOpenGL(CommandQueue &queue,
-                                 const TextureDescriptor &desc,
+    TextureOpenGL::TextureOpenGL(const TextureDescriptor &desc,
                                  const std::vector<uint8_t> &data)
-     : _target(0),
-       _handle(0),
-       _commandQueue(queue)
+     : _target(0), _handle(0)
     {
         const size_t expectedLen = desc.width * desc.height * desc.depth * textureDataTypeSize(desc.format);
         const size_t dataLen = data.size();
@@ -112,49 +106,45 @@ namespace PinkTopaz::Renderer::OpenGL {
         const GLint externalFormat = textureExternalFormat(desc.format);
         const GLint dataType = textureDataType(desc.format);
         
-        _commandQueue.enqueue([=]{
-            const void *bytes = &data[0];
-            
-            glPixelStorei(GL_UNPACK_ALIGNMENT, desc.unpackAlignment);
-            
-            GLuint texture;
-            glGenTextures(1, &texture);
-            glBindTexture(target, texture);
-            
-            switch (target)
-            {
-                case GL_TEXTURE_2D:
-                    glTexImage2D(target, level, internalFormat, desc.width,
-                                 desc.height, border, externalFormat, dataType, bytes);
-                    break;
-                    
-                case GL_TEXTURE_2D_ARRAY:
-                    glTexImage3D(target, level, internalFormat, desc.width,
-                                 desc.height, desc.depth, border, externalFormat,
-                                 dataType, bytes);
-                    break;
-            }
-            
-            if (desc.generateMipMaps) {
-                glGenerateMipmap(target);
-            }
-            
-            glBindTexture(target, 0);
-            CHECK_GL_ERROR();
-            
-            this->_handle = texture;
-        });
+        const void *bytes = &data[0];
+        
+        glPixelStorei(GL_UNPACK_ALIGNMENT, desc.unpackAlignment);
+        
+        GLuint texture;
+        glGenTextures(1, &texture);
+        glBindTexture(target, texture);
+        
+        switch (target)
+        {
+            case GL_TEXTURE_2D:
+                glTexImage2D(target, level, internalFormat, desc.width,
+                             desc.height, border, externalFormat, dataType, bytes);
+                break;
+                
+            case GL_TEXTURE_2D_ARRAY:
+                glTexImage3D(target, level, internalFormat, desc.width,
+                             desc.height, desc.depth, border, externalFormat,
+                             dataType, bytes);
+                break;
+        }
+        
+        if (desc.generateMipMaps) {
+            glGenerateMipmap(target);
+        }
+        
+        glBindTexture(target, 0);
+        CHECK_GL_ERROR();
+        
+        _handle = texture;
     }
     
     TextureOpenGL::~TextureOpenGL()
     {
         GLuint handle = _handle;
-        _commandQueue.enqueue([handle]{
-            if (handle) {
-                glDeleteTextures(1, &handle);
-                CHECK_GL_ERROR();
-            }
-        });
+        if (handle) {
+            glDeleteTextures(1, &handle);
+            CHECK_GL_ERROR();
+        }
     }
     
 } // namespace PinkTopaz::Renderer::OpenGL

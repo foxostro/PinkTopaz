@@ -11,20 +11,18 @@
 
 #include "Renderer/Fence.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
-#include "Renderer/OpenGL/CommandQueue.hpp"
 
 namespace PinkTopaz::Renderer::OpenGL {
     
     class FenceOpenGL : public Fence
     {
     public:
-        FenceOpenGL(CommandQueue &queue);
+        FenceOpenGL();
         ~FenceOpenGL();
         inline GLsync getObject() const { return _object; }
         
     private:
-        CommandQueue &_commandQueue;
-        std::atomic<GLsync> _object;
+        GLsync _object;
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

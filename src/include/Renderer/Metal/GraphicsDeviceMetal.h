@@ -16,7 +16,6 @@
 #import "Renderer/GraphicsDevice.hpp"
 #import "Renderer/CommandEncoder.hpp"
 
-#import <mutex>
 #import <queue>
 #import <memory>
 
@@ -71,24 +70,15 @@ namespace PinkTopaz::Renderer::Metal {
         
         // Creates a new GPU buffer object.
         std::shared_ptr<Buffer>
-        makeBuffer(const VertexFormat &format,
-                   const std::vector<uint8_t> &data,
-                   BufferUsage usage) override;
+        makeBuffer(const std::vector<uint8_t> &bufferData,
+                   BufferUsage usage,
+                   BufferType bufferType) override;
         
         // Creates a new GPU buffer object with undefined contents.
         std::shared_ptr<Buffer>
-        makeBuffer(const VertexFormat &format,
-                   size_t size,
-                   BufferUsage usage) override;
-        
-        // Creates a new GPU uniform buffer object.
-        std::shared_ptr<Buffer>
-        makeUniformBuffer(const std::vector<uint8_t> &bufferData,
-                          BufferUsage usage) override;
-        
-        // Creates a new GPU uniform buffer object with undefined contents.
-        std::shared_ptr<Buffer>
-        makeUniformBuffer(size_t size, BufferUsage usage) override;
+        makeBuffer(size_t size,
+                   BufferUsage usage,
+                   BufferType bufferType) override;
         
         // Creates a new GPU fence object.
         std::shared_ptr<Fence> makeFence() override;

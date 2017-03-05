@@ -12,24 +12,19 @@
 
 namespace PinkTopaz::Renderer::OpenGL {
     
-    FenceOpenGL::FenceOpenGL(CommandQueue &queue)
-     : _commandQueue(queue)
+    FenceOpenGL::FenceOpenGL()
     {
-        _commandQueue.enqueue([this]{
-            constexpr GLenum op = 0x9117;//GL_SYNC_GPU_COMMANDS_COMPLETE​;
-            GLsync sync = glFenceSync(op, 0);
-            CHECK_GL_ERROR();
-            this->_object = sync;
-        });
+        constexpr GLenum op = 0x9117;//GL_SYNC_GPU_COMMANDS_COMPLETE​;
+        GLsync sync = glFenceSync(op, 0);
+        CHECK_GL_ERROR();
+        _object = sync;
     }
     
     FenceOpenGL::~FenceOpenGL()
     {
         GLsync object = _object;
-        _commandQueue.enqueue([object]{
-            glDeleteSync(object);
-            CHECK_GL_ERROR();
-        });
+        glDeleteSync(object);
+        CHECK_GL_ERROR();
     }
     
 } // namespace PinkTopaz::Renderer::OpenGL

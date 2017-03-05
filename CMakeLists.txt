@@ -8,7 +8,6 @@ set(SOURCE_FILES_OPENGL
     "src/include/Renderer/OpenGL/opengl.hpp"
     "src/Renderer/OpenGL/glUtilities.cpp" "src/include/Renderer/OpenGL/glUtilities.hpp"
     "src/Renderer/OpenGL/GraphicsDeviceOpenGL.cpp" "src/include/Renderer/OpenGL/GraphicsDeviceOpenGL.hpp"
-    "src/Renderer/OpenGL/CommandQueue.cpp" "src/include/Renderer/OpenGL/CommandQueue.hpp"
     "src/Renderer/OpenGL/CommandEncoderOpenGL.cpp" "src/include/Renderer/OpenGL/CommandEncoderOpenGL.hpp"
     "src/Renderer/OpenGL/BufferOpenGL.cpp" "src/include/Renderer/OpenGL/BufferOpenGL.hpp"
     "src/Renderer/OpenGL/ShaderOpenGL.cpp" "src/include/Renderer/OpenGL/ShaderOpenGL.hpp"

@@ -10,7 +10,6 @@
 #define TextureSamplerOpenGL_hpp
 
 #include "Renderer/TextureSampler.hpp"
-#include "Renderer/OpenGL/CommandQueue.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
 
 namespace PinkTopaz::Renderer::OpenGL {
@@ -25,16 +24,14 @@ namespace PinkTopaz::Renderer::OpenGL {
     class TextureSamplerOpenGL : public TextureSampler
     {
     public:
-        TextureSamplerOpenGL(CommandQueue &queue,
-                             const TextureSamplerDescriptor &desc);
+        TextureSamplerOpenGL(const TextureSamplerDescriptor &desc);
         
         virtual ~TextureSamplerOpenGL();
         
         inline GLuint getHandle() const { return _handle; }
         
     private:
-        std::atomic<GLuint> _handle;
-        CommandQueue &_commandQueue;
+        GLuint _handle;
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

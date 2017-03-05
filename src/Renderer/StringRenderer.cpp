@@ -293,18 +293,17 @@ namespace PinkTopaz::Renderer {
         _renderPassDescriptor.blend = true;
         _renderPassDescriptor.depthTest = false;
         _renderPassDescriptor.clear = false;
-        
-        _textureAtlas = makeTextureAtlas(fontName, fontSize);
-        
-        _shader = _graphicsDevice->makeShader("text_vert", "text_frag");
-        
-        _vertexFormat.attributes.emplace_back((AttributeFormat){
+        _renderPassDescriptor.vertexFormat.attributes.emplace_back((AttributeFormat){
             .size = 4,
             .type = AttributeTypeFloat,
             .normalized = false,
             .stride = sizeof(float) * 4,
             .offset = 0
         });
+        
+        _textureAtlas = makeTextureAtlas(fontName, fontSize);
+        
+        _shader = _graphicsDevice->makeShader("text_vert", "text_frag");
         
         TextureSamplerDescriptor samplerDesc = {
             .addressS = Renderer::ClampToEdge,
@@ -423,12 +422,10 @@ namespace PinkTopaz::Renderer {
         const size_t bufferSize = bytesPerVertex * vertexCount;
         
         handle->vertexCount = vertexCount;
-        handle->buffer = _graphicsDevice->makeBuffer(_vertexFormat,
-                                                     bufferSize,
-                                                     StaticDraw);
+        handle->buffer = _graphicsDevice->makeBuffer(bufferSize, StaticDraw, ArrayBuffer);
         rebuildVertexBuffer(*handle);
         
-        handle->uniforms = _graphicsDevice->makeUniformBuffer(sizeof(StringUniforms), StaticDraw);
+        handle->uniforms = _graphicsDevice->makeBuffer(sizeof(StringUniforms), StaticDraw, UniformBuffer);
         rebuildUniformBuffer(*handle, glm::mat4x4());
         
         return handle;

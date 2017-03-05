@@ -46,16 +46,20 @@ namespace PinkTopaz {
         auto sampler = graphicsDevice->makeTextureSampler(samplerDesc);
         
         auto mesh = std::make_shared<Renderer::StaticMesh>("terrain.3d.bin");
-        auto vertexBuffer = graphicsDevice->makeBuffer(mesh->getVertexFormat(),
-                                                       mesh->getBufferData(),
-                                                       Renderer::StaticDraw);
+        auto vertexBuffer = graphicsDevice->makeBuffer(mesh->getBufferData(),
+                                                       Renderer::StaticDraw,
+                                                       Renderer::ArrayBuffer);
         
         Renderer::StaticMesh::Uniforms uniforms;
-        auto uniformBuffer = graphicsDevice->makeUniformBuffer(sizeof(uniforms), Renderer::DynamicDraw);
+        // TODO: Need API to specify buffer contents as a raw pointer in makeBuffer().
+        auto uniformBuffer = graphicsDevice->makeBuffer(sizeof(uniforms),
+                                                        Renderer::DynamicDraw,
+                                                        Renderer::UniformBuffer);
         uniformBuffer->replace(sizeof(uniforms), &uniforms);
         
         RenderableStaticMesh meshContainer = {
             .vertexCount = mesh->getVertexCount(),
+            .vertexFormat = mesh->getVertexFormat(),
             .buffer = vertexBuffer,
             .uniforms = uniformBuffer,
             .shader = shader,

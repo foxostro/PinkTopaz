@@ -31,7 +31,7 @@ namespace PinkTopaz {
         void afterFrame();
         
     private:
-        Renderer::GraphicsDevice &_graphicsDevice;
+        //Renderer::GraphicsDevice &_graphicsDevice;
         Renderer::StringRenderer &_stringRenderer;
         const unsigned _framesBetweenReport;
         

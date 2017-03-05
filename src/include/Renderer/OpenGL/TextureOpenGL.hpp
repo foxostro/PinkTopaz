@@ -10,7 +10,6 @@
 #define TextureOpenGL_hpp
 
 #include "Renderer/Texture.hpp"
-#include "Renderer/OpenGL/CommandQueue.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
 
 #include <vector>
@@ -44,20 +43,16 @@ namespace PinkTopaz::Renderer::OpenGL {
     {
     public:
         // Constructs the texture.
-        // queue -- The command queue is used so that OpenGL commands can be
-        //          issued on the blessed OpenGL thread in a thread-safe manner.
         // desc -- The texture descriptor provides information about the type
         //         and format of the texture. It does include enough information
         //         to determine how many bytes of data are in the texture.
         // data -- A pointer to the bytes of data used in the texture. This is
         //         copied when received to prevent problems should the OpenGL
         //         commands run at a later time or on a different thread.
-        TextureOpenGL(CommandQueue &queue,
-                      const TextureDescriptor &desc,
+        TextureOpenGL(const TextureDescriptor &desc,
                       const void *data);
         
-        TextureOpenGL(CommandQueue &queue,
-                      const TextureDescriptor &desc,
+        TextureOpenGL(const TextureDescriptor &desc,
                       const std::vector<uint8_t> &data);
         
         virtual ~TextureOpenGL();
@@ -66,11 +61,11 @@ namespace PinkTopaz::Renderer::OpenGL {
         inline GLenum getTarget() const { return _target; }
         
     private:
-        void commonInit(const TextureDescriptor &desc, const std::vector<uint8_t> &data);
+        void commonInit(const TextureDescriptor &desc,
+                        const std::vector<uint8_t> &data);
         
         GLenum _target;
-        std::atomic<GLuint> _handle;
-        CommandQueue &_commandQueue;
+        GLuint _handle;
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

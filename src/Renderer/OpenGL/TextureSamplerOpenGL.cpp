@@ -37,34 +37,30 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
     }
     
-    TextureSamplerOpenGL::TextureSamplerOpenGL(CommandQueue &queue, const TextureSamplerDescriptor &desc)
-     : _handle(0), _commandQueue(queue)
+    TextureSamplerOpenGL::TextureSamplerOpenGL(const TextureSamplerDescriptor &desc)
+     : _handle(0)
     {
         const GLint addressS = textureSamplerAddressModeEnum(desc.addressS);
         const GLint addressT = textureSamplerAddressModeEnum(desc.addressT);
         const GLint minFilter = textureSamplerFilterEnum(desc.minFilter);
         const GLint maxFilter = textureSamplerFilterEnum(desc.maxFilter);
         
-        _commandQueue.enqueue([=]{
-            GLuint sampler;
-            glGenSamplers(1, &sampler);
-            glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, addressS);
-            glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, addressT);
-            glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter);
-            glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, maxFilter);
-            CHECK_GL_ERROR();
-            
-            this->_handle = sampler;
-        });
+        GLuint sampler;
+        glGenSamplers(1, &sampler);
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, addressS);
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, addressT);
+        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter);
+        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, maxFilter);
+        CHECK_GL_ERROR();
+        
+        _handle = sampler;
     }
     
     TextureSamplerOpenGL::~TextureSamplerOpenGL()
     {
         GLuint handle = _handle;
-        _commandQueue.enqueue([handle]{
-            glDeleteSamplers(1, &handle);
-            CHECK_GL_ERROR();
-        });
+        glDeleteSamplers(1, &handle);
+        CHECK_GL_ERROR();
     }
     
 } // namespace PinkTopaz::Renderer::OpenGL

@@ -9,11 +9,13 @@
 #ifndef RenderableStaticMesh_hpp
 #define RenderableStaticMesh_hpp
 
-#include <memory>
+#include "Renderer/VertexFormat.hpp"
 #include "Renderer/Buffer.hpp"
 #include "Renderer/Shader.hpp"
 #include "Renderer/Texture.hpp"
 #include "Renderer/TextureSampler.hpp"
+
+#include <memory>
 
 namespace PinkTopaz {
     
@@ -21,6 +23,7 @@ namespace PinkTopaz {
     struct RenderableStaticMesh
     {
         size_t vertexCount;
+        Renderer::VertexFormat vertexFormat;
         std::shared_ptr<Renderer::Buffer> buffer;
         std::shared_ptr<Renderer::Buffer> uniforms;
         std::shared_ptr<Renderer::Shader> shader;

@@ -65,17 +65,17 @@ namespace PinkTopaz::Renderer::OpenGL {
     
     void GraphicsDeviceOpenGL::submit(const std::shared_ptr<CommandEncoder> &abstractEncoder)
     {
-        auto concreteEncoder = std::dynamic_pointer_cast<CommandEncoderOpenGL>(abstractEncoder);
-        assert(concreteEncoder);
-        _commandQueue.enqueue(concreteEncoder->getCommandQueue());
+//        auto concreteEncoder = std::dynamic_pointer_cast<CommandEncoderOpenGL>(abstractEncoder);
+//        assert(concreteEncoder);
+//        _commandQueue.enqueue(concreteEncoder->getCommandQueue());
     }
     
     void GraphicsDeviceOpenGL::swapBuffers()
     {
         CHECK_GL_ERROR();
-        _commandQueue.execute();
+//        _commandQueue.execute();
         SDL_GL_SwapWindow(&_window);
-        CHECK_GL_ERROR();
+//        CHECK_GL_ERROR();
     }
     
     std::shared_ptr<Shader> GraphicsDeviceOpenGL::makeShader(const std::string &vertexProgramName, const std::string &fragmentProgramName)
@@ -86,79 +86,53 @@ namespace PinkTopaz::Renderer::OpenGL {
         std::string fragmentProgramSourceFileName = fragmentProgramName + ".glsl";
         std::string fragmentShaderSource = stringFromFileContents(fragmentProgramSourceFileName.c_str());
 
-        auto shader = std::make_shared<ShaderOpenGL>(_commandQueue, vertexShaderSource, fragmentShaderSource);
+        auto shader = std::make_shared<ShaderOpenGL>(vertexShaderSource, fragmentShaderSource);
         return std::dynamic_pointer_cast<Shader>(shader);
     }
     
     std::shared_ptr<Texture> GraphicsDeviceOpenGL::makeTexture(const TextureDescriptor &desc, const void *data)
     {
-        auto texture = std::make_shared<TextureOpenGL>(_commandQueue, desc, data);
+        auto texture = std::make_shared<TextureOpenGL>(desc, data);
         return std::dynamic_pointer_cast<Texture>(texture);
     }
     
     std::shared_ptr<Texture> GraphicsDeviceOpenGL::makeTexture(const TextureDescriptor &desc, const std::vector<uint8_t> &data)
     {
-        auto texture = std::make_shared<TextureOpenGL>(_commandQueue, desc, data);
+        auto texture = std::make_shared<TextureOpenGL>(desc, data);
         return std::dynamic_pointer_cast<Texture>(texture);
     }
     
     std::shared_ptr<TextureSampler>
     GraphicsDeviceOpenGL::makeTextureSampler(const TextureSamplerDescriptor &desc)
     {
-        auto sampler = std::make_shared<TextureSamplerOpenGL>(_commandQueue, desc);
+        auto sampler = std::make_shared<TextureSamplerOpenGL>(desc);
         return std::dynamic_pointer_cast<TextureSampler>(sampler);
     }
     
     std::shared_ptr<Buffer>
-    GraphicsDeviceOpenGL::makeBuffer(const VertexFormat &format,
-                                     const std::vector<uint8_t> &bufferData,
-                                     BufferUsage usage)
+    GraphicsDeviceOpenGL::makeBuffer(const std::vector<uint8_t> &bufferData,
+                                     BufferUsage usage,
+                                     BufferType bufferType)
     {
-        auto buffer = std::make_shared<BufferOpenGL>(_commandQueue,
-                                                     format,
-                                                     bufferData,
+        auto buffer = std::make_shared<BufferOpenGL>(bufferData,
                                                      usage,
-                                                     ArrayBuffer);
+                                                     bufferType);
         return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     
     std::shared_ptr<Buffer>
-    GraphicsDeviceOpenGL::makeBuffer(const VertexFormat &format,
-                                     size_t bufferSize,
-                                     BufferUsage usage)
+    GraphicsDeviceOpenGL::makeBuffer(size_t bufferSize,
+                                     BufferUsage usage,
+                                     BufferType bufferType)
     {
-        auto buffer = std::make_shared<BufferOpenGL>(_commandQueue,
-                                                     format,
-                                                     bufferSize,
+        auto buffer = std::make_shared<BufferOpenGL>(bufferSize,
                                                      usage,
-                                                     ArrayBuffer);
+                                                     bufferType);
         return std::dynamic_pointer_cast<Buffer>(buffer);
     }
-    
-    std::shared_ptr<Buffer>
-    GraphicsDeviceOpenGL::makeUniformBuffer(const std::vector<uint8_t> &data,
-                                            BufferUsage usage)
-    {
-        auto buffer = std::make_shared<BufferOpenGL>(_commandQueue,
-                                                     data,
-                                                     usage,
-                                                     UniformBuffer);
-        return std::dynamic_pointer_cast<Buffer>(buffer);
-    }
-    
-    std::shared_ptr<Buffer>
-    GraphicsDeviceOpenGL::makeUniformBuffer(size_t size, BufferUsage usage)
-    {
-        auto buffer = std::make_shared<BufferOpenGL>(_commandQueue,
-                                                     size,
-                                                     usage,
-                                                     UniformBuffer);
-        return std::dynamic_pointer_cast<Buffer>(buffer);
-    }
-    
     std::shared_ptr<Fence> GraphicsDeviceOpenGL::makeFence()
     {
-        auto fence = std::make_shared<FenceOpenGL>(_commandQueue);
+        auto fence = std::make_shared<FenceOpenGL>();
         return std::dynamic_pointer_cast<Fence>(fence);
     }
     

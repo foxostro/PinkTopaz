@@ -92,4 +92,4 @@ namespace PinkTopaz::Renderer::Metal {
         [_commandBuffer commit];
     }
     
-}; // namespace PinkTopaz::Renderer::Metal
+} // namespace PinkTopaz::Renderer::Metal

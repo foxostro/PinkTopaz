@@ -10,7 +10,6 @@
 #define CommandEncoderOpenGL_hpp
 
 #include "Renderer/CommandEncoder.hpp"
-#include "Renderer/OpenGL/CommandQueue.hpp"
 #include "Renderer/RenderPassDescriptor.hpp"
 
 namespace PinkTopaz::Renderer::OpenGL {
@@ -31,12 +30,14 @@ namespace PinkTopaz::Renderer::OpenGL {
         void waitForFence(const std::shared_ptr<Fence> &fence,
                           std::function<void()> &&completionHandler) override;
         
-        inline CommandQueue& getCommandQueue() { return _commandQueue; }
-        
     private:
-        CommandQueue _commandQueue;
+        // Tell OpenGL about the vertex attribute format expected by the shader.
+        // Call this after the VAO and VBO have both been bound.
+        static void setupVertexAttributes(const VertexFormat &format);
+        
+        VertexFormat _vertexFormat;
     };
     
-}; // namespace PinkTopaz::Renderer::OpenGL
+} // namespace PinkTopaz::Renderer::OpenGL
 
 #endif /* CommandEncoderOpenGL_hpp */
