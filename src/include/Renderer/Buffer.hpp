@@ -40,6 +40,14 @@ namespace PinkTopaz::Renderer {
         // Gets the type of the buffer.
         virtual BufferType getType() const = 0;
         
+        // Adds a debug marker to the buffer for inspecting it in a GPU trace.
+        virtual void addDebugMarker(const std::string &marker,
+                                    size_t location,
+                                    size_t length) = 0;
+        
+        // Removes all debug markers from the buffer.
+        virtual void removeAllDebugMarkers() = 0;
+        
     protected:
         Buffer() = default;
     };

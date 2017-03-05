@@ -77,6 +77,19 @@ namespace PinkTopaz::Renderer::Metal {
         }
     }
     
+    void BufferMetal::addDebugMarker(const std::string &marker,
+                                     size_t location,
+                                     size_t length)
+    {
+        [_buffer addDebugMarker:[NSString stringWithUTF8String:marker.c_str()]
+                          range:NSMakeRange(location, length)];
+    }
+    
+    void BufferMetal::removeAllDebugMarkers()
+    {
+        [_buffer removeAllDebugMarkers];
+    }
+    
     BufferType BufferMetal::getType() const
     {
         return _bufferType;

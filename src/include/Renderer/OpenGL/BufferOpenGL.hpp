@@ -40,6 +40,12 @@ namespace PinkTopaz::Renderer::OpenGL {
         void replace(std::vector<uint8_t> &&wrappedData) override;
         void replace(size_t size, const void *data) override;
         
+        void addDebugMarker(const std::string &marker,
+                            size_t location,
+                            size_t length) override {}
+        
+        void removeAllDebugMarkers() override {}
+        
         inline GLuint getHandleVAO() const { return _vao; }
         inline GLuint getHandleVBO() const { return _vbo; }
         

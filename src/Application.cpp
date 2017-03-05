@@ -44,15 +44,18 @@ namespace PinkTopaz {
         auto sampler = graphicsDevice->makeTextureSampler(samplerDesc);
         
         auto mesh = std::make_shared<Renderer::StaticMesh>("terrain.3d.bin");
-        auto vertexBuffer = graphicsDevice->makeBuffer(mesh->getBufferData(),
+        auto vertexBufferData = mesh->getBufferData();
+        auto vertexBuffer = graphicsDevice->makeBuffer(vertexBufferData,
                                                        Renderer::StaticDraw,
                                                        Renderer::ArrayBuffer);
+        vertexBuffer->addDebugMarker("Terrain Vertices", 0, vertexBufferData.size());
         
         Renderer::StaticMesh::Uniforms uniforms;
         auto uniformBuffer = graphicsDevice->makeBuffer(sizeof(uniforms),
                                                         &uniforms,
                                                         Renderer::DynamicDraw,
                                                         Renderer::UniformBuffer);
+        vertexBuffer->addDebugMarker("Terrain Uniforms", 0, sizeof(uniforms));
         
         auto shader = graphicsDevice->makeShader(mesh->getVertexFormat(),
                                                  "vert", "frag",

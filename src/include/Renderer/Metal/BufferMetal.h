@@ -37,9 +37,15 @@ namespace PinkTopaz::Renderer::Metal {
         virtual ~BufferMetal();
         
         // Replace the entire contents of the buffer.
-        void replace(const std::vector<uint8_t> &data)  override;
-        void replace(std::vector<uint8_t> &&data)  override;
+        void replace(const std::vector<uint8_t> &data) override;
+        void replace(std::vector<uint8_t> &&data) override;
         void replace(size_t size, const void *data) override;
+        
+        void addDebugMarker(const std::string &marker,
+                            size_t location,
+                            size_t length) override;
+        
+        void removeAllDebugMarkers() override;
         
         BufferType getType() const override;
         
