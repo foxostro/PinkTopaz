@@ -40,6 +40,7 @@ namespace PinkTopaz::Renderer {
         
         struct String
         {
+            size_t vertexCount;
             std::string contents;
             glm::vec2 position;
             glm::vec4 color;

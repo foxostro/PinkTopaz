@@ -72,7 +72,7 @@ namespace PinkTopaz {
             encoder->setFragmentTexture(mesh.texture, 0);
             encoder->setVertexBuffer(mesh.buffer, 0);
             encoder->setFragmentBuffer(mesh.uniforms, 0);
-            encoder->drawPrimitives(Renderer::Triangles, 0, mesh.buffer->getVertexCount(), 1);
+            encoder->drawPrimitives(Renderer::Triangles, 0, mesh.vertexCount, 1);
         };
         es.each<RenderableStaticMesh, Transform>(g);
         

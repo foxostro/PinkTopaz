@@ -64,13 +64,11 @@ namespace PinkTopaz::Renderer::OpenGL {
         // Creates a new GPU buffer object.
         std::shared_ptr<Buffer> makeBuffer(const VertexFormat &format,
                                            const std::vector<uint8_t> &data,
-                                           size_t elementCount,
                                            BufferUsage usage) override;
         
         // Creates a new GPU buffer object with undefined contents.
         std::shared_ptr<Buffer> makeBuffer(const VertexFormat &format,
                                            size_t size,
-                                           size_t elementCount,
                                            BufferUsage usage) override;
         
         // Creates a new GPU uniform buffer object.

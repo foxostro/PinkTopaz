@@ -20,17 +20,7 @@ namespace PinkTopaz {
     // Gives the entity a static mesh which is rendered to represent the entity in the world.
     struct RenderableStaticMesh
     {
-        RenderableStaticMesh() = default;
-        
-        RenderableStaticMesh(const std::shared_ptr<Renderer::Buffer> &b,
-                             const std::shared_ptr<Renderer::Buffer> &u,
-                             const std::shared_ptr<Renderer::Shader> &s,
-                             const std::shared_ptr<Renderer::Texture> &t,
-                             const std::shared_ptr<Renderer::TextureSampler> &a)
-         : buffer(b), uniforms(u), shader(s),
-           texture(t), textureSampler(a)
-        {}
-        
+        size_t vertexCount;
         std::shared_ptr<Renderer::Buffer> buffer;
         std::shared_ptr<Renderer::Buffer> uniforms;
         std::shared_ptr<Renderer::Shader> shader;

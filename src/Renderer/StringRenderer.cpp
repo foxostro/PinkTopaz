@@ -339,7 +339,7 @@ namespace PinkTopaz::Renderer {
             
             encoder->setVertexBuffer(string.buffer, 0);
             encoder->setVertexBuffer(string.uniforms, 0);
-            encoder->drawPrimitives(Triangles, 0, string.buffer->getVertexCount(), 1);
+            encoder->drawPrimitives(Triangles, 0, string.vertexCount, 1);
         }
 
         _graphicsDevice->submit(encoder);
@@ -386,7 +386,8 @@ namespace PinkTopaz::Renderer {
             dst += sizeof(vertexBytes);
         }
         
-        string.buffer->replace(std::move(vertexData), vertexCount);
+        string.vertexCount = vertexCount;
+        string.buffer->replace(std::move(vertexData));
     }
     
     void StringRenderer::rebuildUniformBuffer(String &string,
@@ -421,9 +422,9 @@ namespace PinkTopaz::Renderer {
         const size_t vertexCount = verticesPerGlyph * glyphCount;
         const size_t bufferSize = bytesPerVertex * vertexCount;
         
+        handle->vertexCount = vertexCount;
         handle->buffer = _graphicsDevice->makeBuffer(_vertexFormat,
                                                      bufferSize,
-                                                     vertexCount,
                                                      StaticDraw);
         rebuildVertexBuffer(*handle);
         

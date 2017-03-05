@@ -11,9 +11,7 @@
 
 #include <entityx/entityx.h>
 #include "Renderer/GraphicsDevice.hpp"
-#include "Renderer/Buffer.hpp"
-#include "Renderer/Shader.hpp"
-#include "Renderer/Texture.hpp"
+#include "RenderableStaticMesh.hpp"
 
 namespace PinkTopaz {
         
@@ -25,11 +23,7 @@ namespace PinkTopaz {
     {
     public:
         explicit World(const std::shared_ptr<Renderer::GraphicsDevice> &dev,
-                       const std::shared_ptr<Renderer::Buffer> &vertexBuffer,
-                       const std::shared_ptr<Renderer::Buffer> &uniforms,
-                       const std::shared_ptr<Renderer::Shader> &shader,
-                       const std::shared_ptr<Renderer::Texture> &texture,
-                       const std::shared_ptr<Renderer::TextureSampler> &sampler);
+                       const RenderableStaticMesh &mesh);
         
         void update(entityx::TimeDelta dt);
     };

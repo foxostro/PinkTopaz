@@ -19,7 +19,7 @@
 
 namespace PinkTopaz {
     
-    void Application::inner(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
+    RenderableStaticMesh Application::createTerrainMesh(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
     {
         auto shader = graphicsDevice->makeShader("vert", "frag");
         
@@ -44,18 +44,32 @@ namespace PinkTopaz {
             .maxFilter = Renderer::Nearest
         };
         auto sampler = graphicsDevice->makeTextureSampler(samplerDesc);
-
+        
         auto mesh = std::make_shared<Renderer::StaticMesh>("terrain.3d.bin");
         auto vertexBuffer = graphicsDevice->makeBuffer(mesh->getVertexFormat(),
                                                        mesh->getBufferData(),
-                                                       mesh->getVertexCount(),
                                                        Renderer::StaticDraw);
         
         Renderer::StaticMesh::Uniforms uniforms;
         auto uniformBuffer = graphicsDevice->makeUniformBuffer(sizeof(uniforms), Renderer::DynamicDraw);
         uniformBuffer->replace(sizeof(uniforms), &uniforms);
         
-        World gameWorld(graphicsDevice, vertexBuffer, uniformBuffer, shader, texture, sampler);
+        RenderableStaticMesh meshContainer = {
+            .vertexCount = mesh->getVertexCount(),
+            .buffer = vertexBuffer,
+            .uniforms = uniformBuffer,
+            .shader = shader,
+            .texture = texture,
+            .textureSampler = sampler
+        };
+        
+        return meshContainer;
+    }
+    
+    void Application::inner(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
+    {
+        RenderableStaticMesh mesh = createTerrainMesh(graphicsDevice);
+        World gameWorld(graphicsDevice, mesh);
         
         // Send an event containing the initial window size and scale factor.
         // This will allow the render system to setup projection matrices and such.

@@ -27,14 +27,12 @@ namespace PinkTopaz::Renderer::Metal {
         BufferMetal(id <MTLDevice> device,
                     const VertexFormat &format,
                     const std::vector<uint8_t> &bufferData,
-                    size_t elementCount,
                     BufferUsage usage,
                     BufferType bufferType);
         
         BufferMetal(id <MTLDevice> device,
                     const VertexFormat &format,
                     size_t bufferSize,
-                    size_t elementCount,
                     BufferUsage usage,
                     BufferType bufferType);
         
@@ -51,18 +49,14 @@ namespace PinkTopaz::Renderer::Metal {
         virtual ~BufferMetal();
         
         // Replace the entire contents of the buffer.
-        void replace(const std::vector<uint8_t> &data, size_t count)  override;
-        void replace(std::vector<uint8_t> &&data, size_t count)  override;
-        void replace(size_t size, const void *data, size_t count) override;
-        
-        // Get the number of vertices contained in the buffer.
-        size_t getVertexCount() const override;
+        void replace(const std::vector<uint8_t> &data)  override;
+        void replace(std::vector<uint8_t> &&data)  override;
+        void replace(size_t size, const void *data) override;
         
         // Gets the type of the buffer.
         BufferType getType() const override;
         
     private:
-        size_t _count;
         const BufferType _bufferType;
         const BufferUsage _usage;
         id <MTLBuffer> _buffer;

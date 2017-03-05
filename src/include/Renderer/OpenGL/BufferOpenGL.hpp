@@ -25,14 +25,12 @@ namespace PinkTopaz::Renderer::OpenGL {
         BufferOpenGL(CommandQueue &queue,
                      const VertexFormat &format,
                      const std::vector<uint8_t> &bufferData,
-                     size_t elementCount,
                      BufferUsage usage,
                      BufferType bufferType);
 
         BufferOpenGL(CommandQueue &queue,
                      const VertexFormat &format,
                      size_t bufferSize,
-                     size_t elementCount,
                      BufferUsage usage,
                      BufferType bufferType);
         
@@ -49,11 +47,9 @@ namespace PinkTopaz::Renderer::OpenGL {
         virtual ~BufferOpenGL();
         
         // Replace the entire contents of the buffer.
-        void replace(const std::vector<uint8_t> &wrappedData, size_t elementCount) override;
-        void replace(std::vector<uint8_t> &&wrappedData, size_t elementCount) override;
-        void replace(size_t size, const void *data, size_t elementCount) override;
-        
-        virtual size_t getVertexCount() const override { return _count; }
+        void replace(const std::vector<uint8_t> &wrappedData) override;
+        void replace(std::vector<uint8_t> &&wrappedData) override;
+        void replace(size_t size, const void *data) override;
         
         inline GLuint getHandleVAO() const { return _vao; }
         inline GLuint getHandleVBO() const { return _vbo; }
@@ -69,7 +65,6 @@ namespace PinkTopaz::Renderer::OpenGL {
     private:
         std::mutex _lock;
         GLuint _vao, _vbo;
-        size_t _count;
         GLenum _usage;
         const BufferType _bufferType;
         CommandQueue &_commandQueue;
@@ -80,7 +75,7 @@ namespace PinkTopaz::Renderer::OpenGL {
                             size_t bufferSize,
                             void *bufferData);
         
-        void internalReplace(const void *p, size_t n, size_t count);
+        void internalReplace(const void *p, size_t n);
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

@@ -9,17 +9,12 @@
 #include "World.hpp"
 #include "Transform.hpp"
 #include "ActiveCamera.hpp"
-#include "RenderableStaticMesh.hpp"
 #include "RenderSystem.hpp"
 
 namespace PinkTopaz {
     
     World::World(const std::shared_ptr<Renderer::GraphicsDevice> &device,
-                 const std::shared_ptr<Renderer::Buffer> &vertexBuffer,
-                 const std::shared_ptr<Renderer::Buffer> &uniforms,
-                 const std::shared_ptr<Renderer::Shader> &shader,
-                 const std::shared_ptr<Renderer::Texture> &texture,
-                 const std::shared_ptr<Renderer::TextureSampler> &sampler)
+                 const RenderableStaticMesh &mesh)
     {
         systems.add<RenderSystem>(device);
         systems.configure();
@@ -36,8 +31,7 @@ namespace PinkTopaz {
         
         // Create an entity to represent the terrain.
         entityx::Entity terrain = entities.create();
-        terrain.assign<RenderableStaticMesh>(vertexBuffer, uniforms, shader,
-                                             texture, sampler);
+        terrain.assign<RenderableStaticMesh>(mesh);
         terrain.assign<Transform>(glm::mat4x4());
     }
     

@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "Renderer/GraphicsDevice.hpp"
+#include "RenderableStaticMesh.hpp"
 
 namespace PinkTopaz {
     
@@ -27,7 +28,8 @@ namespace PinkTopaz {
         void run();
         
     private:
-        void inner(const std::shared_ptr<Renderer::GraphicsDevice> &);
+        RenderableStaticMesh createTerrainMesh(const std::shared_ptr<Renderer::GraphicsDevice> &g);
+        void inner(const std::shared_ptr<Renderer::GraphicsDevice> &g);
         
         SDL_Window *_window;
     };

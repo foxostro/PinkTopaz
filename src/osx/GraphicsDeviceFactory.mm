@@ -8,7 +8,7 @@
 
 #import "Renderer/GraphicsDevice.hpp"
 
-#if 1
+#if 0
 #import "Renderer/Metal/GraphicsDeviceMetal.h"
 #define DEVICE_TYPE Metal::GraphicsDeviceMetal
 #else

@@ -26,10 +26,9 @@ namespace PinkTopaz::Renderer::Metal {
     BufferMetal::BufferMetal(id <MTLDevice> device,
                              const VertexFormat &format,
                              const std::vector<uint8_t> &bufferData,
-                             size_t elementCount,
                              BufferUsage usage,
                              BufferType bufferType)
-    : _count(elementCount), _bufferType(bufferType), _usage(usage)
+    : _bufferType(bufferType), _usage(usage)
     {
         _device = [device retain];
         _buffer = [device newBufferWithBytes:(&bufferData[0])
@@ -40,10 +39,9 @@ namespace PinkTopaz::Renderer::Metal {
     BufferMetal::BufferMetal(id <MTLDevice> device,
                              const VertexFormat &format,
                              size_t bufferSize,
-                             size_t elementCount,
                              BufferUsage usage,
                              BufferType bufferType)
-    : _count(elementCount), _bufferType(bufferType), _usage(usage)
+    : _bufferType(bufferType), _usage(usage)
     {
         _device = [device retain];
         _buffer = [device newBufferWithLength:bufferSize
@@ -54,7 +52,7 @@ namespace PinkTopaz::Renderer::Metal {
                              size_t bufferSize,
                              BufferUsage usage,
                              BufferType bufferType)
-    : _count(0), _bufferType(bufferType), _usage(usage)
+    : _bufferType(bufferType), _usage(usage)
     {
         _device = [device retain];
         _buffer = [device newBufferWithLength:bufferSize
@@ -65,7 +63,7 @@ namespace PinkTopaz::Renderer::Metal {
                              const std::vector<uint8_t> &data,
                              BufferUsage usage,
                              BufferType bufferType)
-    : _count(0), _bufferType(bufferType), _usage(usage)
+    : _bufferType(bufferType), _usage(usage)
     {
         _device = [device retain];
         _buffer = [device newBufferWithBytes:(&data[0])
@@ -79,17 +77,17 @@ namespace PinkTopaz::Renderer::Metal {
         [_device release];
     }
     
-    void BufferMetal::replace(const std::vector<uint8_t> &data, size_t count)
+    void BufferMetal::replace(const std::vector<uint8_t> &data)
     {
-        replace(data.size(), &data[0], count);
+        replace(data.size(), &data[0]);
     }
     
-    void BufferMetal::replace(std::vector<uint8_t> &&data, size_t count)
+    void BufferMetal::replace(std::vector<uint8_t> &&data)
     {
-        replace(data.size(), &data[0], count);
+        replace(data.size(), &data[0]);
     }
     
-    void BufferMetal::replace(size_t size, const void *data, size_t count)
+    void BufferMetal::replace(size_t size, const void *data)
     {
         size_t len = _buffer.length;
         if (size == len) {
@@ -101,11 +99,6 @@ namespace PinkTopaz::Renderer::Metal {
                                            length:size
                                           options:getUsageOption(_usage)];
         }
-    }
-    
-    size_t BufferMetal::getVertexCount() const
-    {
-        return _count;
     }
     
     BufferType BufferMetal::getType() const

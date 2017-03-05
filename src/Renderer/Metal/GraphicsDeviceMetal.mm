@@ -120,26 +120,22 @@ namespace PinkTopaz::Renderer::Metal {
     std::shared_ptr<Buffer>
     GraphicsDeviceMetal::makeBuffer(const VertexFormat &format,
                                     const std::vector<uint8_t> &bufferData,
-                                    size_t elementCount,
                                     BufferUsage usage)
     {
         auto buffer = std::make_shared<BufferMetal>(_metalLayer.device,
                                                     format, bufferData,
-                                                    elementCount, usage,
-                                                    ArrayBuffer);
+                                                    usage, ArrayBuffer);
         return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     
     std::shared_ptr<Buffer>
     GraphicsDeviceMetal::makeBuffer(const VertexFormat &format,
                                     size_t bufferSize,
-                                    size_t elementCount,
                                     BufferUsage usage)
     {
         auto buffer = std::make_shared<BufferMetal>(_metalLayer.device,
                                                     format, bufferSize,
-                                                    elementCount, usage,
-                                                    ArrayBuffer);
+                                                    usage, ArrayBuffer);
         return std::dynamic_pointer_cast<Buffer>(buffer);
     }
     
