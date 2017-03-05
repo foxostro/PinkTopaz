@@ -14,6 +14,7 @@
 #endif
 
 #include "Renderer/Shader.hpp"
+#include "Renderer/VertexFormat.hpp"
 #include <Metal/Metal.h>
 
 namespace PinkTopaz::Renderer::Metal {
@@ -21,10 +22,12 @@ namespace PinkTopaz::Renderer::Metal {
     class ShaderMetal : public Shader
     {
     public:
-        ShaderMetal(id <MTLDevice> device,
+        ShaderMetal(const VertexFormat &_vertexFormat,
+                    id <MTLDevice> device,
                     id <MTLLibrary> library,
                     const std::string &vert,
                     const std::string &frag);
+        
         virtual ~ShaderMetal();
         
         inline id <MTLRenderPipelineState> getPipelineState() const { return _pipelineState; }

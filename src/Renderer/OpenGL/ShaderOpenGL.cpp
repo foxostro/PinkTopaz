@@ -50,9 +50,10 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
     }
 
-    ShaderOpenGL::ShaderOpenGL(const std::string &vertexShaderSource,
+    ShaderOpenGL::ShaderOpenGL(const VertexFormat &vertexFormat,
+                               const std::string &vertexShaderSource,
                                const std::string &fragmentShaderSource)
-    : _program(0)
+    : _program(0), _vertexFormat(vertexFormat)
     {
         const GLchar *vert = (const GLchar *)vertexShaderSource.c_str();
         const GLchar *frag = (const GLchar *)fragmentShaderSource.c_str();

@@ -63,21 +63,18 @@ namespace PinkTopaz::Renderer::OpenGL {
     }
     
     void GraphicsDeviceOpenGL::submit(const std::shared_ptr<CommandEncoder> &abstractEncoder)
-    {
-//        auto concreteEncoder = std::dynamic_pointer_cast<CommandEncoderOpenGL>(abstractEncoder);
-//        assert(concreteEncoder);
-//        _commandQueue.enqueue(concreteEncoder->getCommandQueue());
-    }
+    {}
     
     void GraphicsDeviceOpenGL::swapBuffers()
     {
         CHECK_GL_ERROR();
-//        _commandQueue.execute();
         SDL_GL_SwapWindow(&_window);
-//        CHECK_GL_ERROR();
     }
     
-    std::shared_ptr<Shader> GraphicsDeviceOpenGL::makeShader(const std::string &vertexProgramName, const std::string &fragmentProgramName)
+    std::shared_ptr<Shader>
+    GraphicsDeviceOpenGL::makeShader(const VertexFormat &vertexFormat,
+                                     const std::string &vertexProgramName,
+                                     const std::string &fragmentProgramName)
     {
         std::string vertexProgramSourceFileName = vertexProgramName + ".glsl";
         std::string vertexShaderSource = stringFromFileContents(vertexProgramSourceFileName.c_str());
@@ -85,7 +82,9 @@ namespace PinkTopaz::Renderer::OpenGL {
         std::string fragmentProgramSourceFileName = fragmentProgramName + ".glsl";
         std::string fragmentShaderSource = stringFromFileContents(fragmentProgramSourceFileName.c_str());
 
-        auto shader = std::make_shared<ShaderOpenGL>(vertexShaderSource, fragmentShaderSource);
+        auto shader = std::make_shared<ShaderOpenGL>(vertexFormat,
+                                                     vertexShaderSource,
+                                                     fragmentShaderSource);
         return std::dynamic_pointer_cast<Shader>(shader);
     }
     

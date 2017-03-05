@@ -23,7 +23,6 @@ namespace PinkTopaz {
     struct RenderableStaticMesh
     {
         size_t vertexCount;
-        Renderer::VertexFormat vertexFormat;
         std::shared_ptr<Renderer::Buffer> buffer;
         std::shared_ptr<Renderer::Buffer> uniforms;
         std::shared_ptr<Renderer::Shader> shader;

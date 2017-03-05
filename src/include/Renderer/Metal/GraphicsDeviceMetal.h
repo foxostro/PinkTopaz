@@ -51,7 +51,8 @@ namespace PinkTopaz::Renderer::Metal {
         
         // Create a new shader using the specified vertex and fragment programs.
         std::shared_ptr<Shader>
-        makeShader(const std::string &vertexProgramName,
+        makeShader(const VertexFormat &vertexFormat,
+                   const std::string &vertexProgramName,
                    const std::string &fragmentProgramName) override;
         
         // Creates a new texture from the specified descriptor and data.

@@ -18,7 +18,6 @@ namespace PinkTopaz::Renderer {
         bool blend;
         bool depthTest;
         bool clear;
-        VertexFormat vertexFormat;
     };
     
 } // namespace PinkTopaz::Renderer

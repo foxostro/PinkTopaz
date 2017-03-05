@@ -21,8 +21,6 @@ namespace PinkTopaz {
     
     RenderableStaticMesh Application::createTerrainMesh(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
     {
-        auto shader = graphicsDevice->makeShader("vert", "frag");
-        
         // Load terrain texture array from a single image.
         // TODO: create a TextureArrayLoader class to encapsulate tex loading.
         SDL_Surface *surface = IMG_Load("terrain.png");
@@ -56,9 +54,10 @@ namespace PinkTopaz {
                                                         Renderer::DynamicDraw,
                                                         Renderer::UniformBuffer);
         
+        auto shader = graphicsDevice->makeShader(mesh->getVertexFormat(), "vert", "frag");
+        
         RenderableStaticMesh meshContainer = {
             .vertexCount = mesh->getVertexCount(),
-            .vertexFormat = mesh->getVertexFormat(),
             .buffer = vertexBuffer,
             .uniforms = uniformBuffer,
             .shader = shader,

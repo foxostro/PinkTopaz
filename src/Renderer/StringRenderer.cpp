@@ -293,17 +293,18 @@ namespace PinkTopaz::Renderer {
         _renderPassDescriptor.blend = true;
         _renderPassDescriptor.depthTest = false;
         _renderPassDescriptor.clear = false;
-        _renderPassDescriptor.vertexFormat.attributes.emplace_back((AttributeFormat){
+        
+        VertexFormat vertexFormat;
+        vertexFormat.attributes.emplace_back((AttributeFormat){
             .size = 4,
             .type = AttributeTypeFloat,
             .normalized = false,
             .stride = sizeof(float) * 4,
             .offset = 0
         });
+        _shader = _graphicsDevice->makeShader(vertexFormat, "text_vert", "text_frag");
         
         _textureAtlas = makeTextureAtlas(fontName, fontSize);
-        
-        _shader = _graphicsDevice->makeShader("text_vert", "text_frag");
         
         TextureSamplerDescriptor samplerDesc = {
             .addressS = Renderer::ClampToEdge,

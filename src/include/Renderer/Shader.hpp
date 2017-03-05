@@ -9,9 +9,6 @@
 #ifndef Shader_hpp
 #define Shader_hpp
 
-#include <glm/mat4x4.hpp>
-#include <functional>
-
 namespace PinkTopaz::Renderer {
     
     // Encapsulates a Shader resource in a platform-agnostic manner.

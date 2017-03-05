@@ -47,7 +47,8 @@ namespace PinkTopaz::Renderer {
         
         // Create a new shader using the specified vertex and fragment programs.
         virtual std::shared_ptr<Shader>
-        makeShader(const std::string &vertexProgramName,
+        makeShader(const VertexFormat &vertexFormat,
+                   const std::string &vertexProgramName,
                    const std::string &fragmentProgramName) = 0;
         
         // Creates a new texture from the specified descriptor and data.

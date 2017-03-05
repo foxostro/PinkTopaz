@@ -19,8 +19,6 @@ namespace PinkTopaz::Renderer::OpenGL {
     
     CommandEncoderOpenGL::CommandEncoderOpenGL(const RenderPassDescriptor &desc)
     {
-        _vertexFormat = desc.vertexFormat;
-        
         if (desc.blend) {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -58,6 +56,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         GLuint program = shader->getProgram();
         glUseProgram(program);
         CHECK_GL_ERROR();
+        _currentShader = shader;
     }
     
     void CommandEncoderOpenGL::setFragmentTexture(const std::shared_ptr<Texture> &abstractTexture, size_t index)
@@ -82,6 +81,11 @@ namespace PinkTopaz::Renderer::OpenGL {
     void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
     {
         assert(abstractBuffer);
+        
+        if (!_currentShader) {
+            throw Exception("Must bind a shader before calling setVertexBuffer().");
+        }
+        
         auto buffer = std::dynamic_pointer_cast<BufferOpenGL>(abstractBuffer);
         const GLuint vbo = buffer->getHandleVBO();
         const GLenum target = buffer->getTargetEnum();
@@ -92,7 +96,10 @@ namespace PinkTopaz::Renderer::OpenGL {
             GLuint vao = buffer->getHandleVAO();
             glBindVertexArray(vao);
             glBindBuffer(target, vbo);
-            setupVertexAttributes(_vertexFormat);
+            
+            const VertexFormat &format = _currentShader->getVertexFormat();
+            setupVertexAttributes(format);
+            
             glBindBuffer(target, 0);
         }
         CHECK_GL_ERROR();

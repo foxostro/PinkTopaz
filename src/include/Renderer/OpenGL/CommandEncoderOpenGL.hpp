@@ -11,6 +11,7 @@
 
 #include "Renderer/CommandEncoder.hpp"
 #include "Renderer/RenderPassDescriptor.hpp"
+#include "Renderer/OpenGL/ShaderOpenGL.hpp"
 
 namespace PinkTopaz::Renderer::OpenGL {
     
@@ -32,7 +33,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         // Call this after the VAO and VBO have both been bound.
         static void setupVertexAttributes(const VertexFormat &format);
         
-        VertexFormat _vertexFormat;
+        std::shared_ptr<ShaderOpenGL> _currentShader;
     };
     
 } // namespace PinkTopaz::Renderer::OpenGL

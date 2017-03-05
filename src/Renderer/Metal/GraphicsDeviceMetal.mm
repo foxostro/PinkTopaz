@@ -85,10 +85,12 @@ namespace PinkTopaz::Renderer::Metal {
     void GraphicsDeviceMetal::swapBuffers() {}
     
     std::shared_ptr<Shader>
-    GraphicsDeviceMetal::makeShader(const std::string &vert,
+    GraphicsDeviceMetal::makeShader(const VertexFormat &vertexFormat,
+                                    const std::string &vert,
                                     const std::string &frag)
     {
-        auto shader = std::make_shared<ShaderMetal>(_metalLayer.device,
+        auto shader = std::make_shared<ShaderMetal>(vertexFormat,
+                                                    _metalLayer.device,
                                                     _library, vert, frag);
         return std::dynamic_pointer_cast<Shader>(shader);
     }

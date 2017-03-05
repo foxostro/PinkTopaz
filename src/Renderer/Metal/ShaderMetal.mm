@@ -11,7 +11,8 @@
 
 namespace PinkTopaz::Renderer::Metal {
 
-    ShaderMetal::ShaderMetal(id <MTLDevice> device,
+    ShaderMetal::ShaderMetal(const VertexFormat &vertexFormat,
+                             id <MTLDevice> device,
                              id<MTLLibrary> library,
                              const std::string &vert,
                              const std::string &frag)

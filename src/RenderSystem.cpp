@@ -67,8 +67,7 @@ namespace PinkTopaz {
             Renderer::RenderPassDescriptor desc = {
                 .blend = false,
                 .depthTest = true,
-                .clear = true,
-                .vertexFormat = mesh.vertexFormat
+                .clear = true
             };
             auto encoder = _graphicsDevice->encoder(desc);
             encoder->setViewport(_viewport);
