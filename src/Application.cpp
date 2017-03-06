@@ -13,9 +13,11 @@
 #include "RetinaSupport.h"
 #include "World.hpp"
 #include "WindowSizeChangedEvent.hpp"
+#include "KeypressEvent.hpp"
 
 #include "SDL.h"
 #include "SDL_image.h"
+#include <map>
 
 namespace PinkTopaz {
     
@@ -75,6 +77,8 @@ namespace PinkTopaz {
     
     void Application::inner(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
     {
+        std::map<SDL_Keycode, bool> prevKeyStates, keyStates;
+        
         RenderableStaticMesh mesh = createTerrainMesh(graphicsDevice);
         World gameWorld(graphicsDevice, mesh);
         
@@ -119,6 +123,21 @@ namespace PinkTopaz {
                             } break;
                         }
                         break;
+                        
+                    case SDL_KEYDOWN:
+                        keyStates[e.key.keysym.sym] = true;
+                        break;
+                        
+                    case SDL_KEYUP:
+                        keyStates[e.key.keysym.sym] = false;
+                        break;
+                }
+            }
+            
+            for(std::pair<SDL_Keycode, bool> pair : keyStates)
+            {
+                if (pair.second != prevKeyStates[pair.first]) {
+                    gameWorld.events.emit(KeypressEvent(pair.first, pair.second));
                 }
             }
             
@@ -128,6 +147,8 @@ namespace PinkTopaz {
             entityx::TimeDelta dt = ticksElapsedMs;
 
             gameWorld.update(dt);
+            
+            prevKeyStates = keyStates;
         }
     }
     

@@ -44,7 +44,7 @@ namespace PinkTopaz {
         
         glm::mat4x4 cameraTransform;
         if (_activeCamera.valid()) {
-            cameraTransform = _activeCamera.component<Transform>()->value;
+            cameraTransform = _activeCamera.component<Transform>()->getMatrix();
         }
         
         // Update the uniform buffers so they include the most recent matrices.
@@ -52,7 +52,7 @@ namespace PinkTopaz {
                      RenderableStaticMesh &mesh,
                      Transform &transform) {
             Renderer::TerrainUniforms uniforms = {
-                .view = cameraTransform * transform.value,
+                .view = cameraTransform * transform.getMatrix(),
                 .proj = _proj,
             };
             mesh.uniforms->replace(sizeof(uniforms), &uniforms);

@@ -10,6 +10,7 @@
 #include "Transform.hpp"
 #include "ActiveCamera.hpp"
 #include "RenderSystem.hpp"
+#include "CameraMovementSystem.hpp"
 
 namespace PinkTopaz {
     
@@ -17,6 +18,7 @@ namespace PinkTopaz {
                  const RenderableStaticMesh &mesh)
     {
         systems.add<RenderSystem>(device);
+        systems.add<CameraMovementSystem>();
         systems.configure();
         
         // Create an entity to represent the camera.
@@ -24,7 +26,7 @@ namespace PinkTopaz {
         // They will retrieve the entity's transformation and take it into
         // account when rendering their stuff.
         entityx::Entity camera = entities.create();
-        camera.assign<Transform>(glm::vec3(85.1, 16.1, 140.1),
+        camera.assign<Transform>(glm::vec3(85.1, 20.1, 140.1),
                                  glm::vec3(80.1, 20.1, 130.1),
                                  glm::vec3(0, 1, 0));
         camera.assign<ActiveCamera>();
@@ -32,7 +34,7 @@ namespace PinkTopaz {
         // Create an entity to represent the terrain.
         entityx::Entity terrain = entities.create();
         terrain.assign<RenderableStaticMesh>(mesh);
-        terrain.assign<Transform>(glm::mat4x4());
+        terrain.assign<Transform>();
     }
     
     void World::update(entityx::TimeDelta dt)
