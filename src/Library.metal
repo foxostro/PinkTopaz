@@ -11,14 +11,14 @@ struct TerrainVertex
 {
     float3 vp [[attribute(0)]];
     float3 vt [[attribute(1)]];
-    float4 vc [[attribute(2)]];
+    uchar4 vc [[attribute(2)]];
 };
 
 struct TerrainProjectedVertex
 {
     float4 position [[position]];
     float3 texCoord;
-    float4 color;
+    uchar4 color;
 };
 
 struct TerrainUniforms
@@ -40,9 +40,13 @@ fragment float4 frag(TerrainProjectedVertex vert [[stage_in]],
                      texture2d_array<float> diffuseTexture [[texture(0)]],
                      sampler textureSampler [[sampler(0)]])
 {
-    return vert.color * diffuseTexture.sample(textureSampler,
-                                              vert.texCoord.xy,
-                                              vert.texCoord.z);
+    float4 color = float4(vert.color.r / 255.0,
+                          vert.color.g / 255.0,
+                          vert.color.b / 255.0,
+                          1.0);
+    return color * diffuseTexture.sample(textureSampler,
+                                         vert.texCoord.xy,
+                                         vert.texCoord.z);
 }
 
 
