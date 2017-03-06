@@ -32,7 +32,6 @@ namespace PinkTopaz::Renderer::Metal {
     getVertexDescriptor(const VertexFormat &format)
     {
         MTLVertexDescriptor *desc = [MTLVertexDescriptor vertexDescriptor];
-        size_t stride = 0;
         
         for (size_t i = 0, n = format.attributes.size(); i < n; ++i)
         {
@@ -42,11 +41,10 @@ namespace PinkTopaz::Renderer::Metal {
             metalAttr.format = getVertexFormatEnum(attr);
             metalAttr.offset = attr.offset;
             metalAttr.bufferIndex = 0;
-            
-            stride += attr.stride;
         }
         
         MTLVertexBufferLayoutDescriptor *layout = desc.layouts[0];
+        size_t stride = format.attributes[0].stride;
         layout.stride = stride;
         layout.stepFunction = MTLVertexStepFunctionPerVertex;
         layout.stepRate = 1;
@@ -62,32 +60,30 @@ namespace PinkTopaz::Renderer::Metal {
                              bool blending)
     : _blending(blending)
     {
-        @autoreleasepool {
-            NSError *error;
-            
-            MTLRenderPipelineDescriptor *desc = [[MTLRenderPipelineDescriptor alloc] init];
-            desc.vertexFunction = [library newFunctionWithName:[NSString stringWithUTF8String:vert.c_str()]];
-            desc.fragmentFunction = [library newFunctionWithName:[NSString stringWithUTF8String:frag.c_str()]];
-            desc.vertexDescriptor = getVertexDescriptor(vertexFormat);
-            
-            MTLRenderPipelineColorAttachmentDescriptor *colorAttachment = desc.colorAttachments[0];
-            colorAttachment.pixelFormat = MTLPixelFormatBGRA8Unorm;
-            if (blending) {
-                colorAttachment.blendingEnabled = YES;
-                colorAttachment.rgbBlendOperation = MTLBlendOperationAdd;
-                colorAttachment.alphaBlendOperation = MTLBlendOperationAdd;
-                colorAttachment.sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
-                colorAttachment.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
-                colorAttachment.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-                colorAttachment.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
-            }
-            
-            error = nil;
-            _pipelineState = [device newRenderPipelineStateWithDescriptor:desc error:&error];
-            if (!_pipelineState) {
-                NSString *errorDesc = [error localizedDescription];
-                throw Exception("Failed to create Metal pipeline state object: %s", errorDesc.UTF8String);
-            }
+        NSError *error;
+        
+        MTLRenderPipelineDescriptor *desc = [[MTLRenderPipelineDescriptor alloc] init];
+        desc.vertexFunction = [library newFunctionWithName:[NSString stringWithUTF8String:vert.c_str()]];
+        desc.fragmentFunction = [library newFunctionWithName:[NSString stringWithUTF8String:frag.c_str()]];
+        desc.vertexDescriptor = getVertexDescriptor(vertexFormat);
+        
+        MTLRenderPipelineColorAttachmentDescriptor *colorAttachment = desc.colorAttachments[0];
+        colorAttachment.pixelFormat = MTLPixelFormatBGRA8Unorm;
+        if (blending) {
+            colorAttachment.blendingEnabled = YES;
+            colorAttachment.rgbBlendOperation = MTLBlendOperationAdd;
+            colorAttachment.alphaBlendOperation = MTLBlendOperationAdd;
+            colorAttachment.sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+            colorAttachment.sourceAlphaBlendFactor = MTLBlendFactorSourceAlpha;
+            colorAttachment.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+            colorAttachment.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+        }
+        
+        error = nil;
+        _pipelineState = [device newRenderPipelineStateWithDescriptor:desc error:&error];
+        if (!_pipelineState) {
+            NSString *errorDesc = [error localizedDescription];
+            throw Exception("Failed to create Metal pipeline state object: %s", errorDesc.UTF8String);
         }
     }
     

@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <glm/mat4x4.hpp>
+#include <simd/simd.h>
 
 namespace PinkTopaz::Renderer {
     
@@ -28,9 +29,9 @@ namespace PinkTopaz::Renderer {
         
         struct GPUVertex
         {
-            glm::vec4 position;
-            glm::vec4 texCoord;
-            glm::tvec4<uint8_t> color;
+            simd::float4 position;
+            simd::float4 color;
+            simd::float3 texCoord;
         };
         
         struct Header

@@ -9,16 +9,16 @@ using namespace metal;
 
 struct TerrainVertex
 {
-    float3 vp [[attribute(0)]];
-    float3 vt [[attribute(1)]];
-    uchar4 vc [[attribute(2)]];
+    float4 vp [[attribute(0)]];
+    float4 vc [[attribute(1)]];
+    float3 vt [[attribute(2)]];
 };
 
 struct TerrainProjectedVertex
 {
     float4 position [[position]];
+    float4 color;
     float3 texCoord;
-    uchar4 color;
 };
 
 struct TerrainUniforms
@@ -30,9 +30,9 @@ vertex TerrainProjectedVertex vert(TerrainVertex inVert [[stage_in]],
                                    constant TerrainUniforms &u [[buffer(1)]])
 {
     TerrainProjectedVertex outVert;
-    outVert.position = u.proj * u.view * float4(inVert.vp, 1.0);
-    outVert.texCoord = inVert.vt;
+    outVert.position = u.proj * u.view * inVert.vp;
     outVert.color = inVert.vc;
+    outVert.texCoord = inVert.vt;
     return outVert;
 }
 
@@ -40,13 +40,9 @@ fragment float4 frag(TerrainProjectedVertex vert [[stage_in]],
                      texture2d_array<float> diffuseTexture [[texture(0)]],
                      sampler textureSampler [[sampler(0)]])
 {
-    float4 color = float4(vert.color.r / 255.0,
-                          vert.color.g / 255.0,
-                          vert.color.b / 255.0,
-                          1.0);
-    return color * diffuseTexture.sample(textureSampler,
-                                         vert.texCoord.xy,
-                                         vert.texCoord.z);
+    return vert.color * diffuseTexture.sample(textureSampler,
+                                              vert.texCoord.xy,
+                                              vert.texCoord.z);
 }
 
 

@@ -46,25 +46,25 @@ namespace PinkTopaz::Renderer {
     {
         VertexFormat format;
         format.attributes.emplace_back((AttributeFormat){
-            .size = 3,
+            .size = 4,
             .type = AttributeTypeFloat,
             .normalized = false,
             .stride = sizeof(StaticMesh::GPUVertex),
             .offset = offsetof(StaticMesh::GPUVertex, position)
         });
         format.attributes.emplace_back((AttributeFormat){
-            .size = 3,
+            .size = 4,
+            .type = AttributeTypeFloat,
+            .normalized = false,
+            .stride = sizeof(StaticMesh::GPUVertex),
+            .offset = offsetof(StaticMesh::GPUVertex, color)
+        });
+        format.attributes.emplace_back((AttributeFormat){
+            .size = 4,
             .type = AttributeTypeFloat,
             .normalized = false,
             .stride = sizeof(StaticMesh::GPUVertex),
             .offset = offsetof(StaticMesh::GPUVertex, texCoord)
-        });
-        format.attributes.emplace_back((AttributeFormat){
-            .size = 4,
-            .type = AttributeTypeUnsignedByte,
-            .normalized = false,
-            .stride = sizeof(StaticMesh::GPUVertex),
-            .offset = offsetof(StaticMesh::GPUVertex, color)
         });
         return format;
     }
@@ -78,18 +78,20 @@ namespace PinkTopaz::Renderer {
         {
             StaticMesh::GPUVertex &gpuVertex = vertices[i];
             const StaticMesh::FileVertex &fileVertex = header.vertices[i];
-            gpuVertex.position = glm::vec4(fileVertex.position[0],
-                                           fileVertex.position[1],
-                                           fileVertex.position[2],
-                                           1.0);
-            gpuVertex.texCoord = glm::vec4(fileVertex.texCoord[0],
-                                           fileVertex.texCoord[1],
-                                           fileVertex.texCoord[2],
-                                           0.0);
-            gpuVertex.color = glm::tvec4<uint8_t>(fileVertex.color[0],
-                                                  fileVertex.color[1],
-                                                  fileVertex.color[2],
-                                                  fileVertex.color[3]);
+            
+            gpuVertex.position[0] = fileVertex.position[0];
+            gpuVertex.position[1] = fileVertex.position[1];
+            gpuVertex.position[2] = fileVertex.position[2];
+            gpuVertex.position[3] = 1.0;
+            
+            gpuVertex.color[0] = fileVertex.color[0] / 255.0f;
+            gpuVertex.color[1] = fileVertex.color[1] / 255.0f;
+            gpuVertex.color[2] = fileVertex.color[2] / 255.0f;
+            gpuVertex.color[3] = fileVertex.color[3] / 255.0f;
+            
+            gpuVertex.texCoord[0] = fileVertex.texCoord[0];
+            gpuVertex.texCoord[1] = fileVertex.texCoord[1];
+            gpuVertex.texCoord[2] = fileVertex.texCoord[2];
         }
         
         return vertices;
