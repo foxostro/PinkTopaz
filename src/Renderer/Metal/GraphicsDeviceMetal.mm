@@ -51,18 +51,8 @@ namespace PinkTopaz::Renderer::Metal {
         }
         
         // Create the depth buffer.
-        {
-            CGSize drawableSize = _metalLayer.drawableSize;
-            MTLTextureDescriptor *descriptor =
-            [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
-                                                               width:drawableSize.width
-                                                              height:drawableSize.height
-                                                           mipmapped:NO];
-            descriptor.storageMode = MTLStorageModePrivate;
-            descriptor.usage = MTLTextureUsageRenderTarget;
-            _depthTexture = [_metalLayer.device newTextureWithDescriptor:descriptor];
-            _depthTexture.label = @"Depth";
-        }
+        _depthTexture = nil;
+        rebuildDepthTexture();
         
         // Create some state objects for the depth test being ON and OFF.
         {
@@ -193,19 +183,23 @@ namespace PinkTopaz::Renderer::Metal {
     {
         // Resize the layer when the window resizes.
         _metalLayer.frame = _metalLayer.superlayer.frame;
-        
-        // Create a new depth buffer for the new window size.
+        rebuildDepthTexture();
+    }
+    
+    void GraphicsDeviceMetal::rebuildDepthTexture()
+    {
         [_depthTexture release];
+        
         CGSize drawableSize = _metalLayer.drawableSize;
         MTLTextureDescriptor *descriptor =
-        [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
+        [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float_Stencil8
                                                            width:drawableSize.width
                                                           height:drawableSize.height
                                                        mipmapped:NO];
         descriptor.storageMode = MTLStorageModePrivate;
-        descriptor.usage = MTLTextureUsageRenderTarget;
+        descriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
         _depthTexture = [_metalLayer.device newTextureWithDescriptor:descriptor];
-        _depthTexture.label = @"Depth";
+        _depthTexture.label = @"DepthStencil";
     }
     
 } // namespace PinkTopaz::Renderer::Metal

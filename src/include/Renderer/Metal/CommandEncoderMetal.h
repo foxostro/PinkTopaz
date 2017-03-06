@@ -53,7 +53,6 @@ namespace PinkTopaz::Renderer::Metal {
         id <CAMetalDrawable> _drawable;
         id <MTLRenderCommandEncoder> _encoder;
         NSAutoreleasePool *_pool;
-        std::shared_ptr<ShaderMetal> _currentShader;
         id <MTLDepthStencilState> _depthTestOn;
         id <MTLDepthStencilState> _depthTestOff;
     };

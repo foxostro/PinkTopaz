@@ -41,6 +41,9 @@ namespace PinkTopaz::Renderer::Metal {
         depthAttachment.storeAction = MTLStoreActionStore;
         depthAttachment.loadAction = desc.clear ? MTLLoadActionClear : MTLLoadActionLoad;
         
+        MTLRenderPassStencilAttachmentDescriptor *stencilAttachment = _metalRenderPassDesc.stencilAttachment;
+        stencilAttachment.texture = depthAttachment.texture;
+        
         _encoder = [[_commandBuffer renderCommandEncoderWithDescriptor:_metalRenderPassDesc] retain];
         
         [_encoder setFrontFacingWinding:MTLWindingCounterClockwise];
@@ -80,7 +83,6 @@ namespace PinkTopaz::Renderer::Metal {
         auto shader = std::dynamic_pointer_cast<ShaderMetal>(abstractShader);
         id <MTLRenderPipelineState> pipelineState = shader->getPipelineState();
         [_encoder setRenderPipelineState:pipelineState];
-        _currentShader = shader;
     }
     
     void CommandEncoderMetal::setFragmentTexture(const std::shared_ptr<Texture> &abstractTexture, size_t index)

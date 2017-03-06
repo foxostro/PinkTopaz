@@ -88,6 +88,8 @@ namespace PinkTopaz::Renderer::Metal {
         void windowSizeChanged() override;
         
     private:
+        void rebuildDepthTexture();
+        
         CAMetalLayer *_metalLayer;
         id <MTLCommandQueue> _commandQueue;
         id <MTLLibrary> _library;
