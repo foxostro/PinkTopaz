@@ -49,34 +49,34 @@ namespace PinkTopaz::Renderer {
             .size = 4,
             .type = AttributeTypeFloat,
             .normalized = false,
-            .stride = sizeof(StaticMesh::GPUVertex),
-            .offset = offsetof(StaticMesh::GPUVertex, position)
+            .stride = sizeof(TerrainVertex),
+            .offset = offsetof(TerrainVertex, position)
         });
         format.attributes.emplace_back((AttributeFormat){
             .size = 4,
             .type = AttributeTypeFloat,
             .normalized = false,
-            .stride = sizeof(StaticMesh::GPUVertex),
-            .offset = offsetof(StaticMesh::GPUVertex, color)
+            .stride = sizeof(TerrainVertex),
+            .offset = offsetof(TerrainVertex, color)
         });
         format.attributes.emplace_back((AttributeFormat){
-            .size = 4,
+            .size = 3,
             .type = AttributeTypeFloat,
             .normalized = false,
-            .stride = sizeof(StaticMesh::GPUVertex),
-            .offset = offsetof(StaticMesh::GPUVertex, texCoord)
+            .stride = sizeof(TerrainVertex),
+            .offset = offsetof(TerrainVertex, texCoord)
         });
         return format;
     }
     
-    std::vector<StaticMesh::GPUVertex> StaticMesh::getVertices() const
+    std::vector<TerrainVertex> StaticMesh::getVertices() const
     {
         const StaticMesh::Header &header = *getHeader();
-        std::vector<StaticMesh::GPUVertex> vertices(header.numVerts);
+        std::vector<TerrainVertex> vertices(header.numVerts);
         
         for (size_t i = 0, n = header.numVerts; i < n; ++i)
         {
-            StaticMesh::GPUVertex &gpuVertex = vertices[i];
+            TerrainVertex &gpuVertex = vertices[i];
             const StaticMesh::FileVertex &fileVertex = header.vertices[i];
             
             gpuVertex.position[0] = fileVertex.position[0];
@@ -99,10 +99,10 @@ namespace PinkTopaz::Renderer {
     
     std::vector<uint8_t> StaticMesh::getBufferData() const
     {
-        std::vector<StaticMesh::GPUVertex> vertices(getVertices());
+        std::vector<TerrainVertex> vertices(getVertices());
         
         const StaticMesh::Header &header = *getHeader();
-        const size_t bufferSize = header.numVerts * sizeof(StaticMesh::GPUVertex);
+        const size_t bufferSize = header.numVerts * sizeof(TerrainVertex);
         std::vector<uint8_t> bufferData(bufferSize);
         memcpy(&bufferData[0], &vertices[0], bufferSize);
         return bufferData;

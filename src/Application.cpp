@@ -50,7 +50,7 @@ namespace PinkTopaz {
                                                        Renderer::ArrayBuffer);
         vertexBuffer->addDebugMarker("Terrain Vertices", 0, vertexBufferData.size());
         
-        Renderer::StaticMesh::Uniforms uniforms;
+        Renderer::TerrainUniforms uniforms;
         auto uniformBuffer = graphicsDevice->makeBuffer(sizeof(uniforms),
                                                         &uniforms,
                                                         Renderer::DynamicDraw,

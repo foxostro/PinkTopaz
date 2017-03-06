@@ -10,10 +10,10 @@
 #define StaticMesh_hpp
 
 #include "Renderer/VertexFormat.hpp"
+#include "Renderer/TerrainVertex.hpp"
 
 #include <vector>
 #include <glm/mat4x4.hpp>
-#include <simd/simd.h>
 
 namespace PinkTopaz::Renderer {
     
@@ -27,13 +27,6 @@ namespace PinkTopaz::Renderer {
             float texCoord[3];
         };
         
-        struct GPUVertex
-        {
-            simd::float4 position;
-            simd::float4 color;
-            simd::float3 texCoord;
-        };
-        
         struct Header
         {
             uint32_t magic;
@@ -44,17 +37,12 @@ namespace PinkTopaz::Renderer {
             FileVertex vertices[0];
         };
         
-        struct Uniforms
-        {
-            glm::mat4 view, proj;
-        };
-        
         StaticMesh(const char *filePath);
         ~StaticMesh() = default;
         
         const Header *getHeader() const;
         VertexFormat getVertexFormat() const;
-        std::vector<GPUVertex> getVertices() const;
+        std::vector<TerrainVertex> getVertices() const;
         std::vector<uint8_t> getBufferData() const;
         
         inline size_t getVertexCount() const

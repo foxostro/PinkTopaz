@@ -51,7 +51,7 @@ namespace PinkTopaz {
         auto f = [&](entityx::Entity entity,
                      RenderableStaticMesh &mesh,
                      Transform &transform) {
-            Renderer::StaticMesh::Uniforms uniforms = {
+            Renderer::TerrainUniforms uniforms = {
                 .view = cameraTransform * transform.value,
                 .proj = _proj,
             };
