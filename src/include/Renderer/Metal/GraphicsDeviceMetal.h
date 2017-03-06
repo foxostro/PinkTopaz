@@ -91,6 +91,7 @@ namespace PinkTopaz::Renderer::Metal {
         CAMetalLayer *_metalLayer;
         id <MTLCommandQueue> _commandQueue;
         id <MTLLibrary> _library;
+        id <MTLDepthStencilState> _depthStencilState;
         NSAutoreleasePool *_pool;
     };
     

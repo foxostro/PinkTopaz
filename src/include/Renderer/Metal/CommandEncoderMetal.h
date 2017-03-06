@@ -28,7 +28,8 @@ namespace PinkTopaz::Renderer::Metal {
     public:
         CommandEncoderMetal(const RenderPassDescriptor &desc,
                             id <MTLCommandQueue> commandQueue,
-                            id <CAMetalDrawable> drawable);
+                            id <CAMetalDrawable> drawable,
+                            id <MTLDepthStencilState> depthStencilState);
         
         virtual ~CommandEncoderMetal();
         

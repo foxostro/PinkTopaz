@@ -17,7 +17,8 @@ namespace PinkTopaz::Renderer::Metal {
     
     CommandEncoderMetal::CommandEncoderMetal(const RenderPassDescriptor &desc,
                                              id <MTLCommandQueue> commandQueue,
-                                             id <CAMetalDrawable> drawable)
+                                             id <CAMetalDrawable> drawable,
+                                             id <MTLDepthStencilState> depthStencilState)
     {
         _pool = [[NSAutoreleasePool alloc] init];
         _commandQueue = [commandQueue retain];
@@ -27,17 +28,15 @@ namespace PinkTopaz::Renderer::Metal {
         
         MTLRenderPassColorAttachmentDescriptor *colorAttachment = _metalRenderPassDesc.colorAttachments[0];
         colorAttachment.texture = _drawable.texture;
+        colorAttachment.clearColor  = MTLClearColorMake(0.2, 0.4, 0.5, 1.0);
         colorAttachment.storeAction = MTLStoreActionStore;
-        
-        if (desc.clear) {
-            colorAttachment.clearColor  = MTLClearColorMake(0.2, 0.4, 0.5, 1.0);
-            colorAttachment.loadAction  = desc.clear ? MTLLoadActionClear : MTLLoadActionLoad;
-        }
+        colorAttachment.loadAction  = desc.clear ? MTLLoadActionClear : MTLLoadActionLoad;
         
         _encoder = [[_commandBuffer renderCommandEncoderWithDescriptor:_metalRenderPassDesc] retain];
         
         [_encoder setFrontFacingWinding:MTLWindingCounterClockwise];
         [_encoder setCullMode:MTLCullModeBack];
+        [_encoder setDepthStencilState:depthStencilState];
     }
     
     CommandEncoderMetal::~CommandEncoderMetal()
@@ -56,7 +55,7 @@ namespace PinkTopaz::Renderer::Metal {
             .originY    = (double)viewport.y,
             .width      = (double)viewport.z,
             .height     = (double)viewport.w,
-            .znear      = -0.1,
+            .znear      = 1.0,
             .zfar       = 100.0
         }];
     }
