@@ -55,6 +55,9 @@ namespace PinkTopaz::Renderer {
         
         // Call when finished encoding to submit to the GPU.
         virtual void commit() = 0;
+        
+        // Enable/Disable depth testing.
+        virtual void setDepthTest(bool enable) = 0;
     };
 
 } // namespace PinkTopaz::Renderer

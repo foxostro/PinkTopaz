@@ -44,6 +44,7 @@ namespace PinkTopaz::Renderer::Metal {
         void setFragmentBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) override;
         void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) override;
         void commit() override;
+        void setDepthTest(bool enable) override;
         
     private:
         id <MTLCommandQueue> _commandQueue;
@@ -53,6 +54,8 @@ namespace PinkTopaz::Renderer::Metal {
         id <MTLRenderCommandEncoder> _encoder;
         NSAutoreleasePool *_pool;
         std::shared_ptr<ShaderMetal> _currentShader;
+        id <MTLDepthStencilState> _depthTestOn;
+        id <MTLDepthStencilState> _depthTestOff;
     };
     
 } // namespace PinkTopaz::Renderer::Metal

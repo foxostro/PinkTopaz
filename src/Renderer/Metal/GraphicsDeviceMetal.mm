@@ -86,7 +86,7 @@ namespace PinkTopaz::Renderer::Metal {
         {
             NSError *error = nil;
             NSString *libraryName = @"Library.metallib";
-            _library = [_metalLayer.device newLibraryWithFile:libraryName error:&error];
+            _library = [device newLibraryWithFile:libraryName error:&error];
             if (!_library) {
                 NSString *errorDesc = [error localizedDescription];
                 throw Exception("Failed to create Metal shader library \"%s\": %s",

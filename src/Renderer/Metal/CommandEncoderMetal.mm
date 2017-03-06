@@ -47,6 +47,9 @@ namespace PinkTopaz::Renderer::Metal {
         [_encoder setCullMode:MTLCullModeBack];
         
         [_encoder setDepthStencilState:(desc.depthTest ? depthTestOn : depthTestOff)];
+        
+        _depthTestOn = [depthTestOn retain];
+        _depthTestOff = [depthTestOff retain];
     }
     
     CommandEncoderMetal::~CommandEncoderMetal()
@@ -56,6 +59,8 @@ namespace PinkTopaz::Renderer::Metal {
         [_metalRenderPassDesc release];
         [_drawable release];
         [_encoder release];
+        [_depthTestOn release];
+        [_depthTestOff release];
     }
     
     void CommandEncoderMetal::setViewport(const glm::ivec4 &viewport)
@@ -130,6 +135,11 @@ namespace PinkTopaz::Renderer::Metal {
         
         [_pool release];
         _pool = nil;
+    }
+    
+    void CommandEncoderMetal::setDepthTest(bool enable)
+    {
+        [_encoder setDepthStencilState:(enable ? _depthTestOn : _depthTestOff)];
     }
     
 } // namespace PinkTopaz::Renderer::Metal

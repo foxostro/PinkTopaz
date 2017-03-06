@@ -19,19 +19,13 @@ namespace PinkTopaz::Renderer::OpenGL {
     
     CommandEncoderOpenGL::CommandEncoderOpenGL(const RenderPassDescriptor &desc)
     {
-        if (desc.depthTest) {
-            glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GL_LESS);
-        } else {
-            glDisable(GL_DEPTH_TEST);
-            glDepthFunc(GL_ALWAYS);
-        }
-        
         if (desc.clear) {
             // According to <https://www.khronos.org/opengl/wiki/Common_Mistakes#Swap_Buffers>
             // it is important to clear all three buffers for best performance.
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         }
+        
+        setDepthTest(desc.depthTest);
 
         CHECK_GL_ERROR();
     }
@@ -165,5 +159,16 @@ namespace PinkTopaz::Renderer::OpenGL {
     }
     
     void CommandEncoderOpenGL::commit() {}
+    
+    void CommandEncoderOpenGL::setDepthTest(bool enable)
+    {
+        if (enable) {
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LESS);
+        } else {
+            glDisable(GL_DEPTH_TEST);
+            glDepthFunc(GL_ALWAYS);
+        }
+    }
     
 } // namespace PinkTopaz::Renderer::OpenGL
