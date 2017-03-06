@@ -47,6 +47,7 @@ namespace PinkTopaz::Renderer::OpenGL {
         glDepthFunc(GL_LESS);
         
         glEnable(GL_CULL_FACE);
+        glFrontFace(GL_CCW);
 
         CHECK_GL_ERROR();
     }

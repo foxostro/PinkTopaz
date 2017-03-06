@@ -16,9 +16,10 @@
 namespace PinkTopaz::Renderer::Metal {
     
     CommandEncoderMetal::CommandEncoderMetal(const RenderPassDescriptor &desc,
+                                             id <MTLDevice> device,
                                              id <MTLCommandQueue> commandQueue,
                                              id <CAMetalDrawable> drawable,
-                                             id <MTLDepthStencilState> depthStencilState)
+                                             id <MTLTexture> depthTexture)
     {
         _pool = [[NSAutoreleasePool alloc] init];
         _commandQueue = [commandQueue retain];
@@ -32,11 +33,30 @@ namespace PinkTopaz::Renderer::Metal {
         colorAttachment.storeAction = MTLStoreActionStore;
         colorAttachment.loadAction  = desc.clear ? MTLLoadActionClear : MTLLoadActionLoad;
         
+        MTLRenderPassDepthAttachmentDescriptor *depthAttachment = _metalRenderPassDesc.depthAttachment;
+        depthAttachment.texture = depthTexture;
+        depthAttachment.loadAction = MTLLoadActionClear;
+        depthAttachment.storeAction = MTLStoreActionDontCare;
+        depthAttachment.clearDepth = 1.0;
+        
+        MTLDepthStencilDescriptor *depthDescriptor = [[MTLDepthStencilDescriptor alloc] init];
+        if (desc.depthTest) {
+            depthDescriptor.depthWriteEnabled = YES;
+            depthDescriptor.depthCompareFunction = MTLCompareFunctionAlways;
+        } else {
+            depthDescriptor.depthWriteEnabled = NO;
+            depthDescriptor.depthCompareFunction = MTLCompareFunctionAlways;
+        }
+        id <MTLDepthStencilState> depthStencilState = [device newDepthStencilStateWithDescriptor:depthDescriptor];
+        [depthDescriptor release];
+        
         _encoder = [[_commandBuffer renderCommandEncoderWithDescriptor:_metalRenderPassDesc] retain];
         
         [_encoder setFrontFacingWinding:MTLWindingCounterClockwise];
         [_encoder setCullMode:MTLCullModeBack];
+        
         [_encoder setDepthStencilState:depthStencilState];
+        [depthStencilState release];
     }
     
     CommandEncoderMetal::~CommandEncoderMetal()

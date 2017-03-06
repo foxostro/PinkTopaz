@@ -60,11 +60,10 @@ namespace PinkTopaz {
         es.each<RenderableStaticMesh, Transform>(f);
         
         // Render all meshes.
-        static const Renderer::RenderPassDescriptor desc = {
+        auto encoder = _graphicsDevice->encoder((Renderer::RenderPassDescriptor) {
             .depthTest = true,
             .clear = true
-        };
-        auto encoder = _graphicsDevice->encoder(desc);
+        });
         encoder->setViewport(_viewport);
         auto g = [&](entityx::Entity entity,
                      RenderableStaticMesh &mesh,
@@ -77,11 +76,18 @@ namespace PinkTopaz {
             encoder->drawPrimitives(Renderer::Triangles, 0, mesh.vertexCount, 1);
         };
         es.each<RenderableStaticMesh, Transform>(g);
-        
-        // Draw text strings on the screen last because they blend.
-        _stringRenderer.draw(encoder, _viewport);
-        
         encoder->commit();
+        
+#if 0
+        // Draw text strings on the screen last because they blend.
+        auto encoder2 = _graphicsDevice->encoder((Renderer::RenderPassDescriptor) {
+            .depthTest = false,
+            .clear = false
+        });
+        encoder2->setViewport(_viewport);
+        _stringRenderer.draw(encoder2, _viewport);
+        encoder2->commit();
+#endif
 
         _frameTimer.endFrame();
         _graphicsDevice->swapBuffers();

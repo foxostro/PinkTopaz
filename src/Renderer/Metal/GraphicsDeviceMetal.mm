@@ -45,11 +45,16 @@ namespace PinkTopaz::Renderer::Metal {
         
         [sdlLayer addSublayer:_metalLayer];
         
-        MTLDepthStencilDescriptor *depthDescriptor = [[MTLDepthStencilDescriptor alloc] init];
-        depthDescriptor.depthWriteEnabled = YES;
-        depthDescriptor.depthCompareFunction = MTLCompareFunctionAlways;
-        _depthStencilState = [_metalLayer.device newDepthStencilStateWithDescriptor:depthDescriptor];
-        [depthDescriptor release];
+        CGSize drawableSize = _metalLayer.drawableSize;
+        MTLTextureDescriptor *descriptor =
+        [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
+                                                           width:drawableSize.width
+                                                          height:drawableSize.height
+                                                       mipmapped:NO];
+        descriptor.storageMode = MTLStorageModePrivate;
+        descriptor.usage = MTLTextureUsageRenderTarget;
+        _depthTexture = [_metalLayer.device newTextureWithDescriptor:descriptor];
+        _depthTexture.label = @"Depth";
 
         // We need a command queue in order to control the GPU.
         _commandQueue = [_metalLayer.device newCommandQueue];
@@ -72,7 +77,6 @@ namespace PinkTopaz::Renderer::Metal {
         [_library release];
         [_commandQueue release];
         [_metalLayer release];
-        [_depthStencilState release];
         [_pool release];
     }
     
@@ -82,9 +86,10 @@ namespace PinkTopaz::Renderer::Metal {
         id <CAMetalDrawable> drawable = [_metalLayer nextDrawable];
         
         auto encoder = std::make_shared<CommandEncoderMetal>(desc,
+                                                             _metalLayer.device,
                                                              _commandQueue,
                                                              drawable,
-                                                             _depthStencilState);
+                                                             _depthTexture);
         return std::dynamic_pointer_cast<CommandEncoder>(encoder);
     }
     
