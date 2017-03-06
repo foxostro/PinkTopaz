@@ -92,6 +92,7 @@ namespace PinkTopaz::Renderer::Metal {
         id <MTLCommandQueue> _commandQueue;
         id <MTLLibrary> _library;
         id <MTLTexture> _depthTexture;
+        id <MTLDepthStencilState> _depthTestOn, _depthTestOff;
         NSAutoreleasePool *_pool;
     };
     

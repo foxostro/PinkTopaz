@@ -30,7 +30,9 @@ namespace PinkTopaz::Renderer::Metal {
                             id <MTLDevice> device,
                             id <MTLCommandQueue> commandQueue,
                             id <CAMetalDrawable> drawable,
-                            id <MTLTexture> depthTexture);
+                            id <MTLTexture> depthTexture,
+                            id <MTLDepthStencilState> depthTestOn,
+                            id <MTLDepthStencilState> depthTestOff);
         
         virtual ~CommandEncoderMetal();
         

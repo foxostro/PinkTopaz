@@ -22,51 +22,76 @@ namespace PinkTopaz::Renderer::Metal {
     {
         _pool = [[NSAutoreleasePool alloc] init];
         
-        SDL_SysWMinfo windowManagerInfo;
-        SDL_VERSION(&windowManagerInfo.version);
-        SDL_GetWindowWMInfo(&window, &windowManagerInfo);
+        id <MTLDevice> device = MTLCreateSystemDefaultDevice();
         
-        // Create a metal layer and add it to the view that SDL created.
-        NSView *sdlView = windowManagerInfo.info.cocoa.window.contentView;
-        sdlView.wantsLayer = YES;
-        CALayer *sdlLayer = sdlView.layer;
+        // Create a Metal layer for displaying rendering results in the window.
+        {
+            SDL_SysWMinfo windowManagerInfo;
+            SDL_VERSION(&windowManagerInfo.version);
+            SDL_GetWindowWMInfo(&window, &windowManagerInfo);
+            
+            // Create a metal layer and add it to the view that SDL created.
+            NSView *sdlView = windowManagerInfo.info.cocoa.window.contentView;
+            sdlView.wantsLayer = YES;
+            CALayer *sdlLayer = sdlView.layer;
+            
+            CGFloat contentsScale = sdlLayer.contentsScale;
+            NSSize layerSize = sdlLayer.frame.size;
+            
+            _metalLayer = [[CAMetalLayer layer] retain];
+            _metalLayer.contentsScale = contentsScale;
+            _metalLayer.drawableSize = NSMakeSize(layerSize.width * contentsScale,
+                                                 layerSize.height * contentsScale);
+            _metalLayer.device = device;
+            _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+            _metalLayer.frame = sdlLayer.frame;
+            _metalLayer.framebufferOnly = true;
+            
+            [sdlLayer addSublayer:_metalLayer];
+        }
         
-        CGFloat contentsScale = sdlLayer.contentsScale;
-        NSSize layerSize = sdlLayer.frame.size;
+        // Create the depth buffer.
+        {
+            CGSize drawableSize = _metalLayer.drawableSize;
+            MTLTextureDescriptor *descriptor =
+            [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
+                                                               width:drawableSize.width
+                                                              height:drawableSize.height
+                                                           mipmapped:NO];
+            descriptor.storageMode = MTLStorageModePrivate;
+            descriptor.usage = MTLTextureUsageRenderTarget;
+            _depthTexture = [_metalLayer.device newTextureWithDescriptor:descriptor];
+            _depthTexture.label = @"Depth";
+        }
         
-        _metalLayer = [[CAMetalLayer layer] retain];
-        _metalLayer.contentsScale = contentsScale;
-        _metalLayer.drawableSize = NSMakeSize(layerSize.width * contentsScale,
-                                             layerSize.height * contentsScale);
-        _metalLayer.device = MTLCreateSystemDefaultDevice();
-        _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-        _metalLayer.frame = sdlLayer.frame;
-        _metalLayer.framebufferOnly = true;
-        
-        [sdlLayer addSublayer:_metalLayer];
-        
-        CGSize drawableSize = _metalLayer.drawableSize;
-        MTLTextureDescriptor *descriptor =
-        [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
-                                                           width:drawableSize.width
-                                                          height:drawableSize.height
-                                                       mipmapped:NO];
-        descriptor.storageMode = MTLStorageModePrivate;
-        descriptor.usage = MTLTextureUsageRenderTarget;
-        _depthTexture = [_metalLayer.device newTextureWithDescriptor:descriptor];
-        _depthTexture.label = @"Depth";
+        // Create some state objects for the depth test being ON and OFF.
+        {
+            MTLDepthStencilDescriptor *depthDescriptor = [[MTLDepthStencilDescriptor alloc] init];
+            
+            depthDescriptor.depthWriteEnabled = YES;
+            depthDescriptor.depthCompareFunction = MTLCompareFunctionLess;
+            _depthTestOn = [device newDepthStencilStateWithDescriptor:depthDescriptor];
+            
+            depthDescriptor.depthWriteEnabled = NO;
+            depthDescriptor.depthCompareFunction = MTLCompareFunctionAlways;
+            _depthTestOff = [device newDepthStencilStateWithDescriptor:depthDescriptor];
+            
+            [depthDescriptor release];
+        }
 
         // We need a command queue in order to control the GPU.
-        _commandQueue = [_metalLayer.device newCommandQueue];
+        _commandQueue = [device newCommandQueue];
         
-        // Load the shader library.
-        NSError *error = nil;
-        NSString *libraryName = @"Library.metallib";
-        _library = [_metalLayer.device newLibraryWithFile:libraryName error:&error];
-        if (!_library) {
-            NSString *errorDesc = [error localizedDescription];
-            throw Exception("Failed to create Metal shader library \"%s\": %s",
-                            libraryName.UTF8String, errorDesc.UTF8String);
+        // Load the shader library we're going to use.
+        {
+            NSError *error = nil;
+            NSString *libraryName = @"Library.metallib";
+            _library = [_metalLayer.device newLibraryWithFile:libraryName error:&error];
+            if (!_library) {
+                NSString *errorDesc = [error localizedDescription];
+                throw Exception("Failed to create Metal shader library \"%s\": %s",
+                                libraryName.UTF8String, errorDesc.UTF8String);
+            }
         }
     }
     
@@ -77,6 +102,9 @@ namespace PinkTopaz::Renderer::Metal {
         [_library release];
         [_commandQueue release];
         [_metalLayer release];
+        [_depthTexture release];
+        [_depthTestOn release];
+        [_depthTestOff release];
         [_pool release];
     }
     
@@ -89,7 +117,9 @@ namespace PinkTopaz::Renderer::Metal {
                                                              _metalLayer.device,
                                                              _commandQueue,
                                                              drawable,
-                                                             _depthTexture);
+                                                             _depthTexture,
+                                                             _depthTestOn,
+                                                             _depthTestOff);
         return std::dynamic_pointer_cast<CommandEncoder>(encoder);
     }
     
@@ -163,6 +193,19 @@ namespace PinkTopaz::Renderer::Metal {
     {
         // Resize the layer when the window resizes.
         _metalLayer.frame = _metalLayer.superlayer.frame;
+        
+        // Create a new depth buffer for the new window size.
+        [_depthTexture release];
+        CGSize drawableSize = _metalLayer.drawableSize;
+        MTLTextureDescriptor *descriptor =
+        [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
+                                                           width:drawableSize.width
+                                                          height:drawableSize.height
+                                                       mipmapped:NO];
+        descriptor.storageMode = MTLStorageModePrivate;
+        descriptor.usage = MTLTextureUsageRenderTarget;
+        _depthTexture = [_metalLayer.device newTextureWithDescriptor:descriptor];
+        _depthTexture.label = @"Depth";
     }
     
 } // namespace PinkTopaz::Renderer::Metal
