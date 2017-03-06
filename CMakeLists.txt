@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.6)
 project (PinkTopaz)
 set(APP_NAME "PinkTopaz")
 
-set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z")
+set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z -DMETAL_ENABLED")
 
 set(SOURCE_FILES_OPENGL
     "src/include/Renderer/OpenGL/opengl.hpp"

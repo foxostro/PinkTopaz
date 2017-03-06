@@ -9,12 +9,12 @@ out vec4 color;
 
 layout (std140) uniform TerrainUniforms
 {
-    mat4 view, proj;
+	mat4 view, proj;
 };
 
 void main()
 {
-	texCoord = vt;
-	color = vc / 255.0;
-	gl_Position = proj * view * vp;
+    texCoord = vt;
+    color = vc;
+    gl_Position = proj * view * vp;
 }
