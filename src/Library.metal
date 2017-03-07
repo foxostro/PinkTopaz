@@ -36,13 +36,26 @@ vertex TerrainProjectedVertex vert(TerrainVertex inVert [[stage_in]],
     return outVert;
 }
 
+constant float4 fogColor = float4(0.7, 0.7, 0.7, 1.0);
+constant float fogDensity = 0.003;
+constant float e = 2.71828182845904523536028747135266249;
+
 fragment float4 frag(TerrainProjectedVertex vert [[stage_in]],
                      texture2d_array<float> diffuseTexture [[texture(0)]],
                      sampler textureSampler [[sampler(0)]])
 {
-    return vert.color * diffuseTexture.sample(textureSampler,
-                                              vert.texCoord.xy,
-                                              vert.texCoord.z);
+    float4 baseColor = vert.color * diffuseTexture.sample(textureSampler,
+                                                          vert.texCoord.xy,
+                                                          vert.texCoord.z);
+    
+    // Apply a fog effect to the terrain geometry. Note the `2*' below. This
+    // factor corrects for the difference between Metal's coordinate space for
+    // normalized device coordinates and the one used by OpenGL. This is
+    // necessary so that fog drawn with the Metal shader has the same density
+    // as fog drawn with the GLSL shader.
+    float depth = 2*vert.position.z / vert.position.w;
+    float f = pow(e, -pow(depth * fogDensity, 2.0));
+    return mix(fogColor, baseColor, f);
 }
 
 
