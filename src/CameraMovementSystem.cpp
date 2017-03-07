@@ -10,16 +10,18 @@
 #include "Transform.hpp"
 #include "Exception.hpp"
 
-#include "SDL.h"
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace PinkTopaz {
     
     CameraMovementSystem::CameraMovementSystem()
-     : _cameraSpeed(1.0), _left(false), _right(false), _up(false), _down(false)
+     : _cameraSpeed(50.0), _cameraRotateSpeed(1.0)
     {}
     
     void CameraMovementSystem::configure(entityx::EventManager &em)
     {
+        em.subscribe<entityx::ComponentAddedEvent<ActiveCamera>>(*this);
+        em.subscribe<entityx::ComponentRemovedEvent<ActiveCamera>>(*this);
         em.subscribe<KeypressEvent>(*this);
     }
     
@@ -27,41 +29,88 @@ namespace PinkTopaz {
                                       entityx::EventManager &events,
                                       entityx::TimeDelta dt)
     {
+        if (!_activeCamera.valid()) {
+            return;
+        }
+        
+        const glm::vec3 localForward(0, 0, -1);
+        const glm::vec3 localRight(1, 0, 0);
+        const glm::vec3 localUp(0, 1, 0);
+        
+        const glm::vec3 worldForward = glm::normalize(_rotation * localForward);
+        const glm::vec3 worldRight = glm::normalize(_rotation * localRight);
+        const glm::vec3 worldUp = glm::normalize(_rotation * localUp);
+        
+        glm::vec3 velocity;
+        
+        const float angle = _cameraRotateSpeed*dt/1000.0;
+        const float speed = _cameraSpeed*dt/1000.0;
+        
         auto f = [&](entityx::Entity entity,
                      ActiveCamera &activeCamera,
                      Transform &xform) {
             
-            const float angle = _cameraSpeed*dt/1000.0;
-            
-            static const glm::vec3 right(1, 0, 0);
-            static const glm::vec3 up(0, 1, 0);
-            
-            if(_up) {
-                xform.rotation = glm::angleAxis(-angle, right) * xform.rotation;
-            } else if(_down) {
-                xform.rotation = glm::angleAxis(angle, right) * xform.rotation;
+            if(_keys[SDLK_w]) {
+                velocity += worldForward * speed;
+            } else if(_keys[SDLK_s]) {
+                velocity += worldForward * -speed;
             }
             
-            if(_left) {
-                xform.rotation *= glm::angleAxis(-angle, up);
-            } else if(_right) {
-                xform.rotation *= glm::angleAxis(angle, up);
+            if(_keys[SDLK_a]) {
+                velocity += worldRight * -speed;
+            } else if(_keys[SDLK_d]) {
+                velocity += worldRight * speed;
+            }
+            
+            if(_keys[SDLK_z]) {
+                velocity += localUp * -speed;
+            } else if(_keys[SDLK_x]) {
+                velocity += localUp * speed;
+            }
+
+            if(_keys[SDLK_i]) {
+                _rotation = glm::angleAxis(-angle, worldRight) * _rotation;
+            } else if(_keys[SDLK_k]) {
+                _rotation = glm::angleAxis(angle, worldRight) * _rotation;
+            }
+            
+            if(_keys[SDLK_j]) {
+                glm::quat deltaRot = glm::angleAxis(angle, localUp);
+                _rotation = deltaRot * _rotation;
+            } else if(_keys[SDLK_l]) {
+                glm::quat deltaRot = glm::angleAxis(-angle, localUp);
+                _rotation = deltaRot * _rotation;
             }
         };
         es.each<ActiveCamera, Transform>(f);
+        
+        _eye += velocity;
+        _center = _eye + worldForward;
+        _up = worldUp;
+        
+        _activeCamera.component<Transform>()->value = glm::lookAt(_eye, _center, _up);
+    }
+    
+    void CameraMovementSystem::receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)
+    {
+        _activeCamera = event.entity;
+        const glm::mat4 &cameraTransform = _activeCamera.component<Transform>()->value;
+        _eye = -glm::vec3(cameraTransform[3]);
+        _center = _eye + glm::vec3(cameraTransform[2]);
+        _up = glm::vec3(cameraTransform[1]);
+        _rotation = glm::quat_cast(cameraTransform);
+    }
+    
+    void CameraMovementSystem::receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event)
+    {
+        if (_activeCamera == event.entity) {
+            _activeCamera.invalidate();
+        }
     }
     
     void CameraMovementSystem::receive(const KeypressEvent &event)
     {
-        bool state = event.down;
-        
-        switch (event.key)
-        {
-            case SDLK_LEFT:     _left   = state; break;
-            case SDLK_RIGHT:    _right  = state; break;
-            case SDLK_UP:       _up     = state; break;
-            case SDLK_DOWN:     _down   = state; break;
-        }
+        _keys[event.key] = event.down;
     }
     
 } // namespace PinkTopaz

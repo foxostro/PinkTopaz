@@ -15,8 +15,7 @@
 #include "Exception.hpp"
 
 #include "SDL.h"
-#include <glm/vec3.hpp>
-#include <glm/gtc/matrix_transform.hpp> // for lookAt
+#include <glm/gtc/matrix_transform.hpp> // for perspective()
 
 constexpr const char *FONT_NAME = "vegur/Vegur-Regular.otf";
 constexpr unsigned FONT_SIZE = 48;
@@ -44,7 +43,7 @@ namespace PinkTopaz {
         
         glm::mat4x4 cameraTransform;
         if (_activeCamera.valid()) {
-            cameraTransform = _activeCamera.component<Transform>()->getMatrix();
+            cameraTransform = _activeCamera.component<Transform>()->value;
         }
         
         const glm::mat4 adjust = _graphicsDevice->getProjectionAdjustMatrix();
@@ -54,7 +53,7 @@ namespace PinkTopaz {
                      RenderableStaticMesh &mesh,
                      Transform &transform) {
             Renderer::TerrainUniforms uniforms = {
-                .view = cameraTransform * transform.getMatrix(),
+                .view = cameraTransform * transform.value,
                 .proj = adjust * _proj,
             };
             mesh.uniforms->replace(sizeof(uniforms), &uniforms);
@@ -107,8 +106,8 @@ namespace PinkTopaz {
     {
         // When the window size changes, recalculate the projection matrix.
         // On the next update, we will pass this matrix to the shaders used to render each object.
-        constexpr float znear = 0.1f;
-        constexpr float zfar = 100.0f;
+        constexpr float znear = 1.0f;
+        constexpr float zfar = 1000.0f;
         _viewport = glm::ivec4(0, 0, event.width * event.windowScaleFactor, event.height * event.windowScaleFactor);
         _proj = glm::perspective(glm::pi<float>() * 0.25f, (float)event.width / event.height, znear, zfar);
         _graphicsDevice->windowSizeChanged();

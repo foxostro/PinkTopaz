@@ -9,10 +9,14 @@
 #ifndef CameraMovementSystem_hpp
 #define CameraMovementSystem_hpp
 
-#include <entityx/entityx.h>
-
 #include "ActiveCamera.hpp"
 #include "KeypressEvent.hpp"
+
+#include <entityx/entityx.h>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <map>
+#include "SDL.h"
 
 namespace PinkTopaz {
     
@@ -22,11 +26,16 @@ namespace PinkTopaz {
         CameraMovementSystem();
         void configure(entityx::EventManager &em) override;
         void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
+        void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
+        void receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event);
         void receive(const KeypressEvent &event);
         
     private:
-        float _cameraSpeed;
-        bool _left, _right, _up, _down;
+        glm::vec3 _eye, _center, _up;
+        glm::quat _rotation;
+        float _cameraSpeed, _cameraRotateSpeed;
+        std::map<SDL_Keycode, bool> _keys;
+        entityx::Entity _activeCamera;
     };
 
 } // namespace PinkTopaz
