@@ -79,8 +79,7 @@ namespace PinkTopaz::Renderer::Metal {
             colorAttachment.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
         }
         
-        desc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float_Stencil8;
-        desc.stencilAttachmentPixelFormat = MTLPixelFormatDepth32Float_Stencil8;
+        desc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float;
         
         error = nil;
         _pipelineState = [device newRenderPipelineStateWithDescriptor:desc error:&error];

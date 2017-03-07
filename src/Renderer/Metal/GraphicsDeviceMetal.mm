@@ -192,14 +192,14 @@ namespace PinkTopaz::Renderer::Metal {
         
         CGSize drawableSize = _metalLayer.drawableSize;
         MTLTextureDescriptor *descriptor =
-        [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float_Stencil8
+        [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatDepth32Float
                                                            width:drawableSize.width
                                                           height:drawableSize.height
                                                        mipmapped:NO];
         descriptor.storageMode = MTLStorageModePrivate;
-        descriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+        descriptor.usage = MTLTextureUsageRenderTarget;
         _depthTexture = [_metalLayer.device newTextureWithDescriptor:descriptor];
-        _depthTexture.label = @"DepthStencil";
+        _depthTexture.label = @"Depth";
     }
     
 } // namespace PinkTopaz::Renderer::Metal

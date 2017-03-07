@@ -41,11 +41,6 @@ namespace PinkTopaz::Renderer::Metal {
         depthAttachment.storeAction = MTLStoreActionDontCare;
         depthAttachment.loadAction = desc.clear ? MTLLoadActionClear : MTLLoadActionLoad;
         
-        MTLRenderPassStencilAttachmentDescriptor *stencilAttachment = _metalRenderPassDesc.stencilAttachment;
-        stencilAttachment.texture = depthAttachment.texture;
-        stencilAttachment.storeAction = MTLStoreActionDontCare;
-        stencilAttachment.loadAction = desc.clear ? MTLLoadActionClear : MTLLoadActionLoad;
-        
         _encoder = [[_commandBuffer renderCommandEncoderWithDescriptor:_metalRenderPassDesc] retain];
         
         [_encoder setFrontFacingWinding:MTLWindingCounterClockwise];
