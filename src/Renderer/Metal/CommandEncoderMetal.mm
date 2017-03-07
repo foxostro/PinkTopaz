@@ -31,7 +31,10 @@ namespace PinkTopaz::Renderer::Metal {
         
         MTLRenderPassColorAttachmentDescriptor *colorAttachment = _metalRenderPassDesc.colorAttachments[0];
         colorAttachment.texture = _drawable.texture;
-        colorAttachment.clearColor  = MTLClearColorMake(0.2, 0.4, 0.5, 1.0);
+        colorAttachment.clearColor  = MTLClearColorMake(desc.clearColor.r,
+                                                        desc.clearColor.g,
+                                                        desc.clearColor.b,
+                                                        desc.clearColor.a);
         colorAttachment.storeAction = MTLStoreActionStore;
         colorAttachment.loadAction  = desc.clear ? MTLLoadActionClear : MTLLoadActionLoad;
         
@@ -45,8 +48,7 @@ namespace PinkTopaz::Renderer::Metal {
         
         [_encoder setFrontFacingWinding:MTLWindingCounterClockwise];
         [_encoder setCullMode:MTLCullModeBack];
-        
-        [_encoder setDepthStencilState:(desc.depthTest ? depthTestOn : depthTestOff)];
+        [_encoder setDepthStencilState:depthTestOn];
         
         _depthTestOn = [depthTestOn retain];
         _depthTestOff = [depthTestOff retain];

@@ -20,12 +20,15 @@ namespace PinkTopaz::Renderer::OpenGL {
     CommandEncoderOpenGL::CommandEncoderOpenGL(const RenderPassDescriptor &desc)
     {
         if (desc.clear) {
+            glClearColor(desc.clearColor.r, desc.clearColor.g,
+                         desc.clearColor.b, desc.clearColor.a);
+            
             // According to <https://www.khronos.org/opengl/wiki/Common_Mistakes#Swap_Buffers>
             // it is important to clear all three buffers for best performance.
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         }
         
-        setDepthTest(desc.depthTest);
+        setDepthTest(true);
 
         CHECK_GL_ERROR();
     }

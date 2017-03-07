@@ -63,8 +63,8 @@ namespace PinkTopaz {
         
         // Render all meshes.
         auto encoder = _graphicsDevice->encoder((Renderer::RenderPassDescriptor) {
-            .depthTest = true,
-            .clear = true
+            .clear = true,
+            .clearColor = glm::vec4(0.2f, 0.4f, 0.5f, 1.0f)
         });
         
         encoder->setViewport(_viewport);

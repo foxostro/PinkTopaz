@@ -290,7 +290,6 @@ namespace PinkTopaz::Renderer {
                                    unsigned fontSize)
      : _graphicsDevice(dev)
     {
-        _renderPassDescriptor.depthTest = false;
         _renderPassDescriptor.clear = false;
         
         VertexFormat vertexFormat;

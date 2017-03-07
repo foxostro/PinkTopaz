@@ -42,7 +42,6 @@ namespace PinkTopaz::Renderer::OpenGL {
             }
         }
         
-        glClearColor(0.2, 0.4, 0.5, 1.0);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         

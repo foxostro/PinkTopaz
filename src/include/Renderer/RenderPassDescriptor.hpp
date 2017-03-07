@@ -15,8 +15,12 @@ namespace PinkTopaz::Renderer {
     
     struct RenderPassDescriptor
     {
-        bool depthTest;
+        // Set to `true' in order to clear Color and Depth and Stencil when the
+        // rendering pass begins.
         bool clear;
+        
+        // The color to clear the render target to should `clear' be true.
+        glm::vec4 clearColor;
     };
     
 } // namespace PinkTopaz::Renderer
