@@ -11,6 +11,7 @@
 
 #include "ActiveCamera.hpp"
 #include "KeypressEvent.hpp"
+#include "MouseMoveEvent.hpp"
 
 #include <entityx/entityx.h>
 #include <glm/mat4x4.hpp>
@@ -29,6 +30,7 @@ namespace PinkTopaz {
         void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
         void receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event);
         void receive(const KeypressEvent &event);
+        void receive(const MouseMoveEvent &event);
         
     private:
         glm::vec3 _eye, _center, _up;
@@ -36,6 +38,8 @@ namespace PinkTopaz {
         float _cameraSpeed, _cameraRotateSpeed;
         std::map<SDL_Keycode, bool> _keys;
         entityx::Entity _activeCamera;
+        float _mouseSensitivity;
+        int _mouseDeltaX, _mouseDeltaY;
     };
 
 } // namespace PinkTopaz

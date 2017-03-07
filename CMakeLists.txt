@@ -56,6 +56,7 @@ set(SOURCE_FILES_COMPONENTS
 set(SOURCE_FILES_EVENTS
     "src/include/WindowSizeChangedEvent.hpp"
     "src/include/KeypressEvent.hpp"
+    "src/include/MouseMoveEvent.hpp"
     )
 
 set(SOURCE_FILES_OTHER_ECS

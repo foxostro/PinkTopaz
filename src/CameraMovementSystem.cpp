@@ -15,7 +15,8 @@
 namespace PinkTopaz {
     
     CameraMovementSystem::CameraMovementSystem()
-     : _cameraSpeed(50.0), _cameraRotateSpeed(1.0)
+     : _cameraSpeed(50.0f), _cameraRotateSpeed(1.0f), _mouseSensitivity(5.0f),
+       _mouseDeltaX(0), _mouseDeltaY(0)
     {}
     
     void CameraMovementSystem::configure(entityx::EventManager &em)
@@ -23,12 +24,15 @@ namespace PinkTopaz {
         em.subscribe<entityx::ComponentAddedEvent<ActiveCamera>>(*this);
         em.subscribe<entityx::ComponentRemovedEvent<ActiveCamera>>(*this);
         em.subscribe<KeypressEvent>(*this);
+        em.subscribe<MouseMoveEvent>(*this);
     }
     
     void CameraMovementSystem::update(entityx::EntityManager &es,
                                       entityx::EventManager &events,
-                                      entityx::TimeDelta dt)
+                                      entityx::TimeDelta deltaMilliseconds)
     {
+        const entityx::TimeDelta dt = deltaMilliseconds / 1000;
+        
         if (!_activeCamera.valid()) {
             return;
         }
@@ -43,46 +47,56 @@ namespace PinkTopaz {
         
         glm::vec3 velocity;
         
-        const float angle = _cameraRotateSpeed*dt/1000.0;
-        const float speed = _cameraSpeed*dt/1000.0;
+        const float angle = _cameraRotateSpeed*dt;
+        const float speed = _cameraSpeed*dt;
         
-        auto f = [&](entityx::Entity entity,
-                     ActiveCamera &activeCamera,
-                     Transform &xform) {
-            
-            if(_keys[SDLK_w]) {
-                velocity += worldForward * speed;
-            } else if(_keys[SDLK_s]) {
-                velocity += worldForward * -speed;
-            }
-            
-            if(_keys[SDLK_a]) {
-                velocity += worldRight * -speed;
-            } else if(_keys[SDLK_d]) {
-                velocity += worldRight * speed;
-            }
-            
-            if(_keys[SDLK_z]) {
-                velocity += localUp * -speed;
-            } else if(_keys[SDLK_x]) {
-                velocity += localUp * speed;
-            }
+        if(_keys[SDLK_w]) {
+            velocity += worldForward * speed;
+        } else if(_keys[SDLK_s]) {
+            velocity += worldForward * -speed;
+        }
+        
+        if(_keys[SDLK_a]) {
+            velocity += worldRight * -speed;
+        } else if(_keys[SDLK_d]) {
+            velocity += worldRight * speed;
+        }
+        
+        if(_keys[SDLK_z]) {
+            velocity += localUp * -speed;
+        } else if(_keys[SDLK_x]) {
+            velocity += localUp * speed;
+        }
 
-            if(_keys[SDLK_i]) {
-                _rotation = glm::angleAxis(-angle, worldRight) * _rotation;
-            } else if(_keys[SDLK_k]) {
-                _rotation = glm::angleAxis(angle, worldRight) * _rotation;
-            }
-            
-            if(_keys[SDLK_j]) {
-                glm::quat deltaRot = glm::angleAxis(angle, localUp);
-                _rotation = deltaRot * _rotation;
-            } else if(_keys[SDLK_l]) {
-                glm::quat deltaRot = glm::angleAxis(-angle, localUp);
-                _rotation = deltaRot * _rotation;
-            }
-        };
-        es.each<ActiveCamera, Transform>(f);
+        if(_keys[SDLK_i]) {
+            _rotation = glm::angleAxis(-angle, worldRight) * _rotation;
+        } else if(_keys[SDLK_k]) {
+            _rotation = glm::angleAxis(angle, worldRight) * _rotation;
+        }
+        
+        if(_keys[SDLK_j]) {
+            glm::quat deltaRot = glm::angleAxis(angle, localUp);
+            _rotation = deltaRot * _rotation;
+        } else if(_keys[SDLK_l]) {
+            glm::quat deltaRot = glm::angleAxis(-angle, localUp);
+            _rotation = deltaRot * _rotation;
+        }
+        
+        if(_mouseDeltaX != 0) {
+            float mouseDirectionX = -_mouseDeltaX*_mouseSensitivity*dt;
+            float angle = mouseDirectionX*dt;
+            glm::quat deltaRot = glm::angleAxis(angle, localUp);
+            _rotation = deltaRot * _rotation;
+            _mouseDeltaX = 0;
+        }
+        
+        if(_mouseDeltaY != 0) {
+            float mouseDirectionY = -_mouseDeltaY*_mouseSensitivity*dt;
+            float angle = mouseDirectionY*dt;
+            glm::quat deltaRot = glm::angleAxis(angle, localRight);
+            _rotation = _rotation * deltaRot;
+            _mouseDeltaY = 0;
+        }
         
         _eye += velocity;
         _center = _eye + worldForward;
@@ -111,6 +125,12 @@ namespace PinkTopaz {
     void CameraMovementSystem::receive(const KeypressEvent &event)
     {
         _keys[event.key] = event.down;
+    }
+    
+    void CameraMovementSystem::receive(const MouseMoveEvent &event)
+    {
+        _mouseDeltaX = event.deltaX;
+        _mouseDeltaY = event.deltaY;
     }
     
 } // namespace PinkTopaz

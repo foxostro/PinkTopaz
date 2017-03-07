@@ -14,6 +14,7 @@
 #include "World.hpp"
 #include "WindowSizeChangedEvent.hpp"
 #include "KeypressEvent.hpp"
+#include "MouseMoveEvent.hpp"
 
 #include "SDL.h"
 #include "SDL_image.h"
@@ -131,6 +132,11 @@ namespace PinkTopaz {
                     case SDL_KEYUP:
                         keyStates[e.key.keysym.sym] = false;
                         break;
+                        
+                    case SDL_MOUSEMOTION:
+                        gameWorld.events.emit(MouseMoveEvent(e.motion.xrel,
+                                                             e.motion.yrel));
+                        break;
                 }
             }
             
@@ -171,6 +177,8 @@ namespace PinkTopaz {
         
         _window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600,
                                    SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
+        
+        SDL_SetRelativeMouseMode(SDL_TRUE);
         
         inner(Renderer::createDefaultGraphicsDevice(*_window));
 
