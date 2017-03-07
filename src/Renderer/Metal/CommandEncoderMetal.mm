@@ -38,11 +38,13 @@ namespace PinkTopaz::Renderer::Metal {
         MTLRenderPassDepthAttachmentDescriptor *depthAttachment = _metalRenderPassDesc.depthAttachment;
         depthAttachment.texture = depthTexture;
         depthAttachment.clearDepth = 1.0;
-        depthAttachment.storeAction = MTLStoreActionStore;
+        depthAttachment.storeAction = MTLStoreActionDontCare;
         depthAttachment.loadAction = desc.clear ? MTLLoadActionClear : MTLLoadActionLoad;
         
         MTLRenderPassStencilAttachmentDescriptor *stencilAttachment = _metalRenderPassDesc.stencilAttachment;
         stencilAttachment.texture = depthAttachment.texture;
+        stencilAttachment.storeAction = MTLStoreActionDontCare;
+        stencilAttachment.loadAction = desc.clear ? MTLLoadActionClear : MTLLoadActionLoad;
         
         _encoder = [[_commandBuffer renderCommandEncoderWithDescriptor:_metalRenderPassDesc] retain];
         
