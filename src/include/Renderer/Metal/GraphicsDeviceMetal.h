@@ -87,6 +87,17 @@ namespace PinkTopaz::Renderer::Metal {
         // to update the underlying context or layers as needed.
         void windowSizeChanged() override;
         
+        // Returns a matrix that you should left-multiply against the projection
+        // matrix before sending to the shader. This corrects for differences
+        // in expected normalized device coordinates between different graphics
+        // APIs.
+        //
+        // Different expect to use different coordinate spaces for normalized
+        // device coordinates. For example, OpenGL uses an NDC space that's a
+        // cube [-1,+1] x [-1,+1] x [-1,+1] and Metal uses an NDC space that's
+        // a cuboid [-1,+1] x [-1,+1] x [0,+1].
+        const glm::mat4& getProjectionAdjustMatrix() const override;
+        
     private:
         void rebuildDepthTexture();
         

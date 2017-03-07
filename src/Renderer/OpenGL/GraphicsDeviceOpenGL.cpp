@@ -140,4 +140,10 @@ namespace PinkTopaz::Renderer::OpenGL {
     
     void GraphicsDeviceOpenGL::windowSizeChanged() {}
     
+    const glm::mat4& GraphicsDeviceOpenGL::getProjectionAdjustMatrix() const
+    {
+        static const glm::mat4 identity;
+        return identity;
+    }
+    
 } // namespace PinkTopaz::Renderer::OpenGL

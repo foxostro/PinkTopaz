@@ -202,4 +202,13 @@ namespace PinkTopaz::Renderer::Metal {
         _depthTexture.label = @"Depth";
     }
     
+    const glm::mat4& GraphicsDeviceMetal::getProjectionAdjustMatrix() const
+    {
+        static const glm::mat4 adjust(glm::vec4(1.0, 0.0, 0.0, 0.0),
+                                      glm::vec4(0.0, 1.0, 0.0, 0.0),
+                                      glm::vec4(0.0, 0.0, 0.5, 0.0),
+                                      glm::vec4(0.0, 0.0, 0.0, 1.0));
+        return adjust;
+    }
+    
 } // namespace PinkTopaz::Renderer::Metal

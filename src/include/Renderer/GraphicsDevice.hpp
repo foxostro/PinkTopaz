@@ -85,6 +85,17 @@ namespace PinkTopaz::Renderer {
         // Call this when the window size changes. This provides the opportunity
         // to update the underlying context or layers as needed.
         virtual void windowSizeChanged() = 0;
+        
+        // Returns a matrix that you should left-multiply against the projection
+        // matrix before sending to the shader. This corrects for differences
+        // in expected normalized device coordinates between different graphics
+        // APIs.
+        //
+        // Different expect to use different coordinate spaces for normalized
+        // device coordinates. For example, OpenGL uses an NDC space that's a
+        // cube [-1,+1] x [-1,+1] x [-1,+1] and Metal uses an NDC space that's
+        // a cuboid [-1,+1] x [-1,+1] x [0,+1].
+        virtual const glm::mat4& getProjectionAdjustMatrix() const = 0;
     };
     
     // Create a default graphics device for the system.

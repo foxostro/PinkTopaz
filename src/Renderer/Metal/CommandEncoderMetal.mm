@@ -70,8 +70,8 @@ namespace PinkTopaz::Renderer::Metal {
             .originY    = (double)viewport.y,
             .width      = (double)viewport.z,
             .height     = (double)viewport.w,
-            .znear      = 1.0,
-            .zfar       = 100.0
+            .znear      = 0.0,
+            .zfar       = 1.0
         }];
     }
     

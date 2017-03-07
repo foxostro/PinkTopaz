@@ -47,13 +47,15 @@ namespace PinkTopaz {
             cameraTransform = _activeCamera.component<Transform>()->getMatrix();
         }
         
+        const glm::mat4 adjust = _graphicsDevice->getProjectionAdjustMatrix();
+        
         // Update the uniform buffers so they include the most recent matrices.
         auto f = [&](entityx::Entity entity,
                      RenderableStaticMesh &mesh,
                      Transform &transform) {
             Renderer::TerrainUniforms uniforms = {
                 .view = cameraTransform * transform.getMatrix(),
-                .proj = _proj,
+                .proj = adjust * _proj,
             };
             mesh.uniforms->replace(sizeof(uniforms), &uniforms);
         };
