@@ -182,7 +182,7 @@ if(APPLE)
 	set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.foxostro.pinktopaz")
 
     add_custom_command(TARGET PinkTopaz POST_BUILD
-                       COMMAND xcrun -sdk macosx metal src/Library.metal -o /tmp/PinkTopaz.Library.air
+                       COMMAND xcrun -sdk macosx metal src/Library.metal -gline-tables-only -o /tmp/PinkTopaz.Library.air
                        COMMAND xcrun -sdk macosx metallib /tmp/PinkTopaz.Library.air -o res/Library.metallib
                        )
 
