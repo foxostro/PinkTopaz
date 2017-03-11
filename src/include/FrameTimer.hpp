@@ -10,6 +10,9 @@
 #define FrameTimer_hpp
 
 #include "Renderer/StringRenderer.hpp"
+#include "UniqueName.hpp"
+
+#define FRAME_TIMER(frameTimer) auto UNIQUE_NAME(token) = (frameTimer).token()
 
 namespace PinkTopaz {
     
@@ -17,16 +20,33 @@ namespace PinkTopaz {
     class FrameTimer
     {
     public:
+        class Token
+        {
+        public:
+            Token(FrameTimer &frameTimer) : _frameTimer(frameTimer)
+            {
+                _frameTimer.beginFrame();
+            }
+            
+            ~Token()
+            {
+                _frameTimer.endFrame();
+            }
+            
+        private:
+            FrameTimer &_frameTimer;
+        };
+        
         FrameTimer(Renderer::StringRenderer &stringRenderer);
         
         // Call at the beginning of the frame to start timing.
         void beginFrame();
         
-        // Call immediately before swapBuffers() to mark the end of the frame.
+        // Call after swapBuffers() to calculate the time and update the UI.
         void endFrame();
         
-        // Call after swapBuffers() to calculate the time and update the UI.
-        void afterFrame();
+        // The token will begin and end the frame at the edges of it's scope.
+        inline Token token() { return Token(*this); }
         
     private:
         Renderer::StringRenderer &_stringRenderer;
@@ -36,7 +56,7 @@ namespace PinkTopaz {
         unsigned _timeAccum;
         unsigned _countDown;
         bool _firstReportingPeriod;
-        unsigned _ticksBeginMs, _ticksEndMs;
+        unsigned _ticksBeginMs;
     };
     
 } // namespace PinkTopaz

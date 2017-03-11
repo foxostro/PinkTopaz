@@ -14,12 +14,11 @@ namespace PinkTopaz {
     
     FrameTimer::FrameTimer(Renderer::StringRenderer &stringRenderer)
      : _stringRenderer(stringRenderer),
-       _framesBetweenReport(100),
+       _framesBetweenReport(60),
        _timeAccum(0),
-       _countDown(0),
+       _countDown(60),
        _firstReportingPeriod(true),
-       _ticksBeginMs(0),
-       _ticksEndMs(0)
+       _ticksBeginMs(0)
     {}
     
     void FrameTimer::beginFrame()
@@ -29,11 +28,8 @@ namespace PinkTopaz {
     
     void FrameTimer::endFrame()
     {
-        _ticksEndMs = SDL_GetTicks();
-    }
-    
-    void FrameTimer::afterFrame()
-    {
+        unsigned _ticksEndMs = SDL_GetTicks();
+        
         // Report the average time between frames.
         unsigned ticksElapsedMs = _ticksEndMs - _ticksBeginMs;
         _timeAccum += ticksElapsedMs;

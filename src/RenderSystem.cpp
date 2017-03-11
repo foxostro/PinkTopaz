@@ -39,7 +39,7 @@ namespace PinkTopaz {
                               entityx::EventManager &events,
                               entityx::TimeDelta dt)
     {
-        _frameTimer.beginFrame();
+        FRAME_TIMER(_frameTimer);
         
         glm::mat4x4 cameraTransform;
         if (_activeCamera.valid()) {
@@ -85,9 +85,7 @@ namespace PinkTopaz {
         
         encoder->commit();
 
-        _frameTimer.endFrame();
         _graphicsDevice->swapBuffers();
-        _frameTimer.afterFrame();
     }
     
     void RenderSystem::receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)

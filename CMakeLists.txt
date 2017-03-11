@@ -70,6 +70,7 @@ set(SOURCE_FILES_MISC
     "src/Exception.cpp" "src/include/Exception.hpp"
     "src/include/RetinaSupport.h"
     "src/FrameTimer.cpp" "src/include/FrameTimer.hpp"
+    "src/include/UniqueName.hpp"
     )
 
 set(SOURCE_FILES_TEST
