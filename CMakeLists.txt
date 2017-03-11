@@ -188,14 +188,20 @@ if(APPLE)
                        COMMAND xcrun -sdk macosx metallib /tmp/PinkTopaz.Library.air -o res/Library.metallib
                        )
 
-	# On Mac OS, copy the SDL framework into the app bundle. Important for redistributing the game.
-	add_custom_command(TARGET PinkTopaz POST_BUILD
-	                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${SDL2_LIBRARY} $<TARGET_FILE_DIR:PinkTopaz>/../Frameworks/SDL2.framework
-                       )
+	## On Mac OS, copy the SDL framework into the app bundle. Important for redistributing the game.
+    ## TODO: Should I also package FreeType? Can I simply link to static libraries?
+	#add_custom_command(TARGET PinkTopaz POST_BUILD
+	#                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${SDL2_LIBRARY} $<TARGET_FILE_DIR:PinkTopaz>/../Frameworks/SDL2.framework
+    #                   )
 
 	# On Mac OS, copy the resources directory into the app bundle. Important for redistributing the game.
 	add_custom_command(TARGET PinkTopaz POST_BUILD
 	                   COMMAND ${CMAKE_COMMAND} -E copy_directory "./res" $<TARGET_FILE_DIR:PinkTopaz>/../Resources
+                       )
+
+    # On Mac OS, sign the app bundle.
+    add_custom_command(TARGET PinkTopaz POST_BUILD
+                       COMMAND ./sign_the_app_bundle $<TARGET_FILE_DIR:PinkTopaz>/../..
                        )
 endif(APPLE)
 
