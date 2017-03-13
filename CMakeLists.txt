@@ -4,6 +4,15 @@ set(APP_NAME "PinkTopaz")
 
 set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z -DMETAL_ENABLED")
 
+set(SOURCE_FILES_TERRAIN
+    "src/include/Terrain/Voxel.hpp"
+    "src/Terrain/VoxelData.cpp" "src/include/Terrain/VoxelData.hpp"
+    )
+
+set(SOURCE_FILES_TERRAIN_TEST
+    "src/test/Terrain/VoxelDataTest.cpp"
+    )
+
 set(SOURCE_FILES_OPENGL
     "src/include/Renderer/OpenGL/opengl.hpp"
     "src/Renderer/OpenGL/glUtilities.cpp" "src/include/Renderer/OpenGL/glUtilities.hpp"
@@ -71,10 +80,7 @@ set(SOURCE_FILES_MISC
     "src/include/RetinaSupport.h"
     "src/FrameTimer.cpp" "src/include/FrameTimer.hpp"
     "src/include/UniqueName.hpp"
-    )
-
-set(SOURCE_FILES_TEST
-    "src/test/test.cpp"
+    "src/include/AABB.hpp"
     )
 
 if(APPLE)
@@ -90,6 +96,7 @@ else()
 endif(APPLE)
 
 set(SOURCE_FILES
+    ${SOURCE_FILES_TERRAIN}
     ${SOURCE_FILES_OTHER_ECS}
     ${SOURCE_FILES_RENDERER}
     ${SOURCE_FILES_SYSTEMS}
@@ -101,12 +108,19 @@ set(SOURCE_FILES
     ${SOURCE_FILES_MISC}
     )
 
+set(SOURCE_FILES_TEST
+    ${SOURCE_FILES_TERRAIN_TEST}
+    ${SOURCE_FILES_TERRAIN}
+    )
+
+source_group("Terrain" FILES ${SOURCE_FILES_TERRAIN})
 source_group("ECS\\Systems" FILES ${SOURCE_FILES_SYSTEMS})
 source_group("ECS\\Components" FILES ${SOURCE_FILES_COMPONENTS})
 source_group("ECS\\Events" FILES ${SOURCE_FILES_EVENTS})
 source_group("ECS\\" FILES ${SOURCE_FILES_OTHER_ECS})
 source_group("Renderer" FILES ${SOURCE_FILES_RENDERER})
 source_group("Renderer\\OpenGL" FILES ${SOURCE_FILES_OPENGL})
+source_group("Renderer\\Metal" FILES ${SOURCE_FILES_METAL})
 source_group("Platform Support" FILES ${SOURCE_FILES_PLATFORM_SUPPORT})
 source_group("Misc" FILES ${SOURCE_FILES_MISC})
 
@@ -209,7 +223,9 @@ endif(APPLE)
 enable_testing()
 set(PROJECT_TEST_NAME ${APP_NAME}Test)
 find_package(GTest REQUIRED)
-include_directories(${GTEST_INCLUDE_DIRS})
+include_directories(${GTEST_INCLUDE_DIRS}
+	                "${PROJECT_SOURCE_DIR}/src/include"
+	                )
 add_executable(${PROJECT_TEST_NAME} ${SOURCE_FILES_TEST})
 target_link_libraries(${PROJECT_TEST_NAME} ${GTEST_BOTH_LIBRARIES})
 add_test(${PROJECT_TEST_NAME} ${PROJECT_TEST_NAME})
