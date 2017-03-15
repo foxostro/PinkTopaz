@@ -13,46 +13,47 @@
 #include "Renderer/TerrainVertex.hpp"
 
 #include <vector>
-#include <glm/mat4x4.hpp>
 
 namespace PinkTopaz::Renderer {
     
     class StaticMesh
     {
     public:
-        struct FileVertex
-        {
-            float position[3];
-            unsigned char color[4];
-            float texCoord[3];
-        };
+        // Default constructor. Creates an empty mesh.
+        StaticMesh();
         
-        struct Header
-        {
-            uint32_t magic;
-            uint32_t version;
-            uint32_t w, h, d;
-            int32_t numVerts;
-            uint32_t len;
-            FileVertex vertices[0];
-        };
+        // Constructor. Creates a mesh from the lost of vertices.
+        StaticMesh(const std::vector<TerrainVertex> &vertices);
         
-        StaticMesh(const char *filePath);
         ~StaticMesh() = default;
         
-        const Header *getHeader() const;
-        VertexFormat getVertexFormat() const;
-        std::vector<TerrainVertex> getVertices() const;
-        std::vector<uint8_t> getBufferData() const;
+        inline void addVertex(const TerrainVertex &vertex)
+        {
+            _vertices.push_back(vertex);
+        }
+        
+        inline const std::vector<TerrainVertex>& getVertices() const
+        {
+            return _vertices;
+        }
         
         inline size_t getVertexCount() const
         {
-            size_t count = getHeader()->numVerts;
-            return count;
+            return _vertices.size();
         }
         
+        inline const VertexFormat& getVertexFormat() const
+        {
+            return _vertexFormat;
+        }
+        
+        std::vector<uint8_t> getBufferData() const;
+        
     private:
-        std::vector<uint8_t> _bytes;
+        void initVertexFormat();
+        
+        VertexFormat _vertexFormat;
+        std::vector<TerrainVertex> _vertices;
     };
     
 } // namespace PinkTopaz::Renderer

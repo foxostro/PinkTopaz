@@ -15,6 +15,7 @@
 #include "WindowSizeChangedEvent.hpp"
 #include "KeypressEvent.hpp"
 #include "MouseMoveEvent.hpp"
+#include "Renderer/StaticMeshLoader.hpp"
 
 #include "SDL.h"
 #include "SDL_image.h"
@@ -46,8 +47,9 @@ namespace PinkTopaz {
         };
         auto sampler = graphicsDevice->makeTextureSampler(samplerDesc);
         
-        auto mesh = std::make_shared<Renderer::StaticMesh>("terrain.3d.bin");
-        auto vertexBufferData = mesh->getBufferData();
+        Renderer::StaticMeshLoader meshLoader("terrain.3d.bin");
+        auto mesh = meshLoader.getStaticMesh();
+        auto vertexBufferData = mesh.getBufferData();
         auto vertexBuffer = graphicsDevice->makeBuffer(vertexBufferData,
                                                        Renderer::StaticDraw,
                                                        Renderer::ArrayBuffer);
@@ -60,12 +62,12 @@ namespace PinkTopaz {
                                                         Renderer::UniformBuffer);
         vertexBuffer->addDebugMarker("Terrain Uniforms", 0, sizeof(uniforms));
         
-        auto shader = graphicsDevice->makeShader(mesh->getVertexFormat(),
+        auto shader = graphicsDevice->makeShader(mesh.getVertexFormat(),
                                                  "vert", "frag",
                                                  false);
         
         RenderableStaticMesh meshContainer = {
-            .vertexCount = mesh->getVertexCount(),
+            .vertexCount = mesh.getVertexCount(),
             .buffer = vertexBuffer,
             .uniforms = uniformBuffer,
             .shader = shader,
