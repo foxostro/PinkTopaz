@@ -155,6 +155,7 @@ namespace PinkTopaz::Renderer::Metal {
     GraphicsDeviceMetal::makeBuffer(const std::vector<uint8_t> &data,
                                     BufferUsage usage, BufferType bufferType)
     {
+        assert(data.size() > 0);
         return makeBuffer(data.size(), &data[0], usage, bufferType);
     }
     
@@ -164,6 +165,7 @@ namespace PinkTopaz::Renderer::Metal {
                                     BufferUsage usage,
                                     BufferType type)
     {
+        assert(size > 0);
         auto buffer = std::make_shared<BufferMetal>(_metalLayer.device, size,
                                                     bufferData, usage, type);
         return std::dynamic_pointer_cast<Buffer>(buffer);

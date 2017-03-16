@@ -16,10 +16,12 @@
 #include "KeypressEvent.hpp"
 #include "MouseMoveEvent.hpp"
 #include "Renderer/StaticMeshLoader.hpp"
+#include "Terrain/Mesher.hpp"
 
 #include "SDL.h"
 #include "SDL_image.h"
 #include <map>
+#include <glm/glm.hpp>
 
 namespace PinkTopaz {
     
@@ -47,8 +49,37 @@ namespace PinkTopaz {
         };
         auto sampler = graphicsDevice->makeTextureSampler(samplerDesc);
         
-        Renderer::StaticMeshLoader meshLoader("terrain.3d.bin");
-        auto mesh = meshLoader.getStaticMesh();
+        // Create a voxel field where each voxel contains the distance from the
+        // origin. We then extract the isosurface where value=16 to get a mesh
+        // for a sphere with a radius of 16.
+        
+        const AABB bounds = {
+            .center = glm::vec3(0.0f, 0.0f, 0.0f),
+            .extent = glm::vec3(32.0f, 32.0f, 32.0f)
+        };
+        
+        Terrain::VoxelData voxels(bounds, glm::ivec3(64, 64, 64));
+        
+        const glm::vec3 mins = bounds.center - bounds.extent;
+        const glm::vec3 maxs = bounds.center + bounds.extent;
+        const glm::vec3 dim = voxels.getVoxelDimensions();
+        glm::vec3 pos;
+        
+        for(pos.z = mins.z; pos.z < maxs.z; pos.z += dim.z)
+        {
+            for(pos.x = mins.x; pos.x < maxs.x; pos.x += dim.x)
+            {
+                for(pos.y = mins.y; pos.y < maxs.y; pos.y += dim.y)
+                {
+                    float distance = glm::length(pos);
+                    voxels.set(pos, Terrain::Voxel(distance));
+                }
+            }
+        }
+        
+        Terrain::Mesher mesher;
+        auto mesh = mesher.extract(voxels, 16.0f);
+        
         auto vertexBufferData = mesh.getBufferData();
         auto vertexBuffer = graphicsDevice->makeBuffer(vertexBufferData,
                                                        Renderer::StaticDraw,

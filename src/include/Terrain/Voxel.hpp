@@ -16,6 +16,7 @@ namespace PinkTopaz::Terrain {
         float value;
         
         Voxel() : value(0.0f) {}
+        Voxel(float v) : value(v) {}
     };
 
 } // namespace PinkTopaz::Terrain
