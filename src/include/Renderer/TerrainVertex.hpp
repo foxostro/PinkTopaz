@@ -6,22 +6,27 @@
 //
 //
 
+#ifndef TerrainVertex_hpp
+#define TerrainVertex_hpp
+
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 
 namespace PinkTopaz::Renderer {
-
-struct TerrainVertex
-{
-    glm::vec4 position;
-    glm::vec4 color;
-    glm::vec3 texCoord;
-};
-
-struct TerrainUniforms
-{
-    glm::mat4 view, proj;
-};
-
+    
+    struct TerrainVertex
+    {
+        glm::vec4 position;
+        glm::vec4 color;
+        glm::vec3 texCoord;
+    };
+    
+    struct TerrainUniforms
+    {
+        glm::mat4 view, proj;
+    };
+    
 } // namespace PinkTopaz::Renderer
+
+#endif /* TerrainVertex_hpp */

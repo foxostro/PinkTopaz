@@ -7,6 +7,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z -DMETAL_ENABLED")
 set(SOURCE_FILES_TERRAIN
     "src/include/Terrain/Voxel.hpp"
     "src/Terrain/VoxelData.cpp" "src/include/Terrain/VoxelData.hpp"
+    "src/Terrain/Mesher.cpp" "src/include/Terrain/Mesher.hpp"
     )
 
 set(SOURCE_FILES_TERRAIN_TEST
@@ -82,6 +83,7 @@ set(SOURCE_FILES_MISC
     "src/FrameTimer.cpp" "src/include/FrameTimer.hpp"
     "src/include/UniqueName.hpp"
     "src/include/AABB.hpp"
+    "src/include/math.hpp"
     )
 
 if(APPLE)
