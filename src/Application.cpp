@@ -8,7 +8,7 @@
 
 #include "Application.hpp"
 
-#include "config.h"
+#include "pinktopaz_config.h"
 #include "FileUtilities.hpp"
 #include "RetinaSupport.h"
 #include "World.hpp"

@@ -2,13 +2,23 @@ PinkTopaz (working title)
 
 This project is intended to be a simple third-person shooter video game.
 
-Generate an Xcode project with:
+Building Pink Topaz
+===================
 
-	% cmake -GXcode .
+1. Install conan:
 
-Dependencies:
-* SDL2 <https://www.libsdl.org/download-2.0.php>
-* SDL2_image <https://www.libsdl.org/projects/SDL_image/>
-* GLM <http://glm.g-truc.net/0.9.7/index.html>
-* EntityX <https://github.com/alecthomas/entityx>
-* Google Test <https://github.com/google/googletest>
+    % pip install conan
+
+2. Use conan to install dependencies:
+
+    % cd $PINK_TOPAZ_ROOT_DIR
+    % conan install . --build=missing
+
+3. Install googletest too. (Not presently configured in the conanfile.)
+
+4. Actually build the project:
+
+    % cmake -GXcode .
+    % cmake --build . --target PinkTopaz
+
+TODO: The conan.io package for entityx always builds as shared and that makes it slightly harder to package. The app will not run on a non-dev machine.

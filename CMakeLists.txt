@@ -2,16 +2,15 @@ cmake_minimum_required (VERSION 3.6)
 project (PinkTopaz)
 set(APP_NAME "PinkTopaz")
 
+include(conanbuildinfo.cmake)
+conan_basic_setup()
+
 set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z -DMETAL_ENABLED")
 
 set(SOURCE_FILES_TERRAIN
     "src/include/Terrain/Voxel.hpp"
     "src/Terrain/VoxelData.cpp" "src/include/Terrain/VoxelData.hpp"
     "src/Terrain/Mesher.cpp" "src/include/Terrain/Mesher.hpp"
-    )
-
-set(SOURCE_FILES_TERRAIN_TEST
-    "src/test/Terrain/VoxelDataTest.cpp"
     )
 
 set(SOURCE_FILES_OPENGL
@@ -111,11 +110,6 @@ set(SOURCE_FILES
     ${SOURCE_FILES_MISC}
     )
 
-set(SOURCE_FILES_TEST
-    ${SOURCE_FILES_TERRAIN_TEST}
-    ${SOURCE_FILES_TERRAIN}
-    )
-
 source_group("Terrain" FILES ${SOURCE_FILES_TERRAIN})
 source_group("ECS\\Systems" FILES ${SOURCE_FILES_SYSTEMS})
 source_group("ECS\\Components" FILES ${SOURCE_FILES_COMPONENTS})
@@ -131,10 +125,6 @@ add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(OpenGL REQUIRED)
-find_package(GLM REQUIRED)
-find_package(SDL2_image REQUIRED)
-find_package(SDL2 REQUIRED)
-find_package(Freetype REQUIRED)
 
 # Apple's "Metal" graphics library.
 if(APPLE)
@@ -158,39 +148,17 @@ else()
     set(MACOS_INCLUDE_DIRS "")
 endif(APPLE)
 
-# EntityX ECS library.
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PC_LIBENTITYX QUIET entityx)
-set(ENTITYX_CFLAGS ${PC_LIBENTITYX_CFLAGS_OTHER})
-
-find_path(ENTITYX_INCLUDE_DIR entityx/entityx.h
-          HINTS ${PC_LIBENTITYX_INCLUDEDIR} ${PC_LIBENTITYX_INCLUDE_DIRS}
-          PATH_SUFFIXES
-          )
-
-find_library(ENTITYX_LIBRARY NAMES entityx
-             HINTS ${PC_LIBENTITYX_LIBDIR} ${PC_LIBENTITYX_LIBRARY_DIRS}
-             )
-
 # Cmake configures a header file with some macros.
-configure_file("${PROJECT_SOURCE_DIR}/src/config.h.in" "${PROJECT_BINARY_DIR}/config.h")
+configure_file("${PROJECT_SOURCE_DIR}/src/pinktopaz_config.h.in"
+               "${PROJECT_SOURCE_DIR}/src/pinktopaz_config.h")
 
 include_directories("${PROJECT_SOURCE_DIR}/src/include"
-                    ${SDL2_INCLUDE_DIR}
-                    ${SDL2_IMAGE_INCLUDE_DIR}
-                    ${FREETYPE_INCLUDE_DIR_ft2build}
-                    ${GLM_INCLUDE_DIR}
                     ${OPENGL_INCLUDE_DIRS}
-                    ${PROJECT_BINARY_DIR}
-                    ${ENTITYX_INCLUDE_DIR}
                     ${MACOS_INCLUDE_DIRS}
                     )
 target_link_libraries(PinkTopaz
-                      ${SDL2_LIBRARY}
-                      ${SDL2_IMAGE_LIBRARY}
-                      ${FREETYPE_LIBRARY}
+                      ${CONAN_LIBS}
                       ${OPENGL_LIBRARIES}
-                      ${ENTITYX_LIBRARY}
                       ${MACOS_LIBRARIES}
                       )
 
@@ -227,8 +195,14 @@ enable_testing()
 set(PROJECT_TEST_NAME ${APP_NAME}Test)
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS}
-	                "${PROJECT_SOURCE_DIR}/src/include"
-	                )
-add_executable(${PROJECT_TEST_NAME} ${SOURCE_FILES_TEST})
-target_link_libraries(${PROJECT_TEST_NAME} ${GTEST_BOTH_LIBRARIES})
+                    "${PROJECT_SOURCE_DIR}/src/include"
+                    )
+add_executable(${PROJECT_TEST_NAME}
+               "src/test/Terrain/VoxelDataTest.cpp"
+               "src/Terrain/VoxelData.cpp"
+               "src/Renderer/StaticMesh.cpp"
+               )
+target_link_libraries(${PROJECT_TEST_NAME}
+                      ${GTEST_BOTH_LIBRARIES}
+                      )
 add_test(${PROJECT_TEST_NAME} ${PROJECT_TEST_NAME})

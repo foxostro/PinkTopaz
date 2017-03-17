@@ -8,7 +8,11 @@ Release/
 PinkTopaz.build/
 PinkTopaz.xcodeproj/
 cmake_install.cmake
-config.h
 CTestTestfile.cmake
 Testing/
 *.metallib
+bin/
+conanbuildinfo.cmake
+conanfile.txt
+conaninfo.txt
+src/pinktopaz_config.h
