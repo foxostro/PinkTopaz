@@ -1,6 +1,6 @@
 PinkTopaz (working title)
 
-This project is intended to be a simple third-person shooter video game.
+Cross-platform voxel engine. Some day, this might eventually become a video game.
 
 Building Pink Topaz
 ===================
@@ -21,4 +21,3 @@ Building Pink Topaz
     % cmake -GXcode .
     % cmake --build . --target PinkTopaz
 
-TODO: The conan.io package for entityx always builds as shared and that makes it slightly harder to package. The app will not run on a non-dev machine.
