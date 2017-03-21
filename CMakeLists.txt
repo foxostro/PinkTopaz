@@ -10,6 +10,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z -DMETAL_ENABLED")
 set(SOURCE_FILES_TERRAIN
     "src/include/Terrain/Voxel.hpp"
     "src/Terrain/VoxelData.cpp" "src/include/Terrain/VoxelData.hpp"
+    "src/Terrain/VoxelDataLoader.cpp" "src/include/Terrain/VoxelDataLoader.hpp"
     "src/Terrain/Mesher.cpp" "src/include/Terrain/Mesher.hpp"
     )
 
