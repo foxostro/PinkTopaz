@@ -10,6 +10,7 @@
 #define StaticMeshLoader_hpp
 
 #include "Renderer/StaticMesh.hpp"
+#include <boost/filesystem.hpp>
 
 namespace PinkTopaz::Renderer {
     
@@ -36,7 +37,7 @@ namespace PinkTopaz::Renderer {
         StaticMeshLoader();
         ~StaticMeshLoader() = default;
         
-        StaticMesh load(const char *filePath);
+        StaticMesh load(const boost::filesystem::path &path);
         
     private:
         const uint32_t GEO_MAGIC, GEO_VERSION;

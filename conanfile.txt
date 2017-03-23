@@ -4,7 +4,7 @@ SDL2_image/2.0.1@lasote/stable
 freetype/2.6.3@lasote/stable
 glm/0.9.7.6@dlarudgus20/stable
 EntityX/1.2.0@foxostro/testing
-##Boost/1.60.0@lasote/stable
+Boost/1.60.0@lasote/stable
 ##gtest/1.8.0@lasote/stable
 
 [options]

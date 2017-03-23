@@ -22,6 +22,7 @@
 #include "SDL_image.h"
 #include <map>
 #include <glm/glm.hpp>
+#include <boost/filesystem.hpp>
 
 namespace PinkTopaz {
     
@@ -178,9 +179,10 @@ namespace PinkTopaz {
         // Set the current working directory to the SDL data path.
         // On Mac OS, this is the bundle "Resources" directory.
         {
-            char *path = SDL_GetBasePath();
-            setCurrentWorkingDirectory(path);
-            SDL_free(path);
+            char *pathStr = SDL_GetBasePath();
+            boost::filesystem::path cwd(pathStr);
+            boost::filesystem::current_path(cwd);
+            SDL_free(pathStr);
         }
         
         SDL_LogSetPriority(SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_INFO);

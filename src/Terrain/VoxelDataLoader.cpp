@@ -17,9 +17,9 @@ namespace PinkTopaz::Terrain {
      : VOXEL_MAGIC('lxov'), VOXEL_VERSION(0)
     {}
     
-    VoxelData VoxelDataLoader::load(const char *filePath)
+    VoxelData VoxelDataLoader::load(const boost::filesystem::path &path)
     {
-        std::vector<uint8_t> bytes = binaryFileContents(filePath);
+        std::vector<uint8_t> bytes = binaryFileContents(path);
         
         const Header &header = *((Header *)bytes.data());
         

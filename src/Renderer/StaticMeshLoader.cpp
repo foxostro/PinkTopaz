@@ -17,9 +17,9 @@ namespace PinkTopaz::Renderer {
      : GEO_MAGIC('moeg'), GEO_VERSION(0)
     {}
     
-    StaticMesh StaticMeshLoader::load(const char *fileName)
+    StaticMesh StaticMeshLoader::load(const boost::filesystem::path &path)
     {
-        std::vector<uint8_t> _bytes = binaryFileContents(fileName);
+        std::vector<uint8_t> _bytes = binaryFileContents(path);
         
         const Header &header = *((Header *)_bytes.data());
         

@@ -10,6 +10,7 @@
 #define VoxelDataLoader_hpp
 
 #include "Terrain/VoxelData.hpp"
+#include <boost/filesystem.hpp>
 
 namespace PinkTopaz::Terrain {
     
@@ -52,7 +53,7 @@ namespace PinkTopaz::Terrain {
         VoxelDataLoader();
         ~VoxelDataLoader() = default;
         
-        VoxelData load(const char *filePath);
+        VoxelData load(const boost::filesystem::path &path);
         
     private:
         const uint32_t VOXEL_MAGIC, VOXEL_VERSION;

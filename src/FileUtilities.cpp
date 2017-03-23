@@ -22,8 +22,10 @@ namespace PinkTopaz {
         }
     }
     
-    std::string stringFromFileContents(const char *filePath)
+    std::string stringFromFileContents(const boost::filesystem::path &path)
     {
+        const char *filePath = path.c_str();
+        
         std::ifstream in(filePath, std::ios::in | std::ios::binary);
 
         if (!in) {
@@ -40,8 +42,10 @@ namespace PinkTopaz {
         return contents;
     }
     
-    std::vector<uint8_t> binaryFileContents(const char *filePath)
+    std::vector<uint8_t> binaryFileContents(const boost::filesystem::path &path)
     {
+        const char *filePath = path.c_str();
+        
         std::ifstream in(filePath, std::ios::in | std::ios::binary);
         
         if (!in) {

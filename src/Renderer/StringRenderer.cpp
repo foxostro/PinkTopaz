@@ -14,12 +14,14 @@
 #include "SDL.h"
 #include "SDL_image.h"
 
+#include <boost/filesystem.hpp>
+
 namespace PinkTopaz::Renderer {
     
-    static std::string getPrefPath()
+    static boost::filesystem::path getPrefPath()
     {
         char *s = SDL_GetPrefPath("foxostro", "PinkTopaz");
-        std::string prefPath(s);
+        boost::filesystem::path prefPath(s);
         SDL_free(s);
         return prefPath;
     }
@@ -230,7 +232,7 @@ namespace PinkTopaz::Renderer {
         return atlasSurface;
     }
     
-    SDL_Surface* StringRenderer::genTextureAtlas(const std::string &fontName,
+    SDL_Surface* StringRenderer::genTextureAtlas(const boost::filesystem::path &fontName,
                                                  unsigned fontSize)
     {
         FT_Library ft;
@@ -260,11 +262,12 @@ namespace PinkTopaz::Renderer {
     }
     
     std::shared_ptr<Texture>
-    StringRenderer::makeTextureAtlas(const std::string &fontName,
+    StringRenderer::makeTextureAtlas(const boost::filesystem::path &fontName,
                                      unsigned fontSize)
     {
         // Font texture atlas is cached between runs of the game.
-        std::string atlasFileName = getPrefPath() + "font" + std::to_string(fontSize) + ".png";
+        boost::filesystem::path baseName("font" + std::to_string(fontSize) + ".png");
+        boost::filesystem::path atlasFileName = getPrefPath() / baseName;
         SDL_Surface *atlasSurface = genTextureAtlas(fontName, fontSize);
         IMG_SavePNG(atlasSurface, atlasFileName.c_str());
         SDL_Log("Saving font texture atlas to file: %s", atlasFileName.c_str());
@@ -286,7 +289,7 @@ namespace PinkTopaz::Renderer {
     }
 
     StringRenderer::StringRenderer(const std::shared_ptr<GraphicsDevice> &dev,
-                                   const std::string &fontName,
+                                   const boost::filesystem::path &fontName,
                                    unsigned fontSize)
      : _graphicsDevice(dev)
     {
