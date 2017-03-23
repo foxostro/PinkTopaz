@@ -33,24 +33,13 @@ namespace PinkTopaz::Renderer {
             FileVertex vertices[0];
         };
         
-        StaticMeshLoader(const char *filePath);
+        StaticMeshLoader();
         ~StaticMeshLoader() = default;
         
-        const Header& getHeader() const;
-        std::vector<TerrainVertex> getVertices() const;
-        std::vector<uint8_t> getBufferData() const;
-        
-        inline size_t getVertexCount() const
-        {
-            size_t count = getHeader().numVerts;
-            return count;
-        }
-        
-        StaticMesh getStaticMesh() const;
+        StaticMesh load(const char *filePath);
         
     private:
         const uint32_t GEO_MAGIC, GEO_VERSION;
-        std::vector<uint8_t> _bytes;
     };
     
 } // namespace PinkTopaz::Renderer

@@ -49,16 +49,13 @@ namespace PinkTopaz::Terrain {
             FileVoxel voxels[0];
         };
         
-        VoxelDataLoader(const char *filePath);
+        VoxelDataLoader();
         ~VoxelDataLoader() = default;
         
-        const Header& getHeader() const;
-        
-        VoxelData getVoxelData() const;
+        VoxelData load(const char *filePath);
         
     private:
         const uint32_t VOXEL_MAGIC, VOXEL_VERSION;
-        std::vector<uint8_t> _bytes;
     };
     
 } // namespace PinkTopaz::Terrain

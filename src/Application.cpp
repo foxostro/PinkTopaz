@@ -27,6 +27,8 @@ namespace PinkTopaz {
     
     RenderableStaticMesh Application::createTerrainMesh(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
     {
+        Terrain::VoxelDataLoader voxelDataLoader;
+        
         // Load terrain texture array from a single image.
         // TODO: create a TextureArrayLoader class to encapsulate tex loading.
         SDL_Surface *surface = IMG_Load("terrain.png");
@@ -49,8 +51,7 @@ namespace PinkTopaz {
         };
         auto sampler = graphicsDevice->makeTextureSampler(samplerDesc);
         
-        Terrain::VoxelDataLoader voxelDataLoader("0_0_0.voxels.dat");
-        Terrain::VoxelData voxels = voxelDataLoader.getVoxelData();
+        Terrain::VoxelData voxels = voxelDataLoader.load("0_0_0.voxels.dat");
         
         // The voxel file uses a binary SOLID/EMPTY flag for voxels. So, we get
         // values that are either 0.0 or 1.0.

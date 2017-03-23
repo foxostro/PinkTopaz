@@ -13,12 +13,15 @@
 
 namespace PinkTopaz::Renderer {
     
-    StaticMeshLoader::StaticMeshLoader(const char *filePath)
+    StaticMeshLoader::StaticMeshLoader()
      : GEO_MAGIC('moeg'), GEO_VERSION(0)
+    {}
+    
+    StaticMesh StaticMeshLoader::load(const char *fileName)
     {
-        _bytes = binaryFileContents(filePath);
+        std::vector<uint8_t> _bytes = binaryFileContents(fileName);
         
-        const Header &header = getHeader();
+        const Header &header = *((Header *)_bytes.data());
         
         if (header.magic != GEO_MAGIC) {
             throw Exception("Unexpected magic number in geometry data file: found %d but expected %d", header.magic, GEO_MAGIC);
@@ -31,16 +34,7 @@ namespace PinkTopaz::Renderer {
         if (header.len != (header.numVerts * sizeof(FileVertex))) {
             throw Exception("Unexpected number of bytes used in geometry data file.");
         }
-    }
-    
-    const StaticMeshLoader::Header& StaticMeshLoader::getHeader() const
-    {
-        return *((Header *)_bytes.data());
-    }
-    
-    std::vector<TerrainVertex> StaticMeshLoader::getVertices() const
-    {
-        const Header &header = getHeader();
+        
         std::vector<TerrainVertex> vertices(header.numVerts);
         
         for (size_t i = 0, n = header.numVerts; i < n; ++i)
@@ -63,12 +57,7 @@ namespace PinkTopaz::Renderer {
             gpuVertex.texCoord[2] = fileVertex.texCoord[2];
         }
         
-        return vertices;
-    }
-    
-    StaticMesh StaticMeshLoader::getStaticMesh() const
-    {
-        return StaticMesh(getVertices());
+        return StaticMesh(vertices);
     }
 
 } // namespace PinkTopaz::Renderer
