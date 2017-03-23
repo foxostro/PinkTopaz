@@ -16,7 +16,7 @@
 #include "KeypressEvent.hpp"
 #include "MouseMoveEvent.hpp"
 #include "Terrain/VoxelDataLoader.hpp"
-#include "Terrain/Mesher.hpp"
+#include "Terrain/MesherMarchingCubes.hpp"
 
 #include "SDL.h"
 #include "SDL_image.h"
@@ -56,8 +56,8 @@ namespace PinkTopaz {
         
         // The voxel file uses a binary SOLID/EMPTY flag for voxels. So, we get
         // values that are either 0.0 or 1.0.
-        Terrain::Mesher mesher;
-        auto mesh = mesher.extract(voxels, 0.5f);
+        std::shared_ptr<Terrain::Mesher> mesher(new Terrain::MesherMarchingCubes());
+        auto mesh = mesher->extract(voxels, 0.5f);
         
         auto vertexBufferData = mesh.getBufferData();
         auto vertexBuffer = graphicsDevice->makeBuffer(vertexBufferData,

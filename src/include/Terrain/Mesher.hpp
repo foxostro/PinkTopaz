@@ -14,33 +14,18 @@
 
 namespace PinkTopaz::Terrain {
     
-    // Produces meshes from blocks of voxels.
+    // Accepts voxels and produces a triangle mesh for the specified isosurface.
     class Mesher
     {
     public:
+        virtual ~Mesher() = default;
+        
+        // Returns a triangle mesh for the specified isosurface.
+        virtual Renderer::StaticMesh
+        extract(const VoxelData &voxels, float isosurface) = 0;
+        
+    protected:
         Mesher() = default;
-        ~Mesher() = default;
-        
-        // Produces a mesh from a block of voxels.
-        Renderer::StaticMesh extract(const VoxelData &voxels, float isosurface);
-        
-    private:
-        struct CubeVertex
-        {
-            const Voxel &voxel;
-            const glm::vec3 &worldPos;
-            
-            CubeVertex(const VoxelData &voxels, const glm::vec3 &w)
-            : voxel(voxels.get(w)), worldPos(w)
-            {}
-        };
-        
-        static constexpr int NUM_CUBE_EDGES = 12;
-        static constexpr int NUM_CUBE_VERTS = 8;
-        
-        void polygonizeGridCell(Renderer::StaticMesh &geometry,
-                                const std::array<CubeVertex, NUM_CUBE_VERTS> &cube,
-                                float isosurface);
     };
     
 } // namespace PinkTopaz::Terrain

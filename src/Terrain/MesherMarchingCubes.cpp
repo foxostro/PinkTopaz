@@ -1,12 +1,12 @@
 //
-//  Mesher.cpp
+//  MesherMarchingCubes.cpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 3/14/16.
 //
 //
 
-#include "Terrain/Mesher.hpp"
+#include "Terrain/MesherMarchingCubes.hpp"
 #include "Renderer/TerrainVertex.hpp"
 #include "math.hpp" // for clamp
 #include <glm/glm.hpp>
@@ -22,9 +22,9 @@ namespace PinkTopaz::Terrain {
     static const glm::vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
     static const glm::vec3 texCoord(0.0f, 0.0f, 0.0f);
     
-    void Mesher::polygonizeGridCell(Renderer::StaticMesh &geometry,
-                                    const std::array<CubeVertex, NUM_CUBE_VERTS> &cube,
-                                    float isosurface)
+    void MesherMarchingCubes::polygonizeGridCell(Renderer::StaticMesh &geometry,
+                                                 const std::array<CubeVertex, NUM_CUBE_VERTS> &cube,
+                                                 float isosurface)
     {
         // Based on Paul Bourke's Marching Cubes algorithm at
         // <http://paulbourke.net/geometry/polygonise/>. The edge and tri tables
@@ -95,7 +95,7 @@ namespace PinkTopaz::Terrain {
     }
     
     Renderer::StaticMesh
-    Mesher::extract(const VoxelData &voxels, float isosurface)
+    MesherMarchingCubes::extract(const VoxelData &voxels, float isosurface)
     {
         Renderer::StaticMesh geometry;
         
