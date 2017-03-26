@@ -5,14 +5,15 @@ freetype/2.6.3@lasote/stable
 glm/0.9.7.6@dlarudgus20/stable
 EntityX/1.2.0@foxostro/testing
 Boost/1.60.0@lasote/stable
-##gtest/1.8.0@lasote/stable
+gtest/1.8.0@lasote/stable
 
 [options]
 SDL2:shared=False
 SDL2_image:shared=False
 freetype:shared=False
 EntityX:shared=False
-##gtest:shared=False
+EntityX:benchmarks=False
+gtest:shared=False
 
 [generators]
 cmake

@@ -5,7 +5,11 @@ set(APP_NAME "PinkTopaz")
 include(conanbuildinfo.cmake)
 conan_basic_setup()
 
-set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z -DMETAL_ENABLED")
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS "/std:c++latest")
+else()
+    set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z -DMETAL_ENABLED")
+endif()
 
 set(SOURCE_FILES_TERRAIN
     "src/include/Terrain/Voxel.hpp"
@@ -195,9 +199,7 @@ endif(APPLE)
 # Set up unit test support.
 enable_testing()
 set(PROJECT_TEST_NAME ${APP_NAME}Test)
-find_package(GTest REQUIRED)
-include_directories(${GTEST_INCLUDE_DIRS}
-                    "${PROJECT_SOURCE_DIR}/src/include"
+include_directories("${PROJECT_SOURCE_DIR}/src/include"
                     )
 add_executable(${PROJECT_TEST_NAME}
                "src/test/Terrain/VoxelDataTest.cpp"
@@ -205,6 +207,7 @@ add_executable(${PROJECT_TEST_NAME}
                "src/Renderer/StaticMesh.cpp"
                )
 target_link_libraries(${PROJECT_TEST_NAME}
-                      ${GTEST_BOTH_LIBRARIES}
+                      ${CONAN_LIBS}
+                      ${OPENGL_LIBRARIES}
                       )
 add_test(${PROJECT_TEST_NAME} ${PROJECT_TEST_NAME})
