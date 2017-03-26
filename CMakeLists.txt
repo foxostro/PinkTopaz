@@ -175,12 +175,6 @@ if(APPLE)
                        COMMAND xcrun -sdk macosx metallib /tmp/PinkTopaz.Library.air -o res/Library.metallib
                        )
 
-	## On Mac OS, copy the SDL framework into the app bundle. Important for redistributing the game.
-    ## TODO: Should I also package FreeType? Can I simply link to static libraries?
-	#add_custom_command(TARGET PinkTopaz POST_BUILD
-	#                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${SDL2_LIBRARY} $<TARGET_FILE_DIR:PinkTopaz>/../Frameworks/SDL2.framework
-    #                   )
-
 	# On Mac OS, copy the resources directory into the app bundle. Important for redistributing the game.
 	add_custom_command(TARGET PinkTopaz POST_BUILD
 	                   COMMAND ${CMAKE_COMMAND} -E copy_directory "./res" $<TARGET_FILE_DIR:PinkTopaz>/../Resources
@@ -195,7 +189,6 @@ endif(APPLE)
 # Set up unit test support.
 enable_testing()
 set(PROJECT_TEST_NAME ${APP_NAME}Test)
-find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS}
                     "${PROJECT_SOURCE_DIR}/src/include"
                     )
@@ -205,6 +198,7 @@ add_executable(${PROJECT_TEST_NAME}
                "src/Renderer/StaticMesh.cpp"
                )
 target_link_libraries(${PROJECT_TEST_NAME}
-                      ${GTEST_BOTH_LIBRARIES}
+                      ${CONAN_LIBS_GTEST}
+                      ${CONAN_LIBS_BOOST}
                       )
 add_test(${PROJECT_TEST_NAME} ${PROJECT_TEST_NAME})

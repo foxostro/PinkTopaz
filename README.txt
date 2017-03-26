@@ -14,10 +14,7 @@ Building Pink Topaz
     % cd $PINK_TOPAZ_ROOT_DIR
     % conan install . --build=missing
 
-3. Install googletest too. (Not presently configured in the conanfile.)
-
 4. Actually build the project:
 
     % cmake -GXcode .
     % cmake --build . --target PinkTopaz
-
