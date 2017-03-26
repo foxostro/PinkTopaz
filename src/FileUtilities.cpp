@@ -10,17 +10,9 @@
 #include "Exception.hpp"
 #include <fstream>
 #include <streambuf>
-#include <unistd.h> // for chdir
 #include "SDL.h"
 
 namespace PinkTopaz {
-    
-    void setCurrentWorkingDirectory(const char *path)
-    {
-        if (::chdir(path) < 0) {
-            throw Exception("chdir failed: %s, path=%s\n", strerror(errno), path);
-        }
-    }
     
     std::string stringFromFileContents(const boost::filesystem::path &path)
     {
