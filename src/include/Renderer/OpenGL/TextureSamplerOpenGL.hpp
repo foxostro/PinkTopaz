@@ -10,9 +10,9 @@
 #define TextureSamplerOpenGL_hpp
 
 #include "Renderer/TextureSampler.hpp"
-#include "Renderer/OpenGL/opengl.hpp"
+#include "GL/glew.h"
 
-namespace PinkTopaz::Renderer::OpenGL {
+namespace Renderer {
     
     // The OpenGL address mode to use when sampling, as implied by `mode'.
     GLint texturSamplerAddressModeEnum(TextureSamplerAddressMode mode);
@@ -34,6 +34,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         GLuint _handle;
     };
     
-} // namespace PinkTopaz::Renderer::OpenGL
+} // namespace Renderer
 
 #endif /* TextureSamplerOpenGL_hpp */

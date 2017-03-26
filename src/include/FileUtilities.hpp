@@ -13,11 +13,7 @@
 #include <vector>
 #include <boost/filesystem.hpp>
 
-namespace PinkTopaz {
-    
-    std::string stringFromFileContents(const boost::filesystem::path &path);
-    std::vector<uint8_t> binaryFileContents(const boost::filesystem::path &path);
-
-} // namespace PinkTopaz
+std::string stringFromFileContents(const boost::filesystem::path &path);
+std::vector<uint8_t> binaryFileContents(const boost::filesystem::path &path);
 
 #endif /* FileUtilities_hpp */

@@ -11,7 +11,7 @@
 
 #include "Terrain/Mesher.hpp"
 
-namespace PinkTopaz::Terrain {
+namespace Terrain {
     
     // Accepts voxels and produces a triangle mesh for the specified isosurface.
     class MesherMarchingCubes : public Mesher
@@ -43,6 +43,6 @@ namespace PinkTopaz::Terrain {
                                 float isosurface);
     };
     
-} // namespace PinkTopaz::Terrain
+} // namespace Terrain
 
 #endif /* MesherMarchingCubes_hpp */

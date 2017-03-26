@@ -14,7 +14,7 @@
 
 #include <vector>
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     class StaticMesh
     {
@@ -56,6 +56,6 @@ namespace PinkTopaz::Renderer {
         std::vector<TerrainVertex> _vertices;
     };
     
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer
 
 #endif /* StaticMesh_hpp */

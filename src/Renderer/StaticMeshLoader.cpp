@@ -11,7 +11,7 @@
 #include "Exception.hpp"
 #include "Renderer/StaticMeshLoader.hpp"
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     StaticMeshLoader::StaticMeshLoader()
      : GEO_MAGIC('moeg'), GEO_VERSION(0)
@@ -60,4 +60,4 @@ namespace PinkTopaz::Renderer {
         return StaticMesh(vertices);
     }
 
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer

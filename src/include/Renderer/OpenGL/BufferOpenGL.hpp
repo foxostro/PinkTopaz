@@ -10,9 +10,10 @@
 #define BufferOpenGL_hpp
 
 #include "Renderer/Buffer.hpp"
-#include "Renderer/OpenGL/opengl.hpp"
 
-namespace PinkTopaz::Renderer::OpenGL {
+#include "GL/glew.h"
+
+namespace Renderer {
     
     GLenum getBufferTypeEnum(BufferType type);
     
@@ -66,6 +67,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         void internalReplace(size_t bufferSize, const void *bufferData);
     };
     
-} // namespace PinkTopaz::Renderer::OpenGL
+} // namespace Renderer
 
 #endif /* BufferOpenGL_hpp */

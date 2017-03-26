@@ -15,7 +15,7 @@
 using glm::vec3;
 using glm::vec4;
 
-namespace PinkTopaz::Terrain {
+namespace Terrain {
     
     static constexpr float L = 0.5f;
     static const glm::vec3 LLL(L, L, L);
@@ -85,11 +85,9 @@ namespace PinkTopaz::Terrain {
                 const vec3 &v2 = cube[pairs[i].second].worldPos;
                 vec3 worldPos = glm::mix(v1, v2, LLL);
                 
-                geometry.addVertex((PinkTopaz::Renderer::TerrainVertex){
-                    .position = vec4(worldPos.x, worldPos.y, worldPos.z, 1.0f),
-                    .color = color,
-                    .texCoord = texCoord
-                });
+                geometry.addVertex(Renderer::TerrainVertex(vec4(worldPos.x, worldPos.y, worldPos.z, 1.0f),
+					                                       color,
+						                                   texCoord));
             }
         }
     }
@@ -135,4 +133,4 @@ namespace PinkTopaz::Terrain {
         return geometry;
     }
     
-} // namespace PinkTopaz::Terrain
+} // namespace Terrain

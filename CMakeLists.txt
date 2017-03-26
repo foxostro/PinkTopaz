@@ -6,7 +6,7 @@ include(conanbuildinfo.cmake)
 conan_basic_setup()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS "/std:c++latest")
+    set(CMAKE_CXX_FLAGS "/EHsc /std:c++latest /MACHINE:X86")
 else()
     set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z -DMETAL_ENABLED")
 endif()
@@ -20,7 +20,6 @@ set(SOURCE_FILES_TERRAIN
     )
 
 set(SOURCE_FILES_OPENGL
-    "src/include/Renderer/OpenGL/opengl.hpp"
     "src/Renderer/OpenGL/glUtilities.cpp" "src/include/Renderer/OpenGL/glUtilities.hpp"
     "src/Renderer/OpenGL/GraphicsDeviceOpenGL.cpp" "src/include/Renderer/OpenGL/GraphicsDeviceOpenGL.hpp"
     "src/Renderer/OpenGL/CommandEncoderOpenGL.cpp" "src/include/Renderer/OpenGL/CommandEncoderOpenGL.hpp"
@@ -196,18 +195,3 @@ if(APPLE)
                        )
 endif(APPLE)
 
-# Set up unit test support.
-enable_testing()
-set(PROJECT_TEST_NAME ${APP_NAME}Test)
-include_directories("${PROJECT_SOURCE_DIR}/src/include"
-                    )
-add_executable(${PROJECT_TEST_NAME}
-               "src/test/Terrain/VoxelDataTest.cpp"
-               "src/Terrain/VoxelData.cpp"
-               "src/Renderer/StaticMesh.cpp"
-               )
-target_link_libraries(${PROJECT_TEST_NAME}
-                      ${CONAN_LIBS}
-                      ${OPENGL_LIBRARIES}
-                      )
-add_test(${PROJECT_TEST_NAME} ${PROJECT_TEST_NAME})

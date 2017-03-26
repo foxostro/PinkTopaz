@@ -11,7 +11,7 @@
 
 #include <vector>
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     enum AttributeType
     {
@@ -33,6 +33,6 @@ namespace PinkTopaz::Renderer {
         std::vector<AttributeFormat> attributes;
     };
     
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer
 
 #endif /* VertexFormat_hpp */

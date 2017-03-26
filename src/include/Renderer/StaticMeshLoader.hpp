@@ -12,7 +12,7 @@
 #include "Renderer/StaticMesh.hpp"
 #include <boost/filesystem.hpp>
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     class StaticMeshLoader
     {
@@ -43,6 +43,6 @@ namespace PinkTopaz::Renderer {
         const uint32_t GEO_MAGIC, GEO_VERSION;
     };
     
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer
 
 #endif /* StaticMesh_hpp */

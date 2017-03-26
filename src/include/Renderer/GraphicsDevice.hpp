@@ -23,7 +23,7 @@
 
 #include "SDL.h"
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
 
     // This is a thin abstraction layer over the graphics API. Instantiate a
     // concrete GraphicsDevice sub-class that implements an API such as OpenGL.
@@ -101,6 +101,6 @@ namespace PinkTopaz::Renderer {
     // Create a default graphics device for the system.
     std::shared_ptr<GraphicsDevice> createDefaultGraphicsDevice(SDL_Window &w);
     
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer
 
 #endif /* GraphicsDevice_hpp */

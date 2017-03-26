@@ -15,7 +15,7 @@
 #include "Exception.hpp"
 #include "SDL.h"
 
-namespace PinkTopaz::Renderer::OpenGL {
+namespace Renderer {
     
     CommandEncoderOpenGL::CommandEncoderOpenGL(const RenderPassDescriptor &desc)
     {
@@ -174,4 +174,4 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
     }
     
-} // namespace PinkTopaz::Renderer::OpenGL
+} // namespace Renderer

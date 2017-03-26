@@ -6,7 +6,7 @@
 //
 //
 
-#include "../RetinaSupport.h"
+#include "RetinaSupport.h"
 
 float windowScaleFactor(SDL_Window *window)
 {

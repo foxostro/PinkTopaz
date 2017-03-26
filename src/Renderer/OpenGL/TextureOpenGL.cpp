@@ -10,7 +10,7 @@
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
 
-namespace PinkTopaz::Renderer::OpenGL {
+namespace Renderer {
     
     GLenum textureTargetEnum(TextureType type)
     {
@@ -147,4 +147,4 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
     }
     
-} // namespace PinkTopaz::Renderer::OpenGL
+} // namespace Renderer

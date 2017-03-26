@@ -11,7 +11,7 @@
 
 int main(int argc, char * arg[])
 {
-    PinkTopaz::Application game;
+    Application game;
     game.run(); // Blocks until the window closes.
     return EXIT_SUCCESS;
 }

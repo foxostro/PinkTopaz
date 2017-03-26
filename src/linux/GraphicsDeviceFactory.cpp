@@ -9,13 +9,13 @@
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/OpenGL/GraphicsDeviceOpenGL.hpp"
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     std::shared_ptr<GraphicsDevice> createDefaultGraphicsDevice(SDL_Window &w)
     {
-        auto concrete = std::make_shared<OpenGL::GraphicsDeviceOpenGL>(w);
+        auto concrete = std::make_shared<GraphicsDeviceOpenGL>(w);
         auto abstract = std::dynamic_pointer_cast<GraphicsDevice>(concrete);
         return abstract;
     }
     
-}; // namespace PinkTopaz::Renderer
+}; // namespace Renderer

@@ -10,7 +10,7 @@
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
 
-namespace PinkTopaz::Renderer::OpenGL {
+namespace Renderer {
     
     GLint textureSamplerAddressModeEnum(TextureSamplerAddressMode mode)
     {
@@ -63,4 +63,4 @@ namespace PinkTopaz::Renderer::OpenGL {
         CHECK_GL_ERROR();
     }
     
-} // namespace PinkTopaz::Renderer::OpenGL
+} // namespace Renderer

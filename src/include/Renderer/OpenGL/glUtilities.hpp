@@ -9,7 +9,7 @@
 #ifndef glUtilities_hpp
 #define glUtilities_hpp
 
-#include "opengl.hpp"
+#include <GL/glew.h>
 
 #ifdef NDEBUG
 #define CHECK_GL_ERROR(...)
@@ -17,11 +17,11 @@
 #define CHECK_GL_ERROR(...) checkGLError(__VA_ARGS__)
 #endif
 
-namespace PinkTopaz::Renderer::OpenGL {
+namespace Renderer {
     
     const char * stringForOpenGLError(GLenum error);
     void checkGLError();
     
-} // namespace PinkTopaz::Renderer::OpenGL
+} // namespace Renderer
 
 #endif /* glUtilities_hpp */

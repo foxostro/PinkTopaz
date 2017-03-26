@@ -8,7 +8,7 @@
 
 #include "Renderer/StaticMesh.hpp"
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     StaticMesh::StaticMesh()
     {
@@ -33,30 +33,33 @@ namespace PinkTopaz::Renderer {
     void StaticMesh::initVertexFormat()
     {
         _vertexFormat.attributes.clear();
+
+        AttributeFormat attr = {
+            4,
+            AttributeTypeFloat,
+            false,
+            sizeof(TerrainVertex),
+            offsetof(TerrainVertex, position)
+        };
+        _vertexFormat.attributes.emplace_back(attr);
+
+        attr = {
+            4,
+            AttributeTypeFloat,
+            false,
+            sizeof(TerrainVertex),
+            offsetof(TerrainVertex, color)
+        };
+        _vertexFormat.attributes.emplace_back(attr);
         
-        _vertexFormat.attributes.emplace_back((AttributeFormat){
-            .size = 4,
-            .type = AttributeTypeFloat,
-            .normalized = false,
-            .stride = sizeof(TerrainVertex),
-            .offset = offsetof(TerrainVertex, position)
-        });
-        
-        _vertexFormat.attributes.emplace_back((AttributeFormat){
-            .size = 4,
-            .type = AttributeTypeFloat,
-            .normalized = false,
-            .stride = sizeof(TerrainVertex),
-            .offset = offsetof(TerrainVertex, color)
-        });
-        
-        _vertexFormat.attributes.emplace_back((AttributeFormat){
-            .size = 3,
-            .type = AttributeTypeFloat,
-            .normalized = false,
-            .stride = sizeof(TerrainVertex),
-            .offset = offsetof(TerrainVertex, texCoord)
-        });
+        attr = {
+            3,
+            AttributeTypeFloat,
+            false,
+            sizeof(TerrainVertex),
+            offsetof(TerrainVertex, texCoord)
+        };
+        _vertexFormat.attributes.emplace_back(attr);
     }
 
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer

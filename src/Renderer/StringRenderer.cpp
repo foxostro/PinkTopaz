@@ -16,7 +16,7 @@
 
 #include <boost/filesystem.hpp>
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     static boost::filesystem::path getPrefPath()
     {
@@ -122,17 +122,13 @@ namespace PinkTopaz::Renderer {
         
         // Blit the glyph into the texture atlas at the cursor position.
         SDL_Rect src = {
-            .x = 0,
-            .y = 0,
-            .w = (int)width,
-            .h = (int)height,
+            0, 0,
+            (int)width, (int)height,
         };
         
         SDL_Rect dst = {
-            .x = cursor.x,
-            .y = cursor.y,
-            .w = (int)width,
-            .h = (int)height,
+            cursor.x, cursor.y,
+            (int)width, (int)height,
         };
         
         SDL_BlitSurface(glyphSurface, &src, atlasSurface, &dst);
@@ -140,14 +136,14 @@ namespace PinkTopaz::Renderer {
         
         // Now store the glyph for later use.
         Glyph glyph = {
-            .uvOrigin = glm::vec2((float)cursor.x / atlasSurface->w,
-                                  (float)cursor.y / atlasSurface->w),
-            .uvExtent = glm::vec2((float)width / atlasSurface->h,
-                                  (float)height / atlasSurface->h),
-            .size = glm::ivec2(width, height),
-            .bearing = glm::ivec2(face->glyph->bitmap_left,
-                                  face->glyph->bitmap_top),
-            .advance = (unsigned)face->glyph->advance.x
+            glm::vec2((float)cursor.x / atlasSurface->w,
+                       (float)cursor.y / atlasSurface->w),
+            glm::vec2((float)width / atlasSurface->h,
+                       (float)height / atlasSurface->h),
+            glm::ivec2(width, height),
+            glm::ivec2(face->glyph->bitmap_left,
+                       face->glyph->bitmap_top),
+            (unsigned)face->glyph->advance.x
         };
         glyphs.insert(std::pair<char, Glyph>((char)c, glyph));
         
@@ -241,7 +237,7 @@ namespace PinkTopaz::Renderer {
         }
         
         FT_Face face;
-        if (FT_New_Face(ft, fontName.c_str(), 0, &face)) {
+        if (FT_New_Face(ft, fontName.string().c_str(), 0, &face)) {
             throw Exception("Failed to load the font: %s", fontName.c_str());
         }
         
@@ -269,19 +265,19 @@ namespace PinkTopaz::Renderer {
         boost::filesystem::path baseName("font" + std::to_string(fontSize) + ".png");
         boost::filesystem::path atlasFileName = getPrefPath() / baseName;
         SDL_Surface *atlasSurface = genTextureAtlas(fontName, fontSize);
-        IMG_SavePNG(atlasSurface, atlasFileName.c_str());
+        IMG_SavePNG(atlasSurface, atlasFileName.string().c_str());
         SDL_Log("Saving font texture atlas to file: %s", atlasFileName.c_str());
         
         // We only want to store the RED components in the GPU texture.
         std::vector<uint8_t> atlasPixels = getGrayScaleImageBytes(atlasSurface);
         TextureDescriptor texDesc = {
-            .type = Texture2D,
-            .format = R8,
-            .width = (size_t)atlasSurface->w,
-            .height = (size_t)atlasSurface->h,
-            .depth = 1,
-            .unpackAlignment = 1,
-            .generateMipMaps = false
+            Texture2D,
+            R8,
+            (size_t)atlasSurface->w,
+            (size_t)atlasSurface->h,
+            1,
+            1,
+            false
         };
         SDL_FreeSurface(atlasSurface);
         
@@ -295,14 +291,15 @@ namespace PinkTopaz::Renderer {
     {
         _renderPassDescriptor.clear = false;
         
-        VertexFormat vertexFormat;
-        vertexFormat.attributes.emplace_back((AttributeFormat){
-            .size = 4,
-            .type = AttributeTypeFloat,
-            .normalized = false,
-            .stride = sizeof(float) * 4,
-            .offset = 0
-        });
+        AttributeFormat attr = {
+			4,
+			AttributeTypeFloat,
+			false,
+			sizeof(float) * 4,
+			0
+		};
+		VertexFormat vertexFormat;
+		vertexFormat.attributes.push_back(attr);
         _shader = _graphicsDevice->makeShader(vertexFormat,
                                               "text_vert", "text_frag",
                                               true);
@@ -310,10 +307,10 @@ namespace PinkTopaz::Renderer {
         _textureAtlas = makeTextureAtlas(fontName, fontSize);
         
         TextureSamplerDescriptor samplerDesc = {
-            .addressS = Renderer::ClampToEdge,
-            .addressT = Renderer::ClampToEdge,
-            .minFilter = Renderer::Nearest,
-            .maxFilter = Renderer::Nearest
+            Renderer::ClampToEdge,
+            Renderer::ClampToEdge,
+            Renderer::Nearest,
+            Renderer::Nearest
         };
         _sampler = _graphicsDevice->makeTextureSampler(samplerDesc);
     }
@@ -395,8 +392,8 @@ namespace PinkTopaz::Renderer {
                                               const glm::mat4x4 &projection)
     {
         StringUniforms uniforms = {
-            .color = string.color,
-            .projection = projection
+            string.color,
+            projection
         };
         string.uniforms->replace(sizeof(uniforms), &uniforms);
     }
@@ -405,14 +402,16 @@ namespace PinkTopaz::Renderer {
                                                      const glm::vec2 &position,
                                                      const glm::vec4 &color)
     {
-        _strings.emplace_back((String){
-            .contents = str,
-            .position = position,
-            .color = color,
-            .viewport = glm::ivec4(),
-            .buffer = nullptr,
-            .uniforms = nullptr
-        });
+		String s = {
+			0,
+			str,
+			position,
+			color,
+			glm::ivec4(),
+			nullptr,
+			nullptr
+		};
+        _strings.push_back(s);
         auto handle = _strings.end();
         --handle;
         
@@ -445,4 +444,4 @@ namespace PinkTopaz::Renderer {
         rebuildVertexBuffer(*handle);
     }
     
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer

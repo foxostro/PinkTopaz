@@ -9,7 +9,7 @@
 #ifndef Shader_hpp
 #define Shader_hpp
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     // Encapsulates a Shader resource in a platform-agnostic manner.
     class Shader
@@ -21,6 +21,6 @@ namespace PinkTopaz::Renderer {
         Shader() = default;
     };
 
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer
 
 #endif /* Shader_hpp */

@@ -9,7 +9,7 @@
 #ifndef TextureSampler_hpp
 #define TextureSampler_hpp
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     enum TextureSamplerAddressMode
     {
@@ -42,6 +42,6 @@ namespace PinkTopaz::Renderer {
         TextureSampler() = default;
     };
     
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer
 
 #endif /* TextureSampler_hpp */

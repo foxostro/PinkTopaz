@@ -10,17 +10,13 @@
 #define MouseMoveEvent_hpp
 
 #include "SDL.h"
-
-namespace PinkTopaz {
     
-    struct MouseMoveEvent
-    {
-        MouseMoveEvent(int dx, int dy) : deltaX(dx), deltaY(dy) {}
-        MouseMoveEvent() : deltaX(0), deltaY(0) {}
+struct MouseMoveEvent
+{
+    MouseMoveEvent(int dx, int dy) : deltaX(dx), deltaY(dy) {}
+    MouseMoveEvent() : deltaX(0), deltaY(0) {}
         
-        int deltaX, deltaY;
-    };
-
-} // namespace PinkTopaz
+    int deltaX, deltaY;
+};
 
 #endif /* MouseMoveEvent_hpp */

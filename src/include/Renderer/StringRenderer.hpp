@@ -29,7 +29,7 @@
 
 #include <boost/filesystem.hpp>
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     class StringRenderer
     {
@@ -140,6 +140,6 @@ namespace PinkTopaz::Renderer {
         std::list<String> _strings;
     };
     
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer
 
 #endif /* StringRenderer_hpp */

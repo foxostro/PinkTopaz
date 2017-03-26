@@ -12,7 +12,7 @@
 #include "VoxelData.hpp"
 #include "Renderer/StaticMesh.hpp"
 
-namespace PinkTopaz::Terrain {
+namespace Terrain {
     
     // Accepts voxels and produces a triangle mesh for the specified isosurface.
     class Mesher
@@ -28,6 +28,6 @@ namespace PinkTopaz::Terrain {
         Mesher() = default;
     };
     
-} // namespace PinkTopaz::Terrain
+} // namespace Terrain
 
 #endif /* Mesher_hpp */

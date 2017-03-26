@@ -9,7 +9,7 @@
 #ifndef Voxel_hpp
 #define Voxel_hpp
 
-namespace PinkTopaz::Terrain {
+namespace Terrain {
     
     struct Voxel
     {
@@ -19,6 +19,6 @@ namespace PinkTopaz::Terrain {
         Voxel(float v) : value(v) {}
     };
 
-} // namespace PinkTopaz::Terrain
+} // namespace Terrain
 
 #endif /* Voxel_hpp */

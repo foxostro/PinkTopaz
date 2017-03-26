@@ -16,7 +16,7 @@
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/CommandEncoder.hpp"
 
-namespace PinkTopaz::Renderer::OpenGL {
+namespace Renderer {
     
     class GraphicsDeviceOpenGL : public GraphicsDevice
     {
@@ -94,6 +94,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         SDL_GLContext _glContext;
     };
     
-} // namespace PinkTopaz::Renderer::OpenGL
+} // namespace Renderer
 
 #endif /* GraphicsDeviceOpenGL_hpp */

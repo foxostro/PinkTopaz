@@ -13,52 +13,48 @@
 #include "UniqueName.hpp"
 
 #define FRAME_TIMER(frameTimer) auto UNIQUE_NAME(token) = (frameTimer).token()
-
-namespace PinkTopaz {
     
-    // Measures the time each frame takes and displays that on the screen.
-    class FrameTimer
+// Measures the time each frame takes and displays that on the screen.
+class FrameTimer
+{
+public:
+    class Token
     {
     public:
-        class Token
+        Token(FrameTimer &frameTimer) : _frameTimer(frameTimer)
         {
-        public:
-            Token(FrameTimer &frameTimer) : _frameTimer(frameTimer)
-            {
-                _frameTimer.beginFrame();
-            }
+            _frameTimer.beginFrame();
+        }
             
-            ~Token()
-            {
-                _frameTimer.endFrame();
-            }
+        ~Token()
+        {
+            _frameTimer.endFrame();
+        }
             
-        private:
-            FrameTimer &_frameTimer;
-        };
-        
-        FrameTimer(Renderer::StringRenderer &stringRenderer);
-        
-        // Call at the beginning of the frame to start timing.
-        void beginFrame();
-        
-        // Call after swapBuffers() to calculate the time and update the UI.
-        void endFrame();
-        
-        // The token will begin and end the frame at the edges of it's scope.
-        inline Token token() { return Token(*this); }
-        
     private:
-        Renderer::StringRenderer &_stringRenderer;
-        const unsigned _framesBetweenReport;
-        
-        Renderer::StringRenderer::StringHandle _frameTimeLabel;
-        unsigned _timeAccum;
-        unsigned _countDown;
-        bool _firstReportingPeriod;
-        unsigned _ticksBeginMs;
+        FrameTimer &_frameTimer;
     };
-    
-} // namespace PinkTopaz
+        
+    FrameTimer(Renderer::StringRenderer &stringRenderer);
+        
+    // Call at the beginning of the frame to start timing.
+    void beginFrame();
+        
+    // Call after swapBuffers() to calculate the time and update the UI.
+    void endFrame();
+        
+    // The token will begin and end the frame at the edges of it's scope.
+    inline Token token() { return Token(*this); }
+        
+private:
+    Renderer::StringRenderer &_stringRenderer;
+    const unsigned _framesBetweenReport;
+        
+    Renderer::StringRenderer::StringHandle _frameTimeLabel;
+    unsigned _timeAccum;
+    unsigned _countDown;
+    bool _firstReportingPeriod;
+    unsigned _ticksBeginMs;
+};
 
 #endif /* RenderSystem_hpp */

@@ -9,12 +9,12 @@
 #ifndef TextureOpenGL_hpp
 #define TextureOpenGL_hpp
 
+#include "GL/glew.h"
 #include "Renderer/Texture.hpp"
-#include "Renderer/OpenGL/opengl.hpp"
 
 #include <vector>
 
-namespace PinkTopaz::Renderer::OpenGL {
+namespace Renderer {
     
     // The OpenGL texture target implied by the texture type in `type'.
     GLenum textureTargetEnum(TextureType type);
@@ -68,6 +68,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         GLuint _handle;
     };
     
-} // namespace PinkTopaz::Renderer::OpenGL
+} // namespace Renderer
 
 #endif /* TextureOpenGL_hpp */

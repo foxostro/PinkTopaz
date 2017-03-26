@@ -12,7 +12,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 
-namespace PinkTopaz::Renderer::OpenGL {
+namespace Renderer {
     
     static void checkShaderCompileStatus(GLuint shader)
     {
@@ -96,4 +96,4 @@ namespace PinkTopaz::Renderer::OpenGL {
 //        });
     }
 
-} // namespace PinkTopaz::Renderer::OpenGL
+} // namespace Renderer

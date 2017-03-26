@@ -16,13 +16,19 @@
 #include "Exception.hpp"
 #include "FileUtilities.hpp"
 
+#include <GL/glew.h>
 #include <vector>
 
-namespace PinkTopaz::Renderer::OpenGL {
+namespace Renderer {
     
     GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(SDL_Window &window)
      : _window(window)
     {
+        GLenum err = glewInit();
+        if (GLEW_OK != err) {
+            throw Exception("Error: %s\n", glewGetErrorString(err));
+        }
+        
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
         SDL_GL_SetSwapInterval(1);
@@ -145,4 +151,4 @@ namespace PinkTopaz::Renderer::OpenGL {
         return identity;
     }
     
-} // namespace PinkTopaz::Renderer::OpenGL
+} // namespace Renderer

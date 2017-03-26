@@ -9,16 +9,12 @@
 #ifndef WindowSizeChangedEvent_hpp
 #define WindowSizeChangedEvent_hpp
 
-namespace PinkTopaz {
-    
-    struct WindowSizeChangedEvent
-    {
-        WindowSizeChangedEvent() : windowScaleFactor(0), width(0), height(0) {}
+struct WindowSizeChangedEvent
+{
+    WindowSizeChangedEvent() : windowScaleFactor(0), width(0), height(0) {}
         
-        float windowScaleFactor;
-        int width, height;
-    };
-
-} // namespace PinkTopaz
+    float windowScaleFactor;
+    int width, height;
+};
 
 #endif /* WindowSizeChangedEvent_hpp */

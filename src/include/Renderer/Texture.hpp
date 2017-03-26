@@ -11,7 +11,7 @@
 
 #include <cstddef>
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     enum TextureType
     {
@@ -45,6 +45,6 @@ namespace PinkTopaz::Renderer {
         Texture() = default;
     };
     
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer
 
 #endif /* Texture_hpp */

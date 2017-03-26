@@ -13,7 +13,7 @@
 #include "Renderer/RenderPassDescriptor.hpp"
 #include "Renderer/OpenGL/ShaderOpenGL.hpp"
 
-namespace PinkTopaz::Renderer::OpenGL {
+namespace Renderer {
     
     class CommandEncoderOpenGL : public CommandEncoder
     {
@@ -38,6 +38,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         std::shared_ptr<ShaderOpenGL> _currentShader;
     };
     
-} // namespace PinkTopaz::Renderer::OpenGL
+} // namespace Renderer
 
 #endif /* CommandEncoderOpenGL_hpp */

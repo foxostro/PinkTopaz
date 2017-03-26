@@ -12,7 +12,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     enum BufferUsage
     {
@@ -52,6 +52,6 @@ namespace PinkTopaz::Renderer {
         Buffer() = default;
     };
     
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer
 
 #endif /* Buffer_hpp */

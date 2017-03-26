@@ -18,7 +18,7 @@
 #include "Renderer/TextureSampler.hpp"
 #include "Renderer/Buffer.hpp"
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     enum PrimitiveType
     {
@@ -60,6 +60,6 @@ namespace PinkTopaz::Renderer {
         virtual void setDepthTest(bool enable) = 0;
     };
 
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer
 
 #endif /* CommandEncoder_hpp */

@@ -10,7 +10,7 @@
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
 
-namespace PinkTopaz::Renderer::OpenGL {
+namespace Renderer {
     
     static GLenum getUsageEnum(BufferUsage usage)
     {
@@ -146,4 +146,4 @@ namespace PinkTopaz::Renderer::OpenGL {
         }
     }
     
-} // namespace PinkTopaz::Renderer::OpenGL
+} // namespace Renderer

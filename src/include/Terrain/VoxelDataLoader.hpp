@@ -12,7 +12,7 @@
 #include "Terrain/VoxelData.hpp"
 #include <boost/filesystem.hpp>
 
-namespace PinkTopaz::Terrain {
+namespace Terrain {
     
     class VoxelDataLoader
     {
@@ -59,6 +59,6 @@ namespace PinkTopaz::Terrain {
         const uint32_t VOXEL_MAGIC, VOXEL_VERSION;
     };
     
-} // namespace PinkTopaz::Terrain
+} // namespace Terrain
 
 #endif /* StaticMesh_hpp */

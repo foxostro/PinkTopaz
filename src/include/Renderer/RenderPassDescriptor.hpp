@@ -11,7 +11,7 @@
 
 #include "Renderer/VertexFormat.hpp"
 
-namespace PinkTopaz::Renderer {
+namespace Renderer {
     
     struct RenderPassDescriptor
     {
@@ -23,6 +23,6 @@ namespace PinkTopaz::Renderer {
         glm::vec4 clearColor;
     };
     
-} // namespace PinkTopaz::Renderer
+} // namespace Renderer
 
 #endif /* RenderPassDescriptor_hpp */

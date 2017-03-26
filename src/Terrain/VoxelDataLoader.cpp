@@ -11,7 +11,7 @@
 #include "Exception.hpp"
 #include "Terrain/VoxelDataLoader.hpp"
 
-namespace PinkTopaz::Terrain {
+namespace Terrain {
     
     VoxelDataLoader::VoxelDataLoader()
      : VOXEL_MAGIC('lxov'), VOXEL_VERSION(0)
@@ -38,8 +38,8 @@ namespace PinkTopaz::Terrain {
         
         glm::vec3 half(header.w / 2.f, header.h / 2.f, header.d / 2.f);
         AABB box = {
-            .center = half,
-            .extent = half,
+            half,
+            half,
         };
         glm::ivec3 resolution(header.w, header.h, header.d);
         VoxelData voxels(box, resolution);
@@ -54,4 +54,4 @@ namespace PinkTopaz::Terrain {
         return voxels;
     }
 
-} // namespace PinkTopaz::Terrain
+} // namespace Terrain

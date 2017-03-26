@@ -8,7 +8,7 @@
 
 #include "Terrain/VoxelData.hpp"
 
-namespace PinkTopaz::Terrain {
+namespace Terrain {
     
     VoxelData::VoxelData(const AABB &box, const glm::ivec3 &res)
      : _voxels(res.x * res.y * res.z), _box(box), _res(res)
@@ -44,4 +44,4 @@ namespace PinkTopaz::Terrain {
         _voxels[index] = voxel;
     }
     
-} // namespace PinkTopaz::Terrain
+} // namespace Terrain

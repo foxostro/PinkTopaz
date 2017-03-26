@@ -11,9 +11,9 @@
 
 #include "Renderer/Shader.hpp"
 #include "Renderer/VertexFormat.hpp"
-#include "Renderer/OpenGL/opengl.hpp"
+#include "GL/glew.h"
 
-namespace PinkTopaz::Renderer::OpenGL {
+namespace Renderer {
     
     class ShaderOpenGL : public Shader
     {
@@ -35,6 +35,6 @@ namespace PinkTopaz::Renderer::OpenGL {
         bool _blending;
     };
     
-} // namespace PinkTopaz::Renderer::OpenGL
+} // namespace Renderer
 
 #endif /* ShaderOpenGL_hpp */

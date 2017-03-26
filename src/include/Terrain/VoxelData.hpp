@@ -15,7 +15,7 @@
 #include <vector>
 #include <glm/vec3.hpp>
 
-namespace PinkTopaz::Terrain {
+namespace Terrain {
     
     // A block of voxels in space.
     class VoxelData
@@ -71,6 +71,6 @@ namespace PinkTopaz::Terrain {
         const glm::ivec3 _res;
     };
     
-} // namespace PinkTopaz::Terrain
+} // namespace Terrain
 
 #endif /* VoxelData_hpp */
