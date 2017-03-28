@@ -6,9 +6,18 @@ include(conanbuildinfo.cmake)
 conan_basic_setup()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS "/EHsc")
+    set(CMAKE_CXX_FLAGS "/EHsc /D_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH")
+
+    set(CMAKE_CXX_FLAGS_RELEASE "/MD")
+    set(CMAKE_CXX_FLAGS_DEBUG "/MD")
 else()
-    set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z -DMETAL_ENABLED")
+    if(APPLE)
+    set(APPLE_FLAGS "-DMETAL_ENABLED")
+    else(APPLE)
+    set(APPLE_FLAGS "")
+    endif(APPLE)
+    
+    set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
 endif()
 
 set(SOURCE_FILES_TERRAIN
@@ -40,7 +49,7 @@ if(APPLE)
         "src/Renderer/Metal/BufferMetal.mm" "src/include/Renderer/Metal/BufferMetal.h"
         "src/Library.metal"
         )
-else()
+else(APPLE)
     set(SOURCE_FILES_METAL "")
 endif(APPLE)
 
@@ -96,7 +105,7 @@ if(APPLE)
         "src/include/RetinaSupport.h" "src/osx/RetinaSupport.m"
         "src/osx/GraphicsDeviceFactory.mm"
         )
-else()
+else(APPLE)
     set(SOURCE_FILES_PLATFORM_SUPPORT
         "src/include/RetinaSupport.h" "src/linux/RetinaSupport.c"
         "src/linux/GraphicsDeviceFactory.cpp"
@@ -130,9 +139,9 @@ source_group("Misc" FILES ${SOURCE_FILES_MISC})
 # Build the app. If we're on Apple then this is a .app bundle.
 if(APPLE)
 add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
-else()
+else(APPLE)
 add_executable(${APP_NAME} ${SOURCE_FILES})
-endif()
+endif(APPLE)
 
 find_package(OpenGL REQUIRED)
 
