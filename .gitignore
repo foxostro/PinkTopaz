@@ -19,6 +19,7 @@ src/pinktopaz_config.h
 .vs/
 ALL_BUILD.vcxproj
 ALL_BUILD.vcxproj.filters
+ALL_BUILD.vcxproj.user
 PinkTopaz.VC.db
 PinkTopaz.sln
 PinkTopaz.vcxproj
