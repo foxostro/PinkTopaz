@@ -6,7 +6,7 @@ include(conanbuildinfo.cmake)
 conan_basic_setup()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS "/EHsc /std:c++latest")
+    set(CMAKE_CXX_FLAGS "/EHsc")
 else()
     set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z -DMETAL_ENABLED")
 endif()
