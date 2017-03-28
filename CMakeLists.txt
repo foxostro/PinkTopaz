@@ -128,7 +128,6 @@ source_group("Misc" FILES ${SOURCE_FILES_MISC})
 
 add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
 
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(OpenGL REQUIRED)
 
 # Apple's "Metal" graphics library.
