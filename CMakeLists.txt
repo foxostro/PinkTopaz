@@ -20,6 +20,7 @@ set(SOURCE_FILES_TERRAIN
     )
 
 set(SOURCE_FILES_OPENGL
+    "src/include/Renderer/OpenGL/opengl.hpp"
     "src/Renderer/OpenGL/glUtilities.cpp" "src/include/Renderer/OpenGL/glUtilities.hpp"
     "src/Renderer/OpenGL/GraphicsDeviceOpenGL.cpp" "src/include/Renderer/OpenGL/GraphicsDeviceOpenGL.hpp"
     "src/Renderer/OpenGL/CommandEncoderOpenGL.cpp" "src/include/Renderer/OpenGL/CommandEncoderOpenGL.hpp"

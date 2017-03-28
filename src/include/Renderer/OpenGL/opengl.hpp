@@ -16,8 +16,13 @@
 #define GL3_PROTOTYPES
 #include <OpenGL/gl3.h>
 #else
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
+#   ifdef _WIN32
+#       include <windows.h>
+#   endif
+#   define GL_GLEXT_PROTOTYPES
+#   include <GL/gl.h>
 #endif
+
+#include <glew.h>
 
 #endif /* opengl_h */
