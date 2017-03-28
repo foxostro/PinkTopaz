@@ -24,16 +24,15 @@ namespace Renderer {
     GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(SDL_Window &window)
      : _window(window)
     {
-        GLenum err = glewInit();
-        if (GLEW_OK != err) {
-            throw Exception("Error: %s\n", glewGetErrorString(err));
-        }
-        
+        constexpr int desiredMajor = 4;
+        constexpr int desiredMinor = 1;
+
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, desiredMajor);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, desiredMinor);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-        SDL_GL_SetSwapInterval(1);
         _glContext = SDL_GL_CreateContext(&_window);
-        
+
         // Check the OpenGL version and log an error if it's not supported.
         // But we'll try to run anyway.
         {
@@ -43,10 +42,17 @@ namespace Renderer {
             glGetIntegerv(GL_MINOR_VERSION, &minor);
             SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "OpenGL version is %d.%d\n", major, minor);
             
-            if (!(major >= 4 && minor >= 1)) {
-                SDL_LogError(SDL_LOG_CATEGORY_RENDER, "This application requires at least OpenGL 4.1 to run.");
+            if ((major < desiredMajor) || ((major == desiredMajor) && (minor < desiredMinor))) {
+                SDL_LogError(SDL_LOG_CATEGORY_RENDER, "This application requires at least OpenGL %d.%d to run.", desiredMajor, desiredMinor);
             }
         }
+
+        GLenum err = glewInit();
+        if (GLEW_OK != err) {
+            throw Exception("glewInit failed: %s\n", glewGetErrorString(err));
+        }
+
+        SDL_GL_SetSwapInterval(1);
         
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
