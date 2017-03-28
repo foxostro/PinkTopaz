@@ -13,6 +13,7 @@ SDL2_image:shared=False
 freetype:shared=False
 EntityX:shared=False
 EntityX:benchmarks=False
+Boost:header_only=True
 glew:shared=False
 
 [generators]
