@@ -9,8 +9,8 @@
 #ifndef TextureOpenGL_hpp
 #define TextureOpenGL_hpp
 
-#include "GL/glew.h"
 #include "Renderer/Texture.hpp"
+#include "Renderer/OpenGL/opengl.hpp"
 
 #include <vector>
 

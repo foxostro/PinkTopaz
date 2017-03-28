@@ -10,7 +10,7 @@
 #define TextureSamplerOpenGL_hpp
 
 #include "Renderer/TextureSampler.hpp"
-#include "GL/glew.h"
+#include "Renderer/OpenGL/opengl.hpp"
 
 namespace Renderer {
     

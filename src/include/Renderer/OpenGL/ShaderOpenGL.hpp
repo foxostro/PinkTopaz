@@ -11,7 +11,7 @@
 
 #include "Renderer/Shader.hpp"
 #include "Renderer/VertexFormat.hpp"
-#include "GL/glew.h"
+#include "Renderer/OpenGL/opengl.hpp"
 
 namespace Renderer {
     

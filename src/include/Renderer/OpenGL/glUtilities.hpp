@@ -9,7 +9,7 @@
 #ifndef glUtilities_hpp
 #define glUtilities_hpp
 
-#include <GL/glew.h>
+#include "Renderer/OpenGL/opengl.hpp"
 
 #ifdef NDEBUG
 #define CHECK_GL_ERROR(...)

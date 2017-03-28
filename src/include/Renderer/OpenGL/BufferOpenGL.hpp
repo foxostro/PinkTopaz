@@ -10,8 +10,7 @@
 #define BufferOpenGL_hpp
 
 #include "Renderer/Buffer.hpp"
-
-#include "GL/glew.h"
+#include "Renderer/OpenGL/opengl.hpp"
 
 namespace Renderer {
     
