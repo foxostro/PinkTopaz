@@ -9,6 +9,8 @@
 #ifndef opengl_h
 #define opengl_h
 
+#include <GL/glew.h>
+
 // The OpenGL headers are located at a different place, and have different names, on different
 // platforms. This header is intended to be a central place where this differentiation can be done
 // for PinkTopaz.
@@ -22,7 +24,5 @@
 #   define GL_GLEXT_PROTOTYPES
 #   include <GL/gl.h>
 #endif
-
-#include <glew.h>
 
 #endif /* opengl_h */

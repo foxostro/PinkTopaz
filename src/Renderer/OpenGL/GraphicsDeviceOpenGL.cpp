@@ -13,6 +13,7 @@
 #include "Renderer/OpenGL/TextureSamplerOpenGL.hpp"
 #include "Renderer/OpenGL/BufferOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
+#include "Renderer/OpenGL/opengl.hpp"
 #include "Exception.hpp"
 #include "FileUtilities.hpp"
 
@@ -44,6 +45,11 @@ namespace Renderer {
             if ((major < desiredMajor) || ((major == desiredMajor) && (minor < desiredMinor))) {
                 SDL_LogError(SDL_LOG_CATEGORY_RENDER, "This application requires at least OpenGL %d.%d to run.", desiredMajor, desiredMinor);
             }
+        }
+
+        GLenum err = glewInit();
+        if (GLEW_OK != err) {
+            throw Exception("glewInit failed: %s\n", glewGetErrorString(err));
         }
 
         SDL_GL_SetSwapInterval(1);

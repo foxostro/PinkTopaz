@@ -5,6 +5,7 @@ freetype/2.6.3@lasote/stable
 glm/0.9.7.6@dlarudgus20/stable
 EntityX/1.2.0@foxostro/testing
 Boost/1.60.0@lasote/stable
+glew/2.0.0@coding3d/stable
 
 [options]
 SDL2:shared=False
@@ -13,6 +14,7 @@ freetype:shared=False
 EntityX:shared=False
 EntityX:benchmarks=False
 Boost:shared=False
+glew:shared=False
 
 [generators]
 cmake
