@@ -127,7 +127,12 @@ source_group("Renderer\\Metal" FILES ${SOURCE_FILES_METAL})
 source_group("Platform Support" FILES ${SOURCE_FILES_PLATFORM_SUPPORT})
 source_group("Misc" FILES ${SOURCE_FILES_MISC})
 
+# Build the app. If we're on Apple then this is a .app bundle.
+if(APPLE)
 add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
+else()
+add_executable(${APP_NAME} ${SOURCE_FILES})
+endif()
 
 find_package(OpenGL REQUIRED)
 
