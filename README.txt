@@ -11,13 +11,22 @@ Building Pink Topaz
 
 2. Use conan to install dependencies:
 
-    % cd $PINK_TOPAZ_ROOT_DIR
-    % conan install . --build=missing
+    % conan install . --build missing
 
-3. Install googletest too. (Not presently configured in the conanfile.)
+4. Configure the CMake project:
 
-4. Actually build the project:
+    * macOS
 
-    % cmake -GXcode .
+        % cmake -GXcode .
+
+    * Windows
+
+        % cmake -G "Visual Studio 15 2017 Win64" .
+
+    * Linux
+
+        % cmake -G "Unix Makefiles" .
+
+5. Build it:
+
     % cmake --build . --target PinkTopaz
-
