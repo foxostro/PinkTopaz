@@ -192,12 +192,6 @@ if(APPLE)
                        COMMAND xcrun -sdk macosx metallib /tmp/${APP_NAME}.Library.air -o res/Library.metallib
                        )
 
-	## On Mac OS, copy the SDL framework into the app bundle. Important for redistributing the game.
-    ## TODO: Should I also package FreeType? Can I simply link to static libraries?
-	#add_custom_command(TARGET ${APP_NAME} POST_BUILD
-	#                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${SDL2_LIBRARY} $<TARGET_FILE_DIR:${APP_NAME}>/../Frameworks/SDL2.framework
-    #                   )
-
 	# On Mac OS, copy the resources directory into the app bundle. Important for redistributing the game.
 	add_custom_command(TARGET ${APP_NAME} POST_BUILD
 	                   COMMAND ${CMAKE_COMMAND} -E copy_directory "./res" $<TARGET_FILE_DIR:${APP_NAME}>/../Resources
@@ -209,3 +203,9 @@ if(APPLE)
                        )
 endif(APPLE)
 
+if(WIN32)
+    # On Windows, copy the resources to the same directory as the executable.
+    add_custom_command(TARGET ${APP_NAME} POST_BUILD
+                       COMMAND ${CMAKE_COMMAND} -E copy_directory "./res" $<TARGET_FILE_DIR:${APP_NAME}>/
+                       )
+endif(WIN32)
