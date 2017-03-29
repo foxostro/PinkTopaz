@@ -17,7 +17,7 @@
 
 void setCurrentWorkingDirectory(const char *path)
 {
-    if (SetCurrentDirectory(path)) {
+    if (!SetCurrentDirectoryA(path)) {
         throw Exception("SetCurrentDirectory failed.\n");
     }
 }
