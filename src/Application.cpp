@@ -22,8 +22,7 @@
 #include "SDL_image.h"
 #include <map>
 #include <glm/glm.hpp>
-#include <boost/filesystem.hpp>
-    
+
 RenderableStaticMesh Application::createTerrainMesh(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
 {
     Terrain::VoxelDataLoader voxelDataLoader;
@@ -173,16 +172,15 @@ void Application::run()
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_Init failed: %s\n", SDL_GetError());
     }
-        
+
     // Set the current working directory to the SDL data path.
     // On Mac OS, this is the bundle "Resources" directory.
     {
-        char *pathStr = SDL_GetBasePath();
-        boost::filesystem::path cwd(pathStr);
-        boost::filesystem::current_path(cwd);
-        SDL_free(pathStr);
+        char *path = SDL_GetBasePath();
+        setCurrentWorkingDirectory(path);
+        SDL_free(path);
     }
-        
+
     SDL_LogSetPriority(SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_INFO);
     SDL_LogSetPriority(SDL_LOG_CATEGORY_ERROR, SDL_LOG_PRIORITY_ERROR);
         

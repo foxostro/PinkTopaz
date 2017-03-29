@@ -10,7 +10,6 @@
 #define VoxelDataLoader_hpp
 
 #include "Terrain/VoxelData.hpp"
-#include <boost/filesystem.hpp>
 
 namespace Terrain {
     
@@ -53,7 +52,7 @@ namespace Terrain {
         VoxelDataLoader();
         ~VoxelDataLoader() = default;
         
-        VoxelData load(const boost::filesystem::path &path);
+        VoxelData load(const char *filePath);
         
     private:
         const uint32_t VOXEL_MAGIC, VOXEL_VERSION;

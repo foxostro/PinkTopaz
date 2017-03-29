@@ -11,11 +11,29 @@
 #include <fstream>
 #include <streambuf>
 #include "SDL.h"
-    
-std::string stringFromFileContents(const boost::filesystem::path &path)
+
+#ifdef _WIN32
+#include <windows.h>
+
+void setCurrentWorkingDirectory(const char *path)
 {
-    const char *filePath = path.string().c_str();
-        
+    if (SetCurrentDirectory(path)) {
+        throw Exception("SetCurrentDirectory failed.\n");
+    }
+}
+#else
+#include <unistd.h> // for chdir
+
+void setCurrentWorkingDirectory(const char *path)
+{
+    if (::chdir(path) < 0) {
+        throw Exception("chdir failed: %s, path=%s\n", strerror(errno), path);
+    }
+}
+#endif
+
+std::string stringFromFileContents(const char *filePath)
+{
     std::ifstream in(filePath, std::ios::in | std::ios::binary);
 
     if (!in) {
@@ -32,10 +50,8 @@ std::string stringFromFileContents(const boost::filesystem::path &path)
     return contents;
 }
     
-std::vector<uint8_t> binaryFileContents(const boost::filesystem::path &path)
+std::vector<uint8_t> binaryFileContents(const char *filePath)
 {
-    const char *filePath = path.string().c_str();
-        
     std::ifstream in(filePath, std::ios::in | std::ios::binary);
         
     if (!in) {

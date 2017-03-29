@@ -10,7 +10,6 @@
 #define StaticMeshLoader_hpp
 
 #include "Renderer/StaticMesh.hpp"
-#include <boost/filesystem.hpp>
 
 namespace Renderer {
     
@@ -37,7 +36,7 @@ namespace Renderer {
         StaticMeshLoader();
         ~StaticMeshLoader() = default;
         
-        StaticMesh load(const boost::filesystem::path &path);
+        StaticMesh load(const char *filePath);
         
     private:
         const uint32_t GEO_MAGIC, GEO_VERSION;

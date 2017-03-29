@@ -10,18 +10,17 @@
 #include "Exception.hpp"
 
 #include <glm/gtc/matrix_transform.hpp> // for glm::ortho
+#include <algorithm>
 
 #include "SDL.h"
 #include "SDL_image.h"
 
-#include <boost/filesystem.hpp>
-
 namespace Renderer {
-    
-    static boost::filesystem::path getPrefPath()
+
+    static std::string getPrefPath()
     {
         char *s = SDL_GetPrefPath("foxostro", "PinkTopaz");
-        boost::filesystem::path prefPath(s);
+        std::string prefPath(s);
         SDL_free(s);
         return prefPath;
     }
@@ -228,7 +227,7 @@ namespace Renderer {
         return atlasSurface;
     }
     
-    SDL_Surface* StringRenderer::genTextureAtlas(const boost::filesystem::path &fontName,
+    SDL_Surface* StringRenderer::genTextureAtlas(const std::string &fontName,
                                                  unsigned fontSize)
     {
         FT_Library ft;
@@ -237,7 +236,7 @@ namespace Renderer {
         }
         
         FT_Face face;
-        if (FT_New_Face(ft, fontName.string().c_str(), 0, &face)) {
+        if (FT_New_Face(ft, fontName.c_str(), 0, &face)) {
             throw Exception("Failed to load the font: %s", fontName.c_str());
         }
         
@@ -258,14 +257,13 @@ namespace Renderer {
     }
     
     std::shared_ptr<Texture>
-    StringRenderer::makeTextureAtlas(const boost::filesystem::path &fontName,
+    StringRenderer::makeTextureAtlas(const std::string &fontName,
                                      unsigned fontSize)
     {
         // Font texture atlas is cached between runs of the game.
-        boost::filesystem::path baseName("font" + std::to_string(fontSize) + ".png");
-        boost::filesystem::path atlasFileName = getPrefPath() / baseName;
+        std::string atlasFileName = getPrefPath() + "font" + std::to_string(fontSize) + ".png";
         SDL_Surface *atlasSurface = genTextureAtlas(fontName, fontSize);
-        IMG_SavePNG(atlasSurface, atlasFileName.string().c_str());
+        IMG_SavePNG(atlasSurface, atlasFileName.c_str());
         SDL_Log("Saving font texture atlas to file: %s", atlasFileName.c_str());
         
         // We only want to store the RED components in the GPU texture.
@@ -285,7 +283,7 @@ namespace Renderer {
     }
 
     StringRenderer::StringRenderer(const std::shared_ptr<GraphicsDevice> &dev,
-                                   const boost::filesystem::path &fontName,
+                                   const std::string &fontName,
                                    unsigned fontSize)
      : _graphicsDevice(dev)
     {

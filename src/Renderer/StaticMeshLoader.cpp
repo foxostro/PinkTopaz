@@ -17,9 +17,9 @@ namespace Renderer {
      : GEO_MAGIC('moeg'), GEO_VERSION(0)
     {}
     
-    StaticMesh StaticMeshLoader::load(const boost::filesystem::path &path)
+    StaticMesh StaticMeshLoader::load(const char *fileName)
     {
-        std::vector<uint8_t> _bytes = binaryFileContents(path);
+        std::vector<uint8_t> _bytes = binaryFileContents(fileName);
         
         const Header &header = *((Header *)_bytes.data());
         

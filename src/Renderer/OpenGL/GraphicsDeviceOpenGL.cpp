@@ -86,11 +86,11 @@ namespace Renderer {
                                      const std::string &fragmentProgramName,
                                      bool blending)
     {
-        boost::filesystem::path vertexProgramSourceFileName(vertexProgramName + ".glsl");
-        std::string vertexShaderSource = stringFromFileContents(vertexProgramSourceFileName);
+        std::string vertexProgramSourceFileName = vertexProgramName + ".glsl";
+        std::string vertexShaderSource = stringFromFileContents(vertexProgramSourceFileName.c_str());
         
-        boost::filesystem::path fragmentProgramSourceFileName(fragmentProgramName + ".glsl");
-        std::string fragmentShaderSource = stringFromFileContents(fragmentProgramSourceFileName);
+        std::string fragmentProgramSourceFileName = fragmentProgramName + ".glsl";
+        std::string fragmentShaderSource = stringFromFileContents(fragmentProgramSourceFileName.c_str());
 
         auto shader = std::make_shared<ShaderOpenGL>(vertexFormat,
                                                      vertexShaderSource,

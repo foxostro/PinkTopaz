@@ -16,15 +16,16 @@
 
 #include "SDL.h"
 #include <glm/gtc/matrix_transform.hpp> // for perspective()
+
+constexpr const char *FONT_NAME = "vegur/Vegur-Regular.otf";
+constexpr unsigned FONT_SIZE = 48;
     
 RenderSystem::RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &dev)
-    : FONT_NAME("vegur/Vegur-Regular.otf"),
-    FONT_SIZE(48),
-    _graphicsDevice(dev),
+    : _graphicsDevice(dev),
     _stringRenderer(dev, FONT_NAME, FONT_SIZE),
     _frameTimer(_stringRenderer)
 {}
-    
+
 void RenderSystem::configure(entityx::EventManager &em)
 {
     em.subscribe<entityx::ComponentAddedEvent<ActiveCamera>>(*this);

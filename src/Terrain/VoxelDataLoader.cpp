@@ -17,9 +17,9 @@ namespace Terrain {
      : VOXEL_MAGIC('lxov'), VOXEL_VERSION(0)
     {}
     
-    VoxelData VoxelDataLoader::load(const boost::filesystem::path &path)
+    VoxelData VoxelDataLoader::load(const char *filePath)
     {
-        std::vector<uint8_t> bytes = binaryFileContents(path);
+        std::vector<uint8_t> bytes = binaryFileContents(filePath);
         
         const Header &header = *((Header *)bytes.data());
         

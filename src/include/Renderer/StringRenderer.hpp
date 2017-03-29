@@ -27,10 +27,8 @@
 
 #include "SDL.h"
 
-#include <boost/filesystem.hpp>
-
 namespace Renderer {
-    
+
     class StringRenderer
     {
     public:
@@ -54,7 +52,7 @@ namespace Renderer {
         typedef std::list<String>::iterator StringHandle;
         
         StringRenderer(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
-                       const boost::filesystem::path &fontName,
+                       const std::string &fontName,
                        unsigned fontSize);
         ~StringRenderer() = default;
         
@@ -113,14 +111,13 @@ namespace Renderer {
         SDL_Surface* atlasSearch(FT_Face &face, unsigned fontSize);
         
         // Returns a font texture atlas for the specified font and size.
-        SDL_Surface* genTextureAtlas(const boost::filesystem::path &fontName,
+        SDL_Surface* genTextureAtlas(const std::string &fontName,
                                      unsigned fontSize);
         
         // Returns a texture which holds the font texture atlas for the
         // specified font and specified font size.
-        std::shared_ptr<Texture>
-        makeTextureAtlas(const boost::filesystem::path &fontName,
-                         unsigned fontSize);
+        std::shared_ptr<Texture> makeTextureAtlas(const std::string &fontName,
+                                                  unsigned fontSize);
         
         // Rebuilds the internal vertex buffer for a string. This is useful
         // when string contents have changed, for example.
