@@ -16,20 +16,15 @@ FrameTimer::FrameTimer(StringRenderer &stringRenderer)
     _timeAccum(0),
     _countDown(60),
     _firstReportingPeriod(true),
-    _ticksBeginMs(0)
+    _ticksBeginMs(SDL_GetTicks())
 {}
     
-void FrameTimer::beginFrame()
+void FrameTimer::tick()
 {
-    _ticksBeginMs = SDL_GetTicks();
-}
-    
-void FrameTimer::endFrame()
-{
-    unsigned _ticksEndMs = SDL_GetTicks();
+    unsigned ticksEndMs = SDL_GetTicks();
         
     // Report the average time between frames.
-    unsigned ticksElapsedMs = _ticksEndMs - _ticksBeginMs;
+    unsigned ticksElapsedMs = ticksEndMs - _ticksBeginMs;
     _timeAccum += ticksElapsedMs;
         
     if (_countDown == 0) {
@@ -54,4 +49,7 @@ void FrameTimer::endFrame()
     } else {
         --_countDown;
     }
+    
+    // We measure intervals between calls to tick().
+    _ticksBeginMs = ticksEndMs;
 }
