@@ -21,11 +21,11 @@
 struct RenderableStaticMesh
 {
     size_t vertexCount;
-    std::shared_ptr<Renderer::Buffer> buffer;
-    std::shared_ptr<Renderer::Buffer> uniforms;
-    std::shared_ptr<Renderer::Shader> shader;
-    std::shared_ptr<Renderer::Texture> texture;
-    std::shared_ptr<Renderer::TextureSampler> textureSampler;
+    std::shared_ptr<Buffer> buffer;
+    std::shared_ptr<Buffer> uniforms;
+    std::shared_ptr<Shader> shader;
+    std::shared_ptr<Texture> texture;
+    std::shared_ptr<TextureSampler> textureSampler;
 };
 
 #endif /* RenderableStaticMesh_hpp */

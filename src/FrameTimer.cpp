@@ -10,7 +10,7 @@
 #include "SDL.h"
 #include <sstream>
     
-FrameTimer::FrameTimer(Renderer::StringRenderer &stringRenderer)
+FrameTimer::FrameTimer(StringRenderer &stringRenderer)
     : _stringRenderer(stringRenderer),
     _framesBetweenReport(60),
     _timeAccum(0),

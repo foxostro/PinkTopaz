@@ -22,7 +22,7 @@
 class RenderSystem : public entityx::System<RenderSystem>, public entityx::Receiver<RenderSystem>
 {
 public:
-    RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice);
+    RenderSystem(const std::shared_ptr<GraphicsDevice> &graphicsDevice);
     void configure(entityx::EventManager &em) override;
     void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
     void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
@@ -33,8 +33,8 @@ private:
     glm::ivec4 _viewport;
     glm::mat4x4 _proj;
     entityx::Entity _activeCamera;
-    std::shared_ptr<Renderer::GraphicsDevice> _graphicsDevice;
-    Renderer::StringRenderer _stringRenderer;
+    std::shared_ptr<GraphicsDevice> _graphicsDevice;
+    StringRenderer _stringRenderer;
     FrameTimer _frameTimer;
 };
 

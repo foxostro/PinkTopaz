@@ -9,18 +9,14 @@
 #ifndef Shader_hpp
 #define Shader_hpp
 
-namespace Renderer {
+// Encapsulates a Shader resource in a platform-agnostic manner.
+class Shader
+{
+public:
+    virtual ~Shader() = default;
     
-    // Encapsulates a Shader resource in a platform-agnostic manner.
-    class Shader
-    {
-    public:
-        virtual ~Shader() = default;
-        
-    protected:
-        Shader() = default;
-    };
-
-} // namespace Renderer
+protected:
+    Shader() = default;
+};
 
 #endif /* Shader_hpp */

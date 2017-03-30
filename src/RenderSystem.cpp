@@ -20,7 +20,7 @@
 constexpr const char *FONT_NAME = "vegur/Vegur-Regular.otf";
 constexpr unsigned FONT_SIZE = 48;
     
-RenderSystem::RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &dev)
+RenderSystem::RenderSystem(const std::shared_ptr<GraphicsDevice> &dev)
     : _graphicsDevice(dev),
     _stringRenderer(dev, FONT_NAME, FONT_SIZE),
     _frameTimer(_stringRenderer)
@@ -48,9 +48,9 @@ void RenderSystem::update(entityx::EntityManager &es,
         
     // Update the uniform buffers so they include the most recent matrices.
     auto f = [&](entityx::Entity entity,
-                    RenderableStaticMesh &mesh,
-                    Transform &transform) {
-        Renderer::TerrainUniforms uniforms = {
+                 RenderableStaticMesh &mesh,
+                 Transform &transform) {
+        TerrainUniforms uniforms = {
             cameraTransform * transform.value,
             adjust * _proj,
         };
@@ -59,7 +59,7 @@ void RenderSystem::update(entityx::EntityManager &es,
     es.each<RenderableStaticMesh, Transform>(f);
         
     // Render all meshes.
-    Renderer::RenderPassDescriptor desc = {
+    RenderPassDescriptor desc = {
         true,
         glm::vec4(0.2f, 0.4f, 0.5f, 1.0f)
     };
@@ -67,14 +67,14 @@ void RenderSystem::update(entityx::EntityManager &es,
         
     encoder->setViewport(_viewport);
     auto g = [&](entityx::Entity entity,
-                    RenderableStaticMesh &mesh,
-                    Transform &transform) {
+                 RenderableStaticMesh &mesh,
+                 Transform &transform) {
         encoder->setShader(mesh.shader);
         encoder->setFragmentSampler(mesh.textureSampler, 0);
         encoder->setFragmentTexture(mesh.texture, 0);
         encoder->setVertexBuffer(mesh.buffer, 0);
         encoder->setVertexBuffer(mesh.uniforms, 1);
-        encoder->drawPrimitives(Renderer::Triangles, 0, mesh.vertexCount, 1);
+        encoder->drawPrimitives(Triangles, 0, mesh.vertexCount, 1);
     };
     es.each<RenderableStaticMesh, Transform>(g);
         

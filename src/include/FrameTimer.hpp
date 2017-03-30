@@ -35,7 +35,7 @@ public:
         FrameTimer &_frameTimer;
     };
         
-    FrameTimer(Renderer::StringRenderer &stringRenderer);
+    FrameTimer(StringRenderer &stringRenderer);
         
     // Call at the beginning of the frame to start timing.
     void beginFrame();
@@ -47,10 +47,10 @@ public:
     inline Token token() { return Token(*this); }
         
 private:
-    Renderer::StringRenderer &_stringRenderer;
+    StringRenderer &_stringRenderer;
     const unsigned _framesBetweenReport;
         
-    Renderer::StringRenderer::StringHandle _frameTimeLabel;
+    StringRenderer::StringHandle _frameTimeLabel;
     unsigned _timeAccum;
     unsigned _countDown;
     bool _firstReportingPeriod;

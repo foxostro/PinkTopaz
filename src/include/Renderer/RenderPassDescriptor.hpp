@@ -11,18 +11,14 @@
 
 #include "Renderer/VertexFormat.hpp"
 
-namespace Renderer {
+struct RenderPassDescriptor
+{
+    // Set to `true' in order to clear Color and Depth and Stencil when the
+    // rendering pass begins.
+    bool clear;
     
-    struct RenderPassDescriptor
-    {
-        // Set to `true' in order to clear Color and Depth and Stencil when the
-        // rendering pass begins.
-        bool clear;
-        
-        // The color to clear the render target to should `clear' be true.
-        glm::vec4 clearColor;
-    };
-    
-} // namespace Renderer
+    // The color to clear the render target to should `clear' be true.
+    glm::vec4 clearColor;
+};
 
 #endif /* RenderPassDescriptor_hpp */

@@ -20,8 +20,8 @@
 class World : public entityx::EntityX
 {
 public:
-    explicit World(const std::shared_ptr<Renderer::GraphicsDevice> &dev,
-                    const RenderableStaticMesh &mesh);
+    explicit World(const std::shared_ptr<GraphicsDevice> &dev,
+                   const RenderableStaticMesh &mesh);
         
     void update(entityx::TimeDelta dt);
 };

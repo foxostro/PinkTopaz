@@ -13,28 +13,24 @@
 #include "Renderer/VertexFormat.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
 
-namespace Renderer {
+class ShaderOpenGL : public Shader
+{
+public:
+    ShaderOpenGL(const VertexFormat &vertexFormat,
+                 const std::string &vertexShaderSource,
+                 const std::string &fragmentShaderSource,
+                 bool blending);
     
-    class ShaderOpenGL : public Shader
-    {
-    public:
-        ShaderOpenGL(const VertexFormat &vertexFormat,
-                     const std::string &vertexShaderSource,
-                     const std::string &fragmentShaderSource,
-                     bool blending);
-
-        ~ShaderOpenGL();
-        
-        inline GLuint getProgram() const { return _program; }
-        inline const VertexFormat& getVertexFormat() const { return _vertexFormat; }
-        inline bool getBlending() const { return _blending; }
-        
-    private:
-        GLuint _program;
-        VertexFormat _vertexFormat;
-        bool _blending;
-    };
+    ~ShaderOpenGL();
     
-} // namespace Renderer
+    inline GLuint getProgram() const { return _program; }
+    inline const VertexFormat& getVertexFormat() const { return _vertexFormat; }
+    inline bool getBlending() const { return _blending; }
+    
+private:
+    GLuint _program;
+    VertexFormat _vertexFormat;
+    bool _blending;
+};
 
 #endif /* ShaderOpenGL_hpp */

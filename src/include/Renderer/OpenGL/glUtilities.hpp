@@ -17,11 +17,7 @@
 #define CHECK_GL_ERROR(...) checkGLError(__VA_ARGS__)
 #endif
 
-namespace Renderer {
-    
-    const char * stringForOpenGLError(GLenum error);
-    void checkGLError();
-    
-} // namespace Renderer
+const char * stringForOpenGLError(GLenum error);
+void checkGLError();
 
 #endif /* glUtilities_hpp */

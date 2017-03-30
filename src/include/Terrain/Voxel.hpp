@@ -9,16 +9,12 @@
 #ifndef Voxel_hpp
 #define Voxel_hpp
 
-namespace Terrain {
+struct Voxel
+{
+    float value;
     
-    struct Voxel
-    {
-        float value;
-        
-        Voxel() : value(0.0f) {}
-        Voxel(float v) : value(v) {}
-    };
-
-} // namespace Terrain
+    Voxel() : value(0.0f) {}
+    Voxel(float v) : value(v) {}
+};
 
 #endif /* Voxel_hpp */

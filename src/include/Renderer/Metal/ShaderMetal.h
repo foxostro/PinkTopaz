@@ -17,28 +17,24 @@
 #include "Renderer/VertexFormat.hpp"
 #include <Metal/Metal.h>
 
-namespace PinkTopaz::Renderer::Metal {
+class ShaderMetal : public Shader
+{
+public:
+    ShaderMetal(const VertexFormat &_vertexFormat,
+                id <MTLDevice> device,
+                id <MTLLibrary> library,
+                const std::string &vert,
+                const std::string &frag,
+                bool blending);
     
-    class ShaderMetal : public Shader
-    {
-    public:
-        ShaderMetal(const VertexFormat &_vertexFormat,
-                    id <MTLDevice> device,
-                    id <MTLLibrary> library,
-                    const std::string &vert,
-                    const std::string &frag,
-                    bool blending);
-        
-        virtual ~ShaderMetal();
-        
-        inline id <MTLRenderPipelineState> getPipelineState() const { return _pipelineState; }
-        inline bool getBlending() const { return _blending; }
-        
-    private:
-        id <MTLRenderPipelineState> _pipelineState;
-        bool _blending;
-    };
+    virtual ~ShaderMetal();
     
-} // namespace PinkTopaz::Renderer::Metal
+    inline id <MTLRenderPipelineState> getPipelineState() const { return _pipelineState; }
+    inline bool getBlending() const { return _blending; }
+    
+private:
+    id <MTLRenderPipelineState> _pipelineState;
+    bool _blending;
+};
 
 #endif /* ShaderMetal_h */

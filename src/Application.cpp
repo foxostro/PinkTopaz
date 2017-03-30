@@ -24,9 +24,9 @@
 #include <map>
 #include <glm/glm.hpp>
 
-RenderableStaticMesh Application::createTerrainMesh(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
+RenderableStaticMesh Application::createTerrainMesh(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
 {
-    Terrain::VoxelDataLoader voxelDataLoader;
+    VoxelDataLoader voxelDataLoader;
         
     // Load terrain texture array from a single image.
     // TODO: create a TextureArrayLoader class to encapsulate tex loading.
@@ -36,9 +36,9 @@ RenderableStaticMesh Application::createTerrainMesh(const std::shared_ptr<Render
         throw Exception("Failed to load terrain terrain.png.");
     }
 
-    Renderer::TextureDescriptor texDesc = {
-        Renderer::Texture2DArray,
-        Renderer::BGRA8,
+    TextureDescriptor texDesc = {
+        Texture2DArray,
+        BGRA8,
         static_cast<size_t>(surface->w),
         static_cast<size_t>(surface->w),
         static_cast<size_t>(surface->h / surface->w),
@@ -47,38 +47,38 @@ RenderableStaticMesh Application::createTerrainMesh(const std::shared_ptr<Render
     };
     auto texture = graphicsDevice->makeTexture(texDesc, surface->pixels);
         
-    Renderer::TextureSamplerDescriptor samplerDesc = {
-        Renderer::ClampToEdge,
-        Renderer::ClampToEdge,
-        Renderer::NearestMipMapNearest,
-        Renderer::Nearest
+    TextureSamplerDescriptor samplerDesc = {
+        ClampToEdge,
+        ClampToEdge,
+        NearestMipMapNearest,
+        Nearest
     };
     auto sampler = graphicsDevice->makeTextureSampler(samplerDesc);
         
-    Terrain::VoxelData voxels = voxelDataLoader.load("0_0_0.voxels.dat");
+    VoxelData voxels = voxelDataLoader.load("0_0_0.voxels.dat");
         
     // The voxel file uses a binary SOLID/EMPTY flag for voxels. So, we get
     // values that are either 0.0 or 1.0.
-    std::shared_ptr<Terrain::Mesher> mesher(new Terrain::MesherMarchingCubes());
+    std::shared_ptr<Mesher> mesher(new MesherMarchingCubes());
     auto mesh = mesher->extract(voxels, 0.5f);
         
     auto vertexBufferData = mesh.getBufferData();
     auto vertexBuffer = graphicsDevice->makeBuffer(vertexBufferData,
-                                                   Renderer::StaticDraw,
-                                                   Renderer::ArrayBuffer);
+                                                   StaticDraw,
+                                                   ArrayBuffer);
     vertexBuffer->addDebugMarker("Terrain Vertices", 0, vertexBufferData.size());
         
-    Renderer::TerrainUniforms uniforms;
+    TerrainUniforms uniforms;
     auto uniformBuffer = graphicsDevice->makeBuffer(sizeof(uniforms),
                                                     &uniforms,
-                                                    Renderer::DynamicDraw,
-                                                    Renderer::UniformBuffer);
+                                                    DynamicDraw,
+                                                    UniformBuffer);
     vertexBuffer->addDebugMarker("Terrain Uniforms", 0, sizeof(uniforms));
         
     auto shader = graphicsDevice->makeShader(mesh.getVertexFormat(),
-                                                "vert", "frag",
-                                                false);
-        
+                                             "vert", "frag",
+                                             false);
+    
     RenderableStaticMesh meshContainer = {
         mesh.getVertexCount(),
         vertexBuffer,
@@ -91,7 +91,7 @@ RenderableStaticMesh Application::createTerrainMesh(const std::shared_ptr<Render
     return meshContainer;
 }
     
-void Application::inner(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice)
+void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
 {
     std::map<SDL_Keycode, bool> prevKeyStates, keyStates;
         
@@ -195,7 +195,7 @@ void Application::run()
         
     SDL_SetRelativeMouseMode(SDL_TRUE);
         
-    inner(Renderer::createDefaultGraphicsDevice(*_window));
+    inner(createDefaultGraphicsDevice(*_window));
 
     SDL_DestroyWindow(_window);
     _window = nullptr;

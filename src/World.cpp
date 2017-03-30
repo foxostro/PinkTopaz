@@ -14,8 +14,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
     
-World::World(const std::shared_ptr<Renderer::GraphicsDevice> &device,
-                const RenderableStaticMesh &mesh)
+World::World(const std::shared_ptr<GraphicsDevice> &device,
+             const RenderableStaticMesh &mesh)
 {
     systems.add<RenderSystem>(device);
     systems.add<CameraMovementSystem>();

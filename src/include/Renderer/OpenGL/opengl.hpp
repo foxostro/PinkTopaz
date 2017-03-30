@@ -15,8 +15,8 @@
 // platforms. This header is intended to be a central place where this differentiation can be done
 // for PinkTopaz.
 #ifdef __APPLE__
-#define GL3_PROTOTYPES
-#include <OpenGL/gl3.h>
+//#define GL3_PROTOTYPES
+//#include <OpenGL/gl3.h>
 #else
 #   ifdef _WIN32
 #       include <windows.h>

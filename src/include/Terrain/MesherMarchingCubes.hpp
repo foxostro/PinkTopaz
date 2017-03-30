@@ -11,38 +11,34 @@
 
 #include "Terrain/Mesher.hpp"
 
-namespace Terrain {
+// Accepts voxels and produces a triangle mesh for the specified isosurface.
+class MesherMarchingCubes : public Mesher
+{
+public:
+    MesherMarchingCubes() = default;
+    virtual ~MesherMarchingCubes() = default;
     
-    // Accepts voxels and produces a triangle mesh for the specified isosurface.
-    class MesherMarchingCubes : public Mesher
+    // Returns a triangle mesh for the specified isosurface.
+    virtual StaticMesh
+    extract(const VoxelData &voxels, float isosurface) override;
+    
+private:
+    struct CubeVertex
     {
-    public:
-        MesherMarchingCubes() = default;
-        virtual ~MesherMarchingCubes() = default;
+        const Voxel &voxel;
+        const glm::vec3 &worldPos;
         
-        // Returns a triangle mesh for the specified isosurface.
-        virtual Renderer::StaticMesh
-        extract(const VoxelData &voxels, float isosurface) override;
-        
-    private:
-        struct CubeVertex
-        {
-            const Voxel &voxel;
-            const glm::vec3 &worldPos;
-            
-            CubeVertex(const VoxelData &voxels, const glm::vec3 &w)
-            : voxel(voxels.get(w)), worldPos(w)
-            {}
-        };
-        
-        static constexpr int NUM_CUBE_EDGES = 12;
-        static constexpr int NUM_CUBE_VERTS = 8;
-        
-        void polygonizeGridCell(Renderer::StaticMesh &geometry,
-                                const std::array<CubeVertex, NUM_CUBE_VERTS> &cube,
-                                float isosurface);
+        CubeVertex(const VoxelData &voxels, const glm::vec3 &w)
+        : voxel(voxels.get(w)), worldPos(w)
+        {}
     };
     
-} // namespace Terrain
+    static constexpr int NUM_CUBE_EDGES = 12;
+    static constexpr int NUM_CUBE_VERTS = 8;
+    
+    void polygonizeGridCell(StaticMesh &geometry,
+                            const std::array<CubeVertex, NUM_CUBE_VERTS> &cube,
+                            float isosurface);
+};
 
 #endif /* MesherMarchingCubes_hpp */
