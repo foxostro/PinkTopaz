@@ -22,8 +22,10 @@
 GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(SDL_Window &window)
 : _window(window)
 {
-    constexpr int desiredMajor = 4;
-    constexpr int desiredMinor = 1;
+    // VMWare provides OpenGL 3.3. So, this is our minimum OpenGL version.
+    // The next lowest is macOS, which provides 4.1.
+    constexpr int desiredMajor = 3;
+    constexpr int desiredMinor = 3;
     
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, desiredMajor);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, desiredMinor);
