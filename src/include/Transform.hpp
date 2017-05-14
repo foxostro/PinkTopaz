@@ -11,16 +11,12 @@
 
 #include <glm/mat4x4.hpp>
 
-namespace PinkTopaz {
-
-    // Position and Orientation of an entity.
-    struct Transform
-    {
-        Transform() {}
-        Transform(const glm::mat4 &a) : value(a) {}
-        glm::mat4 value;
-    };
-
-} // namespace PinkTopaz
+// Position and Orientation of an entity.
+struct Transform
+{
+    Transform() {}
+    Transform(const glm::mat4 &a) : value(a) {}
+    glm::mat4 value;
+};
 
 #endif /* Transform_hpp */

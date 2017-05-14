@@ -11,23 +11,19 @@
 
 #include <exception>
 #include <string>
-
-namespace PinkTopaz {
     
-    class Exception : public std::exception
+class Exception : public std::exception
+{
+private:
+    std::string _reason;
+        
+public:
+    Exception(const std::string fmt, ...);
+        
+    virtual const char *what() const noexcept override
     {
-    private:
-        std::string _reason;
-        
-    public:
-        Exception(const std::string fmt, ...);
-        
-        virtual const char *what() const noexcept override
-        {
-            return _reason.c_str();
-        }
-    };
-    
-} // namespace PinkTopaz
+        return _reason.c_str();
+    }
+};
 
 #endif /* Exception_hpp */

@@ -14,26 +14,22 @@
 
 #include "Renderer/GraphicsDevice.hpp"
 #include "RenderableStaticMesh.hpp"
-
-namespace PinkTopaz {
     
-    // The central game loop, basically.
-    class Application
-    {
-    public:
-        Application() = default;
-        ~Application() = default;
+// The central game loop, basically.
+class Application
+{
+public:
+    Application() = default;
+    ~Application() = default;
 
-        // Runs the game loop on the current thread and returns when the game has ended.
-        void run();
+    // Runs the game loop on the current thread and returns when the game has ended.
+    void run();
         
-    private:
-        RenderableStaticMesh createTerrainMesh(const std::shared_ptr<Renderer::GraphicsDevice> &g);
-        void inner(const std::shared_ptr<Renderer::GraphicsDevice> &g);
+private:
+    RenderableStaticMesh createTerrainMesh(const std::shared_ptr<GraphicsDevice> &g);
+    void inner(const std::shared_ptr<GraphicsDevice> &g);
         
-        SDL_Window *_window;
-    };
-
-} // namespace PinkTopaz
+    SDL_Window *_window;
+};
 
 #endif /* Application_hpp */

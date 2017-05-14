@@ -9,39 +9,35 @@
 #ifndef TextureSampler_hpp
 #define TextureSampler_hpp
 
-namespace PinkTopaz::Renderer {
+enum TextureSamplerAddressMode
+{
+    Repeat,
+    ClampToEdge
+};
+
+enum TextureSamplerFilter
+{
+    Nearest,
+    Linear,
+    NearestMipMapNearest,
+    LinearMipMapNearest,
+    LinearMipMapLinear
+};
+
+struct TextureSamplerDescriptor
+{
+    TextureSamplerAddressMode addressS, addressT;
+    TextureSamplerFilter minFilter, maxFilter;
+};
+
+// Encapsulates a texture sampler resource in a platform-agnostic manner.
+class TextureSampler
+{
+public:
+    virtual ~TextureSampler() = default;
     
-    enum TextureSamplerAddressMode
-    {
-        Repeat,
-        ClampToEdge
-    };
-    
-    enum TextureSamplerFilter
-    {
-        Nearest,
-        Linear,
-        NearestMipMapNearest,
-        LinearMipMapNearest,
-        LinearMipMapLinear
-    };
-    
-    struct TextureSamplerDescriptor
-    {
-        TextureSamplerAddressMode addressS, addressT;
-        TextureSamplerFilter minFilter, maxFilter;
-    };
-    
-    // Encapsulates a texture sampler resource in a platform-agnostic manner.
-    class TextureSampler
-    {
-    public:
-        virtual ~TextureSampler() = default;
-        
-    protected:
-        TextureSampler() = default;
-    };
-    
-} // namespace PinkTopaz::Renderer
+protected:
+    TextureSampler() = default;
+};
 
 #endif /* TextureSampler_hpp */

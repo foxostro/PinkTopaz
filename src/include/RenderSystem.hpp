@@ -11,7 +11,6 @@
 
 #include <glm/mat4x4.hpp>
 #include <entityx/entityx.h>
-#include <boost/filesystem.hpp>
 
 #include "ActiveCamera.hpp"
 #include "WindowSizeChangedEvent.hpp"
@@ -19,31 +18,24 @@
 #include "Renderer/StringRenderer.hpp"
 #include "FrameTimer.hpp"
 
-namespace PinkTopaz {
-    
-    // System for rendering game objects in the world.
-    class RenderSystem : public entityx::System<RenderSystem>, public entityx::Receiver<RenderSystem>
-    {
-    public:
-        RenderSystem(const std::shared_ptr<Renderer::GraphicsDevice> &graphicsDevice);
-        void configure(entityx::EventManager &em) override;
-        void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
-        void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
-        void receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event);
-        void receive(const WindowSizeChangedEvent &event);
+// System for rendering game objects in the world.
+class RenderSystem : public entityx::System<RenderSystem>, public entityx::Receiver<RenderSystem>
+{
+public:
+    RenderSystem(const std::shared_ptr<GraphicsDevice> &graphicsDevice);
+    void configure(entityx::EventManager &em) override;
+    void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
+    void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
+    void receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event);
+    void receive(const WindowSizeChangedEvent &event);
         
-    private:
-        const boost::filesystem::path FONT_NAME;
-        const unsigned FONT_SIZE;
-        
-        glm::ivec4 _viewport;
-        glm::mat4x4 _proj;
-        entityx::Entity _activeCamera;
-        std::shared_ptr<Renderer::GraphicsDevice> _graphicsDevice;
-        Renderer::StringRenderer _stringRenderer;
-        FrameTimer _frameTimer;
-    };
-
-} // namespace PinkTopaz
+private:
+    glm::ivec4 _viewport;
+    glm::mat4x4 _proj;
+    entityx::Entity _activeCamera;
+    std::shared_ptr<GraphicsDevice> _graphicsDevice;
+    StringRenderer _stringRenderer;
+    FrameTimer _frameTimer;
+};
 
 #endif /* RenderSystem_hpp */

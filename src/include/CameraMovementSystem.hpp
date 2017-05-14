@@ -18,30 +18,26 @@
 #include <glm/gtc/quaternion.hpp>
 #include <map>
 #include "SDL.h"
-
-namespace PinkTopaz {
     
-    class CameraMovementSystem : public entityx::System<CameraMovementSystem>, public entityx::Receiver<CameraMovementSystem>
-    {
-    public:
-        CameraMovementSystem();
-        void configure(entityx::EventManager &em) override;
-        void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
-        void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
-        void receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event);
-        void receive(const KeypressEvent &event);
-        void receive(const MouseMoveEvent &event);
+class CameraMovementSystem : public entityx::System<CameraMovementSystem>, public entityx::Receiver<CameraMovementSystem>
+{
+public:
+    CameraMovementSystem();
+    void configure(entityx::EventManager &em) override;
+    void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
+    void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
+    void receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event);
+    void receive(const KeypressEvent &event);
+    void receive(const MouseMoveEvent &event);
         
-    private:
-        glm::vec3 _eye, _center, _up;
-        glm::quat _rotation;
-        float _cameraSpeed, _cameraRotateSpeed;
-        std::map<SDL_Keycode, bool> _keys;
-        entityx::Entity _activeCamera;
-        float _mouseSensitivity;
-        int _mouseDeltaX, _mouseDeltaY;
-    };
-
-} // namespace PinkTopaz
+private:
+    glm::vec3 _eye, _center, _up;
+    glm::quat _rotation;
+    float _cameraSpeed, _cameraRotateSpeed;
+    std::map<SDL_Keycode, bool> _keys;
+    entityx::Entity _activeCamera;
+    float _mouseSensitivity;
+    int _mouseDeltaX, _mouseDeltaY;
+};
 
 #endif /* CameraMovementSystem_hpp */

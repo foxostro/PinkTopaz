@@ -11,28 +11,24 @@
 
 #include <vector>
 
-namespace PinkTopaz::Renderer {
-    
-    enum AttributeType
-    {
-        AttributeTypeFloat,
-        AttributeTypeUnsignedByte
-    };
-    
-    struct AttributeFormat
-    {
-        size_t size;
-        AttributeType type;
-        bool normalized;
-        size_t stride;
-        size_t offset;
-    };
-    
-    struct VertexFormat
-    {
-        std::vector<AttributeFormat> attributes;
-    };
-    
-} // namespace PinkTopaz::Renderer
+enum AttributeType
+{
+    AttributeTypeFloat,
+    AttributeTypeUnsignedByte
+};
+
+struct AttributeFormat
+{
+    size_t size;
+    AttributeType type;
+    bool normalized;
+    size_t stride;
+    size_t offset;
+};
+
+struct VertexFormat
+{
+    std::vector<AttributeFormat> attributes;
+};
 
 #endif /* VertexFormat_hpp */

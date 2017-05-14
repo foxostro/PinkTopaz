@@ -17,30 +17,26 @@
 
 #include <Metal/Metal.h>
 
-namespace PinkTopaz::Renderer::Metal {
+class TextureMetal : public Texture
+{
+public:
+    TextureMetal(id <MTLDevice> device,
+                 const TextureDescriptor &desc,
+                 const void *data);
+    virtual ~TextureMetal();
     
-    class TextureMetal : public Texture
-    {
-    public:
-        TextureMetal(id <MTLDevice> device,
-                     const TextureDescriptor &desc,
-                     const void *data);
-        virtual ~TextureMetal();
-        
-        inline id <MTLTexture> getMetalTexture() const { return _texture; }
-        
-    private:
-        void initTexture2D(id <MTLDevice> device,
-                           const TextureDescriptor &desc,
-                           const void *data);
-        
-        void initTexture2DArray(id <MTLDevice> device,
-                                const TextureDescriptor &desc,
-                                const void *data);
-        
-        id <MTLTexture> _texture;
-    };
+    inline id <MTLTexture> getMetalTexture() const { return _texture; }
     
-} // namespace PinkTopaz::Renderer::Metal
+private:
+    void initTexture2D(id <MTLDevice> device,
+                       const TextureDescriptor &desc,
+                       const void *data);
+    
+    void initTexture2DArray(id <MTLDevice> device,
+                            const TextureDescriptor &desc,
+                            const void *data);
+    
+    id <MTLTexture> _texture;
+};
 
 #endif /* TextureMetal_h */

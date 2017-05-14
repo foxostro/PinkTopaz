@@ -1,11 +1,24 @@
-cmake_minimum_required (VERSION 3.6)
+cmake_minimum_required (VERSION 3.5)
 project (PinkTopaz)
 set(APP_NAME "PinkTopaz")
 
 include(conanbuildinfo.cmake)
 conan_basic_setup()
 
-set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z -DMETAL_ENABLED")
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS "/EHsc /D_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH")
+
+    set(CMAKE_CXX_FLAGS_RELEASE "/MD")
+    set(CMAKE_CXX_FLAGS_DEBUG "/MD /Zi")
+else()
+    if(APPLE)
+    set(APPLE_FLAGS "-DMETAL_ENABLED")
+    else(APPLE)
+    set(APPLE_FLAGS "")
+    endif(APPLE)
+    
+    set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
+endif()
 
 set(SOURCE_FILES_TERRAIN
     "src/include/Terrain/Voxel.hpp"
@@ -36,7 +49,7 @@ if(APPLE)
         "src/Renderer/Metal/BufferMetal.mm" "src/include/Renderer/Metal/BufferMetal.h"
         "src/Library.metal"
         )
-else()
+else(APPLE)
     set(SOURCE_FILES_METAL "")
 endif(APPLE)
 
@@ -82,7 +95,6 @@ set(SOURCE_FILES_MISC
     "src/Exception.cpp" "src/include/Exception.hpp"
     "src/include/RetinaSupport.h"
     "src/FrameTimer.cpp" "src/include/FrameTimer.hpp"
-    "src/include/UniqueName.hpp"
     "src/include/AABB.hpp"
     "src/include/math.hpp"
     )
@@ -92,7 +104,7 @@ if(APPLE)
         "src/include/RetinaSupport.h" "src/osx/RetinaSupport.m"
         "src/osx/GraphicsDeviceFactory.mm"
         )
-else()
+else(APPLE)
     set(SOURCE_FILES_PLATFORM_SUPPORT
         "src/include/RetinaSupport.h" "src/linux/RetinaSupport.c"
         "src/linux/GraphicsDeviceFactory.cpp"
@@ -123,9 +135,13 @@ source_group("Renderer\\Metal" FILES ${SOURCE_FILES_METAL})
 source_group("Platform Support" FILES ${SOURCE_FILES_PLATFORM_SUPPORT})
 source_group("Misc" FILES ${SOURCE_FILES_MISC})
 
+# Build the app. If we're on Apple then this is a .app bundle.
+if(APPLE)
 add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
+else(APPLE)
+add_executable(${APP_NAME} ${SOURCE_FILES})
+endif(APPLE)
 
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(OpenGL REQUIRED)
 
 # Apple's "Metal" graphics library.
@@ -158,7 +174,7 @@ include_directories("${PROJECT_SOURCE_DIR}/src/include"
                     ${OPENGL_INCLUDE_DIRS}
                     ${MACOS_INCLUDE_DIRS}
                     )
-target_link_libraries(PinkTopaz
+target_link_libraries(${APP_NAME}
                       ${CONAN_LIBS}
                       ${OPENGL_LIBRARIES}
                       ${MACOS_LIBRARIES}
@@ -170,35 +186,25 @@ if(APPLE)
 	set_target_properties(PinkTopaz PROPERTIES MACOSX_BUNDLE_INFO_PLIST src/MacOSXBundleInfo.plist.in)
 	set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.foxostro.pinktopaz")
 
-    add_custom_command(TARGET PinkTopaz POST_BUILD
-                       COMMAND xcrun -sdk macosx metal src/Library.metal -gline-tables-only -o /tmp/PinkTopaz.Library.air
-                       COMMAND xcrun -sdk macosx metallib /tmp/PinkTopaz.Library.air -o res/Library.metallib
+    add_custom_command(TARGET ${APP_NAME} POST_BUILD
+                       COMMAND xcrun -sdk macosx metal src/Library.metal -gline-tables-only -o /tmp/${APP_NAME}.Library.air
+                       COMMAND xcrun -sdk macosx metallib /tmp/${APP_NAME}.Library.air -o res/Library.metallib
                        )
 
 	# On Mac OS, copy the resources directory into the app bundle. Important for redistributing the game.
-	add_custom_command(TARGET PinkTopaz POST_BUILD
-	                   COMMAND ${CMAKE_COMMAND} -E copy_directory "./res" $<TARGET_FILE_DIR:PinkTopaz>/../Resources
+	add_custom_command(TARGET ${APP_NAME} POST_BUILD
+	                   COMMAND ${CMAKE_COMMAND} -E copy_directory "./res" $<TARGET_FILE_DIR:${APP_NAME}>/../Resources
                        )
 
     # On Mac OS, sign the app bundle.
-    add_custom_command(TARGET PinkTopaz POST_BUILD
-                       COMMAND ./sign_the_app_bundle $<TARGET_FILE_DIR:PinkTopaz>/../..
+    add_custom_command(TARGET ${APP_NAME} POST_BUILD
+                       COMMAND ./sign_the_app_bundle $<TARGET_FILE_DIR:${APP_NAME}>/../..
                        )
 endif(APPLE)
 
-# Set up unit test support.
-enable_testing()
-set(PROJECT_TEST_NAME ${APP_NAME}Test)
-include_directories(${GTEST_INCLUDE_DIRS}
-                    "${PROJECT_SOURCE_DIR}/src/include"
-                    )
-add_executable(${PROJECT_TEST_NAME}
-               "src/test/Terrain/VoxelDataTest.cpp"
-               "src/Terrain/VoxelData.cpp"
-               "src/Renderer/StaticMesh.cpp"
-               )
-target_link_libraries(${PROJECT_TEST_NAME}
-                      ${CONAN_LIBS_GTEST}
-                      ${CONAN_LIBS_BOOST}
-                      )
-add_test(${PROJECT_TEST_NAME} ${PROJECT_TEST_NAME})
+if(WIN32)
+    # On Windows, copy the resources to the same directory as the executable.
+    add_custom_command(TARGET ${APP_NAME} POST_BUILD
+                       COMMAND ${CMAKE_COMMAND} -E copy_directory "./res" $<TARGET_FILE_DIR:${APP_NAME}>/
+                       )
+endif(WIN32)

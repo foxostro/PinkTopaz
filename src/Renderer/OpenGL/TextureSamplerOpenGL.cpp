@@ -10,57 +10,53 @@
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
 
-namespace PinkTopaz::Renderer::OpenGL {
-    
-    GLint textureSamplerAddressModeEnum(TextureSamplerAddressMode mode)
+GLint textureSamplerAddressModeEnum(TextureSamplerAddressMode mode)
+{
+    switch (mode)
     {
-        switch (mode)
-        {
-            case Repeat: return GL_REPEAT;
-            case ClampToEdge: return GL_CLAMP_TO_EDGE;
-            default:
-                throw Exception("Unsupported texture format.");
-        }
+        case Repeat: return GL_REPEAT;
+        case ClampToEdge: return GL_CLAMP_TO_EDGE;
+        default:
+            throw Exception("Unsupported texture format.");
     }
-    
-    GLint textureSamplerFilterEnum(TextureSamplerFilter filter)
+}
+
+GLint textureSamplerFilterEnum(TextureSamplerFilter filter)
+{
+    switch (filter)
     {
-        switch (filter)
-        {
-            case Nearest: return GL_NEAREST;
-            case Linear: return GL_LINEAR;
-            case NearestMipMapNearest: return GL_NEAREST_MIPMAP_NEAREST;
-            case LinearMipMapNearest: return GL_LINEAR_MIPMAP_NEAREST;
-            case LinearMipMapLinear: return GL_LINEAR_MIPMAP_LINEAR;
-            default:
-                throw Exception("Unsupported texture format.");
-        }
+        case Nearest: return GL_NEAREST;
+        case Linear: return GL_LINEAR;
+        case NearestMipMapNearest: return GL_NEAREST_MIPMAP_NEAREST;
+        case LinearMipMapNearest: return GL_LINEAR_MIPMAP_NEAREST;
+        case LinearMipMapLinear: return GL_LINEAR_MIPMAP_LINEAR;
+        default:
+            throw Exception("Unsupported texture format.");
     }
+}
+
+TextureSamplerOpenGL::TextureSamplerOpenGL(const TextureSamplerDescriptor &desc)
+: _handle(0)
+{
+    const GLint addressS = textureSamplerAddressModeEnum(desc.addressS);
+    const GLint addressT = textureSamplerAddressModeEnum(desc.addressT);
+    const GLint minFilter = textureSamplerFilterEnum(desc.minFilter);
+    const GLint maxFilter = textureSamplerFilterEnum(desc.maxFilter);
     
-    TextureSamplerOpenGL::TextureSamplerOpenGL(const TextureSamplerDescriptor &desc)
-     : _handle(0)
-    {
-        const GLint addressS = textureSamplerAddressModeEnum(desc.addressS);
-        const GLint addressT = textureSamplerAddressModeEnum(desc.addressT);
-        const GLint minFilter = textureSamplerFilterEnum(desc.minFilter);
-        const GLint maxFilter = textureSamplerFilterEnum(desc.maxFilter);
-        
-        GLuint sampler;
-        glGenSamplers(1, &sampler);
-        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, addressS);
-        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, addressT);
-        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter);
-        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, maxFilter);
-        CHECK_GL_ERROR();
-        
-        _handle = sampler;
-    }
+    GLuint sampler;
+    glGenSamplers(1, &sampler);
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, addressS);
+    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, addressT);
+    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter);
+    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, maxFilter);
+    CHECK_GL_ERROR();
     
-    TextureSamplerOpenGL::~TextureSamplerOpenGL()
-    {
-        GLuint handle = _handle;
-        glDeleteSamplers(1, &handle);
-        CHECK_GL_ERROR();
-    }
-    
-} // namespace PinkTopaz::Renderer::OpenGL
+    _handle = sampler;
+}
+
+TextureSamplerOpenGL::~TextureSamplerOpenGL()
+{
+    GLuint handle = _handle;
+    glDeleteSamplers(1, &handle);
+    CHECK_GL_ERROR();
+}

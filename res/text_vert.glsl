@@ -1,4 +1,5 @@
-#version 410
+#version 330
+
 layout (location = 0) in vec4 vertex; // <vec2 pos, vec2 tex>
 out vec2 texCoord;
 out vec4 vertexColor;

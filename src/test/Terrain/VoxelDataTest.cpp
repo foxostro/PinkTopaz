@@ -5,12 +5,12 @@
 
 TEST(Zero, VoxelDataIndex)
 {
-    const PinkTopaz::AABB box = {
-        .center = glm::vec3(16.f, 16.f, 16.f),
-        .extent = glm::vec3(16.f, 16.f, 16.f),
+    const AABB box = {
+        glm::vec3(16.f, 16.f, 16.f),
+        glm::vec3(16.f, 16.f, 16.f),
     };
     const glm::ivec3 res(32, 32, 32);
-    PinkTopaz::Terrain::VoxelData data(box, res);
+    Terrain::VoxelData data(box, res);
     
     EXPECT_EQ(0, data.indexAtPoint(glm::vec3(0.0f, 0.0f, 0.0f)));
 }
@@ -18,9 +18,9 @@ TEST(Zero, VoxelDataIndex)
 TEST(IterateInOrder, VoxelDataIndex)
 {
     // The region of space for which voxel data is defined.
-    const PinkTopaz::AABB box = {
-        .center = glm::vec3(10.f, 10.f, 10.f),
-        .extent = glm::vec3(10.f, 10.f, 10.f),
+    const AABB box = {
+        glm::vec3(10.f, 10.f, 10.f),
+        glm::vec3(10.f, 10.f, 10.f),
     };
     const glm::vec3 mins = box.center - box.extent;
     const glm::vec3 maxs = box.center + box.extent;
@@ -33,7 +33,7 @@ TEST(IterateInOrder, VoxelDataIndex)
                          box.extent.y*2.0f / res.y,
                          box.extent.z*2.0f / res.z);
     
-    PinkTopaz::Terrain::VoxelData data(box, res);
+    Terrain::VoxelData data(box, res);
     
     // Iterate over all cells, in order.
     size_t index = 0;

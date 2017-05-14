@@ -17,20 +17,16 @@
 
 #include <Metal/Metal.h>
 
-namespace PinkTopaz::Renderer::Metal {
+class TextureSamplerMetal : public TextureSampler
+{
+public:
+    TextureSamplerMetal(id <MTLDevice> device, const TextureSamplerDescriptor &desc);
+    virtual ~TextureSamplerMetal();
     
-    class TextureSamplerMetal : public TextureSampler
-    {
-    public:
-        TextureSamplerMetal(id <MTLDevice> device, const TextureSamplerDescriptor &desc);
-        virtual ~TextureSamplerMetal();
-        
-        inline id <MTLSamplerState> getMetalSampler() const { return _sampler; }
-        
-    private:
-        id <MTLSamplerState> _sampler;
-    };
+    inline id <MTLSamplerState> getMetalSampler() const { return _sampler; }
     
-} // namespace PinkTopaz::Renderer::Metal
+private:
+    id <MTLSamplerState> _sampler;
+};
 
 #endif /* TextureSamplerMetal_h */
