@@ -79,6 +79,7 @@ set(SOURCE_FILES_COMPONENTS
     "src/include/ActiveCamera.hpp"
     "src/include/Transform.hpp"
     "src/include/RenderableStaticMesh.hpp"
+    "src/include/TerrainComponent.hpp"
     )
 
 set(SOURCE_FILES_EVENTS

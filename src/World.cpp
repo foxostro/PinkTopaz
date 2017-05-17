@@ -11,6 +11,7 @@
 #include "ActiveCamera.hpp"
 #include "RenderSystem.hpp"
 #include "CameraMovementSystem.hpp"
+#include "TerrainComponent.hpp"
 #include "Terrain/Terrain.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -20,12 +21,12 @@ World::World(const std::shared_ptr<GraphicsDevice> &device)
     systems.add<RenderSystem>(device);
     systems.add<CameraMovementSystem>();
     systems.configure();
-        
+    
     // Setup the position and orientation of the camera.
     glm::mat4 m = glm::rotate(glm::translate(glm::mat4(), -glm::vec3(80.1, 20.1, 140.1)),
                                 glm::pi<float>() * 0.20f,
                                 glm::vec3(0, 1, 0));
-        
+    
     // Create an entity to represent the camera.
     // Render systems will know by the ActiveCamera that this is the camera.
     // They will retrieve the entity's transformation and take it into
@@ -35,12 +36,13 @@ World::World(const std::shared_ptr<GraphicsDevice> &device)
     camera.assign<ActiveCamera>();
     
     // Create an entity to represent the terrain.
-    auto terrain = std::make_shared<Terrain>(device);
+    TerrainComponent terrainComponent;
+    terrainComponent.terrain = std::make_shared<Terrain>(device);
     entityx::Entity terrainEntity = entities.create();
-    terrainEntity.assign<RenderableStaticMesh>(terrain->getMesh());
+    terrainEntity.assign<TerrainComponent>(terrainComponent);
     terrainEntity.assign<Transform>();
 }
-    
+
 void World::update(entityx::TimeDelta dt)
 {
     systems.update_all(dt);

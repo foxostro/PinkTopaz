@@ -15,11 +15,6 @@
 
 Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
 {
-    _mesh = createTerrainMesh(graphicsDevice);
-}
-
-RenderableStaticMesh Terrain::createTerrainMesh(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
-{
     // Load terrain texture array from a single image.
     // TODO: create a TextureArrayLoader class to encapsulate tex loading.
     SDL_Surface *surface = IMG_Load("terrain.png");
@@ -85,7 +80,7 @@ RenderableStaticMesh Terrain::createTerrainMesh(const std::shared_ptr<GraphicsDe
                                              "vert", "frag",
                                              false);
     
-    RenderableStaticMesh meshContainer = {
+    _mesh = (RenderableStaticMesh) {
         mesh.getVertexCount(),
         vertexBuffer,
         uniformBuffer,
@@ -93,6 +88,4 @@ RenderableStaticMesh Terrain::createTerrainMesh(const std::shared_ptr<GraphicsDe
         texture,
         sampler
     };
-    
-    return meshContainer;
 }

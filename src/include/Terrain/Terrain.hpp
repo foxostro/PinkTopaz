@@ -39,8 +39,6 @@ public:
     
 private:
     RenderableStaticMesh _mesh;
-    
-    RenderableStaticMesh createTerrainMesh(const std::shared_ptr<GraphicsDevice> &graphicsDevice);
 };
 
 #endif /* Terrain_hpp */
