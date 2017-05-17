@@ -12,6 +12,7 @@
 #include "VoxelData.hpp"
 #include <shared_mutex>
 #include <functional>
+#include <boost/signals2.hpp>
 
 // A block of voxels in space with locking and expectation of concurrent access.
 class VoxelDataStore
@@ -43,6 +44,11 @@ public:
     // Perform a transaction as a "writer" where we have read-write access to
     // the underlying voxel data.
     void writerTransaction(const std::function<void(VoxelData &voxels)> &fn);
+    
+    // This signal fires when a voxel data "writer" transaction finishes and
+    // provides the opportunity to respond to changes to voxel data. For
+    // example, by rebuilding meshes.
+    boost::signals2::signal<void ()> voxelDataChanged;
     
 private:
     mutable std::shared_mutex _mutex;

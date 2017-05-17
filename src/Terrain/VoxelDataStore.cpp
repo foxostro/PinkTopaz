@@ -21,6 +21,9 @@ void VoxelDataStore::readerTransaction(const std::function<void(const VoxelData 
 
 void VoxelDataStore::writerTransaction(const std::function<void(VoxelData &voxels)> &fn)
 {
-    std::unique_lock<std::shared_mutex> lock(_mutex);
-    fn(_data);
+    {
+        std::unique_lock<std::shared_mutex> lock(_mutex);
+        fn(_data);
+    }
+    voxelDataChanged();
 }
