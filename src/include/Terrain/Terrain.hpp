@@ -9,12 +9,11 @@
 #ifndef Terrain_hpp
 #define Terrain_hpp
 
-#include "Terrain/VoxelDataLoader.hpp"
 #include "Terrain/VoxelDataStore.hpp"
 #include "Terrain/MesherMarchingCubes.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 #include "RenderableStaticMesh.hpp"
-#include <memory>
+#include <mutex>
 
 // This object represents the terrain of the world.
 class Terrain
@@ -35,10 +34,19 @@ public:
     // Destructor is just the default.
     ~Terrain() = default;
     
-    inline const RenderableStaticMesh& getMesh() const { return _mesh; }
+    // Gets the most recently generated terrain mesh.
+    // For now, the entire terrain has exactly one mesh.
+    const RenderableStaticMesh& getMesh() const;
     
 private:
+    std::shared_ptr<GraphicsDevice> _graphicsDevice;
+    std::shared_ptr<Mesher> _mesher;
+    std::shared_ptr<VoxelDataStore> _voxels;
+    
+    mutable std::mutex _lockMesh;
     RenderableStaticMesh _mesh;
+    
+    void rebuildMesh();
 };
 
 #endif /* Terrain_hpp */

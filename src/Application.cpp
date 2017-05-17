@@ -6,8 +6,6 @@
 //
 //
 
-#include "Application.hpp"
-
 #include "pinktopaz_config.h"
 #include "FileUtilities.hpp"
 #include "RetinaSupport.h"
@@ -15,14 +13,12 @@
 #include "WindowSizeChangedEvent.hpp"
 #include "KeypressEvent.hpp"
 #include "MouseMoveEvent.hpp"
-#include "Terrain/VoxelDataLoader.hpp"
-#include "Terrain/VoxelDataStore.hpp"
-#include "Terrain/MesherMarchingCubes.hpp"
 #include "Exception.hpp"
 
 #include "SDL.h"
 #include <map>
-#include <glm/glm.hpp>
+
+#include "Application.hpp"
 
 void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
 {

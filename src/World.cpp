@@ -12,7 +12,6 @@
 #include "RenderSystem.hpp"
 #include "CameraMovementSystem.hpp"
 #include "TerrainComponent.hpp"
-#include "Terrain/Terrain.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
     

@@ -13,7 +13,6 @@
 #include <memory>
 
 #include "Renderer/GraphicsDevice.hpp"
-#include "RenderableStaticMesh.hpp"
     
 // The central game loop, basically.
 class Application

@@ -8,12 +8,13 @@
 
 #include "FileUtilities.hpp"
 #include "Terrain/VoxelDataLoader.hpp"
-#include "Terrain/Terrain.hpp"
-#include "RenderableStaticMesh.hpp"
 #include "SDL_image.h"
 #include "Exception.hpp"
+#include "Terrain/Terrain.hpp"
 
 Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
+ : _graphicsDevice(graphicsDevice),
+   _mesher(new MesherMarchingCubes())
 {
     // Load terrain texture array from a single image.
     // TODO: create a TextureArrayLoader class to encapsulate tex loading.
@@ -42,50 +43,74 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
     };
     auto sampler = graphicsDevice->makeTextureSampler(samplerDesc);
     
-    // Create a voxel data store and fill it with voxel data we load from file.
-    // We need the voxel data store to use the dimensions and resolution of the
-    // data contained in the file.
-    std::vector<uint8_t> bytes = binaryFileContents("0_0_0.voxels.dat");
-    AABB box;
-    glm::ivec3 res;
-    VoxelDataLoader voxelDataLoader;
-    voxelDataLoader.retrieveDimensions(bytes, box, res);
-    VoxelDataStore voxelDataStore(box, res);
-    voxelDataStore.writerTransaction([&](VoxelData &voxels){
-        voxelDataLoader.load(bytes, voxels);
-    });
-    
-    // The voxel file uses a binary SOLID/EMPTY flag for voxels. So, we get
-    // values that are either 0.0 or 1.0.
-    std::shared_ptr<Mesher> mesher(new MesherMarchingCubes());
-    StaticMesh mesh;
-    voxelDataStore.readerTransaction([&](const VoxelData &voxels){
-        mesh = mesher->extract(voxels, 0.5f);
-    });
-    
-    auto vertexBufferData = mesh.getBufferData();
-    auto vertexBuffer = graphicsDevice->makeBuffer(vertexBufferData,
-                                                   StaticDraw,
-                                                   ArrayBuffer);
-    vertexBuffer->addDebugMarker("Terrain Vertices", 0, vertexBufferData.size());
+    StaticMesh mesh; // An empty mesh still has a valid vertex format.
+    auto shader = _graphicsDevice->makeShader(mesh.getVertexFormat(),
+                                              "vert", "frag",
+                                              false);
     
     TerrainUniforms uniforms;
-    auto uniformBuffer = graphicsDevice->makeBuffer(sizeof(uniforms),
-                                                    &uniforms,
-                                                    DynamicDraw,
-                                                    UniformBuffer);
-    vertexBuffer->addDebugMarker("Terrain Uniforms", 0, sizeof(uniforms));
+    auto uniformBuffer = _graphicsDevice->makeBuffer(sizeof(uniforms),
+                                                     &uniforms,
+                                                     DynamicDraw,
+                                                     UniformBuffer);
+    uniformBuffer->addDebugMarker("Terrain Uniforms", 0, sizeof(uniforms));
     
-    auto shader = graphicsDevice->makeShader(mesh.getVertexFormat(),
-                                             "vert", "frag",
-                                             false);
-    
+    // We don't have vertices until the isosurface is extracted later.
     _mesh = (RenderableStaticMesh) {
-        mesh.getVertexCount(),
-        vertexBuffer,
+        0,
+        nullptr,
         uniformBuffer,
         shader,
         texture,
         sampler
     };
+    
+    // Create a voxel data store. We want to fill this with voxel values we read
+    // from file. Before we can do that, we need to initialize the data store to
+    // the dimensions of the voxel field found in the file.
+    const std::vector<uint8_t> bytes = binaryFileContents("0_0_0.voxels.dat");
+    AABB box;
+    glm::ivec3 res;
+    VoxelDataLoader voxelDataLoader;
+    voxelDataLoader.retrieveDimensions(bytes, box, res);
+    _voxels = std::make_shared<VoxelDataStore>(box, res);
+    
+    // When voxels change, we need to extract a polygonal mesh representation
+    // of the isosurface. This mesh is what we actually draw.
+    // For now, we extract the entire isosurface in one step.
+    _voxels->voxelDataChanged.connect([&](){
+        rebuildMesh();
+    });
+    
+    // Finally, actually load the voxel values from file.
+    // For now, we load all voxels in one step.
+    _voxels->writerTransaction([&](VoxelData &voxels){
+        voxelDataLoader.load(bytes, voxels);
+    });
+}
+
+const RenderableStaticMesh& Terrain::getMesh() const
+{
+    std::lock_guard<std::mutex> lock(_lockMesh);
+    return _mesh;
+}
+
+void Terrain::rebuildMesh()
+{
+    _voxels->readerTransaction([&](const VoxelData &voxels){
+        std::lock_guard<std::mutex> lock(_lockMesh);
+ 
+        // The voxel file uses a binary SOLID/EMPTY flag for voxels. So, we get
+        // values that are either 0.0 or 1.0.
+        StaticMesh mesh = _mesher->extract(voxels, 0.5f);
+        
+        auto vertexBufferData = mesh.getBufferData();
+        auto vertexBuffer = _graphicsDevice->makeBuffer(vertexBufferData,
+                                                        StaticDraw,
+                                                        ArrayBuffer);
+        vertexBuffer->addDebugMarker("Terrain Vertices", 0, vertexBufferData.size());
+        
+        _mesh.vertexCount = mesh.getVertexCount();
+        _mesh.buffer = vertexBuffer;
+    });
 }
