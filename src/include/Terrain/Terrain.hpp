@@ -34,9 +34,11 @@ public:
     // Destructor is just the default.
     ~Terrain() = default;
     
-    // Gets the most recently generated terrain mesh.
-    // For now, the entire terrain has exactly one mesh.
-    const RenderableStaticMesh& getMesh() const;
+    // Pass a modelview and projection matrix down for use with the terrain.
+    void setTerrainUniforms(const TerrainUniforms &uniforms);
+    
+    // Draws the terrain.
+    void draw(const std::shared_ptr<CommandEncoder> &encoder) const;
     
 private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;

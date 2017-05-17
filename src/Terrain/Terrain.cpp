@@ -89,10 +89,21 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
     });
 }
 
-const RenderableStaticMesh& Terrain::getMesh() const
+void Terrain::setTerrainUniforms(const TerrainUniforms &uniforms)
 {
     std::lock_guard<std::mutex> lock(_lockMesh);
-    return _mesh;
+    _mesh.uniforms->replace(sizeof(uniforms), &uniforms);
+}
+
+void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder) const
+{
+    std::lock_guard<std::mutex> lock(_lockMesh);
+    encoder->setShader(_mesh.shader);
+    encoder->setFragmentSampler(_mesh.textureSampler, 0);
+    encoder->setFragmentTexture(_mesh.texture, 0);
+    encoder->setVertexBuffer(_mesh.buffer, 0);
+    encoder->setVertexBuffer(_mesh.uniforms, 1);
+    encoder->drawPrimitives(Triangles, 0, _mesh.vertexCount, 1);
 }
 
 void Terrain::rebuildMesh()

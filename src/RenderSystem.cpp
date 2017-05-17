@@ -45,25 +45,24 @@ void RenderSystem::update(entityx::EntityManager &es,
     // Update the uniform buffers so they include the most recent matrices.
     const glm::mat4 adjust = _graphicsDevice->getProjectionAdjustMatrix();
     
-    auto updateMeshTransform = [&](RenderableStaticMesh &mesh, Transform &transform){
+    es.each<RenderableStaticMesh, Transform>([&](entityx::Entity entity,
+                                                 RenderableStaticMesh &mesh,
+                                                 Transform &transform) {
         TerrainUniforms uniforms = {
             cameraTransform * transform.value,
             adjust * _proj,
         };
         mesh.uniforms->replace(sizeof(uniforms), &uniforms);
-    };
-        
-    es.each<RenderableStaticMesh, Transform>([&](entityx::Entity entity,
-                                                 RenderableStaticMesh &mesh,
-                                                 Transform &transform) {
-        updateMeshTransform(mesh, transform);
     });
     
     es.each<TerrainComponent, Transform>([&](entityx::Entity entity,
                                              TerrainComponent &terrain,
                                              Transform &transform) {
-        auto mesh = terrain.terrain->getMesh();
-        updateMeshTransform(mesh, transform);
+        TerrainUniforms uniforms = {
+            cameraTransform * transform.value,
+            adjust * _proj,
+        };
+        terrain.terrain->setTerrainUniforms(uniforms);
     });
         
     // Render all meshes.
@@ -75,22 +74,17 @@ void RenderSystem::update(entityx::EntityManager &es,
     
     encoder->setViewport(_viewport);
     
-    auto drawMesh = [&](RenderableStaticMesh &mesh){
+    es.each<TerrainComponent>([&](entityx::Entity entity, TerrainComponent &terrain){
+        terrain.terrain->draw(encoder);
+    });
+    
+    es.each<RenderableStaticMesh>([&](entityx::Entity entity, RenderableStaticMesh &mesh){
         encoder->setShader(mesh.shader);
         encoder->setFragmentSampler(mesh.textureSampler, 0);
         encoder->setFragmentTexture(mesh.texture, 0);
         encoder->setVertexBuffer(mesh.buffer, 0);
         encoder->setVertexBuffer(mesh.uniforms, 1);
         encoder->drawPrimitives(Triangles, 0, mesh.vertexCount, 1);
-    };
-    
-    es.each<TerrainComponent, Transform>([&](entityx::Entity entity, TerrainComponent &terrain, Transform &transform){
-        auto mesh = terrain.terrain->getMesh();
-        drawMesh(mesh);
-    });
-    
-    es.each<RenderableStaticMesh, Transform>([&](entityx::Entity entity, RenderableStaticMesh &mesh, Transform &transform){
-        drawMesh(mesh);
     });
     
     // Draw text strings on the screen last because they blend.
