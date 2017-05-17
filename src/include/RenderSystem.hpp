@@ -11,6 +11,7 @@
 
 #include <glm/mat4x4.hpp>
 #include <entityx/entityx.h>
+#include <boost/filesystem.hpp>
 
 #include "ActiveCamera.hpp"
 #include "WindowSizeChangedEvent.hpp"
@@ -30,6 +31,9 @@ public:
     void receive(const WindowSizeChangedEvent &event);
         
 private:
+    const boost::filesystem::path FONT_NAME;
+    const unsigned FONT_SIZE;
+    
     glm::ivec4 _viewport;
     glm::mat4x4 _proj;
     entityx::Entity _activeCamera;

@@ -10,6 +10,7 @@
 #define VoxelDataLoader_hpp
 
 #include "Terrain/VoxelData.hpp"
+#include <boost/filesystem.hpp>
 
 class VoxelDataLoader
 {

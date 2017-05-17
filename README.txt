@@ -30,12 +30,3 @@ Building Pink Topaz
 5. Build it:
 
     % cmake --build . --target PinkTopaz
-
-Known Issues With The Windows Build
-===================================
-
-1. PinkTopaz builds as a library?
-
-2>     Creating library C:/Users/Andrew/Documents/PinkTopaz/lib/PinkTopaz.lib and object C:/Users/Andrew/Documents/PinkTopaz/lib/PinkTopaz.exp
-2>LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
-

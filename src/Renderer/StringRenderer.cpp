@@ -10,15 +10,14 @@
 #include "Exception.hpp"
 
 #include <glm/gtc/matrix_transform.hpp> // for glm::ortho
-#include <algorithm>
 
 #include "SDL.h"
 #include "SDL_image.h"
 
-static std::string getPrefPath()
+static boost::filesystem::path getPrefPath()
 {
     char *s = SDL_GetPrefPath("foxostro", "PinkTopaz");
-    std::string prefPath(s);
+    boost::filesystem::path prefPath(s);
     SDL_free(s);
     return prefPath;
 }
@@ -225,7 +224,7 @@ SDL_Surface* StringRenderer::atlasSearch(FT_Face &face, unsigned fontSize)
     return atlasSurface;
 }
 
-SDL_Surface* StringRenderer::genTextureAtlas(const std::string &fontName,
+SDL_Surface* StringRenderer::genTextureAtlas(const boost::filesystem::path &fontName,
                                              unsigned fontSize)
 {
     FT_Library ft;
@@ -255,11 +254,13 @@ SDL_Surface* StringRenderer::genTextureAtlas(const std::string &fontName,
 }
 
 std::shared_ptr<Texture>
-StringRenderer::makeTextureAtlas(const std::string &fontName,
+StringRenderer::makeTextureAtlas(const boost::filesystem::path &fontName,
                                  unsigned fontSize)
 {
     // Font texture atlas is cached between runs of the game.
-    std::string atlasFileName = getPrefPath() + "font" + std::to_string(fontSize) + ".png";
+    boost::filesystem::path atlasFileName = getPrefPath();
+    atlasFileName.append("font" + std::to_string(fontSize) + ".png");
+    
     SDL_Surface *atlasSurface = genTextureAtlas(fontName, fontSize);
     IMG_SavePNG(atlasSurface, atlasFileName.c_str());
     SDL_Log("Saving font texture atlas to file: %s", atlasFileName.c_str());
@@ -281,7 +282,7 @@ StringRenderer::makeTextureAtlas(const std::string &fontName,
 }
 
 StringRenderer::StringRenderer(const std::shared_ptr<GraphicsDevice> &dev,
-                               const std::string &fontName,
+                               const boost::filesystem::path &fontName,
                                unsigned fontSize)
 : _graphicsDevice(dev)
 {

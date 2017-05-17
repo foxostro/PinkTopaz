@@ -10,6 +10,7 @@
 #define StaticMeshLoader_hpp
 
 #include "Renderer/StaticMesh.hpp"
+#include <boost/filesystem.hpp>
 
 class StaticMeshLoader
 {

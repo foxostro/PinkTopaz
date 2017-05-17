@@ -11,9 +11,9 @@
 
 #include <string>
 #include <vector>
+#include <boost/filesystem.hpp>
 
-void setCurrentWorkingDirectory(const char *path);
-std::string stringFromFileContents(const char *filePath);
-std::vector<uint8_t> binaryFileContents(const char *filePath);
+std::string stringFromFileContents(const boost::filesystem::path &path);
+std::vector<uint8_t> binaryFileContents(const boost::filesystem::path &path);
 
 #endif /* FileUtilities_hpp */
