@@ -94,7 +94,7 @@ StaticMesh MesherMarchingCubes::extract(const VoxelData &voxels, float isosurfac
 {
     StaticMesh geometry;
     
-    const vec3 dim = voxels.getVoxelDimensions();
+    const vec3 dim = voxels.getCellDimensions();
     const AABB &aabb = voxels.getBoundingBox();
     
     // Offset to align with the grid cells used by marching cubes.
