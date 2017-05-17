@@ -81,6 +81,8 @@ GraphicsDeviceMetal::GraphicsDeviceMetal(SDL_Window &window)
                             libraryName.UTF8String, errorDesc.UTF8String);
         }
     }
+    
+    [device release];
 }
 
 GraphicsDeviceMetal::~GraphicsDeviceMetal()
