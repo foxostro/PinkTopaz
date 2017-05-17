@@ -61,8 +61,15 @@ ShaderMetal::ShaderMetal(const VertexFormat &vertexFormat,
     NSError *error;
     
     MTLRenderPipelineDescriptor *desc = [[MTLRenderPipelineDescriptor alloc] init];
-    desc.vertexFunction = [library newFunctionWithName:[NSString stringWithUTF8String:vert.c_str()]];
-    desc.fragmentFunction = [library newFunctionWithName:[NSString stringWithUTF8String:frag.c_str()]];
+    
+    id <MTLFunction> vertexFunction = [library newFunctionWithName:[NSString stringWithUTF8String:vert.c_str()]];
+    desc.vertexFunction = vertexFunction;
+    [vertexFunction release];
+    
+    id <MTLFunction> fragmentFunction = [library newFunctionWithName:[NSString stringWithUTF8String:frag.c_str()]];
+    desc.fragmentFunction = fragmentFunction;
+    [fragmentFunction release];
+    
     desc.vertexDescriptor = getVertexDescriptor(vertexFormat);
     
     MTLRenderPipelineColorAttachmentDescriptor *colorAttachment = desc.colorAttachments[0];
