@@ -92,6 +92,8 @@ ShaderMetal::ShaderMetal(const VertexFormat &vertexFormat,
         NSString *errorDesc = [error localizedDescription];
         throw Exception("Failed to create Metal pipeline state object: %s", errorDesc.UTF8String);
     }
+    
+    [desc release];
 }
 
 ShaderMetal::~ShaderMetal()
