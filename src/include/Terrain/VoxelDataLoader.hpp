@@ -49,8 +49,15 @@ public:
     
     VoxelDataLoader();
     ~VoxelDataLoader() = default;
+
+    // Loads the specified voxel data file and writes the data to `output'.
+    void load(const std::vector<uint8_t> &bytes, VoxelData &output);
     
-    VoxelData load(const char *filePath);
+    // Loads the specified voxel data file and retrieves essential dimensions
+    // of the contained voxel data, returning them in `box' and `res'.
+    void retrieveDimensions(const std::vector<uint8_t> &bytes,
+                            AABB &box,
+                            glm::ivec3 &res);
     
 private:
     const uint32_t VOXEL_MAGIC, VOXEL_VERSION;

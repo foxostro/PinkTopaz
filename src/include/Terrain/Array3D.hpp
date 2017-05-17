@@ -84,6 +84,8 @@ public:
     
     inline const AABB& getBoundingBox() const { return _box; }
     
+    inline const glm::ivec3& getResolution() const { return _res; }
+    
 private:
     std::vector<TYPE> _cells;
     const AABB _box;

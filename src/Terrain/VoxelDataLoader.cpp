@@ -15,10 +15,20 @@ VoxelDataLoader::VoxelDataLoader()
 : VOXEL_MAGIC('lxov'), VOXEL_VERSION(0)
 {}
 
-VoxelData VoxelDataLoader::load(const char *filePath)
+void VoxelDataLoader::retrieveDimensions(const std::vector<uint8_t> &bytes, AABB &box, glm::ivec3 &res)
 {
-    std::vector<uint8_t> bytes = binaryFileContents(filePath);
+    const Header &header = *((Header *)bytes.data());
     
+    glm::vec3 half(header.w / 2.f, header.h / 2.f, header.d / 2.f);
+    box = {
+        half,
+        half,
+    };
+    res = glm::ivec3(header.w, header.h, header.d);
+}
+
+void VoxelDataLoader::load(const std::vector<uint8_t> &bytes, VoxelData &output)
+{
     const Header &header = *((Header *)bytes.data());
     
     if (header.magic != VOXEL_MAGIC) {
@@ -40,14 +50,19 @@ VoxelData VoxelDataLoader::load(const char *filePath)
         half,
     };
     glm::ivec3 resolution(header.w, header.h, header.d);
-    VoxelData voxels(box, resolution);
+    
+    if (box != output.getBoundingBox()) {
+        throw Exception("Unexpected voxel data bounding box used in voxel data file.");
+    }
+    
+    if (resolution != output.getResolution()) {
+        throw Exception("Unexpected voxel data resolution used in voxel data file.");
+    }
     
     for (size_t i = 0, n = header.w*header.h*header.d; i < n; ++i)
     {
         const FileVoxel &src = header.voxels[i];
         float value = (src.type == 0) ? 0.0f : 1.0f;
-        voxels.set(i, Voxel(value));
+        output.set(i, Voxel(value));
     }
-    
-    return voxels;
 }

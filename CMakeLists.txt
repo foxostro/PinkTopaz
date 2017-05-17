@@ -24,6 +24,7 @@ set(SOURCE_FILES_TERRAIN
     "src/include/Terrain/Array3D.hpp"
     "src/include/Terrain/Voxel.hpp"
     "src/Terrain/VoxelData.cpp" "src/include/Terrain/VoxelData.hpp"
+    "src/Terrain/VoxelDataStore.cpp" "src/include/Terrain/VoxelDataStore.hpp"
     "src/Terrain/VoxelDataLoader.cpp" "src/include/Terrain/VoxelDataLoader.hpp"
     "src/Terrain/MesherMarchingCubes.cpp" "src/include/Terrain/MesherMarchingCubes.hpp"
     "src/include/Terrain/Mesher.hpp"

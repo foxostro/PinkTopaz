@@ -9,8 +9,8 @@
 #ifndef AABB_hpp
 #define AABB_hpp
 
-#include <glm/vec3.hpp>
-    
+#include <glm/glm.hpp>
+
 // An axis-aligned bounding box.
 template<typename TYPE>
 struct _AABB
@@ -23,6 +23,19 @@ struct _AABB
     // This means that the length of the edge of the box along the X axis is
     // extent.x * 2, and ditto for the other two axii.
     TYPE extent;
+    
+    bool operator==(const _AABB<TYPE> &other) const
+    {
+        bool theSameCenter = (center == other.center);
+        bool theSameExtent = (extent == other.extent);
+        return theSameCenter && theSameExtent;
+    }
+    
+    bool operator!=(const _AABB<TYPE> &other) const
+    {
+        bool theSame = ((*this) == other);
+        return !theSame;
+    }
 };
     
 typedef _AABB<glm::vec3> AABB;
