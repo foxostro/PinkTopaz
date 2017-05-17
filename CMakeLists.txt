@@ -23,6 +23,7 @@ endif()
 set(SOURCE_FILES_TERRAIN
     "src/include/Terrain/Array3D.hpp"
     "src/include/Terrain/Voxel.hpp"
+    "src/Terrain/Terrain.cpp" "src/include/Terrain/Terrain.hpp"
     "src/Terrain/VoxelData.cpp" "src/include/Terrain/VoxelData.hpp"
     "src/Terrain/VoxelDataStore.cpp" "src/include/Terrain/VoxelDataStore.hpp"
     "src/Terrain/VoxelDataLoader.cpp" "src/include/Terrain/VoxelDataLoader.hpp"

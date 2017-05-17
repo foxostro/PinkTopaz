@@ -26,7 +26,6 @@ public:
     void run();
         
 private:
-    RenderableStaticMesh createTerrainMesh(const std::shared_ptr<GraphicsDevice> &g);
     void inner(const std::shared_ptr<GraphicsDevice> &g);
         
     SDL_Window *_window;

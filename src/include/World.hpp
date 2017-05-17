@@ -11,8 +11,7 @@
 
 #include <entityx/entityx.h>
 #include "Renderer/GraphicsDevice.hpp"
-#include "RenderableStaticMesh.hpp"
-        
+
 // A World is the same thing as a game zone or level.
 // This is a collection of interacting entities and associated systems.
 // It is, of course, entirely possible to have multiple worlds. However, interactions across worlds are not
@@ -20,8 +19,7 @@
 class World : public entityx::EntityX
 {
 public:
-    explicit World(const std::shared_ptr<GraphicsDevice> &dev,
-                   const RenderableStaticMesh &mesh);
+    explicit World(const std::shared_ptr<GraphicsDevice> &dev);
         
     void update(entityx::TimeDelta dt);
 };

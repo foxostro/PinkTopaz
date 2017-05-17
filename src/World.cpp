@@ -11,11 +11,11 @@
 #include "ActiveCamera.hpp"
 #include "RenderSystem.hpp"
 #include "CameraMovementSystem.hpp"
+#include "Terrain/Terrain.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
     
-World::World(const std::shared_ptr<GraphicsDevice> &device,
-             const RenderableStaticMesh &mesh)
+World::World(const std::shared_ptr<GraphicsDevice> &device)
 {
     systems.add<RenderSystem>(device);
     systems.add<CameraMovementSystem>();
@@ -33,11 +33,12 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
     entityx::Entity camera = entities.create();
     camera.assign<Transform>(m);
     camera.assign<ActiveCamera>();
-        
+    
     // Create an entity to represent the terrain.
-    entityx::Entity terrain = entities.create();
-    terrain.assign<RenderableStaticMesh>(mesh);
-    terrain.assign<Transform>();
+    auto terrain = std::make_shared<Terrain>(device);
+    entityx::Entity terrainEntity = entities.create();
+    terrainEntity.assign<RenderableStaticMesh>(terrain->getMesh());
+    terrainEntity.assign<Transform>();
 }
     
 void World::update(entityx::TimeDelta dt)
