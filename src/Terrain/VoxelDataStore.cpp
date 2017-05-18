@@ -19,11 +19,12 @@ void VoxelDataStore::readerTransaction(const std::function<void(const VoxelData 
     fn(_data);
 }
 
-void VoxelDataStore::writerTransaction(const std::function<void(VoxelData &voxels)> &fn)
+void VoxelDataStore::writerTransaction(const std::function<ChangeLog(VoxelData &voxels)> &fn)
 {
+    ChangeLog changeLog;
     {
         std::unique_lock<std::shared_mutex> lock(_mutex);
-        fn(_data);
+        changeLog = fn(_data);
     }
-    voxelDataChanged();
+    voxelDataChanged(changeLog);
 }

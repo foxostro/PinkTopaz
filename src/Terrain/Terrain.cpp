@@ -78,14 +78,15 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
     // When voxels change, we need to extract a polygonal mesh representation
     // of the isosurface. This mesh is what we actually draw.
     // For now, we extract the entire isosurface in one step.
-    _voxels->voxelDataChanged.connect([&](){
-        rebuildMesh();
+    _voxels->voxelDataChanged.connect([&](const ChangeLog &changeLog){
+        rebuildMesh(changeLog);
     });
     
     // Finally, actually load the voxel values from file.
     // For now, we load all voxels in one step.
     _voxels->writerTransaction([&](VoxelData &voxels){
         voxelDataLoader.load(bytes, voxels);
+        return ChangeLog::make("load", box);
     });
 }
 
@@ -106,7 +107,7 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder) const
     encoder->drawPrimitives(Triangles, 0, _mesh.vertexCount, 1);
 }
 
-void Terrain::rebuildMesh()
+void Terrain::rebuildMesh(const ChangeLog &changeLog)
 {
     _voxels->readerTransaction([&](const VoxelData &voxels){
         std::lock_guard<std::mutex> lock(_lockMesh);

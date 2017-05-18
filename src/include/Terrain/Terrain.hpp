@@ -48,7 +48,7 @@ private:
     mutable std::mutex _lockMesh;
     RenderableStaticMesh _mesh;
     
-    void rebuildMesh();
+    void rebuildMesh(const ChangeLog &changeLog);
 };
 
 #endif /* Terrain_hpp */

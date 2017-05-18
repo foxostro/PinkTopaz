@@ -10,6 +10,7 @@
 #define VoxelDataStore_hpp
 
 #include "VoxelData.hpp"
+#include "ChangeLog.hpp"
 #include <shared_mutex>
 #include <functional>
 #include <boost/signals2.hpp>
@@ -42,16 +43,19 @@ public:
     void readerTransaction(const std::function<void(const VoxelData &voxels)> &fn) const;
     
     // Perform a transaction as a "writer" where we have read-write access to
-    // the underlying voxel data.
-    void writerTransaction(const std::function<void(VoxelData &voxels)> &fn);
+    // the underlying voxel data. It is the responsibility of the caller to
+    // provide a closure which will update the change log accordingly. 
+    void writerTransaction(const std::function<ChangeLog(VoxelData &voxels)> &fn);
     
     // This signal fires when a voxel data "writer" transaction finishes and
     // provides the opportunity to respond to changes to voxel data. For
     // example, by rebuilding meshes.
-    boost::signals2::signal<void ()> voxelDataChanged;
+    // TODO: Pass a change log object as a parameter here.
+    boost::signals2::signal<void (const ChangeLog &changeLog)> voxelDataChanged;
     
 private:
     mutable std::shared_mutex _mutex;
+    ChangeLog _changeLog;
     VoxelData _data;
 };
 
