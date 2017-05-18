@@ -36,6 +36,11 @@ struct _AABB
         bool theSame = ((*this) == other);
         return !theSame;
     }
+    
+    bool operator<(const _AABB<TYPE> &right) const
+    {
+        return center.x < right.center.x; // This is arbitrary, but consistent.
+    }
 };
     
 typedef _AABB<glm::vec3> AABB;

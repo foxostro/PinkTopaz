@@ -41,12 +41,15 @@ public:
     void draw(const std::shared_ptr<CommandEncoder> &encoder) const;
     
 private:
-    std::shared_ptr<GraphicsDevice> _graphicsDevice;
-    std::shared_ptr<Mesher> _mesher;
-    std::shared_ptr<VoxelDataStore> _voxels;
+    static constexpr int MESH_CHUNK_SIZE = 16;
     
-    mutable std::mutex _lockMesh;
-    RenderableStaticMesh _mesh;
+    std::shared_ptr<GraphicsDevice> _graphicsDevice;
+    std::unique_ptr<Mesher> _mesher;
+    std::unique_ptr<VoxelDataStore> _voxels;
+    
+    mutable std::mutex _lockMeshes;
+    std::unique_ptr<Array3D<RenderableStaticMesh>> _meshes;
+    RenderableStaticMesh _defaultMesh;
     
     void rebuildMesh(const ChangeLog &changeLog);
 };

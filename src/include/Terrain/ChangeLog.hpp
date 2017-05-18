@@ -24,6 +24,10 @@ public:
         AABB affectedRegion;
     };
     
+    typedef std::vector<Change> container_type;
+    typedef container_type::iterator iterator;
+    typedef container_type::const_iterator const_iterator;
+    
     static ChangeLog make(const std::string &type, const AABB &affectedRegion);
     
     // Default constructor.
@@ -50,11 +54,13 @@ public:
         add(change);
     }
     
-    // Gets read-only access to the list of changes.
-    inline const std::vector<Change>& getChanges() const { return _changes; }
+    inline iterator begin() { return _changes.begin(); }
+    inline const_iterator begin() const { return _changes.begin(); }
+    inline iterator end() { return _changes.end(); }
+    inline const_iterator end() const { return _changes.end(); }
     
 private:
-    std::vector<Change> _changes;
+    container_type _changes;
 };
 
 #endif /* ChangeLog_hpp */

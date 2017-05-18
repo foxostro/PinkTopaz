@@ -19,7 +19,10 @@ public:
     virtual ~Mesher() = default;
     
     // Returns a triangle mesh for the specified isosurface.
-    virtual StaticMesh extract(const VoxelData &voxels, float isosurface) = 0;
+    virtual StaticMesh
+    extract(const VoxelData &voxels,
+            const AABB &region,
+            float isosurface) = 0;
     
 protected:
     Mesher() = default;

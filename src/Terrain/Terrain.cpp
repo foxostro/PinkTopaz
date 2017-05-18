@@ -11,6 +11,7 @@
 #include "SDL_image.h"
 #include "Exception.hpp"
 #include "Terrain/Terrain.hpp"
+#include <set>
 
 Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
  : _graphicsDevice(graphicsDevice),
@@ -56,7 +57,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
     uniformBuffer->addDebugMarker("Terrain Uniforms", 0, sizeof(uniforms));
     
     // We don't have vertices until the isosurface is extracted later.
-    _mesh = (RenderableStaticMesh) {
+    _defaultMesh = (RenderableStaticMesh) {
         0,
         nullptr,
         uniformBuffer,
@@ -73,7 +74,8 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
     glm::ivec3 res;
     VoxelDataLoader voxelDataLoader;
     voxelDataLoader.retrieveDimensions(bytes, box, res);
-    _voxels = std::make_shared<VoxelDataStore>(box, res);
+    _voxels = std::make_unique<VoxelDataStore>(box, res);
+    _meshes = std::make_unique<Array3D<RenderableStaticMesh>>(box, res / MESH_CHUNK_SIZE);
     
     // When voxels change, we need to extract a polygonal mesh representation
     // of the isosurface. This mesh is what we actually draw.
@@ -92,37 +94,67 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
 
 void Terrain::setTerrainUniforms(const TerrainUniforms &uniforms)
 {
-    std::lock_guard<std::mutex> lock(_lockMesh);
-    _mesh.uniforms->replace(sizeof(uniforms), &uniforms);
+    std::lock_guard<std::mutex> lock(_lockMeshes);
+    
+    // The uniforms referenced in the default mesh are also referenced by other
+    // meshes in the terrain. Setting it once here sets it for all of them.
+    _defaultMesh.uniforms->replace(sizeof(uniforms), &uniforms);
 }
 
 void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder) const
 {
-    std::lock_guard<std::mutex> lock(_lockMesh);
-    encoder->setShader(_mesh.shader);
-    encoder->setFragmentSampler(_mesh.textureSampler, 0);
-    encoder->setFragmentTexture(_mesh.texture, 0);
-    encoder->setVertexBuffer(_mesh.buffer, 0);
-    encoder->setVertexBuffer(_mesh.uniforms, 1);
-    encoder->drawPrimitives(Triangles, 0, _mesh.vertexCount, 1);
+    std::lock_guard<std::mutex> lock(_lockMeshes);
+    
+    // The following resources are referenced by and used by all meshes in the
+    // terrain. We only need to set them once.
+    encoder->setShader(_defaultMesh.shader);
+    encoder->setFragmentSampler(_defaultMesh.textureSampler, 0);
+    encoder->setFragmentTexture(_defaultMesh.texture, 0);
+    encoder->setVertexBuffer(_defaultMesh.uniforms, 1);
+    
+    for (RenderableStaticMesh &mesh : *_meshes) {
+        if (mesh.vertexCount > 0) {
+            encoder->setVertexBuffer(mesh.buffer, 0);
+            encoder->drawPrimitives(Triangles, 0, mesh.vertexCount, 1);
+        }
+    }
 }
 
 void Terrain::rebuildMesh(const ChangeLog &changeLog)
 {
+    // The voxel file uses a binary SOLID/EMPTY flag for voxels.
+    // So, we get values that are either 0.0 or 1.0.
+    constexpr float isosurface = 0.5f;
+    
     _voxels->readerTransaction([&](const VoxelData &voxels){
-        std::lock_guard<std::mutex> lock(_lockMesh);
+        std::lock_guard<std::mutex> lock(_lockMeshes);
+        
+        // Get the set of meshes (by index) which are affected by the changes.
+        // Only these meshes will need to be rebuilt.
+        decltype(_meshes->indicesOverRegion(AABB())) affectedMeshes;
+        for (const auto &change : changeLog) {
+            const auto &region = change.affectedRegion;
+            const auto indices = _meshes->indicesOverRegion(region);
+            affectedMeshes.insert(indices.begin(), indices.end());
+        }
  
-        // The voxel file uses a binary SOLID/EMPTY flag for voxels. So, we get
-        // values that are either 0.0 or 1.0.
-        StaticMesh mesh = _mesher->extract(voxels, 0.5f);
-        
-        auto vertexBufferData = mesh.getBufferData();
-        auto vertexBuffer = _graphicsDevice->makeBuffer(vertexBufferData,
-                                                        StaticDraw,
-                                                        ArrayBuffer);
-        vertexBuffer->addDebugMarker("Terrain Vertices", 0, vertexBufferData.size());
-        
-        _mesh.vertexCount = mesh.getVertexCount();
-        _mesh.buffer = vertexBuffer;
+        for (const auto& [index, box] : affectedMeshes) {
+            StaticMesh mesh = _mesher->extract(voxels, box, isosurface);
+            
+            std::shared_ptr<Buffer> vertexBuffer = nullptr;
+            
+            if (mesh.getVertexCount() > 0) {
+                auto vertexBufferData = mesh.getBufferData();
+                vertexBuffer = _graphicsDevice->makeBuffer(vertexBufferData,
+                                                           StaticDraw,
+                                                           ArrayBuffer);
+                vertexBuffer->addDebugMarker("Terrain Vertices", 0, vertexBufferData.size());
+            }
+            
+            RenderableStaticMesh renderableStaticMesh = _defaultMesh;
+            renderableStaticMesh.vertexCount = mesh.getVertexCount();
+            renderableStaticMesh.buffer = vertexBuffer;
+            _meshes->set(index, renderableStaticMesh);
+        }
     });
 }

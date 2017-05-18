@@ -90,28 +90,26 @@ void MesherMarchingCubes::polygonizeGridCell(StaticMesh &geometry,
     }
 }
 
-StaticMesh MesherMarchingCubes::extract(const VoxelData &voxels, float isosurface)
+StaticMesh MesherMarchingCubes::extract(const VoxelData &voxels,
+                                        const AABB &aabb,
+                                        float isosurface)
 {
     StaticMesh geometry;
     
     const vec3 dim = voxels.getCellDimensions();
-    const AABB &aabb = voxels.getBoundingBox();
     
     // Offset to align with the grid cells used by marching cubes.
-    const vec3 mins = aabb.center - aabb.extent + LLL;
-    const vec3 maxs = aabb.center + aabb.extent - LLL;
+    const vec3 insetExtent = aabb.extent - LLL;
+    const vec3 mins = aabb.center - insetExtent;
+    const vec3 maxs = aabb.center + insetExtent;
     
     // Marching Cubes isosurface extraction. This is embarrassingly parallel
     // and could potentially benefit from being split across multiple
     // threads, say, with OpenMP or similar.
-    glm::vec3 pos;
-    for(pos.z = mins.z; pos.z < maxs.z; pos.z += dim.z)
-    {
-        for(pos.x = mins.x; pos.x < maxs.x; pos.x += dim.x)
-        {
-            for(pos.y = mins.y; pos.y < maxs.y; pos.y += dim.y)
-            {
-                std::array<CubeVertex, NUM_CUBE_VERTS> cube = {{
+    for (glm::vec3 pos = mins; pos.z <= maxs.z; pos.z += dim.z) {
+        for (pos.x = mins.x; pos.x <= maxs.x; pos.x += dim.x) {
+            for (pos.y = mins.y; pos.y <= maxs.y; pos.y += dim.y) {
+                const std::array<CubeVertex, NUM_CUBE_VERTS> cube = {{
                     CubeVertex(voxels, pos + vec3(-L, -L, +L)),
                     CubeVertex(voxels, pos + vec3(+L, -L, +L)),
                     CubeVertex(voxels, pos + vec3(+L, -L, -L)),
