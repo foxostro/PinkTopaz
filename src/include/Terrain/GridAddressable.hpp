@@ -18,11 +18,11 @@ public:
     virtual ~GridAddressable() = default;
     
     // Each point in space corresponds to exactly one cell. Get the object.
-    virtual TYPE get(const glm::vec3 &p) const = 0;
+    virtual const TYPE& get(const glm::vec3 &p) const = 0;
     
     // Each point in space corresponds to exactly one cell. Get the object.
     // If the point is not in bounds then return the specified default value.
-    virtual TYPE get(const glm::vec3 &p, const TYPE &defaultValue) const = 0;
+    virtual const TYPE& get(const glm::vec3 &p, const TYPE &defaultValue) const = 0;
     
     // Each point in space corresponds to exactly one cell. Get the (mutable) object.
     virtual TYPE& getm(const glm::vec3 &p) = 0;

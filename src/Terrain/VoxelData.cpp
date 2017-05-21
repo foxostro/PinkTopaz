@@ -13,35 +13,55 @@ VoxelData::VoxelData(const AABB &box, const glm::ivec3 &res)
    _res(res),
    _cellDim(box.extent.x * 2.0f / res.x,
             box.extent.y * 2.0f / res.y,
-            box.extent.z * 2.0f / res.z)
+            box.extent.z * 2.0f / res.z),
+   _chunks(box, res / CHUNK_SIZE)
 {}
 
-Voxel VoxelData::get(const glm::vec3 &p) const
+const Voxel& VoxelData::get(const glm::vec3 &p) const
 {
-    return _chunk->get(p);
+    const MaybeChunk &maybeChunk = _chunks.get(p);
+    const Voxel &voxel = maybeChunk->get(p);
+    return voxel;
 }
 
 Voxel& VoxelData::getm(const glm::vec3 &p)
 {
-    return _chunk->getm(p);
+    MaybeChunk &maybeChunk = _chunks.getm(p);
+    Voxel &voxel = maybeChunk->getm(p);
+    return voxel;
 }
 
-Voxel VoxelData::get(const glm::vec3 &p, const Voxel &defaultValue) const
+const Voxel& VoxelData::get(const glm::vec3 &p, const Voxel &defaultValue) const
 {
-    if (!_chunk) {
+    // Return the default value when the point is outside the valid region.
+    if (!_chunks.inbounds(p)) {
+        return defaultValue;
+    }
+    
+    const MaybeChunk &maybeChunk = _chunks.get(p);
+    
+    // If the chunk doesn't exist then immediately default to the default value.
+    if (!maybeChunk) {
         return defaultValue;
     } else {
-        return _chunk->get(p, defaultValue);
+        const Voxel &voxel = maybeChunk->get(p, defaultValue);
+        return voxel;
     }
 }
 
 void VoxelData::set(const glm::vec3 &p, const Voxel &object)
 {
-    if (!_chunk) {
-        return _chunk.emplace(_box, _res);
+    MaybeChunk &maybeChunk = _chunks.getm(p);
+    
+    // If the chunk does not exist then create it now.
+    if (!maybeChunk) {
+        AABB chunkBoundingBox = _chunks.cellAtPoint(p);
+        glm::ivec3 numChunks = _chunks.getResolution();
+        glm::ivec3 chunkRes = _res / numChunks;
+        maybeChunk.emplace(chunkBoundingBox, chunkRes);
     }
     
-    _chunk->set(p, object);
+    maybeChunk->set(p, object);
 }
 
 glm::vec3 VoxelData::getCellDimensions() const

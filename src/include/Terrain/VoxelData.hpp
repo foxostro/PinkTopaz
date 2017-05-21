@@ -40,14 +40,14 @@ public:
     ~VoxelData() = default;
     
     // Each point in space corresponds to exactly one cell. Get the object.
-    Voxel get(const glm::vec3 &p) const override;
+    const Voxel& get(const glm::vec3 &p) const override;
     
     // Each point in space corresponds to exactly one cell. Get the (mutable) object.
     Voxel& getm(const glm::vec3 &p) override;
     
     // Each point in space corresponds to exactly one cell. Get the object.
     // If the point is not in bounds then return the specified default value.
-    Voxel get(const glm::vec3 &p, const Voxel &defaultValue) const override;
+    const Voxel& get(const glm::vec3 &p, const Voxel &defaultValue) const override;
     
     // Each point in space corresponds to exactly one cell. Set the object.
     void set(const glm::vec3 &p, const Voxel &object) override;
@@ -62,11 +62,15 @@ public:
     glm::ivec3 getResolution() const override;
     
 private:
+    static constexpr int CHUNK_SIZE = 16;
+    
     const AABB _box;
     const glm::ivec3 _res;
     const glm::vec3 _cellDim;
     
-    MaybeChunk _chunk;
+    // The voxel grid is broken into chunks where each chunk is a fixed-size
+    // grid of voxels.
+    Array3D<MaybeChunk> _chunks;
 };
 
 #endif /* VoxelData_hpp */
