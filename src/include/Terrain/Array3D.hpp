@@ -15,9 +15,10 @@
 #include <set>
 #include <glm/vec3.hpp>
 #include "Exception.hpp"
+#include "GridAddressable.hpp"
 
 // A regular grid in space where each cell is associated with some object of the templated type.
-template<typename TYPE> class Array3D
+template<typename TYPE> class Array3D : public GridAddressable<TYPE>
 {
 public:
     typedef std::vector<TYPE> container_type;
@@ -37,17 +38,11 @@ public:
     // No default constructor.
     Array3D() = delete;
     
-    // Copy constructor is just the default.
-    Array3D(const Array3D<TYPE> &array) = default;
-    
-    // Move constructor is just the default.
-    Array3D(Array3D<TYPE> &&array) = default;
-    
     // Destructor is just the default.
     ~Array3D() = default;
     
     // Each point in space corresponds to exactly one cell. Get the object.
-    const TYPE& get(const glm::vec3 &p) const
+    TYPE get(const glm::vec3 &p) const override
     {
         assert(inbounds(p));
         return get(indexAtPoint(p));
@@ -55,7 +50,7 @@ public:
     
     // Each point in space corresponds to exactly one cell. Get the object.
     // If the point is not in bounds then return the specified default value.
-    const TYPE& get(const glm::vec3 &p, const TYPE &defaultValue) const
+    TYPE get(const glm::vec3 &p, const TYPE &defaultValue) const override
     {
         if (inbounds(p)) {
             return get(indexAtPoint(p));
@@ -64,8 +59,15 @@ public:
         }
     }
     
+    // Each point in space corresponds to exactly one cell. Get the (mutable) object.
+    TYPE& getm(const glm::vec3 &p) override
+    {
+        assert(inbounds(p));
+        return getm(indexAtPoint(p));
+    }
+    
     // Each point in space corresponds to exactly one cell. Set the object.
-    void set(const glm::vec3 &p, const TYPE &object)
+    void set(const glm::vec3 &p, const TYPE &object) override
     {
         assert(inbounds(p));
         return set(indexAtPoint(p), object);
@@ -163,6 +165,12 @@ public:
         return _cells[index];
     }
     
+    // Gets the (mutable) object for the specified index, produced by `indexAtPoint'.
+    TYPE& getm(index_type index)
+    {
+        return _cells[index];
+    }
+    
     // Sets the object for the specified index, produced by `indexAtPoint'.
     void set(index_type index, const TYPE &object)
     {
@@ -170,16 +178,18 @@ public:
     }
     
     // Gets the dimensions of a single cell. (All cells are the same size.)
-    inline glm::vec3 getCellDimensions() const
+    glm::vec3 getCellDimensions() const override
     {
         return glm::vec3(_box.extent.x * 2.0f / _res.x,
                          _box.extent.y * 2.0f / _res.y,
                          _box.extent.z * 2.0f / _res.z);
     }
     
-    inline const AABB& getBoundingBox() const { return _box; }
+    // Gets the region for which the grid is defined.
+    AABB getBoundingBox() const override { return _box; }
     
-    inline const glm::ivec3& getResolution() const { return _res; }
+    // Gets the number of cells along each axis within the valid region.
+    glm::ivec3 getResolution() const override { return _res; }
     
     inline iterator begin() { return _cells.begin(); }
     inline const_iterator begin() const { return _cells.begin(); }
@@ -188,8 +198,8 @@ public:
     
 private:
     container_type _cells;
-    const AABB _box;
-    const glm::ivec3 _res;
+    AABB _box;
+    glm::ivec3 _res;
 };
 
 #endif /* Array3D_hpp */
