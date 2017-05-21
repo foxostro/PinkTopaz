@@ -60,6 +60,10 @@ public:
     glm::ivec3 getResolution() const override;
     
 private:
+    const AABB _box;
+    const glm::ivec3 _res;
+    const glm::vec3 _cellDim;
+    
     Chunk _chunk;
 };
 

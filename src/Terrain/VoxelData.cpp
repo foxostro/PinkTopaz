@@ -9,7 +9,12 @@
 #include "Terrain/VoxelData.hpp"
 
 VoxelData::VoxelData(const AABB &box, const glm::ivec3 &res)
- : _chunk(box, res)
+ : _box(box),
+   _res(res),
+   _cellDim(box.extent.x * 2.0f / res.x,
+            box.extent.y * 2.0f / res.y,
+            box.extent.z * 2.0f / res.z),
+   _chunk(box, res)
 {}
 
 Voxel VoxelData::get(const glm::vec3 &p) const
@@ -34,15 +39,15 @@ void VoxelData::set(const glm::vec3 &p, const Voxel &object)
 
 glm::vec3 VoxelData::getCellDimensions() const
 {
-    return _chunk.getCellDimensions();
+    return _cellDim;
 }
 
 AABB VoxelData::getBoundingBox() const
 {
-    return _chunk.getBoundingBox();
+    return _box;
 }
 
 glm::ivec3 VoxelData::getResolution() const
 {
-    return _chunk.getResolution();
+    return _res;
 }
