@@ -59,10 +59,22 @@ void VoxelDataLoader::load(const std::vector<uint8_t> &bytes, VoxelData &output)
         throw Exception("Unexpected voxel data resolution used in voxel data file.");
     }
     
-    for (size_t i = 0, n = header.w*header.h*header.d; i < n; ++i)
-    {
-        const FileVoxel &src = header.voxels[i];
-        float value = (src.type == 0) ? 0.0f : 1.0f;
-        output.set(i, Voxel(value));
+    size_t i = 0;
+    
+    for (glm::vec3 mins = box.center - box.extent,
+                   cursor = mins,
+                   cell = output.getCellDimensions();
+         cursor.x < (header.w * cell.x);
+         cursor.x += cell.x) {
+        
+        for (cursor.z = mins.z; cursor.z < (header.d * cell.z); cursor.z += cell.z) {
+            
+            for (cursor.y = mins.y; cursor.y < (header.h * cell.y); cursor.y += cell.y) {
+                
+                const FileVoxel &src = header.voxels[i++];
+                const float value = (src.type == 0) ? 0.0f : 1.0f;
+                output.set(cursor, Voxel(value));
+            }
+        }
     }
 }
