@@ -11,12 +11,14 @@
 
 #include "Array3D.hpp"
 #include "Voxel.hpp"
+#include <experimental/optional>
 
 // A block of voxels in space.
 class VoxelData : public GridAddressable<Voxel>
 {
 public:
     typedef Array3D<Voxel> Chunk;
+    typedef typename std::experimental::optional<Chunk> MaybeChunk;
     
     // Constructor. Accepts a bounding box decribing the region of space
     // this block of voxels represents. The space is divided into voxel
@@ -64,7 +66,7 @@ private:
     const glm::ivec3 _res;
     const glm::vec3 _cellDim;
     
-    Chunk _chunk;
+    MaybeChunk _chunk;
 };
 
 #endif /* VoxelData_hpp */
