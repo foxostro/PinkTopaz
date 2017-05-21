@@ -60,10 +60,10 @@ public:
     }
     
     // Each point in space corresponds to exactly one cell. Get the (mutable) object.
-    TYPE& getm(const glm::vec3 &p) override
+    TYPE& mutableReference(const glm::vec3 &p) override
     {
         assert(inbounds(p));
-        return getm(indexAtPoint(p));
+        return mutableReference(indexAtPoint(p));
     }
     
     // Each point in space corresponds to exactly one cell. Set the object.
@@ -166,7 +166,7 @@ public:
     }
     
     // Gets the (mutable) object for the specified index, produced by `indexAtPoint'.
-    TYPE& getm(index_type index)
+    TYPE& mutableReference(index_type index)
     {
         return _cells[index];
     }

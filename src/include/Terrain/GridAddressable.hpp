@@ -25,7 +25,7 @@ public:
     virtual const TYPE& get(const glm::vec3 &p, const TYPE &defaultValue) const = 0;
     
     // Each point in space corresponds to exactly one cell. Get the (mutable) object.
-    virtual TYPE& getm(const glm::vec3 &p) = 0;
+    virtual TYPE& mutableReference(const glm::vec3 &p) = 0;
     
     // Each point in space corresponds to exactly one cell. Set the object.
     virtual void set(const glm::vec3 &p, const TYPE &object) = 0;

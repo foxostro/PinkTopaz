@@ -24,10 +24,10 @@ const Voxel& VoxelData::get(const glm::vec3 &p) const
     return voxel;
 }
 
-Voxel& VoxelData::getm(const glm::vec3 &p)
+Voxel& VoxelData::mutableReference(const glm::vec3 &p)
 {
-    MaybeChunk &maybeChunk = _chunks.getm(p);
-    Voxel &voxel = maybeChunk->getm(p);
+    MaybeChunk &maybeChunk = _chunks.mutableReference(p);
+    Voxel &voxel = maybeChunk->mutableReference(p);
     return voxel;
 }
 
@@ -51,7 +51,7 @@ const Voxel& VoxelData::get(const glm::vec3 &p, const Voxel &defaultValue) const
 
 void VoxelData::set(const glm::vec3 &p, const Voxel &object)
 {
-    MaybeChunk &maybeChunk = _chunks.getm(p);
+    MaybeChunk &maybeChunk = _chunks.mutableReference(p);
     
     // If the chunk does not exist then create it now.
     if (!maybeChunk) {
