@@ -14,7 +14,7 @@
 #include <experimental/optional>
 
 // A block of voxels in space.
-class VoxelData : public GridAddressable<Voxel>
+class VoxelData : public GridMutable<Voxel>
 {
 public:
     typedef Array3D<Voxel> Chunk;

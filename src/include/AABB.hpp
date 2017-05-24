@@ -41,8 +41,18 @@ struct _AABB
     {
         return center.x < right.center.x; // This is arbitrary, but consistent.
     }
-};
     
+    inline TYPE mins() const
+    {
+        return center - extent;
+    }
+    
+    inline TYPE maxs() const
+    {
+        return center + extent;
+    }
+};
+
 typedef _AABB<glm::vec3> AABB;
 
 #endif /* AABB_hpp */

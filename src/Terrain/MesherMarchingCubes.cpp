@@ -96,34 +96,26 @@ StaticMesh MesherMarchingCubes::extract(const VoxelData &voxels,
 {
     StaticMesh geometry;
     
-    const vec3 dim = voxels.getCellDimensions();
-    
     // Offset to align with the grid cells used by marching cubes.
-    const vec3 insetExtent = aabb.extent - LLL;
-    const vec3 mins = aabb.center - insetExtent;
-    const vec3 maxs = aabb.center + insetExtent;
+    const AABB insetAABB = {aabb.center, aabb.extent - LLL};
     
     // Marching Cubes isosurface extraction. This is embarrassingly parallel
     // and could potentially benefit from being split across multiple
     // threads, say, with OpenMP or similar.
-    for (glm::vec3 pos = mins; pos.z <= maxs.z; pos.z += dim.z) {
-        for (pos.x = mins.x; pos.x <= maxs.x; pos.x += dim.x) {
-            for (pos.y = mins.y; pos.y <= maxs.y; pos.y += dim.y) {
-                const std::array<CubeVertex, NUM_CUBE_VERTS> cube = {{
-                    CubeVertex(voxels, pos + vec3(-L, -L, +L)),
-                    CubeVertex(voxels, pos + vec3(+L, -L, +L)),
-                    CubeVertex(voxels, pos + vec3(+L, -L, -L)),
-                    CubeVertex(voxels, pos + vec3(-L, -L, -L)),
-                    CubeVertex(voxels, pos + vec3(-L, +L, +L)),
-                    CubeVertex(voxels, pos + vec3(+L, +L, +L)),
-                    CubeVertex(voxels, pos + vec3(+L, +L, -L)),
-                    CubeVertex(voxels, pos + vec3(-L, +L, -L))
-                }};
-                
-                polygonizeGridCell(geometry, cube, isosurface);
-            }
-        }
-    }
+    voxels.forPointsInGrid(insetAABB, [&](const glm::vec3 &pos){
+        const std::array<CubeVertex, NUM_CUBE_VERTS> cube = {{
+            CubeVertex(voxels, pos + vec3(-L, -L, +L)),
+            CubeVertex(voxels, pos + vec3(+L, -L, +L)),
+            CubeVertex(voxels, pos + vec3(+L, -L, -L)),
+            CubeVertex(voxels, pos + vec3(-L, -L, -L)),
+            CubeVertex(voxels, pos + vec3(-L, +L, +L)),
+            CubeVertex(voxels, pos + vec3(+L, +L, +L)),
+            CubeVertex(voxels, pos + vec3(+L, +L, -L)),
+            CubeVertex(voxels, pos + vec3(-L, +L, -L))
+        }};
+        
+        polygonizeGridCell(geometry, cube, isosurface);
+    });
     
     return geometry;
 }

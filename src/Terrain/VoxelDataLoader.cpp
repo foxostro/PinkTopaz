@@ -61,20 +61,9 @@ void VoxelDataLoader::load(const std::vector<uint8_t> &bytes, VoxelData &output)
     
     size_t i = 0;
     
-    for (glm::vec3 mins = box.center - box.extent,
-                   cursor = mins,
-                   cell = output.getCellDimensions();
-         cursor.x < (header.w * cell.x);
-         cursor.x += cell.x) {
-        
-        for (cursor.z = mins.z; cursor.z < (header.d * cell.z); cursor.z += cell.z) {
-            
-            for (cursor.y = mins.y; cursor.y < (header.h * cell.y); cursor.y += cell.y) {
-                
-                const FileVoxel &src = header.voxels[i++];
-                const float value = (src.type == 0) ? 0.0f : 1.0f;
-                output.set(cursor, Voxel(value));
-            }
-        }
-    }
+    output.mutableForEachCell(output.getBoundingBox(), [&](const AABB &cell){
+        const FileVoxel &src = header.voxels[i++];
+        const float value = (src.type == 0) ? 0.0f : 1.0f;
+        return Voxel(value);
+    });
 }
