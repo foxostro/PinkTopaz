@@ -19,7 +19,7 @@ public:
     virtual ~MesherMarchingCubes() = default;
     
     // Returns a triangle mesh for the specified isosurface.
-    virtual StaticMesh extract(const VoxelData &voxels,
+    virtual StaticMesh extract(const GridAddressable<Voxel> &voxels,
                                const AABB &region,
                                float isosurface) override;
     
@@ -29,7 +29,7 @@ private:
         const Voxel voxel;
         const glm::vec3 &worldPos;
         
-        CubeVertex(const VoxelData &voxels, const glm::vec3 &w)
+        CubeVertex(const GridAddressable<Voxel> &voxels, const glm::vec3 &w)
          : voxel(voxels.get(w, Voxel())), worldPos(w)
         {}
     };

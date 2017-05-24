@@ -90,7 +90,7 @@ void MesherMarchingCubes::polygonizeGridCell(StaticMesh &geometry,
     }
 }
 
-StaticMesh MesherMarchingCubes::extract(const VoxelData &voxels,
+StaticMesh MesherMarchingCubes::extract(const GridAddressable<Voxel> &voxels,
                                         const AABB &aabb,
                                         float isosurface)
 {

@@ -21,6 +21,7 @@ else()
 endif()
 
 set(SOURCE_FILES_TERRAIN
+    "src/include/Terrain/GridView.hpp"
     "src/include/Terrain/GridAddressable.hpp"
     "src/include/Terrain/Array3D.hpp"
     "src/include/Terrain/Voxel.hpp"

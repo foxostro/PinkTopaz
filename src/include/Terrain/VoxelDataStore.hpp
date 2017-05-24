@@ -39,13 +39,14 @@ public:
     ~VoxelDataStore() = default;
     
     // Perform a transaction as a "reader" where we have read-only access to the
-    // underlying voxel data.
-    void readerTransaction(const std::function<void(const VoxelData &voxels)> &fn) const;
+    // underlying voxel data in the specified region.
+    void readerTransaction(const AABB &region, const std::function<void(const GridAddressable<Voxel> &voxels)> &fn) const;
     
     // Perform a transaction as a "writer" where we have read-write access to
-    // the underlying voxel data. It is the responsibility of the caller to
-    // provide a closure which will update the change log accordingly. 
-    void writerTransaction(const std::function<ChangeLog(VoxelData &voxels)> &fn);
+    // the underlying voxel data in the specified region. It is the
+    // responsibility of the caller to provide a closure which will update the
+    // change log accordingly.
+    void writerTransaction(const AABB &region, const std::function<ChangeLog(GridMutable<Voxel> &voxels)> &fn);
     
     // This signal fires when a voxel data "writer" transaction finishes and
     // provides the opportunity to respond to changes to voxel data. For

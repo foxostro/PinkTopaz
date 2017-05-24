@@ -86,7 +86,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
     
     // Finally, actually load the voxel values from file.
     // For now, we load all voxels in one step.
-    _voxels->writerTransaction([&](VoxelData &voxels){
+    _voxels->writerTransaction(box, [&](GridMutable<Voxel> &voxels){
         voxelDataLoader.load(bytes, voxels);
         return ChangeLog::make("load", box);
     });
@@ -122,23 +122,25 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder) const
 
 void Terrain::rebuildMesh(const ChangeLog &changeLog)
 {
+    std::lock_guard<std::mutex> lock(_lockMeshes);
+    
     // The voxel file uses a binary SOLID/EMPTY flag for voxels.
     // So, we get values that are either 0.0 or 1.0.
     constexpr float isosurface = 0.5f;
     
-    _voxels->readerTransaction([&](const VoxelData &voxels){
-        std::lock_guard<std::mutex> lock(_lockMeshes);
-        
-        // Get the set of meshes (by index) which are affected by the changes.
-        // Only these meshes will need to be rebuilt.
-        decltype(_meshes->indicesOverRegion(AABB())) affectedMeshes;
-        for (const auto &change : changeLog) {
-            const auto &region = change.affectedRegion;
-            const auto indices = _meshes->indicesOverRegion(region);
-            affectedMeshes.insert(indices.begin(), indices.end());
-        }
- 
-        for (const auto& [index, box] : affectedMeshes) {
+    // Get the set of meshes (by index) which are affected by the changes.
+    // Only these meshes will need to be rebuilt.
+    std::set<std::pair<size_t, AABB>> affectedMeshes;
+    for (const auto &change : changeLog) {
+        const auto &region = change.affectedRegion;
+        const auto indices = _meshes->indicesOverRegion(region);
+        affectedMeshes.insert(indices.begin(), indices.end());
+    }
+    
+    for (const std::pair<size_t, AABB> pair : affectedMeshes) {
+        const size_t index = pair.first;
+        const AABB &box = pair.second;
+        _voxels->readerTransaction(box, [&](const GridAddressable<Voxel> &voxels){
             StaticMesh mesh = _mesher->extract(voxels, box, isosurface);
             
             std::shared_ptr<Buffer> vertexBuffer = nullptr;
@@ -155,6 +157,6 @@ void Terrain::rebuildMesh(const ChangeLog &changeLog)
             renderableStaticMesh.vertexCount = mesh.getVertexCount();
             renderableStaticMesh.buffer = vertexBuffer;
             _meshes->set(index, renderableStaticMesh);
-        }
-    });
+        });
+    }
 }

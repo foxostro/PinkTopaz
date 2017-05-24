@@ -78,3 +78,13 @@ glm::ivec3 VoxelData::getResolution() const
 {
     return _res;
 }
+
+const GridView<Voxel> VoxelData::getView(const AABB &region) const
+{
+    return GridView<Voxel>(*this, region);
+}
+
+GridViewMutable<Voxel> VoxelData::getView(const AABB &region)
+{
+    return GridViewMutable<Voxel>(*this, region);
+}

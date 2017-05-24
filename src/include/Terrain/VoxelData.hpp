@@ -11,6 +11,7 @@
 
 #include "Array3D.hpp"
 #include "Voxel.hpp"
+#include "GridView.hpp"
 #include <experimental/optional>
 
 // A block of voxels in space.
@@ -60,6 +61,9 @@ public:
     
     // Gets the number of cells along each axis within the valid region.
     glm::ivec3 getResolution() const override;
+    
+    const GridView<Voxel> getView(const AABB &region) const;
+    GridViewMutable<Voxel> getView(const AABB &region);
     
 private:
     static constexpr int CHUNK_SIZE = 16;

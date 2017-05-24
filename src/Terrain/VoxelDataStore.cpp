@@ -13,18 +13,20 @@ VoxelDataStore::VoxelDataStore(const AABB &box, const glm::ivec3 &resolution)
  : _data(box, resolution)
 {}
 
-void VoxelDataStore::readerTransaction(const std::function<void(const VoxelData &voxels)> &fn) const
+void VoxelDataStore::readerTransaction(const AABB &region, const std::function<void(const GridAddressable<Voxel> &voxels)> &fn) const
 {
     std::shared_lock<std::shared_mutex> lock(_mutex);
-    fn(_data);
+    const GridView<Voxel> view = _data.getView(region);
+    fn(view);
 }
 
-void VoxelDataStore::writerTransaction(const std::function<ChangeLog(VoxelData &voxels)> &fn)
+void VoxelDataStore::writerTransaction(const AABB &region, const std::function<ChangeLog(GridMutable<Voxel> &voxels)> &fn)
 {
     ChangeLog changeLog;
     {
         std::unique_lock<std::shared_mutex> lock(_mutex);
-        changeLog = fn(_data);
+        GridViewMutable<Voxel> view = _data.getView(region);
+        changeLog = fn(view);
     }
     voxelDataChanged(changeLog);
 }

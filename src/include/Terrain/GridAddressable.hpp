@@ -42,7 +42,6 @@ public:
     // These integer coordinates can be used to locate the cell within the grid.
     glm::ivec3 cellCoordsAtPoint(const glm::vec3 &point) const
     {
-        assert(inbounds(point));
         const AABB box = getBoundingBox();
         const glm::vec3 mins = box.mins();
         const glm::vec3 p = (point - mins) / (box.extent*2.0f);
@@ -77,12 +76,10 @@ public:
     glm::ivec3 getCellsInRegion(const AABB &region) const
     {
         assert(inbounds(region));
-        const glm::vec3 mins = cellCenterAtPoint(region.mins());
-        const glm::vec3 maxs = cellCenterAtPoint(region.maxs());
-        const glm::vec3 size = maxs - mins;
-        const glm::vec3 cell = getCellDimensions();
-        const glm::ivec3 res(size.x / cell.x, size.y / cell.y, size.z / cell.z);
-        return res;
+        const glm::ivec3 mins = cellCoordsAtPoint(region.mins());
+        const glm::ivec3 maxs = cellCoordsAtPoint(region.maxs());
+        const glm::ivec3 size = maxs - mins;
+        return size;
     }
     
     // Returns true if the point is within the valid space of the grid.
