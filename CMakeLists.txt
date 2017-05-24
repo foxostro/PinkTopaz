@@ -17,6 +17,7 @@ else()
     set(APPLE_FLAGS "")
     endif(APPLE)
     
+    set(CMAKE_CXX_FLAGS_RELEASE "-g -O2")
     set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
 endif()
 
