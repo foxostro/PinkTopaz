@@ -22,11 +22,6 @@ public:
     // Throws an exception if the point is not within this grid.
     virtual const TYPE& get(const glm::vec3 &p) const = 0;
     
-    // Get the object corresponding to the specified point in space.
-    // Note that each point in space corresponds to exactly one cell.
-    // If the point is not in bounds then return the specified default value.
-    virtual const TYPE& get(const glm::vec3 &p, const TYPE &defaultValue) const = 0;
-    
     // Gets the dimensions of a single cell in the grid.
     // Note that cells in the grid are always the same size.
     virtual glm::vec3 getCellDimensions() const = 0;

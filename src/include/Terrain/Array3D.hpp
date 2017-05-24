@@ -48,17 +48,6 @@ public:
         return get(indexAtPoint(p));
     }
     
-    // Each point in space corresponds to exactly one cell. Get the object.
-    // If the point is not in bounds then return the specified default value.
-    const TYPE& get(const glm::vec3 &p, const TYPE &defaultValue) const override
-    {
-        if (this->inbounds(p)) {
-            return get(indexAtPoint(p));
-        } else {
-            return defaultValue;
-        }
-    }
-    
     // Each point in space corresponds to exactly one cell. Get the (mutable) object.
     TYPE& mutableReference(const glm::vec3 &p) override
     {

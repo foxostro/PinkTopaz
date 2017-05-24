@@ -49,19 +49,11 @@ void VoxelDataLoader::load(const std::vector<uint8_t> &bytes, GridMutable<Voxel>
         half,
         half,
     };
-    glm::ivec3 resolution(header.w, header.h, header.d);
-    
-    if (box != output.getBoundingBox()) {
-        throw Exception("Unexpected voxel data bounding box used in voxel data file.");
-    }
-    
-    if (resolution != output.getResolution()) {
-        throw Exception("Unexpected voxel data resolution used in voxel data file.");
-    }
     
     size_t i = 0;
     
-    output.mutableForEachCell(output.getBoundingBox(), [&](const AABB &cell){
+    output.mutableForEachCell(box, [&](const AABB &cell){
+        assert(i < (header.w * header.h * header.d));
         const FileVoxel &src = header.voxels[i++];
         const float value = (src.type == 0) ? 0.0f : 1.0f;
         return Voxel(value);

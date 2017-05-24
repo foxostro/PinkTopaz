@@ -51,6 +51,11 @@ struct _AABB
     {
         return center + extent;
     }
+    
+    inline _AABB<TYPE> inset(TYPE inset) const
+    {
+        return _AABB<TYPE>{center, extent - inset};
+    }
 };
 
 typedef _AABB<glm::vec3> AABB;

@@ -30,7 +30,7 @@ private:
         const glm::vec3 &worldPos;
         
         CubeVertex(const GridAddressable<Voxel> &voxels, const glm::vec3 &w)
-         : voxel(voxels.get(w, Voxel())), worldPos(w)
+         : voxel(voxels.get(w)), worldPos(w)
         {}
     };
     

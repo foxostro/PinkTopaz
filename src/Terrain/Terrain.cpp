@@ -74,7 +74,12 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
     glm::ivec3 res;
     VoxelDataLoader voxelDataLoader;
     voxelDataLoader.retrieveDimensions(bytes, box, res);
-    _voxels = std::make_unique<VoxelDataStore>(box, res);
+    
+    const glm::vec3 chunkSize(MESH_CHUNK_SIZE, MESH_CHUNK_SIZE, MESH_CHUNK_SIZE);
+    const AABB boxWithBorder = box.inset(-chunkSize);
+    const glm::ivec3 resWithBorder = res + glm::ivec3(MESH_CHUNK_SIZE, MESH_CHUNK_SIZE, MESH_CHUNK_SIZE)*2;
+    
+    _voxels = std::make_unique<VoxelDataStore>(boxWithBorder, resWithBorder);
     _meshes = std::make_unique<Array3D<RenderableStaticMesh>>(box, res / MESH_CHUNK_SIZE);
     
     // When voxels change, we need to extract a polygonal mesh representation
@@ -86,7 +91,12 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
     
     // Finally, actually load the voxel values from file.
     // For now, we load all voxels in one step.
-    _voxels->writerTransaction(box, [&](GridMutable<Voxel> &voxels){
+    _voxels->writerTransaction(boxWithBorder, [&](GridMutable<Voxel> &voxels){
+        assert(voxels.getCellDimensions() == glm::vec3(1.0, 1.0, 1.0));
+        
+        voxels.mutableForEachCell(boxWithBorder, [&](const AABB &cell){
+            return Voxel();
+        });
         voxelDataLoader.load(bytes, voxels);
         return ChangeLog::make("load", box);
     });
@@ -112,7 +122,7 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder) const
     encoder->setFragmentTexture(_defaultMesh.texture, 0);
     encoder->setVertexBuffer(_defaultMesh.uniforms, 1);
     
-    for (RenderableStaticMesh &mesh : *_meshes) {
+    for (const RenderableStaticMesh &mesh : *_meshes) {
         if (mesh.vertexCount > 0) {
             encoder->setVertexBuffer(mesh.buffer, 0);
             encoder->drawPrimitives(Triangles, 0, mesh.vertexCount, 1);
@@ -139,9 +149,14 @@ void Terrain::rebuildMesh(const ChangeLog &changeLog)
     
     for (const std::pair<size_t, AABB> pair : affectedMeshes) {
         const size_t index = pair.first;
-        const AABB &box = pair.second;
-        _voxels->readerTransaction(box, [&](const GridAddressable<Voxel> &voxels){
-            StaticMesh mesh = _mesher->extract(voxels, box, isosurface);
+        const AABB &meshBox = pair.second;
+        
+        // We need a border of voxels around the region of the mesh in order to
+        // perform surface extraction.
+        const AABB voxelBox = meshBox.inset(-glm::vec3(1, 1, 1));
+        
+        _voxels->readerTransaction(voxelBox, [&](const GridAddressable<Voxel> &voxels){
+            StaticMesh mesh = _mesher->extract(voxels, meshBox, isosurface);
             
             std::shared_ptr<Buffer> vertexBuffer = nullptr;
             

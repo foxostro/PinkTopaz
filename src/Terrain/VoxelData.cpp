@@ -31,24 +31,6 @@ Voxel& VoxelData::mutableReference(const glm::vec3 &p)
     return voxel;
 }
 
-const Voxel& VoxelData::get(const glm::vec3 &p, const Voxel &defaultValue) const
-{
-    // Return the default value when the point is outside the valid region.
-    if (!_chunks.inbounds(p)) {
-        return defaultValue;
-    }
-    
-    const MaybeChunk &maybeChunk = _chunks.get(p);
-    
-    // If the chunk doesn't exist then immediately default to the default value.
-    if (!maybeChunk) {
-        return defaultValue;
-    } else {
-        const Voxel &voxel = maybeChunk->get(p, defaultValue);
-        return voxel;
-    }
-}
-
 void VoxelData::set(const glm::vec3 &p, const Voxel &object)
 {
     MaybeChunk &maybeChunk = _chunks.mutableReference(p);
@@ -81,10 +63,12 @@ glm::ivec3 VoxelData::getResolution() const
 
 const GridView<Voxel> VoxelData::getView(const AABB &region) const
 {
+    assert(inbounds(region));
     return GridView<Voxel>(*this, region);
 }
 
 GridViewMutable<Voxel> VoxelData::getView(const AABB &region)
 {
+    assert(inbounds(region));
     return GridViewMutable<Voxel>(*this, region);
 }

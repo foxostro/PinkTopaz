@@ -97,7 +97,7 @@ StaticMesh MesherMarchingCubes::extract(const GridAddressable<Voxel> &voxels,
     StaticMesh geometry;
     
     // Offset to align with the grid cells used by marching cubes.
-    const AABB insetAABB = {aabb.center, aabb.extent - LLL};
+    const AABB insetAABB = aabb.inset(LLL);
     
     // Marching Cubes isosurface extraction. This is embarrassingly parallel
     // and could potentially benefit from being split across multiple

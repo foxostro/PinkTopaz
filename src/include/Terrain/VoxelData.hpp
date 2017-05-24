@@ -46,10 +46,6 @@ public:
     // Each point in space corresponds to exactly one cell. Get the (mutable) object.
     Voxel& mutableReference(const glm::vec3 &p) override;
     
-    // Each point in space corresponds to exactly one cell. Get the object.
-    // If the point is not in bounds then return the specified default value.
-    const Voxel& get(const glm::vec3 &p, const Voxel &defaultValue) const override;
-    
     // Each point in space corresponds to exactly one cell. Set the object.
     void set(const glm::vec3 &p, const Voxel &object) override;
     

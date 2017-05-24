@@ -27,15 +27,6 @@ public:
         return _backing.get(p);
     }
     
-    const TYPE& get(const glm::vec3 &p, const TYPE &defaultValue) const override
-    {
-        if (!this->inbounds(p)) {
-            return defaultValue;
-        } else {
-            return _backing.get(p, defaultValue);
-        }
-    }
-    
     glm::vec3 getCellDimensions() const override
     {
         return _backing.getCellDimensions();
@@ -71,15 +62,6 @@ public:
     {
         assert(this->inbounds(p));
         return _backing.get(p);
-    }
-    
-    const TYPE& get(const glm::vec3 &p, const TYPE &defaultValue) const override
-    {
-        if (!this->inbounds(p)) {
-            return defaultValue;
-        } else {
-            return _backing.get(p, defaultValue);
-        }
     }
     
     TYPE& mutableReference(const glm::vec3 &p) override
