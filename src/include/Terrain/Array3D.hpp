@@ -44,28 +44,36 @@ public:
     // Each point in space corresponds to exactly one cell. Get the object.
     const TYPE& get(const glm::vec3 &p) const override
     {
-        assert(this->inbounds(p));
+        if (GridAddressable<TYPE>::EnableBoundsChecking && !this->inbounds(p)) {
+            throw Exception("out of bounds: (%.2f, %.2f, %.2f)", p.x, p.y, p.z);
+        }
         return get(indexAtPoint(p));
     }
     
     // Each point in space corresponds to exactly one cell. Get the (mutable) object.
     TYPE& mutableReference(const glm::vec3 &p) override
     {
-        assert(this->inbounds(p));
+        if (GridAddressable<TYPE>::EnableBoundsChecking && !this->inbounds(p)) {
+            throw Exception("out of bounds: (%.2f, %.2f, %.2f)", p.x, p.y, p.z);
+        }
         return mutableReference(indexAtPoint(p));
     }
     
     // Each point in space corresponds to exactly one cell. Set the object.
     void set(const glm::vec3 &p, const TYPE &object) override
     {
-        assert(this->inbounds(p));
+        if (GridAddressable<TYPE>::EnableBoundsChecking && !this->inbounds(p)) {
+            throw Exception("out of bounds: (%.2f, %.2f, %.2f)", p.x, p.y, p.z);
+        }
         return set(indexAtPoint(p), object);
     }
     
     // Gets the internal cell index for the specified point in space.
     index_type indexAtPoint(const glm::vec3 &point) const
     {
-        assert(this->inbounds(point));
+        if (GridAddressable<TYPE>::EnableBoundsChecking && !this->inbounds(point)) {
+            throw Exception("out of bounds");
+        }
         
         const glm::ivec3 a = this->cellCoordsAtPoint(point);
         
@@ -78,7 +86,9 @@ public:
     // affected cell.
     auto indicesOverRegion(const AABB &region) const
     {
-        assert(this->inbounds(region));
+        if (GridAddressable<TYPE>::EnableBoundsChecking && !this->inbounds(region)) {
+            throw Exception("out of bounds");
+        }
         
         std::set<std::pair<index_type, AABB>> indices;
         

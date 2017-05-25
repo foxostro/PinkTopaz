@@ -15,6 +15,8 @@
 template<typename TYPE> class GridAddressable
 {
 public:
+    static constexpr bool EnableBoundsChecking = false;
+    
     virtual ~GridAddressable() = default;
     
     // Get the object corresponding to the specified point in space.
@@ -48,7 +50,10 @@ public:
     // Gets the center point of the cell in which the specified point resides.
     glm::vec3 cellCenterAtPoint(const glm::vec3 &point) const
     {
-        assert(inbounds(point));
+        if (EnableBoundsChecking && !inbounds(point)) {
+            throw Exception("out of bounds");
+        }
+        
         const glm::vec3 cellDim = getCellDimensions();
         const AABB box = getBoundingBox();
         const glm::ivec3 a = cellCoordsAtPoint(point);
@@ -60,7 +65,10 @@ public:
     // Gets the bouding box of the cell in which the specified point resides.
     AABB cellAtPoint(const glm::vec3 &point) const
     {
-        assert(inbounds(point));
+        if (EnableBoundsChecking && !inbounds(point)) {
+            throw Exception("out of bounds");
+        }
+        
         const glm::vec3 cellCenter = cellCenterAtPoint(point);
         const glm::vec3 cellExtent = getCellDimensions() * 0.5f;
         const AABB cell = {cellCenter, cellExtent};
@@ -70,7 +78,10 @@ public:
     // Gets the number of cells along each axis within the specified region.
     glm::ivec3 getCellsInRegion(const AABB &region) const
     {
-        assert(inbounds(region));
+        if (EnableBoundsChecking && !inbounds(region)) {
+            throw Exception("out of bounds");
+        }
+        
         const glm::ivec3 mins = cellCoordsAtPoint(region.mins());
         const glm::ivec3 maxs = cellCoordsAtPoint(region.maxs());
         const glm::ivec3 size = maxs - mins;
@@ -103,7 +114,9 @@ public:
     void forEachCell(const AABB &region,
                      std::function<void (const AABB &cell)> fn) const
     {
-        assert(inbounds(region));
+        if (EnableBoundsChecking && !inbounds(region)) {
+            throw Exception("out of bounds");
+        }
         
         const auto dim = getCellDimensions();
         const auto min = region.mins();
@@ -122,7 +135,9 @@ public:
     void forPointsInGrid(const AABB &region,
                          std::function<void (const glm::vec3 &point)> fn) const
     {
-        assert(inbounds(region));
+        if (EnableBoundsChecking && !inbounds(region)) {
+            throw Exception("out of bounds");
+        }
         
         const auto dim = getCellDimensions();
         const auto min = region.mins();
@@ -156,7 +171,9 @@ public:
     void mutableForEachCell(const AABB &region,
                             std::function<TYPE (const AABB &cell)> fn)
     {
-        assert(this->inbounds(region));
+        if (GridAddressable<TYPE>::EnableBoundsChecking && !this->inbounds(region)) {
+            throw Exception("out of bounds");
+        }
         
         const auto dim = this->getCellDimensions();
         const auto min = region.mins();

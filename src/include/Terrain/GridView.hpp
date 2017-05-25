@@ -23,7 +23,9 @@ public:
     
     const TYPE& get(const glm::vec3 &p) const override
     {
-        assert(this->inbounds(p));
+        if (!this->inbounds(p)) {
+            throw Exception("out of bounds");
+        }
         return _backing.get(p);
     }
     
@@ -60,19 +62,25 @@ public:
     
     const TYPE& get(const glm::vec3 &p) const override
     {
-        assert(this->inbounds(p));
+        if (!this->inbounds(p)) {
+            throw Exception("out of bounds");
+        }
         return _backing.get(p);
     }
     
     TYPE& mutableReference(const glm::vec3 &p) override
     {
-        assert(this->inbounds(p));
+        if (!this->inbounds(p)) {
+            throw Exception("out of bounds");
+        }
         return _backing.mutableReference(p);
     }
     
     void set(const glm::vec3 &p, const TYPE &object) override
     {
-        assert(this->inbounds(p));
+        if (!this->inbounds(p)) {
+            throw Exception("out of bounds");
+        }
         return _backing.set(p, object);
     }
     
