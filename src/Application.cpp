@@ -78,7 +78,8 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
                         
                 case SDL_MOUSEMOTION:
                     gameWorld.events.emit(MouseMoveEvent(e.motion.xrel,
-                                                            e.motion.yrel));
+                                                         e.motion.yrel,
+                                                         SDL_GetTicks()));
                     break;
             }
         }
@@ -86,7 +87,9 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
         for(std::pair<SDL_Keycode, bool> pair : keyStates)
         {
             if (pair.second != prevKeyStates[pair.first]) {
-                gameWorld.events.emit(KeypressEvent(pair.first, pair.second));
+                gameWorld.events.emit(KeypressEvent(pair.first,
+                                                    pair.second,
+                                                    SDL_GetTicks()));
             }
         }
             

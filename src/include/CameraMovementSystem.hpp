@@ -31,13 +31,14 @@ public:
     void receive(const MouseMoveEvent &event);
         
 private:
+    const float _cameraSpeed, _cameraRotateSpeed;
+    const float _mouseSensitivity;
+    
     glm::vec3 _eye, _center, _up;
     glm::quat _rotation;
-    float _cameraSpeed, _cameraRotateSpeed;
     std::map<SDL_Keycode, bool> _keys;
     entityx::Entity _activeCamera;
-    float _mouseSensitivity;
-    int _mouseDeltaX, _mouseDeltaY;
+    bool _mouseEventPending;
 };
 
 #endif /* CameraMovementSystem_hpp */

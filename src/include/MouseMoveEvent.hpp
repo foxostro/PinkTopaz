@@ -13,10 +13,14 @@
     
 struct MouseMoveEvent
 {
-    MouseMoveEvent(int dx, int dy) : deltaX(dx), deltaY(dy) {}
-    MouseMoveEvent() : deltaX(0), deltaY(0) {}
+    MouseMoveEvent(int dx, int dy, unsigned t)
+     : deltaX(dx), deltaY(dy)
+    {}
+    
+    MouseMoveEvent() : deltaX(0), deltaY(0), timestamp(0) {}
         
     int deltaX, deltaY;
+    unsigned timestamp;
 };
 
 #endif /* MouseMoveEvent_hpp */

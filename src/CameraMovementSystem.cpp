@@ -13,8 +13,10 @@
 #include <glm/gtc/matrix_transform.hpp>
     
 CameraMovementSystem::CameraMovementSystem()
-    : _cameraSpeed(50.0f), _cameraRotateSpeed(1.0f), _mouseSensitivity(5.0f),
-    _mouseDeltaX(0), _mouseDeltaY(0)
+ : _cameraSpeed(50.0f),
+   _cameraRotateSpeed(1.0f),
+   _mouseSensitivity(5.0f),
+   _mouseEventPending(false)
 {}
     
 void CameraMovementSystem::configure(entityx::EventManager &em)
@@ -79,21 +81,28 @@ void CameraMovementSystem::update(entityx::EntityManager &es,
         glm::quat deltaRot = glm::angleAxis(-angle, localUp);
         _rotation = deltaRot * _rotation;
     }
+    
+    int mouseDeltaX = 0, mouseDeltaY = 0;
+    
+    if (_mouseEventPending) {
+        _mouseEventPending = false;
+        SDL_GetRelativeMouseState(&mouseDeltaX, &mouseDeltaY);
+    }
         
-    if(_mouseDeltaX != 0) {
-        float mouseDirectionX = -_mouseDeltaX*_mouseSensitivity*dt;
+    if(mouseDeltaX != 0) {
+        float mouseDirectionX = -mouseDeltaX*_mouseSensitivity*dt;
         float angle = mouseDirectionX*dt;
         glm::quat deltaRot = glm::angleAxis(angle, localUp);
         _rotation = deltaRot * _rotation;
-        _mouseDeltaX = 0;
+        mouseDeltaX = 0;
     }
         
-    if(_mouseDeltaY != 0) {
-        float mouseDirectionY = -_mouseDeltaY*_mouseSensitivity*dt;
+    if(mouseDeltaY != 0) {
+        float mouseDirectionY = -mouseDeltaY*_mouseSensitivity*dt;
         float angle = mouseDirectionY*dt;
         glm::quat deltaRot = glm::angleAxis(angle, localRight);
         _rotation = _rotation * deltaRot;
-        _mouseDeltaY = 0;
+        mouseDeltaY = 0;
     }
         
     _eye += velocity;
@@ -127,6 +136,5 @@ void CameraMovementSystem::receive(const KeypressEvent &event)
     
 void CameraMovementSystem::receive(const MouseMoveEvent &event)
 {
-    _mouseDeltaX = event.deltaX;
-    _mouseDeltaY = event.deltaY;
+    _mouseEventPending = true;
 }

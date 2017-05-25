@@ -13,11 +13,15 @@
     
 struct KeypressEvent
 {
-    KeypressEvent(SDL_Keycode k, bool d) : key(k), down(d) {}
-    KeypressEvent() : key(SDLK_UNKNOWN), down(false) {}
+    KeypressEvent(SDL_Keycode k, bool d, unsigned t)
+     : key(k), down(d), timestamp(t)
+    {}
+    
+    KeypressEvent() : key(SDLK_UNKNOWN), down(false), timestamp(0) {}
         
     SDL_Keycode key;
     bool down;
+    unsigned timestamp;
 };
 
 #endif /* KeypressEvent_hpp */
