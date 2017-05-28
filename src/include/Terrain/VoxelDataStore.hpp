@@ -54,6 +54,10 @@ public:
     boost::signals2::signal<void (const ChangeLog &changeLog)> voxelDataChanged;
     
 private:
+    void underLock(const AABB &region,
+                   bool shared,
+                   const std::function<void()> &fn) const;
+    
     ChangeLog _changeLog;
     VoxelData _data;
     mutable Array3D<std::shared_ptr<std::shared_mutex>> _chunkLocks;
