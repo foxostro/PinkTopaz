@@ -62,7 +62,7 @@ public:
     GridViewMutable<Voxel> getView(const AABB &region);
     
 private:
-    static constexpr int CHUNK_SIZE = 16;
+    static constexpr int CHUNK_SIZE = 32;
     
     const AABB _box;
     const glm::ivec3 _res;

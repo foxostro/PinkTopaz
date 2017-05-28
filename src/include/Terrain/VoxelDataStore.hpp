@@ -51,13 +51,12 @@ public:
     // This signal fires when a voxel data "writer" transaction finishes and
     // provides the opportunity to respond to changes to voxel data. For
     // example, by rebuilding meshes.
-    // TODO: Pass a change log object as a parameter here.
     boost::signals2::signal<void (const ChangeLog &changeLog)> voxelDataChanged;
     
 private:
-    mutable std::shared_mutex _mutex;
     ChangeLog _changeLog;
     VoxelData _data;
+    mutable Array3D<std::shared_ptr<std::shared_mutex>> _chunkLocks;
 };
 
 #endif /* VoxelDataStore_hpp */
