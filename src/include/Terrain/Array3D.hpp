@@ -11,6 +11,11 @@
 
 #include "AABB.hpp"
 
+#define LOG_ARRAY_CTOR 0
+#if LOG_ARRAY_CTOR
+#include "SDL.h"
+#endif
+
 #include <vector>
 #include <set>
 #include <glm/vec3.hpp>
@@ -32,6 +37,16 @@ public:
     typedef typename container_type::iterator iterator;
     typedef typename container_type::const_iterator const_iterator;
     
+    ~Array3D()
+    {
+#if LOG_ARRAY_CTOR
+        SDL_Log("~Array3D -- %p", this);
+#endif
+    }
+    
+    // No default constructor.
+    Array3D() = delete;
+    
     // Constructor. Accepts a bounding box decribing the region of space
     // this grid of objects represents. The space is divided into cells at a
     // resolution described by `resolution.' That is, there are `resolution.x'
@@ -39,13 +54,46 @@ public:
     // `resolution.z' cells along the Z-axis.
     Array3D(const AABB &box, const glm::ivec3 &res)
      : _cells(res.x * res.y * res.z), _box(box), _res(res)
-    {}
+    {
+#if LOG_ARRAY_CTOR
+        SDL_Log("Array3D(const AABB &box, const glm::ivec3 &res) -- %p", this);
+#endif
+    }
     
-    // No default constructor.
-    Array3D() = delete;
+    // Copy constructor.
+    Array3D(const Array3D<TYPE> &array)
+     : _cells(array._cells),
+       _box(array._box),
+       _res(array._res)
+    {
+#if LOG_ARRAY_CTOR
+        SDL_Log("Array3D(const Array3D<TYPE> &array) -- %p", this);
+#endif
+    }
     
-    // Destructor is just the default.
-    ~Array3D() = default;
+    // Move constructor.
+    Array3D(Array3D<TYPE> &&array)
+     : _cells(std::move(array._cells)),
+       _box(array._box),
+       _res(array._res)
+    {
+#if LOG_ARRAY_CTOR
+        SDL_Log("Array3D(Array3D<TYPE> &&array) -- %p", this);
+#endif
+    }
+    
+    // Copy assignment operator.
+    // We need this because we have a user-declared move constructor.
+    Array3D<TYPE>& operator=(const Array3D<TYPE> &array)
+    {
+#if LOG_ARRAY_CTOR
+        SDL_Log("Array3D<TYPE>& operator=(const Array3D<TYPE> &array) -- %p", this);
+#endif
+        _cells = array._cells;
+        _box = array._box;
+        _res = array._res;
+        return *this;
+    }
     
     // Each point in space corresponds to exactly one cell. Get the object.
     const TYPE& get(const glm::vec3 &p) const override

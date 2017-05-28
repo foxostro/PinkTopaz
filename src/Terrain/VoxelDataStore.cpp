@@ -53,8 +53,7 @@ void VoxelDataStore::underLock(const AABB &region,
 void VoxelDataStore::readerTransaction(const AABB &region, const std::function<void(const Array3D<Voxel> &voxels)> &fn) const
 {
     underLock(region, true, [&]{
-        Array3D<Voxel> aCopy = _data.copy(region);
-        fn(aCopy);
+        fn(_data.copy(region));
     });
 }
 
