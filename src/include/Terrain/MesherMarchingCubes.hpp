@@ -26,11 +26,11 @@ public:
 private:
     struct CubeVertex
     {
-        const Voxel voxel;
+        const Voxel &voxel;
         const glm::vec3 &worldPos;
         
-        CubeVertex(const GridAddressable<Voxel> &voxels, const glm::vec3 &w)
-         : voxel(voxels.get(w)), worldPos(w)
+        CubeVertex(const Voxel &voxel, const glm::vec3 &w)
+         : voxel(voxel), worldPos(w)
         {}
     };
     

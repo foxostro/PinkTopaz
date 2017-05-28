@@ -11,6 +11,7 @@
 #include "math.hpp" // for clamp
 #include <glm/glm.hpp>
 #include <array>
+#include "SDL.h"
 
 using glm::vec3;
 using glm::vec4;
@@ -99,21 +100,55 @@ StaticMesh MesherMarchingCubes::extract(const Array3D<Voxel> &voxels,
     // Offset to align with the grid cells used by marching cubes.
     const AABB insetAABB = aabb.inset(LLL);
     
-    // AFOX_TODO: Use direct array access here.
+    static const vec3 posOffset[NUM_CUBE_VERTS] = {
+        vec3(-L, -L, +L),
+        vec3(+L, -L, +L),
+        vec3(+L, -L, -L),
+        vec3(-L, -L, -L),
+        vec3(-L, +L, +L),
+        vec3(+L, +L, +L),
+        vec3(+L, +L, -L),
+        vec3(-L, +L, -L)
+    };
     
-    // Marching Cubes isosurface extraction. This is embarrassingly parallel
-    // and could potentially benefit from being split across multiple
-    // threads, say, with OpenMP or similar.
+    // Compute an offset to add to the base index in order to get the
+    // corresponding neighboring vertex of the cube. This is very much
+    // dependent on the chubnk size, but will be the same for all chunks.
+    // AFOX_TODO: Compute these offsets dynamically.
+    static const size_t vertexIndicesOffsets[NUM_CUBE_VERTS] = {
+        19,
+        380,
+        361,
+        0,
+        20,
+        381,
+        362,
+        1
+    };
+    
     voxels.forPointsInGrid(insetAABB, [&](const glm::vec3 &pos){
+        const vec3 vertexPositions[NUM_CUBE_VERTS] = {
+            pos + posOffset[0],
+            pos + posOffset[1],
+            pos + posOffset[2],
+            pos + posOffset[3],
+            pos + posOffset[4],
+            pos + posOffset[5],
+            pos + posOffset[6],
+            pos + posOffset[7]
+        };
+        
+        const size_t index = voxels.indexAtPoint(pos);
+        
         const std::array<CubeVertex, NUM_CUBE_VERTS> cube = {{
-            CubeVertex(voxels, pos + vec3(-L, -L, +L)),
-            CubeVertex(voxels, pos + vec3(+L, -L, +L)),
-            CubeVertex(voxels, pos + vec3(+L, -L, -L)),
-            CubeVertex(voxels, pos + vec3(-L, -L, -L)),
-            CubeVertex(voxels, pos + vec3(-L, +L, +L)),
-            CubeVertex(voxels, pos + vec3(+L, +L, +L)),
-            CubeVertex(voxels, pos + vec3(+L, +L, -L)),
-            CubeVertex(voxels, pos + vec3(-L, +L, -L))
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[0]), vertexPositions[0]),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[1]), vertexPositions[1]),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[2]), vertexPositions[2]),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[3]), vertexPositions[3]),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[4]), vertexPositions[4]),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[5]), vertexPositions[5]),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[6]), vertexPositions[6]),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[7]), vertexPositions[7]),
         }};
         
         polygonizeGridCell(geometry, cube, isosurface);
