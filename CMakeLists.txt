@@ -106,6 +106,7 @@ set(SOURCE_FILES_MISC
     "src/FrameTimer.cpp" "src/include/FrameTimer.hpp"
     "src/include/AABB.hpp"
     "src/include/math.hpp"
+    "src/ThreadPool.cpp" "src/include/ThreadPool.hpp"
     )
 
 if(APPLE)

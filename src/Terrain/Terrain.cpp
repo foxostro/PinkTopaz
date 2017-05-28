@@ -11,6 +11,7 @@
 #include "SDL_image.h"
 #include "Exception.hpp"
 #include "Terrain/Terrain.hpp"
+#include "ThreadPool.hpp"
 #include <set>
 
 Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
@@ -148,30 +149,32 @@ void Terrain::rebuildMesh(const ChangeLog &changeLog)
     }
     
     for (const std::pair<size_t, AABB> pair : affectedMeshes) {
-        const size_t index = pair.first;
-        const AABB &meshBox = pair.second;
-        
-        // We need a border of voxels around the region of the mesh in order to
-        // perform surface extraction.
-        const AABB voxelBox = meshBox.inset(-glm::vec3(1, 1, 1));
-        
-        _voxels->readerTransaction(voxelBox, [&](const GridAddressable<Voxel> &voxels){
-            StaticMesh mesh = _mesher->extract(voxels, meshBox, isosurface);
+        g_threadPool.enqueue([=]{
+            const size_t index = pair.first;
+            const AABB &meshBox = pair.second;
             
-            std::shared_ptr<Buffer> vertexBuffer = nullptr;
+            // We need a border of voxels around the region of the mesh in order to
+            // perform surface extraction.
+            const AABB voxelBox = meshBox.inset(-glm::vec3(1, 1, 1));
             
-            if (mesh.getVertexCount() > 0) {
-                auto vertexBufferData = mesh.getBufferData();
-                vertexBuffer = _graphicsDevice->makeBuffer(vertexBufferData,
-                                                           StaticDraw,
-                                                           ArrayBuffer);
-                vertexBuffer->addDebugMarker("Terrain Vertices", 0, vertexBufferData.size());
-            }
-            
-            RenderableStaticMesh renderableStaticMesh = _defaultMesh;
-            renderableStaticMesh.vertexCount = mesh.getVertexCount();
-            renderableStaticMesh.buffer = vertexBuffer;
-            _meshes->set(index, renderableStaticMesh);
+            _voxels->readerTransaction(voxelBox, [&](const GridAddressable<Voxel> &voxels){
+                StaticMesh mesh = _mesher->extract(voxels, meshBox, isosurface);
+                
+                std::shared_ptr<Buffer> vertexBuffer = nullptr;
+                
+                if (mesh.getVertexCount() > 0) {
+                    auto vertexBufferData = mesh.getBufferData();
+                    vertexBuffer = _graphicsDevice->makeBuffer(vertexBufferData,
+                                                               StaticDraw,
+                                                               ArrayBuffer);
+                    vertexBuffer->addDebugMarker("Terrain Vertices", 0, vertexBufferData.size());
+                }
+                
+                RenderableStaticMesh renderableStaticMesh = _defaultMesh;
+                renderableStaticMesh.vertexCount = mesh.getVertexCount();
+                renderableStaticMesh.buffer = vertexBuffer;
+                _meshes->set(index, renderableStaticMesh);
+            });
         });
     }
 }
