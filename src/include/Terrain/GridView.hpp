@@ -41,7 +41,7 @@ public:
         return _subregion;
     }
     
-    glm::ivec3 getResolution() const override
+    glm::ivec3 gridResolution() const override
     {
         return _res;
     }
@@ -98,7 +98,7 @@ public:
         return _subregion;
     }
     
-    glm::ivec3 getResolution() const override
+    glm::ivec3 gridResolution() const override
     {
         return _res;
     }

@@ -33,7 +33,7 @@ public:
     virtual AABB getBoundingBox() const = 0;
     
     // Gets the number of cells along each axis within the valid region.
-    virtual glm::ivec3 getResolution() const = 0;
+    virtual glm::ivec3 gridResolution() const = 0;
     
     // Gets the coordinates of the cell in which the specified point resides.
     // These integer coordinates can be used to locate the cell within the grid.
@@ -42,7 +42,7 @@ public:
         const AABB box = getBoundingBox();
         const glm::vec3 mins = box.mins();
         const glm::vec3 p = (point - mins) / (box.extent*2.0f);
-        const glm::ivec3 res = getResolution();
+        const glm::ivec3 res = gridResolution();
         const glm::ivec3 a(p.x * res.x, p.y * res.y, p.z * res.z);
         return a;
     }

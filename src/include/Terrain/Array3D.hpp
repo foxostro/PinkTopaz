@@ -135,7 +135,7 @@ public:
     AABB getBoundingBox() const override { return _box; }
     
     // Gets the number of cells along each axis within the valid region.
-    glm::ivec3 getResolution() const override { return _res; }
+    glm::ivec3 gridResolution() const override { return _res; }
     
     inline iterator begin() { return _cells.begin(); }
     inline const_iterator begin() const { return _cells.begin(); }

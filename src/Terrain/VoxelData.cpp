@@ -38,7 +38,7 @@ void VoxelData::set(const glm::vec3 &p, const Voxel &object)
     // If the chunk does not exist then create it now.
     if (!maybeChunk) {
         AABB chunkBoundingBox = _chunks.cellAtPoint(p);
-        glm::ivec3 numChunks = _chunks.getResolution();
+        glm::ivec3 numChunks = _chunks.gridResolution();
         glm::ivec3 chunkRes = _res / numChunks;
         maybeChunk.emplace(chunkBoundingBox, chunkRes);
     }
@@ -56,7 +56,7 @@ AABB VoxelData::getBoundingBox() const
     return _box;
 }
 
-glm::ivec3 VoxelData::getResolution() const
+glm::ivec3 VoxelData::gridResolution() const
 {
     return _res;
 }

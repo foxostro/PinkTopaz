@@ -56,7 +56,7 @@ public:
     AABB getBoundingBox() const override;
     
     // Gets the number of cells along each axis within the valid region.
-    glm::ivec3 getResolution() const override;
+    glm::ivec3 gridResolution() const override;
     
     const GridView<Voxel> getView(const AABB &region) const;
     GridViewMutable<Voxel> getView(const AABB &region);
