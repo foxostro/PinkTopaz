@@ -20,11 +20,12 @@
 
 #include "Application.hpp"
 
-void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
+void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+                        const std::shared_ptr<TaskDispatcher> &dispatcher)
 {
     std::map<SDL_Keycode, bool> prevKeyStates, keyStates;
     
-    World gameWorld(graphicsDevice);
+    World gameWorld(graphicsDevice, dispatcher);
     
     // Send an event containing the initial window size and scale factor.
     // This will allow the render system to setup projection matrices and such.
@@ -126,8 +127,9 @@ void Application::run()
                                 SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
         
     SDL_SetRelativeMouseMode(SDL_TRUE);
-        
-    inner(createDefaultGraphicsDevice(*_window));
+    
+    inner(createDefaultGraphicsDevice(*_window),
+          std::make_shared<TaskDispatcher>());
 
     SDL_DestroyWindow(_window);
     _window = nullptr;

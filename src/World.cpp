@@ -15,7 +15,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
     
-World::World(const std::shared_ptr<GraphicsDevice> &device)
+World::World(const std::shared_ptr<GraphicsDevice> &device,
+             const std::shared_ptr<TaskDispatcher> &dispatcher)
 {
     systems.add<RenderSystem>(device);
     systems.add<CameraMovementSystem>();
@@ -37,7 +38,7 @@ World::World(const std::shared_ptr<GraphicsDevice> &device)
     // Create an entity to represent the terrain.
     unsigned beginMs = SDL_GetTicks();
     TerrainComponent terrainComponent;
-    terrainComponent.terrain = std::make_shared<Terrain>(device);
+    terrainComponent.terrain = std::make_shared<Terrain>(device, dispatcher);
     entityx::Entity terrainEntity = entities.create();
     terrainEntity.assign<TerrainComponent>(terrainComponent);
     terrainEntity.assign<Transform>();

@@ -13,6 +13,7 @@
 #include "Terrain/MesherMarchingCubes.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 #include "RenderableStaticMesh.hpp"
+#include "TaskDispatcher.hpp"
 #include <mutex>
 
 // This object represents the terrain of the world.
@@ -20,7 +21,8 @@ class Terrain
 {
 public:
     // Constructor.
-    Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice);
+    Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+            const std::shared_ptr<TaskDispatcher> &dispatcher);
     
     // No default constructor.
     Terrain() = delete;
@@ -44,6 +46,7 @@ private:
     static constexpr int MESH_CHUNK_SIZE = 16;
     
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
+    std::shared_ptr<TaskDispatcher> _dispatcher;
     std::unique_ptr<Mesher> _mesher;
     std::unique_ptr<VoxelDataStore> _voxels;
     

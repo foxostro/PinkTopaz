@@ -15,7 +15,7 @@
 template<typename TYPE> class GridAddressable
 {
 public:
-    static constexpr bool EnableVerboseBoundsChecking = false;
+    static constexpr bool EnableVerboseBoundsChecking = true;
     
     virtual ~GridAddressable() = default;
     

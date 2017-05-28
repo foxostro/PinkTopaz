@@ -1,10 +1,13 @@
 //
-//  ThreadPool.hpp
+//  TaskDispatcher.hpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 5/28/17.
 //
 //
+
+#ifndef TaskDispatcher_hpp
+#define TaskDispatcher_hpp
 
 #include <functional>
 #include <mutex>
@@ -13,24 +16,26 @@
 #include <vector>
 #include <thread>
 
-class ThreadPool
+class TaskDispatcher
 {
 public:
-    typedef std::function<void()> Job;
+    static constexpr bool ForceSerialDispatch = true;
     
-    ThreadPool();
-    ~ThreadPool();
+    typedef std::function<void()> Task;
     
-    void enqueue(Job &&job);
+    TaskDispatcher();
+    ~TaskDispatcher();
+    
+    void async(Task &&task);
     
 private:
     void worker();
     
     std::vector<std::thread> _threads;
-    std::mutex _lockJobs;
+    std::mutex _lockTasks;
     std::condition_variable _cv;
-    std::queue<Job> _jobs;
+    std::queue<Task> _tasks;
     std::atomic<bool> _threadShouldExit;
 };
 
-extern ThreadPool g_threadPool;
+#endif /* TaskDispatcher_hpp */

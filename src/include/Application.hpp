@@ -13,7 +13,8 @@
 #include <memory>
 
 #include "Renderer/GraphicsDevice.hpp"
-    
+#include "TaskDispatcher.hpp"
+
 // The central game loop, basically.
 class Application
 {
@@ -25,8 +26,9 @@ public:
     void run();
         
 private:
-    void inner(const std::shared_ptr<GraphicsDevice> &g);
-        
+    void inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+               const std::shared_ptr<TaskDispatcher> &dispatcher);
+    
     SDL_Window *_window;
 };
 

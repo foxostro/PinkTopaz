@@ -11,11 +11,12 @@
 #include "SDL_image.h"
 #include "Exception.hpp"
 #include "Terrain/Terrain.hpp"
-#include "ThreadPool.hpp"
 #include <set>
 
-Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
+Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+                 const std::shared_ptr<TaskDispatcher> &dispatcher)
  : _graphicsDevice(graphicsDevice),
+   _dispatcher(dispatcher),
    _mesher(new MesherMarchingCubes())
 {
     // Load terrain texture array from a single image.
@@ -149,7 +150,7 @@ void Terrain::rebuildMesh(const ChangeLog &changeLog)
     }
     
     for (const std::pair<size_t, AABB> pair : affectedMeshes) {
-        g_threadPool.enqueue([=]{
+        _dispatcher->async([=]{
             const size_t index = pair.first;
             const AABB &meshBox = pair.second;
             
