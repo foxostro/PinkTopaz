@@ -18,8 +18,9 @@ VoxelDataStore::VoxelDataStore(const AABB &box, const glm::ivec3 &resolution)
     }
 }
 
-void VoxelDataStore::readerTransaction(const AABB &region, const std::function<void(const GridAddressable<Voxel> &voxels)> &fn) const
+void VoxelDataStore::readerTransaction(const AABB &region, const std::function<void(const Array3D<Voxel> &voxels)> &fn) const
 {
+    // AFOX_TODO: Can I extract the lock taking stuff to it's own method?
     std::vector<std::shared_ptr<std::shared_mutex>> locks;
     _chunkLocks.forEachCell(region, [&](const AABB &cell){
         std::shared_ptr<std::shared_mutex> lock = _chunkLocks.get(cell.center);
@@ -30,7 +31,8 @@ void VoxelDataStore::readerTransaction(const AABB &region, const std::function<v
         lock->lock_shared();
     }
     
-    fn(_data.getView(region));
+    Array3D<Voxel> aCopy = _data.copy(region);
+    fn(aCopy); // AFOX_TODO: Can this be moved out of the locked region, or is that a data race?
     
     for (auto iter = locks.rbegin(); iter != locks.rend(); ++iter)
     {

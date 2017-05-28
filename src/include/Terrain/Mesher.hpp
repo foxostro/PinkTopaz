@@ -20,7 +20,7 @@ public:
     
     // Returns a triangle mesh for the specified isosurface.
     virtual StaticMesh
-    extract(const GridAddressable<Voxel> &voxels,
+    extract(const Array3D<Voxel> &voxels,
             const AABB &region,
             float isosurface) = 0;
     

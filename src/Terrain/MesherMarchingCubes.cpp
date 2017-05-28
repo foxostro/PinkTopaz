@@ -90,7 +90,7 @@ void MesherMarchingCubes::polygonizeGridCell(StaticMesh &geometry,
     }
 }
 
-StaticMesh MesherMarchingCubes::extract(const GridAddressable<Voxel> &voxels,
+StaticMesh MesherMarchingCubes::extract(const Array3D<Voxel> &voxels,
                                         const AABB &aabb,
                                         float isosurface)
 {
@@ -98,6 +98,8 @@ StaticMesh MesherMarchingCubes::extract(const GridAddressable<Voxel> &voxels,
     
     // Offset to align with the grid cells used by marching cubes.
     const AABB insetAABB = aabb.inset(LLL);
+    
+    // AFOX_TODO: Use direct array access here.
     
     // Marching Cubes isosurface extraction. This is embarrassingly parallel
     // and could potentially benefit from being split across multiple

@@ -21,10 +21,11 @@
 template<typename TYPE> class Array3D : public GridMutable<TYPE>
 {
 public:
-    using GridAddressable<TYPE>::EnableVerboseBoundsChecking;
-    using GridAddressable<TYPE>::inbounds;
-    using GridAddressable<TYPE>::forEachCell;
-    using GridAddressable<TYPE>::cellCoordsAtPoint;
+    using GridMutable<TYPE>::EnableVerboseBoundsChecking;
+    using GridMutable<TYPE>::inbounds;
+    using GridMutable<TYPE>::forEachCell;
+    using GridMutable<TYPE>::cellCoordsAtPoint;
+    using GridMutable<TYPE>::mutableForEachCell;
     
     typedef std::vector<TYPE> container_type;
     typedef typename container_type::size_type index_type;
@@ -74,7 +75,7 @@ public:
     }
     
     // Gets the internal cell index for the specified point in space.
-    index_type indexAtPoint(const glm::vec3 &point) const
+    inline index_type indexAtPoint(const glm::vec3 &point) const
     {
         if (EnableVerboseBoundsChecking && !inbounds(point)) {
             throw Exception("out of bounds");
@@ -106,19 +107,19 @@ public:
     }
     
     // Gets the object for the specified index, produced by `indexAtPoint'.
-    const TYPE& get(index_type index) const
+    inline const TYPE& get(index_type index) const
     {
         return _cells[index];
     }
     
     // Gets the (mutable) object for the specified index, produced by `indexAtPoint'.
-    TYPE& mutableReference(index_type index)
+    inline TYPE& mutableReference(index_type index)
     {
         return _cells[index];
     }
     
     // Sets the object for the specified index, produced by `indexAtPoint'.
-    void set(index_type index, const TYPE &object)
+    inline void set(index_type index, const TYPE &object)
     {
         _cells[index] = object;
     }

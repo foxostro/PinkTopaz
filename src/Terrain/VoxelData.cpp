@@ -76,3 +76,26 @@ GridViewMutable<Voxel> VoxelData::getView(const AABB &region)
     }
     return GridViewMutable<Voxel>(*this, region);
 }
+
+Array3D<Voxel> VoxelData::copy(const AABB &region) const
+{
+    // Get an AABB which covers the cells which intersect `region'.
+    const glm::vec3 halfCellDim = cellDimensions() * 0.5f;
+    const glm::vec3 mins = cellCenterAtPoint(region.mins()) - halfCellDim;
+    const glm::vec3 maxs = cellCenterAtPoint(region.maxs()) + halfCellDim;
+    const glm::vec3 center = (maxs + mins) * 0.5f;
+    const glm::vec3 extent = (maxs - mins) * 0.5f;
+    const AABB adjustedRegion = {center, extent};
+    
+    const glm::ivec3 res = countCellsInRegion(adjustedRegion);
+    
+    Array3D<Voxel> dst(adjustedRegion, res);
+    assert(dst.inbounds(region));
+    
+    // AFOX_TODO: Use direct array access here.
+    dst.mutableForEachCell(adjustedRegion, [&](const AABB &cell){
+        return get(cell.center);
+    });
+    
+    return dst;
+}

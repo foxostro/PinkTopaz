@@ -40,7 +40,7 @@ public:
     
     // Perform a transaction as a "reader" where we have read-only access to the
     // underlying voxel data in the specified region.
-    void readerTransaction(const AABB &region, const std::function<void(const GridAddressable<Voxel> &voxels)> &fn) const;
+    void readerTransaction(const AABB &region, const std::function<void(const Array3D<Voxel> &voxels)> &fn) const;
     
     // Perform a transaction as a "writer" where we have read-write access to
     // the underlying voxel data in the specified region. It is the

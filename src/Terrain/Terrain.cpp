@@ -158,7 +158,7 @@ void Terrain::rebuildMesh(const ChangeLog &changeLog)
             // perform surface extraction.
             const AABB voxelBox = meshBox.inset(-glm::vec3(1, 1, 1));
             
-            _voxels->readerTransaction(voxelBox, [&](const GridAddressable<Voxel> &voxels){
+            _voxels->readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
                 StaticMesh mesh = _mesher->extract(voxels, meshBox, isosurface);
                 
                 std::shared_ptr<Buffer> vertexBuffer = nullptr;

@@ -61,6 +61,9 @@ public:
     const GridView<Voxel> getView(const AABB &region) const;
     GridViewMutable<Voxel> getView(const AABB &region);
     
+    // Returns an array which holds a copy of the contents of the subregion.
+    Array3D<Voxel> copy(const AABB &region) const;
+    
 private:
     static constexpr int CHUNK_SIZE = 32;
     
