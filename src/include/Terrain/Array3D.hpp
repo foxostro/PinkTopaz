@@ -21,7 +21,7 @@
 template<typename TYPE> class Array3D : public GridMutable<TYPE>
 {
 public:
-    using GridAddressable<TYPE>::EnableBoundsChecking;
+    using GridAddressable<TYPE>::EnableVerboseBoundsChecking;
     using GridAddressable<TYPE>::inbounds;
     using GridAddressable<TYPE>::forEachCell;
     using GridAddressable<TYPE>::cellCoordsAtPoint;
@@ -49,7 +49,7 @@ public:
     // Each point in space corresponds to exactly one cell. Get the object.
     const TYPE& get(const glm::vec3 &p) const override
     {
-        if (EnableBoundsChecking && !inbounds(p)) {
+        if (EnableVerboseBoundsChecking && !inbounds(p)) {
             throw Exception("out of bounds");
         }
         return get(indexAtPoint(p));
@@ -58,7 +58,7 @@ public:
     // Each point in space corresponds to exactly one cell. Get the (mutable) object.
     TYPE& mutableReference(const glm::vec3 &p) override
     {
-        if (EnableBoundsChecking && !inbounds(p)) {
+        if (EnableVerboseBoundsChecking && !inbounds(p)) {
             throw Exception("out of bounds");
         }
         return mutableReference(indexAtPoint(p));
@@ -67,7 +67,7 @@ public:
     // Each point in space corresponds to exactly one cell. Set the object.
     void set(const glm::vec3 &p, const TYPE &object) override
     {
-        if (EnableBoundsChecking && !inbounds(p)) {
+        if (EnableVerboseBoundsChecking && !inbounds(p)) {
             throw Exception("out of bounds");
         }
         return set(indexAtPoint(p), object);
@@ -76,7 +76,7 @@ public:
     // Gets the internal cell index for the specified point in space.
     index_type indexAtPoint(const glm::vec3 &point) const
     {
-        if (EnableBoundsChecking && !inbounds(point)) {
+        if (EnableVerboseBoundsChecking && !inbounds(point)) {
             throw Exception("out of bounds");
         }
         
@@ -91,7 +91,7 @@ public:
     // affected cell.
     auto indicesOverRegion(const AABB &region) const
     {
-        if (EnableBoundsChecking && !inbounds(region)) {
+        if (EnableVerboseBoundsChecking && !inbounds(region)) {
             throw Exception("out of bounds");
         }
         

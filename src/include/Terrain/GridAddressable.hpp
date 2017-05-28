@@ -15,7 +15,7 @@
 template<typename TYPE> class GridAddressable
 {
 public:
-    static constexpr bool EnableBoundsChecking = false;
+    static constexpr bool EnableVerboseBoundsChecking = false;
     
     virtual ~GridAddressable() = default;
     
@@ -50,7 +50,7 @@ public:
     // Gets the center point of the cell in which the specified point resides.
     glm::vec3 cellCenterAtPoint(const glm::vec3 &point) const
     {
-        if (EnableBoundsChecking && !inbounds(point)) {
+        if (EnableVerboseBoundsChecking && !inbounds(point)) {
             throw Exception("out of bounds");
         }
         
@@ -65,7 +65,7 @@ public:
     // Gets the bouding box of the cell in which the specified point resides.
     AABB cellAtPoint(const glm::vec3 &point) const
     {
-        if (EnableBoundsChecking && !inbounds(point)) {
+        if (EnableVerboseBoundsChecking && !inbounds(point)) {
             throw Exception("out of bounds");
         }
         
@@ -78,7 +78,7 @@ public:
     // Gets the number of cells along each axis within the specified region.
     glm::ivec3 countCellsInRegion(const AABB &region) const
     {
-        if (EnableBoundsChecking && !inbounds(region)) {
+        if (EnableVerboseBoundsChecking && !inbounds(region)) {
             throw Exception("out of bounds");
         }
         
@@ -114,7 +114,7 @@ public:
     void forEachCell(const AABB &region,
                      std::function<void (const AABB &cell)> fn) const
     {
-        if (EnableBoundsChecking && !inbounds(region)) {
+        if (EnableVerboseBoundsChecking && !inbounds(region)) {
             throw Exception("out of bounds");
         }
         
@@ -135,7 +135,7 @@ public:
     void forPointsInGrid(const AABB &region,
                          std::function<void (const glm::vec3 &point)> fn) const
     {
-        if (EnableBoundsChecking && !inbounds(region)) {
+        if (EnableVerboseBoundsChecking && !inbounds(region)) {
             throw Exception("out of bounds");
         }
         
@@ -156,7 +156,7 @@ public:
 template<typename TYPE> class GridMutable : public GridAddressable<TYPE>
 {
 public:
-    using GridAddressable<TYPE>::EnableBoundsChecking;
+    using GridAddressable<TYPE>::EnableVerboseBoundsChecking;
     using GridAddressable<TYPE>::inbounds;
     using GridAddressable<TYPE>::cellDimensions;
     using GridAddressable<TYPE>::cellAtPoint;
@@ -176,7 +176,7 @@ public:
     void mutableForEachCell(const AABB &region,
                             std::function<TYPE (const AABB &cell)> fn)
     {
-        if (EnableBoundsChecking && !inbounds(region)) {
+        if (EnableVerboseBoundsChecking && !inbounds(region)) {
             throw Exception("out of bounds");
         }
         
