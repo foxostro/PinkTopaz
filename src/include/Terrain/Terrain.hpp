@@ -45,6 +45,13 @@ public:
 private:
     static constexpr int MESH_CHUNK_SIZE = 16;
     
+    void rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
+                                  const size_t index,
+                                  const AABB &meshBox);
+    
+    void rebuildMeshForChunkOuter(const size_t index,
+                                  const AABB &meshBox);
+    
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<TaskDispatcher> _dispatcher;
     std::unique_ptr<Mesher> _mesher;

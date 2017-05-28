@@ -132,14 +132,50 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder) const
     }
 }
 
-void Terrain::rebuildMesh(const ChangeLog &changeLog)
+void Terrain::rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
+                                       const size_t index,
+                                       const AABB &meshBox)
 {
-    std::lock_guard<std::mutex> lock(_lockMeshes);
-    
     // The voxel file uses a binary SOLID/EMPTY flag for voxels.
     // So, we get values that are either 0.0 or 1.0.
     constexpr float isosurface = 0.5f;
     
+    StaticMesh mesh = _mesher->extract(voxels, meshBox, isosurface);
+    
+    std::shared_ptr<Buffer> vertexBuffer = nullptr;
+    
+    if (mesh.getVertexCount() > 0) {
+        // AFOX_TODO: We may need to create graphics resources on the main thread, e.g., when using OpenGL.
+        auto vertexBufferData = mesh.getBufferData();
+        vertexBuffer = _graphicsDevice->makeBuffer(vertexBufferData,
+                                                   StaticDraw,
+                                                   ArrayBuffer);
+        vertexBuffer->addDebugMarker("Terrain Vertices", 0, vertexBufferData.size());
+    }
+    
+    RenderableStaticMesh renderableStaticMesh = _defaultMesh;
+    renderableStaticMesh.vertexCount = mesh.getVertexCount();
+    renderableStaticMesh.buffer = vertexBuffer;
+    
+    {
+        std::lock_guard<std::mutex> lock(_lockMeshes);
+        _meshes->set(index, renderableStaticMesh);
+    }
+}
+
+void Terrain::rebuildMeshForChunkOuter(const size_t index, const AABB &meshBox)
+{
+    // We need a border of voxels around the region of the mesh in order to
+    // perform surface extraction.
+    const AABB voxelBox = meshBox.inset(-glm::vec3(1, 1, 1));
+    
+    _voxels->readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
+        rebuildMeshForChunkInner(voxels, index, meshBox);
+    });
+}
+
+void Terrain::rebuildMesh(const ChangeLog &changeLog)
+{
     // Get the set of meshes (by index) which are affected by the changes.
     // Only these meshes will need to be rebuilt.
     std::set<std::pair<size_t, AABB>> affectedMeshes;
@@ -151,31 +187,7 @@ void Terrain::rebuildMesh(const ChangeLog &changeLog)
     
     for (const std::pair<size_t, AABB> pair : affectedMeshes) {
         _dispatcher->async([=]{
-            const size_t index = pair.first;
-            const AABB &meshBox = pair.second;
-            
-            // We need a border of voxels around the region of the mesh in order to
-            // perform surface extraction.
-            const AABB voxelBox = meshBox.inset(-glm::vec3(1, 1, 1));
-            
-            _voxels->readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
-                StaticMesh mesh = _mesher->extract(voxels, meshBox, isosurface);
-                
-                std::shared_ptr<Buffer> vertexBuffer = nullptr;
-                
-                if (mesh.getVertexCount() > 0) {
-                    auto vertexBufferData = mesh.getBufferData();
-                    vertexBuffer = _graphicsDevice->makeBuffer(vertexBufferData,
-                                                               StaticDraw,
-                                                               ArrayBuffer);
-                    vertexBuffer->addDebugMarker("Terrain Vertices", 0, vertexBufferData.size());
-                }
-                
-                RenderableStaticMesh renderableStaticMesh = _defaultMesh;
-                renderableStaticMesh.vertexCount = mesh.getVertexCount();
-                renderableStaticMesh.buffer = vertexBuffer;
-                _meshes->set(index, renderableStaticMesh);
-            });
+            rebuildMeshForChunkOuter(pair.first, pair.second);
         });
     }
 }
