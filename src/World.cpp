@@ -12,20 +12,23 @@
 #include "RenderSystem.hpp"
 #include "CameraMovementSystem.hpp"
 #include "TerrainComponent.hpp"
+#include "Profiler.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
     
 World::World(const std::shared_ptr<GraphicsDevice> &device,
              const std::shared_ptr<TaskDispatcher> &dispatcher)
 {
+    PROFILER("World::World");
+    
     systems.add<RenderSystem>(device);
     systems.add<CameraMovementSystem>();
     systems.configure();
     
     // Setup the position and orientation of the camera.
     glm::mat4 m = glm::rotate(glm::translate(glm::mat4(), -glm::vec3(80.1, 20.1, 140.1)),
-                                glm::pi<float>() * 0.20f,
-                                glm::vec3(0, 1, 0));
+                              glm::pi<float>() * 0.20f,
+                              glm::vec3(0, 1, 0));
     
     // Create an entity to represent the camera.
     // Render systems will know by the ActiveCamera that this is the camera.
@@ -36,15 +39,11 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
     camera.assign<ActiveCamera>();
     
     // Create an entity to represent the terrain.
-    unsigned beginMs = SDL_GetTicks();
     TerrainComponent terrainComponent;
     terrainComponent.terrain = std::make_shared<Terrain>(device, dispatcher);
     entityx::Entity terrainEntity = entities.create();
     terrainEntity.assign<TerrainComponent>(terrainComponent);
     terrainEntity.assign<Transform>();
-    unsigned endMs = SDL_GetTicks();
-    unsigned elapsedMs = endMs - beginMs;
-    SDL_Log("Terrain created in %d ms", elapsedMs);
 }
 
 void World::update(entityx::TimeDelta dt)

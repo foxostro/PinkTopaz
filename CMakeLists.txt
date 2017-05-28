@@ -107,6 +107,7 @@ set(SOURCE_FILES_MISC
     "src/include/AABB.hpp"
     "src/include/math.hpp"
     "src/TaskDispatcher.cpp" "src/include/TaskDispatcher.hpp"
+    "src/Profiler.cpp" "src/include/Profiler.hpp"
     )
 
 if(APPLE)

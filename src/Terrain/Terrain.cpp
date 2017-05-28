@@ -11,6 +11,7 @@
 #include "SDL_image.h"
 #include "Exception.hpp"
 #include "Terrain/Terrain.hpp"
+#include "Profiler.hpp"
 #include <set>
 
 Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
@@ -19,6 +20,8 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
    _dispatcher(dispatcher),
    _mesher(new MesherMarchingCubes())
 {
+    PROFILER("Terrain::Terrain");
+    
     // Load terrain texture array from a single image.
     // TODO: create a TextureArrayLoader class to encapsulate tex loading.
     SDL_Surface *surface = IMG_Load("terrain.png");
@@ -68,6 +71,8 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
         sampler
     };
     
+    profiler.signpost("Finished creating graphics device.");
+    
     // Create a voxel data store. We want to fill this with voxel values we read
     // from file. Before we can do that, we need to initialize the data store to
     // the dimensions of the voxel field found in the file.
@@ -76,6 +81,8 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     glm::ivec3 res;
     VoxelDataLoader voxelDataLoader;
     voxelDataLoader.retrieveDimensions(bytes, box, res);
+    
+    profiler.signpost("Finished loading voxels from file.");
     
     const glm::vec3 chunkSize(MESH_CHUNK_SIZE, MESH_CHUNK_SIZE, MESH_CHUNK_SIZE);
     const AABB boxWithBorder = box.inset(-chunkSize);
@@ -91,9 +98,12 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
         rebuildMesh(changeLog);
     });
     
+    profiler.signpost("Ready to load voxels into VoxelDataStore.");
+    
     // Finally, actually load the voxel values from file.
     // For now, we load all voxels in one step.
     _voxels->writerTransaction(boxWithBorder, [&](GridMutable<Voxel> &voxels){
+        PROFILER("Set Voxel Values");
         assert(voxels.cellDimensions() == glm::vec3(1.0, 1.0, 1.0));
         
         voxels.mutableForEachCell(boxWithBorder, [&](const AABB &cell){
@@ -176,6 +186,8 @@ void Terrain::rebuildMeshForChunkOuter(const size_t index, const AABB &meshBox)
 
 void Terrain::rebuildMesh(const ChangeLog &changeLog)
 {
+    PROFILER("Terrain::rebuildMesh");
+    
     // Get the set of meshes (by index) which are affected by the changes.
     // Only these meshes will need to be rebuilt.
     std::set<std::pair<size_t, AABB>> affectedMeshes;

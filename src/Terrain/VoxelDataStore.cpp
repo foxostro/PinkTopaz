@@ -7,12 +7,14 @@
 //
 
 #include "Terrain/VoxelDataStore.hpp"
+#include "Profiler.hpp"
 #include <mutex> // for std::unique_lock
 
 VoxelDataStore::VoxelDataStore(const AABB &box, const glm::ivec3 &resolution)
  : _data(box, resolution),
    _chunkLocks(box, _data.gridResolution())
 {
+    PROFILER("VoxelDataStore::VoxelDataStore");
     for (auto &lock : _chunkLocks) {
         lock = std::make_shared<std::shared_mutex>();
     }
