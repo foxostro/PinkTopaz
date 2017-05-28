@@ -20,7 +20,7 @@ public:
     GridView(const GridAddressable<TYPE> &backing, const AABB &subregion)
      : _backing(backing),
        _subregion(subregion),
-       _res(backing.getCellsInRegion(subregion))
+       _res(backing.countCellsInRegion(subregion))
     {}
     
     const TYPE& get(const glm::vec3 &p) const override
@@ -61,7 +61,7 @@ public:
     GridViewMutable(GridMutable<TYPE> &backing, const AABB &subregion)
      : _backing(backing),
        _subregion(subregion),
-       _res(backing.getCellsInRegion(subregion))
+       _res(backing.countCellsInRegion(subregion))
     {}
     
     const TYPE& get(const glm::vec3 &p) const override

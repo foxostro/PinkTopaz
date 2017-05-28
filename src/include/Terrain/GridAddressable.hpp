@@ -76,7 +76,7 @@ public:
     }
     
     // Gets the number of cells along each axis within the specified region.
-    glm::ivec3 getCellsInRegion(const AABB &region) const
+    glm::ivec3 countCellsInRegion(const AABB &region) const
     {
         if (EnableBoundsChecking && !inbounds(region)) {
             throw Exception("out of bounds");
