@@ -63,7 +63,7 @@ ShaderOpenGL::ShaderOpenGL(const VertexFormat &vertexFormat,
     };
     
     GLuint program = glCreateProgram();
-    this->_program = program;
+    _program = program;
     
     for(auto p : shaderType)
     {

@@ -156,6 +156,11 @@ public:
 template<typename TYPE> class GridMutable : public GridAddressable<TYPE>
 {
 public:
+    using GridAddressable<TYPE>::EnableBoundsChecking;
+    using GridAddressable<TYPE>::inbounds;
+    using GridAddressable<TYPE>::getCellDimensions;
+    using GridAddressable<TYPE>::cellAtPoint;
+    
     // Get the (mutable) object corresponding to the specified point in space.
     // Throws an exception if the point is not within this grid.
     virtual TYPE& mutableReference(const glm::vec3 &p) = 0;
@@ -171,18 +176,18 @@ public:
     void mutableForEachCell(const AABB &region,
                             std::function<TYPE (const AABB &cell)> fn)
     {
-        if (GridAddressable<TYPE>::EnableBoundsChecking && !this->inbounds(region)) {
+        if (EnableBoundsChecking && !inbounds(region)) {
             throw Exception("out of bounds");
         }
         
-        const auto dim = this->getCellDimensions();
+        const auto dim = getCellDimensions();
         const auto min = region.mins();
         const auto max = region.maxs();
         
         for (glm::vec3 cursor = min; cursor.z < max.z; cursor.z += dim.z) {
             for (cursor.x = min.x; cursor.x < max.x; cursor.x += dim.x) {
                 for (cursor.y = min.y; cursor.y < max.y; cursor.y += dim.y) {
-                    const auto cell = this->cellAtPoint(cursor);
+                    const auto cell = cellAtPoint(cursor);
                     const TYPE value = fn(cell);
                     set(cell.center, value);
                 }

@@ -15,6 +15,8 @@
 template<typename TYPE> class GridView : public GridAddressable<TYPE>
 {
 public:
+    using GridAddressable<TYPE>::inbounds;
+    
     GridView(const GridAddressable<TYPE> &backing, const AABB &subregion)
      : _backing(backing),
        _subregion(subregion),
@@ -23,7 +25,7 @@ public:
     
     const TYPE& get(const glm::vec3 &p) const override
     {
-        if (!this->inbounds(p)) {
+        if (!inbounds(p)) {
             throw Exception("out of bounds");
         }
         return _backing.get(p);
@@ -54,6 +56,8 @@ private:
 template<typename TYPE> class GridViewMutable : public GridMutable<TYPE>
 {
 public:
+    using GridAddressable<TYPE>::inbounds;
+    
     GridViewMutable(GridMutable<TYPE> &backing, const AABB &subregion)
      : _backing(backing),
        _subregion(subregion),
@@ -62,7 +66,7 @@ public:
     
     const TYPE& get(const glm::vec3 &p) const override
     {
-        if (!this->inbounds(p)) {
+        if (!inbounds(p)) {
             throw Exception("out of bounds");
         }
         return _backing.get(p);
@@ -70,7 +74,7 @@ public:
     
     TYPE& mutableReference(const glm::vec3 &p) override
     {
-        if (!this->inbounds(p)) {
+        if (!inbounds(p)) {
             throw Exception("out of bounds");
         }
         return _backing.mutableReference(p);
@@ -78,7 +82,7 @@ public:
     
     void set(const glm::vec3 &p, const TYPE &object) override
     {
-        if (!this->inbounds(p)) {
+        if (!inbounds(p)) {
             throw Exception("out of bounds");
         }
         return _backing.set(p, object);
