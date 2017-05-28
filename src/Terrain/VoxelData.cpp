@@ -51,7 +51,7 @@ glm::vec3 VoxelData::getCellDimensions() const
     return _cellDim;
 }
 
-AABB VoxelData::getBoundingBox() const
+AABB VoxelData::boundingBox() const
 {
     return _box;
 }

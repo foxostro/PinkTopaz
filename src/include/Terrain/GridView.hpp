@@ -36,7 +36,7 @@ public:
         return _backing.getCellDimensions();
     }
     
-    AABB getBoundingBox() const override
+    AABB boundingBox() const override
     {
         return _subregion;
     }
@@ -93,7 +93,7 @@ public:
         return _backing.getCellDimensions();
     }
     
-    AABB getBoundingBox() const override
+    AABB boundingBox() const override
     {
         return _subregion;
     }

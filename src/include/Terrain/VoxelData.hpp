@@ -53,7 +53,7 @@ public:
     glm::vec3 getCellDimensions() const override;
     
     // Gets the region for which the grid is defined.
-    AABB getBoundingBox() const override;
+    AABB boundingBox() const override;
     
     // Gets the number of cells along each axis within the valid region.
     glm::ivec3 gridResolution() const override;

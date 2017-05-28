@@ -30,7 +30,7 @@ public:
     
     // Gets the region for which the grid is defined.
     // Accesses to points outside this box is not permitted.
-    virtual AABB getBoundingBox() const = 0;
+    virtual AABB boundingBox() const = 0;
     
     // Gets the number of cells along each axis within the valid region.
     virtual glm::ivec3 gridResolution() const = 0;
@@ -39,7 +39,7 @@ public:
     // These integer coordinates can be used to locate the cell within the grid.
     glm::ivec3 cellCoordsAtPoint(const glm::vec3 &point) const
     {
-        const AABB box = getBoundingBox();
+        const AABB box = boundingBox();
         const glm::vec3 mins = box.mins();
         const glm::vec3 p = (point - mins) / (box.extent*2.0f);
         const glm::ivec3 res = gridResolution();
@@ -55,7 +55,7 @@ public:
         }
         
         const glm::vec3 cellDim = getCellDimensions();
-        const AABB box = getBoundingBox();
+        const AABB box = boundingBox();
         const glm::ivec3 a = cellCoordsAtPoint(point);
         const glm::vec3 q(a.x * cellDim.x, a.y * cellDim.y, a.z * cellDim.z);
         const glm::vec3 p = q + box.mins() + (cellDim*0.5f);
@@ -91,7 +91,7 @@ public:
     // Returns true if the point is within the valid space of the grid.
     bool inbounds(const glm::vec3 &point) const
     {
-        const AABB box = getBoundingBox();
+        const AABB box = boundingBox();
         const glm::vec3 mins = box.mins();
         const glm::vec3 maxs = box.maxs();
         return point.x >= mins.x && point.y >= mins.y && point.z >= mins.z &&
@@ -105,7 +105,7 @@ public:
             return false;
         } else {
             const glm::vec3 point = region.maxs();
-            const glm::vec3 maxs = getBoundingBox().maxs();
+            const glm::vec3 maxs = boundingBox().maxs();
             return point.x <= maxs.x && point.y <= maxs.y && point.z <= maxs.z;
         }
     }

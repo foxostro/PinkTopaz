@@ -132,7 +132,7 @@ public:
     }
     
     // Gets the region for which the grid is defined.
-    AABB getBoundingBox() const override { return _box; }
+    AABB boundingBox() const override { return _box; }
     
     // Gets the number of cells along each axis within the valid region.
     glm::ivec3 gridResolution() const override { return _res; }
