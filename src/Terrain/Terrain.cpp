@@ -92,7 +92,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
     // Finally, actually load the voxel values from file.
     // For now, we load all voxels in one step.
     _voxels->writerTransaction(boxWithBorder, [&](GridMutable<Voxel> &voxels){
-        assert(voxels.getCellDimensions() == glm::vec3(1.0, 1.0, 1.0));
+        assert(voxels.cellDimensions() == glm::vec3(1.0, 1.0, 1.0));
         
         voxels.mutableForEachCell(boxWithBorder, [&](const AABB &cell){
             return Voxel();

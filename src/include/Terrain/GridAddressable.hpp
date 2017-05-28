@@ -26,7 +26,7 @@ public:
     
     // Gets the dimensions of a single cell in the grid.
     // Note that cells in the grid are always the same size.
-    virtual glm::vec3 getCellDimensions() const = 0;
+    virtual glm::vec3 cellDimensions() const = 0;
     
     // Gets the region for which the grid is defined.
     // Accesses to points outside this box is not permitted.
@@ -54,7 +54,7 @@ public:
             throw Exception("out of bounds");
         }
         
-        const glm::vec3 cellDim = getCellDimensions();
+        const glm::vec3 cellDim = cellDimensions();
         const AABB box = boundingBox();
         const glm::ivec3 a = cellCoordsAtPoint(point);
         const glm::vec3 q(a.x * cellDim.x, a.y * cellDim.y, a.z * cellDim.z);
@@ -70,7 +70,7 @@ public:
         }
         
         const glm::vec3 cellCenter = cellCenterAtPoint(point);
-        const glm::vec3 cellExtent = getCellDimensions() * 0.5f;
+        const glm::vec3 cellExtent = cellDimensions() * 0.5f;
         const AABB cell = {cellCenter, cellExtent};
         return cell;
     }
@@ -118,7 +118,7 @@ public:
             throw Exception("out of bounds");
         }
         
-        const auto dim = getCellDimensions();
+        const auto dim = cellDimensions();
         const auto min = region.mins();
         const auto max = region.maxs();
         
@@ -139,7 +139,7 @@ public:
             throw Exception("out of bounds");
         }
         
-        const auto dim = getCellDimensions();
+        const auto dim = cellDimensions();
         const auto min = region.mins();
         const auto max = region.maxs();
         
@@ -158,7 +158,7 @@ template<typename TYPE> class GridMutable : public GridAddressable<TYPE>
 public:
     using GridAddressable<TYPE>::EnableBoundsChecking;
     using GridAddressable<TYPE>::inbounds;
-    using GridAddressable<TYPE>::getCellDimensions;
+    using GridAddressable<TYPE>::cellDimensions;
     using GridAddressable<TYPE>::cellAtPoint;
     
     // Get the (mutable) object corresponding to the specified point in space.
@@ -180,7 +180,7 @@ public:
             throw Exception("out of bounds");
         }
         
-        const auto dim = getCellDimensions();
+        const auto dim = cellDimensions();
         const auto min = region.mins();
         const auto max = region.maxs();
         

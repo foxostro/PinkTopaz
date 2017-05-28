@@ -124,7 +124,7 @@ public:
     }
     
     // Gets the dimensions of a single cell. (All cells are the same size.)
-    glm::vec3 getCellDimensions() const override
+    glm::vec3 cellDimensions() const override
     {
         return glm::vec3(_box.extent.x * 2.0f / _res.x,
                          _box.extent.y * 2.0f / _res.y,

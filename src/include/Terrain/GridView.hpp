@@ -31,9 +31,9 @@ public:
         return _backing.get(p);
     }
     
-    glm::vec3 getCellDimensions() const override
+    glm::vec3 cellDimensions() const override
     {
-        return _backing.getCellDimensions();
+        return _backing.cellDimensions();
     }
     
     AABB boundingBox() const override
@@ -88,9 +88,9 @@ public:
         return _backing.set(p, object);
     }
     
-    glm::vec3 getCellDimensions() const override
+    glm::vec3 cellDimensions() const override
     {
-        return _backing.getCellDimensions();
+        return _backing.cellDimensions();
     }
     
     AABB boundingBox() const override

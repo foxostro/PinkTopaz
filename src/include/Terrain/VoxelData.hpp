@@ -50,7 +50,7 @@ public:
     void set(const glm::vec3 &p, const Voxel &object) override;
     
     // Gets the dimensions of a single cell. (All cells are the same size.)
-    glm::vec3 getCellDimensions() const override;
+    glm::vec3 cellDimensions() const override;
     
     // Gets the region for which the grid is defined.
     AABB boundingBox() const override;

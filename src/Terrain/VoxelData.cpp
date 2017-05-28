@@ -46,7 +46,7 @@ void VoxelData::set(const glm::vec3 &p, const Voxel &object)
     maybeChunk->set(p, object);
 }
 
-glm::vec3 VoxelData::getCellDimensions() const
+glm::vec3 VoxelData::cellDimensions() const
 {
     return _cellDim;
 }
