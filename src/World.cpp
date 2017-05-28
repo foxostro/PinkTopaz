@@ -35,11 +35,15 @@ World::World(const std::shared_ptr<GraphicsDevice> &device)
     camera.assign<ActiveCamera>();
     
     // Create an entity to represent the terrain.
+    unsigned beginMs = SDL_GetTicks();
     TerrainComponent terrainComponent;
     terrainComponent.terrain = std::make_shared<Terrain>(device);
     entityx::Entity terrainEntity = entities.create();
     terrainEntity.assign<TerrainComponent>(terrainComponent);
     terrainEntity.assign<Transform>();
+    unsigned endMs = SDL_GetTicks();
+    unsigned elapsedMs = endMs - beginMs;
+    SDL_Log("Terrain created in %d ms", elapsedMs);
 }
 
 void World::update(entityx::TimeDelta dt)
