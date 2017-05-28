@@ -15,9 +15,6 @@ VoxelDataStore::VoxelDataStore(const AABB &box, const glm::ivec3 &resolution)
    _chunkLocks(box, _data.gridResolution())
 {
     PROFILER("VoxelDataStore::VoxelDataStore");
-    for (auto &lock : _chunkLocks) {
-        lock = std::make_shared<std::shared_mutex>();
-    }
 }
 
 void VoxelDataStore::underLock(const AABB &region,
@@ -27,8 +24,12 @@ void VoxelDataStore::underLock(const AABB &region,
     std::vector<std::shared_ptr<std::shared_mutex>> locks;
     
     _chunkLocks.forEachCell(region, [&](const AABB &cell){
-        std::shared_ptr<std::shared_mutex> lock = _chunkLocks.get(cell.center);
-        locks.push_back(lock);
+        std::lock_guard<std::mutex> lock(_lockChunkLocks);
+        std::shared_ptr<std::shared_mutex> &cellLock = _chunkLocks.mutableReference(cell.center);
+        if (!cellLock) {
+            cellLock = std::make_shared<std::shared_mutex>();
+        }
+        locks.push_back(cellLock);
     });
     
     for (const std::shared_ptr<std::shared_mutex> &lock : locks) {
@@ -43,11 +44,11 @@ void VoxelDataStore::underLock(const AABB &region,
     
     for (auto iter = locks.rbegin(); iter != locks.rend(); ++iter)
     {
-        const std::shared_ptr<std::shared_mutex> &lock = *iter;
+        const std::shared_ptr<std::shared_mutex> &cellLock = *iter;
         if (shared) {
-            lock->unlock_shared();
+            cellLock->unlock_shared();
         } else {
-            lock->unlock();
+            cellLock->unlock();
         }
     }
 }

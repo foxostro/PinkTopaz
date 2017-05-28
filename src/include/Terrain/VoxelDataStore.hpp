@@ -60,6 +60,7 @@ private:
     
     ChangeLog _changeLog;
     VoxelData _data;
+    mutable std::mutex _lockChunkLocks;
     mutable Array3D<std::shared_ptr<std::shared_mutex>> _chunkLocks;
 };
 

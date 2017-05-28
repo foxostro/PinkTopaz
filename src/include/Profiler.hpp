@@ -27,7 +27,7 @@ private:
 #if 0
 #define PROFILER(label)
 #else
-#define PROFILER(label) Profiler profiler(label);
+#define PROFILER(label) Profiler profiler(label)
 #endif
 
 #endif /* Profiler_hpp */
