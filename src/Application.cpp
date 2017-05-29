@@ -50,6 +50,7 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                 case SDL_QUIT:
                     SDL_Log("Received SDL_QUIT.");
                     quit = true;
+                    dispatcher->shutdown();
                     break;
                         
                 case SDL_WINDOWEVENT:

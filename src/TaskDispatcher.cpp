@@ -20,10 +20,29 @@ TaskDispatcher::TaskDispatcher() : _threadShouldExit(false)
 
 TaskDispatcher::~TaskDispatcher()
 {
+    shutdown();
+}
+
+void TaskDispatcher::shutdown()
+{
     _threadShouldExit = true;
-    _cv.notify_all();
+    _cvarTaskPosted.notify_all();
     for (std::thread &thread : _threads) {
         thread.join();
+    }
+    _threads.clear();
+}
+
+void TaskDispatcher::async(Task &&task)
+{
+    if (ForceSerialDispatch) {
+        task();
+    } else {
+        {
+            std::unique_lock<std::mutex> lock(_lockTaskPosted);
+            _tasks.push(task);
+        }
+        _cvarTaskPosted.notify_one();
     }
 }
 
@@ -33,8 +52,8 @@ void TaskDispatcher::worker()
         Task task;
         
         {
-            std::unique_lock<std::mutex> lock(_lockTasks);
-            _cv.wait(lock, [this]{
+            std::unique_lock<std::mutex> lock(_lockTaskPosted);
+            _cvarTaskPosted.wait(lock, [this]{
                 return _threadShouldExit || !_tasks.empty();
             });
             
@@ -51,18 +70,6 @@ void TaskDispatcher::worker()
         }
         
         task();
-    }
-}
-
-void TaskDispatcher::async(Task &&task)
-{
-    if (ForceSerialDispatch) {
-        task();
-    } else {
-        {
-            std::unique_lock<std::mutex> lock(_lockTasks);
-            _tasks.push(task);
-        }
-        _cv.notify_one();
+        _cvarTaskCompleted.notify_one();
     }
 }

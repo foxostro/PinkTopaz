@@ -19,23 +19,29 @@
 class TaskDispatcher
 {
 public:
-    static constexpr bool ForceSerialDispatch = true;
+    static constexpr bool ForceSerialDispatch = false;
     
     typedef std::function<void()> Task;
     
     TaskDispatcher();
     ~TaskDispatcher();
     
+    // Finish all scheduled tasks and exit all threads.
+    void shutdown();
+    
+    // Schedule a task to be run asynchronously on another thread.
     void async(Task &&task);
     
 private:
     void worker();
     
     std::vector<std::thread> _threads;
-    std::mutex _lockTasks;
-    std::condition_variable _cv;
+    std::mutex _lockTaskPosted;
+    std::condition_variable _cvarTaskPosted;
+    std::mutex _lockTaskCompleted;
+    std::condition_variable _cvarTaskCompleted;
     std::queue<Task> _tasks;
-    std::atomic<bool> _threadShouldExit;
+    bool _threadShouldExit;
 };
 
 #endif /* TaskDispatcher_hpp */

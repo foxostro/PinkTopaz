@@ -114,6 +114,12 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     });
 }
 
+Terrain::~Terrain()
+{
+    std::lock_guard<std::mutex> lock(_lockMeshes);
+    _dispatcher->shutdown();
+}
+
 void Terrain::setTerrainUniforms(const TerrainUniforms &uniforms)
 {
     std::lock_guard<std::mutex> lock(_lockMeshes);

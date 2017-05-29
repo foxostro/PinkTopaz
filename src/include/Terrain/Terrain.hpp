@@ -33,8 +33,8 @@ public:
     // Move constructor is just the default.
     Terrain(Terrain &&terrain) = default;
     
-    // Destructor is just the default.
-    ~Terrain() = default;
+    // Destructor.
+    ~Terrain();
     
     // Pass a modelview and projection matrix down for use with the terrain.
     void setTerrainUniforms(const TerrainUniforms &uniforms);
