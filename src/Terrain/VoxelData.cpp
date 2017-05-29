@@ -64,7 +64,7 @@ glm::ivec3 VoxelData::gridResolution() const
 const GridView<Voxel> VoxelData::getView(const AABB &region) const
 {
     if (!inbounds(region)) {
-        throw Exception("out of bounds");
+        throw OutOfBoundsException();
     }
     return GridView<Voxel>(*this, region);
 }
@@ -72,7 +72,7 @@ const GridView<Voxel> VoxelData::getView(const AABB &region) const
 GridViewMutable<Voxel> VoxelData::getView(const AABB &region)
 {
     if (!inbounds(region)) {
-        throw Exception("out of bounds");
+        throw OutOfBoundsException();
     }
     return GridViewMutable<Voxel>(*this, region);
 }

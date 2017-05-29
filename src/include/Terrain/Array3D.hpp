@@ -99,7 +99,7 @@ public:
     const TYPE& get(const glm::vec3 &p) const override
     {
         if (EnableVerboseBoundsChecking && !inbounds(p)) {
-            throw Exception("out of bounds");
+            throw OutOfBoundsException();
         }
         return get(indexAtPoint(p));
     }
@@ -108,7 +108,7 @@ public:
     TYPE& mutableReference(const glm::vec3 &p) override
     {
         if (EnableVerboseBoundsChecking && !inbounds(p)) {
-            throw Exception("out of bounds");
+            throw OutOfBoundsException();
         }
         return mutableReference(indexAtPoint(p));
     }
@@ -117,7 +117,7 @@ public:
     void set(const glm::vec3 &p, const TYPE &object) override
     {
         if (EnableVerboseBoundsChecking && !inbounds(p)) {
-            throw Exception("out of bounds");
+            throw OutOfBoundsException();
         }
         return set(indexAtPoint(p), object);
     }
@@ -126,7 +126,7 @@ public:
     inline index_type indexAtPoint(const glm::vec3 &point) const
     {
         if (EnableVerboseBoundsChecking && !inbounds(point)) {
-            throw Exception("out of bounds");
+            throw OutOfBoundsException();
         }
         
         const glm::ivec3 a = cellCoordsAtPoint(point);
@@ -141,7 +141,7 @@ public:
     auto indicesOverRegion(const AABB &region) const
     {
         if (EnableVerboseBoundsChecking && !inbounds(region)) {
-            throw Exception("out of bounds");
+            throw OutOfBoundsException();
         }
         
         std::set<std::pair<index_type, AABB>> indices;

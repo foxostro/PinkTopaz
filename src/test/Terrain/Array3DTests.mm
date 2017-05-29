@@ -59,7 +59,7 @@ using glm::ivec3;
     try {
         myArray.cellCenterAtPoint(vec3(-10.0f, 0.0f, 0.0f));
         XCTFail("We expected an exception before reaching this line.");
-    } catch(const Exception &e) {
+    } catch(const OutOfBoundsException &e) {
         // Swallow the exception without failing the test.
     }
     
@@ -69,7 +69,7 @@ using glm::ivec3;
     try {
         myArray.cellCenterAtPoint(vec3(4.0f, 4.0f, 4.0f));
         XCTFail("We expected an exception before reaching this line.");
-    } catch(const Exception &e) {
+    } catch(const OutOfBoundsException &e) {
         // Swallow the exception without failing the test.
     }
 }

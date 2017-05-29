@@ -10,6 +10,15 @@
 #define GridAddressable_hpp
 
 #include <glm/vec3.hpp>
+#include "Exception.hpp"
+
+// Exception thrown when attempting to access the grid at a point that is not in
+// the valid space of the grid.
+class OutOfBoundsException : public Exception
+{
+public:
+    OutOfBoundsException() : Exception("out of bounds") {}
+};
 
 // A regular grid in space where each cell is associated with some object of the templated type.
 template<typename TYPE> class GridAddressable
@@ -59,7 +68,7 @@ public:
     glm::vec3 cellCenterAtPoint(const glm::vec3 &point) const
     {
         if (EnableVerboseBoundsChecking && !inbounds(point)) {
-            throw Exception("out of bounds");
+            throw OutOfBoundsException();
         }
         
         const glm::vec3 cellDim = cellDimensions();
@@ -70,11 +79,11 @@ public:
         return p;
     }
     
-    // Gets the bouding box of the cell in which the specified point resides.
+    // Gets the bounding box of the cell in which the specified point resides.
     AABB cellAtPoint(const glm::vec3 &point) const
     {
         if (EnableVerboseBoundsChecking && !inbounds(point)) {
-            throw Exception("out of bounds");
+            throw OutOfBoundsException();
         }
         
         const glm::vec3 cellCenter = cellCenterAtPoint(point);
@@ -87,7 +96,7 @@ public:
     glm::ivec3 countCellsInRegion(const AABB &region) const
     {
         if (EnableVerboseBoundsChecking && !inbounds(region)) {
-            throw Exception("out of bounds");
+            throw OutOfBoundsException();
         }
         
         const glm::ivec3 mins = cellCoordsAtPoint(region.mins());
@@ -123,7 +132,7 @@ public:
                      std::function<void (const AABB &cell)> fn) const
     {
         if (EnableVerboseBoundsChecking && !inbounds(region)) {
-            throw Exception("out of bounds");
+            throw OutOfBoundsException();
         }
         
         const auto dim = cellDimensions();
@@ -144,7 +153,7 @@ public:
                          std::function<void (const glm::vec3 &point)> fn) const
     {
         if (EnableVerboseBoundsChecking && !inbounds(region)) {
-            throw Exception("out of bounds");
+            throw OutOfBoundsException();
         }
         
         const auto dim = cellDimensions();
@@ -185,7 +194,7 @@ public:
                             std::function<TYPE (const AABB &cell)> fn)
     {
         if (EnableVerboseBoundsChecking && !inbounds(region)) {
-            throw Exception("out of bounds");
+            throw OutOfBoundsException();
         }
         
         const auto dim = cellDimensions();
