@@ -13,9 +13,7 @@
 VoxelDataStore::VoxelDataStore(const AABB &box, const glm::ivec3 &resolution)
  : _data(box, resolution),
    _chunkLocks(box, _data.gridResolution())
-{
-    PROFILER("VoxelDataStore::VoxelDataStore");
-}
+{}
 
 void VoxelDataStore::underLock(const AABB &region,
                                bool shared,

@@ -182,6 +182,8 @@ void Terrain::rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
 
 void Terrain::rebuildMeshForChunkOuter(const size_t index, const AABB &meshBox)
 {
+    PROFILER("Terrain::rebuildMeshForChunkOuter");
+    
     // We need a border of voxels around the region of the mesh in order to
     // perform surface extraction.
     const AABB voxelBox = meshBox.inset(-glm::vec3(1, 1, 1));
@@ -193,8 +195,6 @@ void Terrain::rebuildMeshForChunkOuter(const size_t index, const AABB &meshBox)
 
 void Terrain::rebuildMesh(const ChangeLog &changeLog)
 {
-    PROFILER("Terrain::rebuildMesh");
-    
     // Get the set of meshes (by index) which are affected by the changes.
     // Only these meshes will need to be rebuilt.
     std::set<std::pair<size_t, AABB>> affectedMeshes;
