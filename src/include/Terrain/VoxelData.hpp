@@ -58,7 +58,12 @@ public:
     // Gets the number of cells along each axis within the valid region.
     glm::ivec3 gridResolution() const override;
     
+    // Gets a view which can be used to constrain access to this voxel data to
+    // the specified region.
     const GridView<Voxel> getView(const AABB &region) const;
+    
+    // Gets a view which can be used to constrain access to this voxel data to
+    // the specified region.
     GridViewMutable<Voxel> getView(const AABB &region);
     
     // Returns an array which holds a copy of the contents of the subregion.
