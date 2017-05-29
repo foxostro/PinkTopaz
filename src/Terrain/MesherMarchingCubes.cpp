@@ -99,6 +99,7 @@ StaticMesh MesherMarchingCubes::extract(const Array3D<Voxel> &voxels,
     
     // Offset to align with the grid cells used by marching cubes.
     const AABB insetAABB = aabb.inset(LLL);
+    const glm::vec3 mins = insetAABB.mins();
     
     static const vec3 posOffset[NUM_CUBE_VERTS] = {
         vec3(-L, -L, +L),
@@ -114,16 +115,16 @@ StaticMesh MesherMarchingCubes::extract(const Array3D<Voxel> &voxels,
     // Compute an offset to add to the base index in order to get the
     // corresponding neighboring vertex of the cube. This is very much
     // dependent on the chubnk size, but will be the same for all chunks.
-    // AFOX_TODO: Compute these offsets dynamically.
-    static const size_t vertexIndicesOffsets[NUM_CUBE_VERTS] = {
-        19,
-        380,
-        361,
-        0,
-        20,
-        381,
-        362,
-        1
+    const size_t baseIndex = voxels.indexAtPoint(mins);
+    const size_t vertexIndicesOffsets[NUM_CUBE_VERTS] = {
+        voxels.indexAtPoint(mins + posOffset[0]) - baseIndex,
+        voxels.indexAtPoint(mins + posOffset[1]) - baseIndex,
+        voxels.indexAtPoint(mins + posOffset[2]) - baseIndex,
+        voxels.indexAtPoint(mins + posOffset[3]) - baseIndex,
+        voxels.indexAtPoint(mins + posOffset[4]) - baseIndex,
+        voxels.indexAtPoint(mins + posOffset[5]) - baseIndex,
+        voxels.indexAtPoint(mins + posOffset[6]) - baseIndex,
+        voxels.indexAtPoint(mins + posOffset[7]) - baseIndex,
     };
     
     voxels.forPointsInGrid(insetAABB, [&](const glm::vec3 &pos){
