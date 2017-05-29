@@ -24,10 +24,12 @@ private:
     std::string _label;
 };
 
-#if 0
+#if 1
 #define PROFILER(label)
+#define PROFILER_SIGNPOST(label)
 #else
 #define PROFILER(label) Profiler profiler(label)
+#define PROFILER_SIGNPOST(label) profiler.signpost(label)
 #endif
 
 #endif /* Profiler_hpp */

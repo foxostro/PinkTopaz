@@ -71,7 +71,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
         sampler
     };
     
-    profiler.signpost("Finished creating graphics device.");
+    PROFILER_SIGNPOST("Finished creating graphics device.");
     
     // Create a voxel data store. We want to fill this with voxel values we read
     // from file. Before we can do that, we need to initialize the data store to
@@ -82,7 +82,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     VoxelDataLoader voxelDataLoader;
     voxelDataLoader.retrieveDimensions(bytes, box, res);
     
-    profiler.signpost("Finished loading voxels from file.");
+    PROFILER_SIGNPOST("Finished loading voxels from file.");
     
     const glm::vec3 chunkSize(MESH_CHUNK_SIZE, MESH_CHUNK_SIZE, MESH_CHUNK_SIZE);
     const AABB boxWithBorder = box.inset(-chunkSize);
@@ -98,7 +98,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
         rebuildMesh(changeLog);
     });
     
-    profiler.signpost("Ready to load voxels into VoxelDataStore.");
+    PROFILER_SIGNPOST("Ready to load voxels into VoxelDataStore.");
     
     // Finally, actually load the voxel values from file.
     // For now, we load all voxels in one step.
