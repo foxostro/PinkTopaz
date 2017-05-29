@@ -65,6 +65,7 @@ public:
     }
     
     // Gets the center point of the cell in which the specified point resides.
+    // Throws an exception if the point is not within this grid.
     glm::vec3 cellCenterAtPoint(const glm::vec3 &point) const
     {
         if (EnableVerboseBoundsChecking && !inbounds(point)) {
@@ -80,6 +81,7 @@ public:
     }
     
     // Gets the bounding box of the cell in which the specified point resides.
+    // Throws an exception if the point is not within this grid.
     AABB cellAtPoint(const glm::vec3 &point) const
     {
         if (EnableVerboseBoundsChecking && !inbounds(point)) {
@@ -93,6 +95,7 @@ public:
     }
     
     // Gets the number of cells along each axis within the specified region.
+    // Throws an exception if the region is not within this grid.
     glm::ivec3 countCellsInRegion(const AABB &region) const
     {
         if (EnableVerboseBoundsChecking && !inbounds(region)) {
@@ -128,6 +131,7 @@ public:
     }
     
     // Iterate over cells in the specified region of the grid.
+    // Throws an exception if the region is not within this grid.
     void forEachCell(const AABB &region,
                      std::function<void (const AABB &cell)> fn) const
     {
@@ -149,6 +153,7 @@ public:
     }
     
     // Iterate over evenly spaced points in the specified region of the grid.
+    // Throws an exception if the region is not within this grid.
     void forPointsInGrid(const AABB &region,
                          std::function<void (const glm::vec3 &point)> fn) const
     {
@@ -188,6 +193,7 @@ public:
     virtual void set(const glm::vec3 &p, const TYPE &object) = 0;
     
     // Serially iterate over cells in the specified sub-region of the box.
+    // Throws an exception if the region is not within this grid.
     // `fn' paramter is the bounding box of the cell.
     // `fn' returns the new value for the specified cell.
     void mutableForEachCell(const AABB &region,

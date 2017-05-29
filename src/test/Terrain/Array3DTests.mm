@@ -1,6 +1,7 @@
 #import <XCTest/XCTest.h>
 #import "Terrain/Array3D.hpp"
 #import "Exception.hpp"
+#import "SDL.h"
 
 using glm::vec3;
 using glm::ivec3;
@@ -19,7 +20,7 @@ using glm::ivec3;
     XCTAssertEqual(myArray.boundingBox(), box);
     XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
     
-    glm::ivec3 a, b;
+    ivec3 a, b;
     
     // Adding the cell dimensions to the cell's minimum-corner takes us to the
     // neighboring cell. The range is not inclusive.
@@ -72,6 +73,281 @@ using glm::ivec3;
     } catch(const OutOfBoundsException &e) {
         // Swallow the exception without failing the test.
     }
+}
+
+- (void) testCellAtPoint {
+    AABB box = {vec3(2.0f, 2.0f, 2.0f), vec3(2.0f, 2.0f, 2.0f)};
+    ivec3 res(4, 4, 4);
+    Array3D<int> myArray(box, res);
+    XCTAssertEqual(myArray.gridResolution(), res);
+    XCTAssertEqual(myArray.boundingBox(), box);
+    XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
+    
+    AABB cell = myArray.cellAtPoint(vec3(0.1f, 0.1f, 0.1f));
+    XCTAssertEqual(cell.center, vec3(0.5f, 0.5f, 0.5f));
+    XCTAssertEqual(cell.extent, vec3(0.5f, 0.5f, 0.5f));
+    
+    cell = myArray.cellAtPoint(vec3(1.0f, 0.5f, 0.5f));
+    XCTAssertEqual(cell.center, vec3(1.5f, 0.5f, 0.5f));
+    XCTAssertEqual(cell.extent, vec3(0.5f, 0.5f, 0.5f));
+    
+    cell = myArray.cellAtPoint(vec3(1.0f, 1.0f, 1.0f));
+    XCTAssertEqual(cell.center, vec3(1.5f, 1.5f, 1.5f));
+    XCTAssertEqual(cell.extent, vec3(0.5f, 0.5f, 0.5f));
+}
+
+- (void) testCountCellsInRegion {
+    AABB box = {vec3(2.0f, 2.0f, 2.0f), vec3(2.0f, 2.0f, 2.0f)};
+    ivec3 res(4, 4, 4);
+    Array3D<int> myArray(box, res);
+    XCTAssertEqual(myArray.gridResolution(), res);
+    XCTAssertEqual(myArray.boundingBox(), box);
+    XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
+    
+    // If we pass in the exact bounding box then we should get the original grid
+    // resolution back again.
+    XCTAssertEqual(res, myArray.countCellsInRegion(box));
+    
+    ivec3 c;
+    
+    // A region covering exactly one cell.
+    const AABB oneCell = {vec3(0.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f)};
+    c = myArray.countCellsInRegion(oneCell);
+    XCTAssertEqual(ivec3(1, 1, 1), c);
+    
+    // The maximum-corner of a region is exclusive and is not part of the region
+    // which means that a zero-sized region contains zero cells.
+    const AABB zeroBox = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
+    c = myArray.countCellsInRegion(zeroBox);
+    XCTAssertEqual(ivec3(0, 0, 0), c);
+    
+    // Currently, countCellsInRegion() returns <0,0,0> when the min and max
+    // corners of the box are in the same cell. I'm not sure this is correct
+    // behavior, but it is the current behavior and the test verifies that this
+    // behavior does not change unintentionally.
+    const AABB tenthBox1 = {vec3(0.1f, 0.1f, 0.1f), vec3(0.1f, 0.1f, 0.1f)};
+    c = myArray.countCellsInRegion(tenthBox1);
+    XCTAssertEqual(ivec3(0, 0, 0), c);
+    
+    // Currently, countCellsInRegion() returns <1,1,1> when the min and max
+    // corners of the box are in adjacent cells. I'm not sure this is correct
+    // behavior, but it is the current behavior and the test verifies that this
+    // behavior does not change unintentionally.
+    const AABB tenthBox2 = {vec3(1.0f, 1.0f, 1.0f), vec3(0.1f, 0.1f, 0.1f)};
+    c = myArray.countCellsInRegion(tenthBox2);
+    XCTAssertEqual(ivec3(1, 1, 1), c);
+    
+    // Passing in an invalid region causes an exception to be thrown.
+    const AABB negCell = {vec3(-0.5f, -0.5f, -0.5f), vec3(0.5f, 0.5f, 0.5f)};
+    try {
+        myArray.countCellsInRegion(negCell);
+        XCTFail("We expected an exception before reaching this line.");
+    } catch(const OutOfBoundsException &e) {
+        // Swallow the exception without failing the test.
+    }
+}
+
+- (void) testInbounds {
+    AABB box = {vec3(2.0f, 2.0f, 2.0f), vec3(2.0f, 2.0f, 2.0f)};
+    ivec3 res(4, 4, 4);
+    Array3D<int> myArray(box, res);
+    XCTAssertEqual(myArray.gridResolution(), res);
+    XCTAssertEqual(myArray.boundingBox(), box);
+    XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
+    
+    // The grid bounding box is obviously within the valid space of the grid.
+    XCTAssert(myArray.inbounds(box));
+    
+    // A zero-sized region within the valid space of the grid is in-bounds much
+    // the same as a point would be.
+    const AABB zeroBox = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
+    XCTAssert(myArray.inbounds(zeroBox));
+    
+    // A small box within the grid is in-bounds.
+    const AABB tenthBox = {vec3(0.1f, 0.1f, 0.1f), vec3(0.1f, 0.1f, 0.1f)};
+    XCTAssert(myArray.inbounds(tenthBox));
+    
+    // A region totally outside the grid bounding box is not in-bounds.
+    const AABB negCell = {vec3(-0.5f, -0.5f, -0.5f), vec3(0.5f, 0.5f, 0.5f)};
+    XCTAssertFalse(myArray.inbounds(negCell));
+    
+    // A region which intersects the bounding box but is not wholly within the
+    // box is not considered in-bounds.
+    const AABB pastMin = {vec3(0.5f, 0.5f, 0.5f), vec3(0.7f, 0.7f, 0.7f)};
+    XCTAssertFalse(myArray.inbounds(pastMin));
+}
+
+- (void) testForEachCell {
+    AABB box = {vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f)};
+    ivec3 res(2, 2, 2);
+    Array3D<int> myArray(box, res);
+    XCTAssertEqual(myArray.gridResolution(), res);
+    XCTAssertEqual(myArray.boundingBox(), box);
+    XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
+    
+    const std::vector<AABB> desiredCells = {
+        {vec3(0.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(0.5f, 1.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(1.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(1.5f, 1.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(0.5f, 0.5f, 1.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(0.5f, 1.5f, 1.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(1.5f, 0.5f, 1.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(1.5f, 1.5f, 1.5f), vec3(0.5f, 0.5f, 0.5f)},
+    };
+    
+    std::vector<AABB> actualCells;
+    
+    myArray.forEachCell(box, [&](const AABB &cell){
+        actualCells.push_back(cell);
+    });
+    
+    // Make sure we got all the cells we intended to.
+    XCTAssertEqual(desiredCells, actualCells);
+    
+    // Throws an exception when the region is not in-bounds.
+    try {
+        const AABB negCell = {vec3(-0.5f, -0.5f, -0.5f), vec3(0.5f, 0.5f, 0.5f)};
+        myArray.forEachCell(negCell, [&](const AABB &cell){
+            SDL_Log("{(%.2f, %.2f, %.2f), (%.2f, %.2f, %.2f)}",
+                    cell.center.x, cell.center.y, cell.center.z,
+                    cell.extent.x, cell.extent.y, cell.extent.z);
+        });
+        XCTFail("We expected an exception before reaching this line.");
+    } catch(const OutOfBoundsException &e) {
+        // Swallow the exception without failing the test.
+    }
+    
+    // If the region is a zero-sized box then we should iterate over no cells.
+    const AABB zeroBox = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
+    actualCells.clear();
+    myArray.forEachCell(zeroBox, [&](const AABB &cell){
+        XCTFail("We expected to iterate over zero cells in this case.");
+    });
+}
+
+- (void) testForPointsInGrid {
+    AABB box = {vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f)};
+    ivec3 res(2, 2, 2);
+    Array3D<int> myArray(box, res);
+    XCTAssertEqual(myArray.gridResolution(), res);
+    XCTAssertEqual(myArray.boundingBox(), box);
+    XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
+    
+    const std::vector<vec3> desiredPoints = {
+        vec3(0.f, 0.f, 0.f),
+        vec3(0.f, 1.f, 0.f),
+        vec3(0.f, 2.f, 0.f),
+        vec3(1.f, 0.f, 0.f),
+        vec3(1.f, 1.f, 0.f),
+        vec3(1.f, 2.f, 0.f),
+        vec3(2.f, 0.f, 0.f),
+        vec3(2.f, 1.f, 0.f),
+        vec3(2.f, 2.f, 0.f),
+        vec3(0.f, 0.f, 1.f),
+        vec3(0.f, 1.f, 1.f),
+        vec3(0.f, 2.f, 1.f),
+        vec3(1.f, 0.f, 1.f),
+        vec3(1.f, 1.f, 1.f),
+        vec3(1.f, 2.f, 1.f),
+        vec3(2.f, 0.f, 1.f),
+        vec3(2.f, 1.f, 1.f),
+        vec3(2.f, 2.f, 1.f),
+        vec3(0.f, 0.f, 2.f),
+        vec3(0.f, 1.f, 2.f),
+        vec3(0.f, 2.f, 2.f),
+        vec3(1.f, 0.f, 2.f),
+        vec3(1.f, 1.f, 2.f),
+        vec3(1.f, 2.f, 2.f),
+        vec3(2.f, 0.f, 2.f),
+        vec3(2.f, 1.f, 2.f),
+        vec3(2.f, 2.f, 2.f),
+    };
+    
+    std::vector<vec3> actualPoints;
+    
+    myArray.forPointsInGrid(box, [&](const vec3 &point){
+        actualPoints.push_back(point);
+    });
+    
+    // Make sure we got all the points we intended to.
+    XCTAssertEqual(desiredPoints, actualPoints);
+    
+    // Throws an exception when the region is not in-bounds.
+    try {
+        const AABB negCell = {vec3(-0.5f, -0.5f, -0.5f), vec3(0.5f, 0.5f, 0.5f)};
+        myArray.forPointsInGrid(negCell, [&](const vec3 &point){
+            SDL_Log("(%.2f, %.2f, %.2f)", point.x, point.y, point.z);
+        });
+        XCTFail("We expected an exception before reaching this line.");
+    } catch(const OutOfBoundsException &e) {
+        // Swallow the exception without failing the test.
+    }
+    
+    // If the region is a zero-sized box then we should iterate over one point.
+    const AABB zeroBox = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
+    actualPoints.clear();
+    myArray.forPointsInGrid(zeroBox, [&](const vec3 &point){
+        actualPoints.push_back(point);
+    });
+    XCTAssertEqual(1, actualPoints.size());
+}
+
+- (void) testMutableForEachCell {
+    AABB box = {vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f)};
+    ivec3 res(2, 2, 2);
+    Array3D<int> myArray(box, res);
+    XCTAssertEqual(myArray.gridResolution(), res);
+    XCTAssertEqual(myArray.boundingBox(), box);
+    XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
+    
+    const std::vector<AABB> desiredCells = {
+        {vec3(0.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(0.5f, 1.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(1.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(1.5f, 1.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(0.5f, 0.5f, 1.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(0.5f, 1.5f, 1.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(1.5f, 0.5f, 1.5f), vec3(0.5f, 0.5f, 0.5f)},
+        {vec3(1.5f, 1.5f, 1.5f), vec3(0.5f, 0.5f, 0.5f)},
+    };
+    
+    std::vector<AABB> actualCells;
+    
+    myArray.mutableForEachCell(box, [&](const AABB &cell){
+        actualCells.push_back(cell);
+        return 42;
+    });
+    
+    // Make sure we touched all the cells we intended to.
+    XCTAssertEqual(desiredCells, actualCells);
+    
+    // Check to see that the grid cells got the new value we set above.
+    myArray.forEachCell(box, [&](const AABB &cell){
+        XCTAssertEqual(42, myArray.get(cell.center));
+    });
+    
+    // Throws an exception when the region is not in-bounds.
+    try {
+        const AABB negCell = {vec3(-0.5f, -0.5f, -0.5f), vec3(0.5f, 0.5f, 0.5f)};
+        myArray.mutableForEachCell(negCell, [&](const AABB &cell){
+            SDL_Log("{(%.2f, %.2f, %.2f), (%.2f, %.2f, %.2f)}",
+                    cell.center.x, cell.center.y, cell.center.z,
+                    cell.extent.x, cell.extent.y, cell.extent.z);
+            return 42;
+        });
+        XCTFail("We expected an exception before reaching this line.");
+    } catch(const OutOfBoundsException &e) {
+        // Swallow the exception without failing the test.
+    }
+    
+    // If the region is a zero-sized box then we should iterate over no cells.
+    const AABB zeroBox = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
+    actualCells.clear();
+    myArray.mutableForEachCell(zeroBox, [&](const AABB &cell){
+    XCTFail("We expected to iterate over zero cells in this case.");
+        return 42;
+    });
 }
 
 @end
