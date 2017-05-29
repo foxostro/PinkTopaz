@@ -102,6 +102,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
     // Finally, actually load the voxel values from file.
     // For now, we load all voxels in one step.
+    // AFOX_TODO: Use direct array access here.
     _voxels->writerTransaction(boxWithBorder, [&](GridMutable<Voxel> &voxels){
         PROFILER("Set Voxel Values");
         assert(voxels.cellDimensions() == glm::vec3(1.0, 1.0, 1.0));

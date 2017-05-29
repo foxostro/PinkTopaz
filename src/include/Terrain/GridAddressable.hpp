@@ -15,7 +15,11 @@
 template<typename TYPE> class GridAddressable
 {
 public:
+#ifdef NDEBUG
     static constexpr bool EnableVerboseBoundsChecking = false;
+#else
+    static constexpr bool EnableVerboseBoundsChecking = true;
+#endif
     
     virtual ~GridAddressable() = default;
     
