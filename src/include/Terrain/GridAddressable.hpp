@@ -41,6 +41,10 @@ public:
     
     // Gets the coordinates of the cell in which the specified point resides.
     // These integer coordinates can be used to locate the cell within the grid.
+    //
+    // This method will not throw an exception if the point is outside the valid
+    // space of the grid. In this case, you will receive garbage results, but no
+    // error will be reported.
     glm::ivec3 cellCoordsAtPoint(const glm::vec3 &point) const
     {
         const AABB box = boundingBox();
