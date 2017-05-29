@@ -13,6 +13,7 @@
 #include "CameraMovementSystem.hpp"
 #include "TerrainComponent.hpp"
 #include "Profiler.hpp"
+#include "UnitTestDetector.h"
 
 #include <glm/gtc/matrix_transform.hpp>
     
@@ -20,6 +21,12 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
              const std::shared_ptr<TaskDispatcher> &dispatcher)
 {
     PROFILER("World::World");
+    
+    // If we're running unit tests then don't bother actually starting the game.
+    // When running unit tests, it is sufficient to get into the event loop.
+    if(areWeBeingUnitTested()) {
+        return;
+    }
     
     systems.add<RenderSystem>(device);
     systems.add<CameraMovementSystem>();

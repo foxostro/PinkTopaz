@@ -1,5 +1,5 @@
 //
-//  osxSupport.h
+//  RetinaSupport.h
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 7/1/16.

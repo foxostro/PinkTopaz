@@ -18,7 +18,7 @@ else()
     endif(APPLE)
     
     set(CMAKE_CXX_FLAGS_RELEASE "-g -Oz")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O1")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
     set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
 endif()
 
@@ -112,11 +112,13 @@ set(SOURCE_FILES_MISC
 
 if(APPLE)
     set(SOURCE_FILES_PLATFORM_SUPPORT
+        "src/include/UnitTestDetector.h" "src/osx/UnitTestDetector.m"
         "src/include/RetinaSupport.h" "src/osx/RetinaSupport.m"
         "src/osx/GraphicsDeviceFactory.mm"
         )
 else(APPLE)
     set(SOURCE_FILES_PLATFORM_SUPPORT
+        "src/include/UnitTestDetector.h" "src/linux/UnitTestDetector.c"
         "src/include/RetinaSupport.h" "src/linux/RetinaSupport.c"
         "src/linux/GraphicsDeviceFactory.cpp"
         )
@@ -219,3 +221,15 @@ if(WIN32)
                        COMMAND ${CMAKE_COMMAND} -E copy_directory "./res" $<TARGET_FILE_DIR:${APP_NAME}>/
                        )
 endif(WIN32)
+
+
+# Set up unit test support. We currently only support XCTest in Xcode, on macOS.
+# However, I do most of my development on macOS so I'm fine with this.
+if(APPLE)
+    enable_testing()
+    find_package(XCTest REQUIRED)
+    xctest_add_bundle(PinkTopazTests PinkTopaz
+                      src/test/Terrain/Array3DTests.mm
+                      )
+    xctest_add_test(XCTest.PinkTopaz PinkTopazTests)
+endif(APPLE)

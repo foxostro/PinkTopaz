@@ -3,7 +3,7 @@
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 6/24/16.
-//  Copyright © 2016 Andrew Fox. All rights reserved.
+//  Copyright © 2016-2017 Andrew Fox. All rights reserved.
 //
 
 #include "SDL.h"
