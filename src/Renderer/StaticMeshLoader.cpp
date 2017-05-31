@@ -15,11 +15,11 @@ StaticMeshLoader::StaticMeshLoader()
 : GEO_MAGIC('moeg'), GEO_VERSION(0)
 {}
 
-StaticMesh StaticMeshLoader::load(const char *fileName)
+StaticMesh StaticMeshLoader::load(const boost::filesystem::path &path)
 {
-    std::vector<uint8_t> _bytes = binaryFileContents(fileName);
+    std::vector<uint8_t> bytes = binaryFileContents(path);
     
-    const Header &header = *((Header *)_bytes.data());
+    const Header &header = *((Header *)bytes.data());
     
     if (header.magic != GEO_MAGIC) {
         throw Exception("Unexpected magic number in geometry data file: found %d but expected %d", header.magic, GEO_MAGIC);

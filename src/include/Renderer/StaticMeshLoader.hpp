@@ -35,7 +35,7 @@ public:
     StaticMeshLoader();
     ~StaticMeshLoader() = default;
     
-    StaticMesh load(const char *filePath);
+    StaticMesh load(const boost::filesystem::path &path);
     
 private:
     const uint32_t GEO_MAGIC, GEO_VERSION;
