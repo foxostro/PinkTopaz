@@ -1,18 +1,18 @@
 //
-//  StaticMeshLoader.hpp
+//  StaticMeshSerializer.hpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 3/14/17.
 //
 //
 
-#ifndef StaticMeshLoader_hpp
-#define StaticMeshLoader_hpp
+#ifndef StaticMeshSerializer_hpp
+#define StaticMeshSerializer_hpp
 
 #include "Renderer/StaticMesh.hpp"
 #include <boost/filesystem.hpp>
 
-class StaticMeshLoader
+class StaticMeshSerializer
 {
 public:
     struct FileVertex
@@ -32,13 +32,17 @@ public:
         FileVertex vertices[0];
     };
     
-    StaticMeshLoader();
-    ~StaticMeshLoader() = default;
+    StaticMeshSerializer();
+    ~StaticMeshSerializer() = default;
     
-    StaticMesh load(const boost::filesystem::path &path);
+    StaticMesh load(const std::vector<uint8_t> &bytes);
+    std::vector<uint8_t> save(const StaticMesh &mesh);
     
 private:
     const uint32_t GEO_MAGIC, GEO_VERSION;
+    
+    void convert(const FileVertex &input, TerrainVertex &output) const;
+    void convert(const TerrainVertex &input, FileVertex &output) const;
 };
 
-#endif /* StaticMesh_hpp */
+#endif /* StaticMeshSerializer_hpp */

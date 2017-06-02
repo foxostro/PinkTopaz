@@ -64,7 +64,7 @@ endif(APPLE)
 set(SOURCE_FILES_RENDERER
     "src/Renderer/StringRenderer.cpp" "src/include/Renderer/StringRenderer.hpp"
     "src/Renderer/StaticMesh.cpp" "src/include/Renderer/StaticMesh.hpp"
-    "src/Renderer/StaticMeshLoader.cpp" "src/include/Renderer/StaticMeshLoader.hpp"
+    "src/Renderer/StaticMeshSerializer.cpp" "src/include/Renderer/StaticMeshSerializer.hpp"
     "src/include/Renderer/GraphicsDevice.hpp"
     "src/include/Renderer/CommandEncoder.hpp"
     "src/include/Renderer/Shader.hpp"
@@ -230,6 +230,7 @@ if(APPLE)
     find_package(XCTest REQUIRED)
     xctest_add_bundle(PinkTopazTests PinkTopaz
                       src/test/Terrain/Array3DTests.mm
+                      src/test/Renderer/StaticMeshSerializerTests.mm
                       )
     xctest_add_test(XCTest.PinkTopaz PinkTopazTests)
 endif(APPLE)

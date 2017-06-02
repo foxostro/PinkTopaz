@@ -12,7 +12,7 @@
 #include "Terrain/VoxelData.hpp"
 #include <boost/filesystem.hpp>
 
-class VoxelDataLoader
+class VoxelDataLoader // AFOX_TODO: Rework into VoxelDataSerializer and have it consume and produce std::vector<uint8_t>.
 {
 public:
     struct FileVoxel
