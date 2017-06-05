@@ -25,9 +25,10 @@ public:
     
     ~StaticMesh() = default;
     
-    inline void addVertex(const TerrainVertex &vertex)
+    template <class... Args>
+    inline void addVertex(Args&&... args)
     {
-        _vertices.push_back(vertex);
+        _vertices.emplace_back(args...);
     }
     
     inline const std::vector<TerrainVertex>& getVertices() const
