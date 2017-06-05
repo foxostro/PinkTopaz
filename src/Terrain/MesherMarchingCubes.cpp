@@ -17,9 +17,8 @@ using glm::vec3;
 using glm::vec4;
 
 static constexpr float L = 0.5f;
-static const glm::vec3 LLL(L, L, L);
-static const glm::vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
-static const glm::vec3 texCoord(0.0f, 0.0f, 0.0f);
+static const vec3 LLL(L, L, L);
+static const vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
 
 void MesherMarchingCubes::polygonizeGridCell(StaticMesh &geometry,
                                              const std::array<CubeVertex, NUM_CUBE_VERTS> &cube,
@@ -78,11 +77,60 @@ void MesherMarchingCubes::polygonizeGridCell(StaticMesh &geometry,
             vertexList[triTable[index][i+0]]
         }};
         
+        // Calculate one normal for the entire face.
+        // AFOX_TODO: This can probably be cleaned up a bit. We're mixing `cellRelativeVertexPos' both here and below.
+        vec3 n;
+        {
+            CubeVertex v1[3] = {
+                cube[pairs[0].first],
+                cube[pairs[1].first],
+                cube[pairs[2].first]
+            };
+            
+            CubeVertex v2[3] = {
+                cube[pairs[0].second],
+                cube[pairs[1].second],
+                cube[pairs[2].second]
+            };
+            
+            vec3 cellRelativeVertexPos[3] = {
+                glm::mix(v1[0].cellRelativeVertexPos, v2[0].cellRelativeVertexPos, LLL),
+                glm::mix(v1[1].cellRelativeVertexPos, v2[1].cellRelativeVertexPos, LLL),
+                glm::mix(v1[2].cellRelativeVertexPos, v2[2].cellRelativeVertexPos, LLL)
+            };
+            
+            n = glm::normalize(glm::cross(cellRelativeVertexPos[1] - cellRelativeVertexPos[0],
+                                          cellRelativeVertexPos[2] - cellRelativeVertexPos[0]));
+        }
+        
         for (size_t i = 0; i < 3; ++i)
         {
-            const vec3 &v1 = cube[pairs[i].first].worldPos;
-            const vec3 &v2 = cube[pairs[i].second].worldPos;
-            vec3 worldPos = glm::mix(v1, v2, LLL);
+            const CubeVertex &v1 = cube[pairs[i].first];
+            const CubeVertex &v2 = cube[pairs[i].second];
+            vec3 worldPos = glm::mix(v1.worldPos, v2.worldPos, LLL);
+            vec3 cellRelativeVertexPos = glm::mix(v1.cellRelativeVertexPos, v2.cellRelativeVertexPos, LLL);
+            
+            // Compute texture coordinates for the vertex. We want textures to
+            // tile every cell. We need to consider the face normal to make sure
+            // that vertical faces are textured correctly too.
+            vec3 texCoord;
+            {
+                if (n.y == 0) {
+                    if (n.x != 0) {
+                        texCoord = vec3(cellRelativeVertexPos.z, cellRelativeVertexPos.y, 0.0f);
+                    } else {
+                        texCoord = vec3(cellRelativeVertexPos.x, cellRelativeVertexPos.y, 0.0f);
+                    }
+                } else if (n.y > 0) {
+                    texCoord = vec3(cellRelativeVertexPos.x, cellRelativeVertexPos.z, 0.0f);
+                } else {
+                    texCoord = vec3(cellRelativeVertexPos.x, cellRelativeVertexPos.z, 0.0f);
+                }
+                
+                // The Z-coordinate is an index into the texture array.
+                constexpr float grassTex = 75.f;
+                texCoord.z = grassTex;
+            }
             
             geometry.addVertex(TerrainVertex(vec4(worldPos.x, worldPos.y, worldPos.z, 1.0f),
                                              color,
@@ -142,14 +190,14 @@ StaticMesh MesherMarchingCubes::extract(const Array3D<Voxel> &voxels,
         const size_t index = voxels.indexAtPoint(pos);
         
         const std::array<CubeVertex, NUM_CUBE_VERTS> cube = {{
-            CubeVertex(voxels.get(index + vertexIndicesOffsets[0]), vertexPositions[0]),
-            CubeVertex(voxels.get(index + vertexIndicesOffsets[1]), vertexPositions[1]),
-            CubeVertex(voxels.get(index + vertexIndicesOffsets[2]), vertexPositions[2]),
-            CubeVertex(voxels.get(index + vertexIndicesOffsets[3]), vertexPositions[3]),
-            CubeVertex(voxels.get(index + vertexIndicesOffsets[4]), vertexPositions[4]),
-            CubeVertex(voxels.get(index + vertexIndicesOffsets[5]), vertexPositions[5]),
-            CubeVertex(voxels.get(index + vertexIndicesOffsets[6]), vertexPositions[6]),
-            CubeVertex(voxels.get(index + vertexIndicesOffsets[7]), vertexPositions[7]),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[0]), vertexPositions[0], vec3(0.0f, 0.0f, 1.0f)),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[1]), vertexPositions[1], vec3(1.0f, 0.0f, 1.0f)),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[2]), vertexPositions[2], vec3(1.0f, 0.0f, 0.0f)),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[3]), vertexPositions[3], vec3(0.0f, 0.0f, 0.0f)),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[4]), vertexPositions[4], vec3(0.0f, 1.0f, 1.0f)),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[5]), vertexPositions[5], vec3(1.0f, 1.0f, 1.0f)),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[6]), vertexPositions[6], vec3(1.0f, 1.0f, 0.0f)),
+            CubeVertex(voxels.get(index + vertexIndicesOffsets[7]), vertexPositions[7], vec3(0.0f, 1.0f, 0.0f)),
         }};
         
         polygonizeGridCell(geometry, cube, isosurface);

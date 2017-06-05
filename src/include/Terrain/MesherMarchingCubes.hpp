@@ -24,13 +24,17 @@ public:
                                float isosurface) override;
     
 private:
+    // For marching cubes, we sample a cube where each vertex is a voxel in the
+    // voxel grid.
     struct CubeVertex
     {
+        // Reference to the voxel associated with this vertex of the cube.
         const Voxel &voxel;
         const glm::vec3 &worldPos;
+        const glm::vec3 cellRelativeVertexPos;
         
-        CubeVertex(const Voxel &voxel, const glm::vec3 &w)
-         : voxel(voxel), worldPos(w)
+        CubeVertex(const Voxel &voxel, const glm::vec3 &w, const glm::vec3 &c)
+         : voxel(voxel), worldPos(w), cellRelativeVertexPos(c)
         {}
     };
     
