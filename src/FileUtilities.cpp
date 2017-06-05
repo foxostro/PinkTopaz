@@ -51,3 +51,17 @@ std::vector<uint8_t> binaryFileContents(const boost::filesystem::path &path)
         
     return contents;
 }
+
+void saveBinaryFile(const boost::filesystem::path &path, const std::vector<uint8_t> &bytes)
+{
+    const char *filePath = path.string().c_str();
+    
+    std::ofstream out(filePath, std::ios::out | std::ios::binary);
+    
+    if (!out) {
+        throw Exception("Failed to open file: %s, filePath=%s\n", strerror(errno), filePath);
+    }
+    
+    out.write((const char *)bytes.data(), bytes.size());
+    out.close();
+}

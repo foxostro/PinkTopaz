@@ -9,6 +9,7 @@
 #ifndef VoxelDataLoader_hpp
 #define VoxelDataLoader_hpp
 
+#include "Terrain/Array3D.hpp"
 #include "Terrain/VoxelData.hpp"
 #include <boost/filesystem.hpp>
 
@@ -59,6 +60,11 @@ public:
     void retrieveDimensions(const std::vector<uint8_t> &bytes,
                             AABB &box,
                             glm::ivec3 &res);
+    
+    // Create and return an Array3D containing the voxel data in `bytes'.
+    // This array will have a size sufficient to hold the vertices plus an empty
+    // border around the edges as specified by `border'.
+    Array3D<Voxel> createArray(const std::vector<uint8_t> &bytes, int border);
     
 private:
     const uint32_t VOXEL_MAGIC, VOXEL_VERSION;

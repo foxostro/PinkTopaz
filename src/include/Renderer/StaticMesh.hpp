@@ -47,6 +47,8 @@ public:
     
     std::vector<uint8_t> getBufferData() const;
     
+    bool operator==(const StaticMesh &other) const;
+    
 private:
     void initVertexFormat();
     

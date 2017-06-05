@@ -15,5 +15,6 @@
 
 std::string stringFromFileContents(const boost::filesystem::path &path);
 std::vector<uint8_t> binaryFileContents(const boost::filesystem::path &path);
+void saveBinaryFile(const boost::filesystem::path &path, const std::vector<uint8_t> &bytes);
 
 #endif /* FileUtilities_hpp */

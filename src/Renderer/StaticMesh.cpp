@@ -59,3 +59,12 @@ void StaticMesh::initVertexFormat()
     };
     _vertexFormat.attributes.emplace_back(attr);
 }
+
+bool StaticMesh::operator==(const StaticMesh &other) const
+{
+    if (&other == this) {
+        return true;
+    }
+    
+    return _vertices == other._vertices;
+}

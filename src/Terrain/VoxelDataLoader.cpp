@@ -62,3 +62,23 @@ void VoxelDataLoader::load(const std::vector<uint8_t> &bytes, GridMutable<Voxel>
         return Voxel(value);
     });
 }
+
+Array3D<Voxel> VoxelDataLoader::createArray(const std::vector<uint8_t> &bytes, int border)
+{
+    AABB box;
+    glm::ivec3 res;
+    retrieveDimensions(bytes, box, res);
+    
+    const AABB boxWithBorder = box.inset(-glm::vec3(border, border, border));
+    const glm::ivec3 resWithBorder = res + glm::ivec3(border, border, border)*2;
+    
+    Array3D<Voxel> voxels(boxWithBorder, resWithBorder);
+    
+    voxels.mutableForEachCell(boxWithBorder, [&](const AABB &cell){
+        return Voxel();
+    });
+    
+    load(bytes, voxels);
+    
+    return voxels;
+}

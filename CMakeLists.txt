@@ -230,6 +230,7 @@ if(APPLE)
     find_package(XCTest REQUIRED)
     xctest_add_bundle(PinkTopazTests PinkTopaz
                       src/test/Terrain/Array3DTests.mm
+                      src/test/Terrain/MesherMarchingCubesTests.mm
                       src/test/Renderer/StaticMeshSerializerTests.mm
                       )
     xctest_add_test(XCTest.PinkTopaz PinkTopazTests)

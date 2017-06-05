@@ -24,6 +24,13 @@ struct TerrainVertex
     TerrainVertex(const glm::vec4 &p, const glm::vec4 &c, const glm::vec3 &t)
     : position(p), color(c), texCoord(t)
     {}
+    
+    bool operator==(const TerrainVertex &other) const
+    {
+        return position == other.position
+            && color == other.color
+            && texCoord == other.texCoord;
+    }
 };
 
 struct TerrainUniforms
