@@ -10,7 +10,7 @@
 #define Terrain_hpp
 
 #include "Terrain/VoxelDataStore.hpp"
-#include "Terrain/MesherMarchingCubes.hpp"
+#include "Terrain/Mesher.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 #include "RenderableStaticMesh.hpp"
 #include "TaskDispatcher.hpp"

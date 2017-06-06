@@ -33,6 +33,7 @@ set(SOURCE_FILES_TERRAIN
     "src/Terrain/ChangeLog.cpp" "src/include/Terrain/ChangeLog.hpp"
     "src/Terrain/VoxelDataLoader.cpp" "src/include/Terrain/VoxelDataLoader.hpp"
     "src/Terrain/MesherMarchingCubes.cpp" "src/include/Terrain/MesherMarchingCubes.hpp"
+    "src/Terrain/MesherBlocky.cpp" "src/include/Terrain/MesherBlocky.hpp"
     "src/include/Terrain/Mesher.hpp"
     )
 
