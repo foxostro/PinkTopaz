@@ -11,6 +11,7 @@
 
 #include "Terrain/Mesher.hpp"
 #include <array>
+#include <glm/glm.hpp>
 
 // Accepts voxels and produces a triangle mesh for the specified isosurface.
 // The extracted mesh uses a blocky style.
@@ -62,15 +63,11 @@ private:
     
     // Returns six vertices for the two triangles which constitute the specified
     // face of the specified cell, which has the shape of a rectangular prism.
-    std::array<glm::vec3, 6> verticesForFace(const Array3D<Voxel> &voxels,
-                                             float isosurface,
-                                             const AABB &cell,
-                                             size_t face);
-    
-    // Emits one vertex.
-    void emitVertex(StaticMesh &geometry,
-                    const glm::vec3 &vertexPosition,
-                    const glm::vec4 &vertexColor);
+    std::array<TerrainVertex, 6>
+    verticesForFace(const Array3D<Voxel> &voxels,
+                    float isosurface,
+                    const AABB &cell,
+                    size_t face);
     
     // Emits one face for the specified face of the specified cell. This face is
     // typically represented by six vertices contituting two triangles.

@@ -195,12 +195,15 @@ MesherNaiveSurfaceNets::smoothQuad(const Array3D<Voxel> &voxels,
     return output;
 }
 
-std::array<vec3, 6>
+std::array<TerrainVertex, 6>
 MesherNaiveSurfaceNets::verticesForFace(const Array3D<Voxel> &voxels,
                                         float isosurface,
                                         const AABB &cell,
                                         size_t face)
 {
+    static const vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
+    static const vec3 texCoord(0.0f, 0.0f, 0.0f);
+    
     // Get the vertices for the specified face of the cell.
     const std::array<glm::vec3, 4> transformedQuad = quadForFace(cell, face);
     
@@ -210,22 +213,17 @@ MesherNaiveSurfaceNets::verticesForFace(const Array3D<Voxel> &voxels,
     
     // Stitch vertices of the quad together into two triangles.
     constexpr size_t n = 6;
-    std::array<vec3, n> vertices;
     constexpr size_t indices[n] = { 0, 1, 2, 0, 2, 3 };
-    for (size_t i = 0; i < n; ++i) {
-        vertices[i] = smoothedQuad[indices[i]];
-    }
+    std::array<TerrainVertex, n> vertices = {{
+        TerrainVertex(vec4(smoothedQuad[indices[0]], 1.f), color, texCoord),
+        TerrainVertex(vec4(smoothedQuad[indices[1]], 1.f), color, texCoord),
+        TerrainVertex(vec4(smoothedQuad[indices[2]], 1.f), color, texCoord),
+        TerrainVertex(vec4(smoothedQuad[indices[3]], 1.f), color, texCoord),
+        TerrainVertex(vec4(smoothedQuad[indices[4]], 1.f), color, texCoord),
+        TerrainVertex(vec4(smoothedQuad[indices[5]], 1.f), color, texCoord)
+    }};
     
     return vertices;
-}
-
-void MesherNaiveSurfaceNets::emitVertex(StaticMesh &geometry,
-                                        const glm::vec3 &p,
-                                        const glm::vec4 &color)
-{
-    geometry.addVertex(TerrainVertex(vec4(p.x, p.y, p.z, 1.f),
-                                     color,
-                                     vec3(0.0f, 0.0f, 0.0f)));
 }
 
 void MesherNaiveSurfaceNets::emitFace(StaticMesh &geometry,
@@ -234,23 +232,8 @@ void MesherNaiveSurfaceNets::emitFace(StaticMesh &geometry,
                                       const AABB &cell,
                                       size_t face)
 {
-    static const std::array<vec4, NUM_FACES> color = {{
-        vec4(0.0f, 0.0f, 1.0f, 1.0f), // FRONT
-        vec4(0.0f, 1.0f, 0.0f, 1.0f), // LEFT
-        vec4(0.0f, 0.0f, 1.0f, 1.0f), // BACK
-        vec4(0.0f, 1.0f, 0.0f, 1.0f), // RIGHT
-        vec4(1.0f, 1.0f, 1.0f, 1.0f), // TOP
-        vec4(1.0f, 1.0f, 1.0f, 1.0f), // BOTTOM
-    }};
-    
-    std::array<vec3, NUM_FACES> quad = verticesForFace(voxels,
-                                                       isosurface,
-                                                       cell,
-                                                       face);
-    
-    for (const vec3 &p : quad) {
-        emitVertex(geometry, p, color[face]);
-    }
+    const auto vertices = verticesForFace(voxels, isosurface, cell, face);
+    geometry.addVertices(vertices);
 }
 
 StaticMesh MesherNaiveSurfaceNets::extract(const Array3D<Voxel> &voxels,

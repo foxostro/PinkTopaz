@@ -31,6 +31,12 @@ public:
         _vertices.emplace_back(args...);
     }
     
+    template <typename ContainerType>
+    inline void addVertices(const ContainerType &v)
+    {
+        std::copy(std::begin(v), std::end(v), std::back_inserter(_vertices));
+    }
+    
     inline const std::vector<TerrainVertex>& getVertices() const
     {
         return _vertices;
