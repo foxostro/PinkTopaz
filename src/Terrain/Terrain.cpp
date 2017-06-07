@@ -10,7 +10,7 @@
 #include "Terrain/VoxelDataLoader.hpp"
 #include "SDL_image.h"
 #include "Exception.hpp"
-#include "Terrain/MesherBlocky.hpp"
+#include "Terrain/MesherNaiveSurfaceNets.hpp"
 #include "Terrain/Terrain.hpp"
 #include "Profiler.hpp"
 #include <set>
@@ -19,7 +19,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                  const std::shared_ptr<TaskDispatcher> &dispatcher)
  : _graphicsDevice(graphicsDevice),
    _dispatcher(dispatcher),
-   _mesher(new MesherBlocky())
+   _mesher(new MesherNaiveSurfaceNets())
 {
     PROFILER("Terrain::Terrain");
     
