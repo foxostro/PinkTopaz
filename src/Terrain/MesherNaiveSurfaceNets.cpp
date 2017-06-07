@@ -85,6 +85,10 @@ MesherNaiveSurfaceNets::smoothVertex(const Array3D<Voxel> &voxels,
                                      float isosurface,
                                      const glm::vec3 &input)
 {
+    // AFOX_TODO: The cube sampling stuff in this method is similar to logic
+    // found in the Marching Cubes implementation. The two can probably be
+    // consolidated.
+    
     static const vec3 posOffset[NUM_CUBE_VERTS] = {
         vec3(-L, -L, +L),
         vec3(+L, -L, +L),
@@ -107,6 +111,8 @@ MesherNaiveSurfaceNets::smoothVertex(const Array3D<Voxel> &voxels,
         input + posOffset[7]
     };
     
+    // AFOX_TODO: We can probably speed this part up a bit by calculating index
+    // offsets ahead of time like we do for Marching Cubes.
     const std::array<CubeVertex, NUM_CUBE_VERTS> cube = {{
         CubeVertex(voxels.get(vertexPositions[0]), vertexPositions[0], vec3(0.0f, 0.0f, 1.0f)),
         CubeVertex(voxels.get(vertexPositions[1]), vertexPositions[1], vec3(1.0f, 0.0f, 1.0f)),
@@ -153,7 +159,7 @@ MesherNaiveSurfaceNets::smoothVertex(const Array3D<Voxel> &voxels,
         }
     }
     
-    // Get the center of gravity of all edge crossing.
+    // Get the center of gravity of all edge crossings.
     glm::vec3 centerOfGravity;
     
     {
@@ -165,10 +171,10 @@ MesherNaiveSurfaceNets::smoothVertex(const Array3D<Voxel> &voxels,
                 // NUM_CUBE_EDGES is expected to occur in pairs for the setinel value.
                 assert(pair.second < NUM_CUBE_EDGES);
                 
-                // Interpolate verte positions to get the edge crossing.
+                // Interpolate vertex positions to get the edge crossing.
                 const CubeVertex &v1 = cube[pair.first];
                 const CubeVertex &v2 = cube[pair.second];
-                vec3 worldPos = glm::mix(v1.worldPos, v2.worldPos, LLL);
+                const vec3 worldPos = glm::mix(v1.worldPos, v2.worldPos, LLL);
                 
                 accum += worldPos;
                 accumCount++;
@@ -214,16 +220,39 @@ MesherNaiveSurfaceNets::verticesForFace(const Array3D<Voxel> &voxels,
     // Stitch vertices of the quad together into two triangles.
     constexpr size_t n = 6;
     constexpr size_t indices[n] = { 0, 1, 2, 0, 2, 3 };
-    std::array<TerrainVertex, n> vertices = {{
-        TerrainVertex(vec4(smoothedQuad[indices[0]], 1.f), color, texCoord),
-        TerrainVertex(vec4(smoothedQuad[indices[1]], 1.f), color, texCoord),
-        TerrainVertex(vec4(smoothedQuad[indices[2]], 1.f), color, texCoord),
-        TerrainVertex(vec4(smoothedQuad[indices[3]], 1.f), color, texCoord),
-        TerrainVertex(vec4(smoothedQuad[indices[4]], 1.f), color, texCoord),
-        TerrainVertex(vec4(smoothedQuad[indices[5]], 1.f), color, texCoord)
+    const std::array<glm::vec3, n> vertexPositions = {{
+        smoothedQuad[indices[0]],
+        smoothedQuad[indices[1]],
+        smoothedQuad[indices[2]],
+        smoothedQuad[indices[3]],
+        smoothedQuad[indices[4]],
+        smoothedQuad[indices[5]]
     }};
     
-    return vertices;
+    // Calculate normals for the two triangles.
+    const vec3 n1 = normalize(cross(vertexPositions[1] - vertexPositions[0],
+                                    vertexPositions[2] - vertexPositions[0]));
+    
+    const vec3 n2 = normalize(cross(vertexPositions[4] - vertexPositions[3],
+                                    vertexPositions[5] - vertexPositions[3]));
+    
+    // Create some colors to represent those two normal vectors.
+    const vec4 c1 = vec4(n1 * 0.5f + vec3(0.5f), 1.0f);
+    const vec4 c2 = vec4(n2 * 0.5f + vec3(0.5f), 1.0f);
+    
+    // AFOX_TODO: Need real texture coordinates for faces here.
+    
+    // Pack vertex positions, colors, and texcoords together.
+    std::array<TerrainVertex, n> terrainVertices = {{
+        TerrainVertex(vec4(vertexPositions[0], 1.f), c1, texCoord),
+        TerrainVertex(vec4(vertexPositions[1], 1.f), c1, texCoord),
+        TerrainVertex(vec4(vertexPositions[2], 1.f), c1, texCoord),
+        TerrainVertex(vec4(vertexPositions[3], 1.f), c2, texCoord),
+        TerrainVertex(vec4(vertexPositions[4], 1.f), c2, texCoord),
+        TerrainVertex(vec4(vertexPositions[5], 1.f), c2, texCoord)
+    }};
+    
+    return terrainVertices;
 }
 
 void MesherNaiveSurfaceNets::emitFace(StaticMesh &geometry,
