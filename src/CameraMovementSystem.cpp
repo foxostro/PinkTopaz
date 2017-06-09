@@ -26,6 +26,10 @@ void CameraMovementSystem::configure(entityx::EventManager &em)
     em.subscribe<entityx::ComponentAddedEvent<ActiveCamera>>(*this);
     em.subscribe<entityx::ComponentRemovedEvent<ActiveCamera>>(*this);
     em.subscribe<KeypressEvent>(*this);
+    
+    // Get the initial delta position to reset.
+    int mouseDeltaX = 0, mouseDeltaY = 0;
+    SDL_GetRelativeMouseState(&mouseDeltaX, &mouseDeltaY);
 }
     
 void CameraMovementSystem::update(entityx::EntityManager &es,
