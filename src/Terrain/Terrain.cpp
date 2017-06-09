@@ -21,8 +21,6 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
    _dispatcher(dispatcher),
    _mesher(new MesherNaiveSurfaceNets())
 {
-    PROFILER("Terrain::Terrain");
-    
     // Load terrain texture array from a single image.
     // TODO: create a TextureArrayLoader class to encapsulate tex loading.
     SDL_Surface *surface = IMG_Load("terrain.png");
@@ -72,8 +70,6 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
         sampler
     };
     
-    PROFILER_SIGNPOST("Finished creating graphics device.");
-    
     // Create a voxel data store. We want to fill this with voxel values we read
     // from file. Before we can do that, we need to initialize the data store to
     // the dimensions of the voxel field found in the file.
@@ -82,8 +78,6 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     glm::ivec3 res;
     VoxelDataLoader voxelDataLoader;
     voxelDataLoader.retrieveDimensions(bytes, box, res);
-    
-    PROFILER_SIGNPOST("Finished loading voxels from file.");
     
     const glm::vec3 chunkSize(MESH_CHUNK_SIZE, MESH_CHUNK_SIZE, MESH_CHUNK_SIZE);
     const AABB boxWithBorder = box.inset(-chunkSize);
@@ -99,13 +93,10 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
         rebuildMesh(changeLog);
     });
     
-    PROFILER_SIGNPOST("Ready to load voxels into VoxelDataStore.");
-    
     // Finally, actually load the voxel values from file.
     // For now, we load all voxels in one step.
     // AFOX_TODO: Use direct array access here.
     _voxels->writerTransaction(boxWithBorder, [&](GridMutable<Voxel> &voxels){
-        PROFILER("Set Voxel Values");
         assert(voxels.cellDimensions() == glm::vec3(1.0, 1.0, 1.0));
         
         voxels.mutableForEachCell(boxWithBorder, [&](const AABB &cell){
@@ -183,8 +174,6 @@ void Terrain::rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
 
 void Terrain::rebuildMeshForChunkOuter(const size_t index, const AABB &meshBox)
 {
-    PROFILER("Terrain::rebuildMeshForChunkOuter");
-    
     // We need a border of voxels around the region of the mesh in order to
     // perform surface extraction.
     const AABB voxelBox = meshBox.inset(-glm::vec3(1, 1, 1));

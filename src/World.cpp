@@ -18,9 +18,10 @@
 #include <glm/gtc/matrix_transform.hpp>
     
 World::World(const std::shared_ptr<GraphicsDevice> &device,
-             const std::shared_ptr<TaskDispatcher> &dispatcher)
+             const std::shared_ptr<TaskDispatcher> &dispatcher,
+             ThreadProfiler &profiler)
 {
-    PROFILER("World::World");
+    PROFILER(profiler, ctorScope, "World::World");
     
     // If we're running unit tests then don't bother actually starting the game.
     // When running unit tests, it is sufficient to get into the event loop.
@@ -28,8 +29,8 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
         return;
     }
     
-    systems.add<RenderSystem>(device);
-    systems.add<CameraMovementSystem>();
+    systems.add<RenderSystem>(device, profiler);
+    systems.add<CameraMovementSystem>(profiler);
     systems.configure();
     
     // Setup the position and orientation of the camera.

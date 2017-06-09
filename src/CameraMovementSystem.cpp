@@ -12,11 +12,14 @@
 
 #include <glm/gtc/matrix_transform.hpp>
     
-CameraMovementSystem::CameraMovementSystem()
+CameraMovementSystem::CameraMovementSystem(ThreadProfiler &profiler)
  : _cameraSpeed(50.0f),
    _cameraRotateSpeed(1.0f),
-   _mouseSensitivity(5.0f)
-{}
+   _mouseSensitivity(5.0f),
+   _profiler(profiler)
+{
+    (void)_profiler; // Squelch the error about unused private field when PROFILER_ENABLED is 0.
+}
     
 void CameraMovementSystem::configure(entityx::EventManager &em)
 {
@@ -29,6 +32,8 @@ void CameraMovementSystem::update(entityx::EntityManager &es,
                                     entityx::EventManager &events,
                                     entityx::TimeDelta deltaMilliseconds)
 {
+    PROFILER(_profiler, updateScope, "CameraMovementSystem::update");
+    
     const entityx::TimeDelta dt = deltaMilliseconds / 1000;
         
     if (!_activeCamera.valid()) {

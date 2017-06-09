@@ -30,8 +30,6 @@ void VoxelDataLoader::retrieveDimensions(const std::vector<uint8_t> &bytes, AABB
 
 void VoxelDataLoader::load(const std::vector<uint8_t> &bytes, GridMutable<Voxel> &output)
 {
-    PROFILER("VoxelDataLoader::load");
-    
     const Header &header = *((Header *)bytes.data());
     
     if (header.magic != VOXEL_MAGIC) {

@@ -10,26 +10,40 @@
 #define Profiler_hpp
 
 #include <string>
+#include <functional>
 
-class Profiler
+#define PROFILER_ENABLED 0
+
+class ThreadProfiler
 {
 public:
-    Profiler(const std::string &label);
-    ~Profiler();
+    class Scope
+    {
+    public:
+        typedef std::function<void(const std::string &label, unsigned elapsedMs)> Handler;
+        
+        Scope(const std::string &label, const Handler &onDtor);
+        ~Scope();
+        
+    private:
+        const std::string _label;
+        const Handler _onDtor;
+        const unsigned _beginMs;
+    };
     
-    void signpost(const std::string &intermediateLabel) const;
+    ThreadProfiler();
+    ~ThreadProfiler() = default;
+    
+    Scope scope(const std::string &label);
     
 private:
-    unsigned _beginMs;
-    std::string _label;
+    size_t _level;
 };
 
-#if 1
-#define PROFILER(label)
-#define PROFILER_SIGNPOST(label)
+#if PROFILER_ENABLED
+#define PROFILER(profiler, name, label) auto name = (profiler).scope(label)
 #else
-#define PROFILER(label) Profiler profiler(label)
-#define PROFILER_SIGNPOST(label) profiler.signpost(label)
+#define PROFILER(profiler, name, label)
 #endif
 
 #endif /* Profiler_hpp */

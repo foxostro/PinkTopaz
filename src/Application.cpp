@@ -14,6 +14,7 @@
 #include "KeypressEvent.hpp"
 #include "MouseMoveEvent.hpp"
 #include "Exception.hpp"
+#include "Profiler.hpp"
 
 #include "SDL.h"
 #include <map>
@@ -23,7 +24,9 @@
 void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                         const std::shared_ptr<TaskDispatcher> &dispatcher)
 {
-    World gameWorld(graphicsDevice, dispatcher);
+    ThreadProfiler mainThreadProfiler;
+    
+    World gameWorld(graphicsDevice, dispatcher, mainThreadProfiler);
     
     // Send an event containing the initial window size and scale factor.
     // This will allow the render system to setup projection matrices and such.
@@ -33,15 +36,17 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
         event.windowScaleFactor = windowScaleFactor(_window);
         gameWorld.events.emit(event);
     }
-        
+    
     bool quit = false;
-        
+    
     unsigned ticksBeginMs = SDL_GetTicks();
-        
+    
     while(!quit)
     {
+        PROFILER(mainThreadProfiler, frameScope, "Frame");
+        
         SDL_Event e;
-            
+        
         if (SDL_PollEvent(&e)) {
             switch(e.type)
             {

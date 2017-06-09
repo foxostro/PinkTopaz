@@ -18,12 +18,14 @@
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/StringRenderer.hpp"
 #include "FrameTimer.hpp"
+#include "Profiler.hpp"
 
 // System for rendering game objects in the world.
 class RenderSystem : public entityx::System<RenderSystem>, public entityx::Receiver<RenderSystem>
 {
 public:
-    RenderSystem(const std::shared_ptr<GraphicsDevice> &graphicsDevice);
+    RenderSystem(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+                 ThreadProfiler &profiler);
     void configure(entityx::EventManager &em) override;
     void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
     void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
@@ -40,6 +42,7 @@ private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     StringRenderer _stringRenderer;
     FrameTimer _frameTimer;
+    ThreadProfiler &_profiler;
 };
 
 #endif /* RenderSystem_hpp */

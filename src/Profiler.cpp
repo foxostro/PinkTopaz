@@ -9,21 +9,37 @@
 #include "Profiler.hpp"
 #include "SDL.h"
 
-Profiler::Profiler(const std::string &label)
- : _beginMs(SDL_GetTicks()), _label(label)
+ThreadProfiler::Scope::Scope(const std::string &label,
+                             const ThreadProfiler::Scope::Handler &onDtor)
+ : _label(label),
+   _onDtor(onDtor),
+   _beginMs(SDL_GetTicks())
 {}
 
-Profiler::~Profiler()
+ThreadProfiler::Scope::~Scope()
 {
-    const unsigned endMs = SDL_GetTicks();
-    const unsigned elapsedMs = endMs - _beginMs;
-    SDL_Log("[Profiler] %s -- %u ms", _label.c_str(), elapsedMs);
+    const unsigned elapsedMs = SDL_GetTicks() - _beginMs;
+    _onDtor(_label, elapsedMs);
 }
 
-void Profiler::signpost(const std::string &intermediateLabel) const
+ThreadProfiler::Scope ThreadProfiler::scope(const std::string &label)
 {
-    const unsigned endMs = SDL_GetTicks();
-    const unsigned elapsedMs = endMs - _beginMs;
-    SDL_Log("[Profiler] %s -- %s -- %u ms",
-            _label.c_str(), intermediateLabel.c_str(), elapsedMs);
+    _level++;
+    
+#if PROFILER_ENABLED
+    std::string indent(_level, '\t');
+    SDL_Log("%s%s -- Begin", indent.c_str(), label.c_str());
+#endif
+    
+    return Scope(label, [&](const std::string &label, unsigned elapsed){
+#if PROFILER_ENABLED
+        std::string indent(_level, '\t');
+        SDL_Log("%s%s -- End (%d ms)", indent.c_str(), label.c_str(), elapsed);
+#endif
+        _level--;
+    });
 }
+
+ThreadProfiler::ThreadProfiler()
+ : _level(0)
+{}
