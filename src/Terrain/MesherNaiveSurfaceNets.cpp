@@ -80,6 +80,65 @@ MesherNaiveSurfaceNets::quadForFace(const AABB &cell, size_t i)
     return transformedQuad;
 }
 
+std::array<glm::vec2, 4>
+MesherNaiveSurfaceNets::texCoordsForFace(const AABB &cell, size_t i)
+{
+    assert(i < NUM_FACES);
+    
+    static const std::array<std::array<vec2, 4>, NUM_FACES> texCoords = {{
+        
+        // FRONT
+        {{
+            vec2(0.f, 1.f),
+            vec2(1.f, 1.f),
+            vec2(1.f, 0.f),
+            vec2(0.f, 0.f)
+        }},
+        
+        // LEFT
+        {{
+            vec2(1.f, 1.f),
+            vec2(0.f, 1.f),
+            vec2(0.f, 0.f),
+            vec2(1.f, 0.f)
+        }},
+        
+        // BACK
+        {{
+            vec2(1.f, 1.f),
+            vec2(0.f, 1.f),
+            vec2(0.f, 0.f),
+            vec2(1.f, 0.f)
+        }},
+        
+        // RIGHT
+        {{
+            vec2(1.f, 1.f),
+            vec2(1.f, 0.f),
+            vec2(0.f, 0.f),
+            vec2(0.f, 1.f)
+        }},
+        
+        // TOP
+        {{
+            vec2(1.f, 1.f),
+            vec2(0.f, 1.f),
+            vec2(0.f, 0.f),
+            vec2(1.f, 0.f)
+        }},
+        
+        // BOTTOM
+        {{
+            vec2(1.f, 1.f),
+            vec2(1.f, 0.f),
+            vec2(0.f, 0.f),
+            vec2(0.f, 1.f)
+        }}
+    }};
+    
+    return texCoords[i];
+}
+
 glm::vec3
 MesherNaiveSurfaceNets::smoothVertex(const Array3D<Voxel> &voxels,
                                      float isosurface,
@@ -208,7 +267,9 @@ MesherNaiveSurfaceNets::verticesForFace(const Array3D<Voxel> &voxels,
                                         size_t face)
 {
     static const vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
-    static const vec3 texCoord(0.0f, 0.0f, 0.0f);
+    
+    // Get the vertices for the specified face of the cell.
+    const std::array<glm::vec2, 4> quadTexCoords = texCoordsForFace(cell, face);
     
     // Get the vertices for the specified face of the cell.
     const std::array<glm::vec3, 4> transformedQuad = quadForFace(cell, face);
@@ -229,6 +290,16 @@ MesherNaiveSurfaceNets::verticesForFace(const Array3D<Voxel> &voxels,
         smoothedQuad[indices[5]]
     }};
     
+    constexpr float grass = 75.f;
+    const std::array<glm::vec3, n> texCoords = {{
+        vec3(quadTexCoords[indices[0]], grass),
+        vec3(quadTexCoords[indices[1]], grass),
+        vec3(quadTexCoords[indices[2]], grass),
+        vec3(quadTexCoords[indices[3]], grass),
+        vec3(quadTexCoords[indices[4]], grass),
+        vec3(quadTexCoords[indices[5]], grass)
+    }};
+    
     // Calculate normals for the two triangles.
     const vec3 n1 = normalize(cross(vertexPositions[1] - vertexPositions[0],
                                     vertexPositions[2] - vertexPositions[0]));
@@ -240,16 +311,14 @@ MesherNaiveSurfaceNets::verticesForFace(const Array3D<Voxel> &voxels,
     const vec4 c1 = vec4(n1 * 0.5f + vec3(0.5f), 1.0f);
     const vec4 c2 = vec4(n2 * 0.5f + vec3(0.5f), 1.0f);
     
-    // AFOX_TODO: Need real texture coordinates for faces here.
-    
     // Pack vertex positions, colors, and texcoords together.
     std::array<TerrainVertex, n> terrainVertices = {{
-        TerrainVertex(vec4(vertexPositions[0], 1.f), c1, texCoord),
-        TerrainVertex(vec4(vertexPositions[1], 1.f), c1, texCoord),
-        TerrainVertex(vec4(vertexPositions[2], 1.f), c1, texCoord),
-        TerrainVertex(vec4(vertexPositions[3], 1.f), c2, texCoord),
-        TerrainVertex(vec4(vertexPositions[4], 1.f), c2, texCoord),
-        TerrainVertex(vec4(vertexPositions[5], 1.f), c2, texCoord)
+        TerrainVertex(vec4(vertexPositions[0], 1.f), c1, texCoords[0]),
+        TerrainVertex(vec4(vertexPositions[1], 1.f), c1, texCoords[1]),
+        TerrainVertex(vec4(vertexPositions[2], 1.f), c1, texCoords[2]),
+        TerrainVertex(vec4(vertexPositions[3], 1.f), c2, texCoords[3]),
+        TerrainVertex(vec4(vertexPositions[4], 1.f), c2, texCoords[4]),
+        TerrainVertex(vec4(vertexPositions[5], 1.f), c2, texCoords[5])
     }};
     
     return terrainVertices;

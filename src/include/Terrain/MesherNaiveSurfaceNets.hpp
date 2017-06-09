@@ -59,7 +59,13 @@ private:
     
     // Returns the four vertices for the quad which represents the specified
     // face of the specified cell, which has the shape of a rectangular prism.
-    virtual std::array<glm::vec3, 4> quadForFace(const AABB &cell, size_t face);
+    std::array<glm::vec3, 4>
+    quadForFace(const AABB &cell, size_t face);
+    
+    // Returns the four texture coordinates for the quad which represents the
+    // specified face of the specified cell.
+    std::array<glm::vec2, 4>
+    texCoordsForFace(const AABB &cell, size_t face);
     
     // Returns six vertices for the two triangles which constitute the specified
     // face of the specified cell, which has the shape of a rectangular prism.
