@@ -23,8 +23,6 @@
 void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                         const std::shared_ptr<TaskDispatcher> &dispatcher)
 {
-    std::map<SDL_Keycode, bool> prevKeyStates, keyStates;
-    
     World gameWorld(graphicsDevice, dispatcher);
     
     // Send an event containing the initial window size and scale factor.
@@ -71,11 +69,15 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                     break;
                         
                 case SDL_KEYDOWN:
-                    keyStates[e.key.keysym.sym] = true;
+                    gameWorld.events.emit(KeypressEvent(e.key.keysym.sym,
+                                                        true,
+                                                        SDL_GetTicks()));
                     break;
                         
                 case SDL_KEYUP:
-                    keyStates[e.key.keysym.sym] = false;
+                    gameWorld.events.emit(KeypressEvent(e.key.keysym.sym,
+                                                        false,
+                                                        SDL_GetTicks()));
                     break;
                         
                 case SDL_MOUSEMOTION:
@@ -86,23 +88,12 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             }
         }
             
-        for(std::pair<SDL_Keycode, bool> pair : keyStates)
-        {
-            if (pair.second != prevKeyStates[pair.first]) {
-                gameWorld.events.emit(KeypressEvent(pair.first,
-                                                    pair.second,
-                                                    SDL_GetTicks()));
-            }
-        }
-            
         unsigned ticksEndMs = SDL_GetTicks();
         unsigned ticksElapsedMs = ticksEndMs - ticksBeginMs;
         ticksBeginMs = ticksEndMs;
         entityx::TimeDelta dt = ticksElapsedMs;
-
+        
         gameWorld.update(dt);
-            
-        prevKeyStates = keyStates;
     }
 }
     

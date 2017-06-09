@@ -15,8 +15,7 @@
 CameraMovementSystem::CameraMovementSystem()
  : _cameraSpeed(50.0f),
    _cameraRotateSpeed(1.0f),
-   _mouseSensitivity(5.0f),
-   _mouseEventPending(false)
+   _mouseSensitivity(5.0f)
 {}
     
 void CameraMovementSystem::configure(entityx::EventManager &em)
@@ -24,7 +23,6 @@ void CameraMovementSystem::configure(entityx::EventManager &em)
     em.subscribe<entityx::ComponentAddedEvent<ActiveCamera>>(*this);
     em.subscribe<entityx::ComponentRemovedEvent<ActiveCamera>>(*this);
     em.subscribe<KeypressEvent>(*this);
-    em.subscribe<MouseMoveEvent>(*this);
 }
     
 void CameraMovementSystem::update(entityx::EntityManager &es,
@@ -50,31 +48,31 @@ void CameraMovementSystem::update(entityx::EntityManager &es,
     const float angle = _cameraRotateSpeed*dt;
     const float speed = _cameraSpeed*dt;
         
-    if(_keys[SDLK_w]) {
+    if (_keys[SDLK_w]) {
         velocity += worldForward * speed;
     } else if(_keys[SDLK_s]) {
         velocity += worldForward * -speed;
     }
         
-    if(_keys[SDLK_a]) {
+    if (_keys[SDLK_a]) {
         velocity += worldRight * -speed;
     } else if(_keys[SDLK_d]) {
         velocity += worldRight * speed;
     }
         
-    if(_keys[SDLK_z]) {
+    if (_keys[SDLK_z]) {
         velocity += localUp * -speed;
     } else if(_keys[SDLK_x]) {
         velocity += localUp * speed;
     }
 
-    if(_keys[SDLK_i]) {
+    if (_keys[SDLK_i]) {
         _rotation = glm::angleAxis(-angle, worldRight) * _rotation;
     } else if(_keys[SDLK_k]) {
         _rotation = glm::angleAxis(angle, worldRight) * _rotation;
     }
         
-    if(_keys[SDLK_j]) {
+    if (_keys[SDLK_j]) {
         glm::quat deltaRot = glm::angleAxis(angle, localUp);
         _rotation = deltaRot * _rotation;
     } else if(_keys[SDLK_l]) {
@@ -82,14 +80,12 @@ void CameraMovementSystem::update(entityx::EntityManager &es,
         _rotation = deltaRot * _rotation;
     }
     
+    // Poll the mouse position once per frame. We measure the delta of the mouse
+    // position and use that to control the camera.
     int mouseDeltaX = 0, mouseDeltaY = 0;
-    
-    if (_mouseEventPending) {
-        _mouseEventPending = false;
-        SDL_GetRelativeMouseState(&mouseDeltaX, &mouseDeltaY);
-    }
+    SDL_GetRelativeMouseState(&mouseDeltaX, &mouseDeltaY);
         
-    if(mouseDeltaX != 0) {
+    if (mouseDeltaX != 0) {
         float mouseDirectionX = -mouseDeltaX*_mouseSensitivity*dt;
         float angle = mouseDirectionX*dt;
         glm::quat deltaRot = glm::angleAxis(angle, localUp);
@@ -97,7 +93,7 @@ void CameraMovementSystem::update(entityx::EntityManager &es,
         mouseDeltaX = 0;
     }
         
-    if(mouseDeltaY != 0) {
+    if (mouseDeltaY != 0) {
         float mouseDirectionY = -mouseDeltaY*_mouseSensitivity*dt;
         float angle = mouseDirectionY*dt;
         glm::quat deltaRot = glm::angleAxis(angle, localRight);
@@ -132,9 +128,4 @@ void CameraMovementSystem::receive(const entityx::ComponentRemovedEvent<ActiveCa
 void CameraMovementSystem::receive(const KeypressEvent &event)
 {
     _keys[event.key] = event.down;
-}
-    
-void CameraMovementSystem::receive(const MouseMoveEvent &event)
-{
-    _mouseEventPending = true;
 }

@@ -55,5 +55,6 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
 
 void World::update(entityx::TimeDelta dt)
 {
-    systems.update_all(dt);
+    systems.update<CameraMovementSystem>(dt);
+    systems.update<RenderSystem>(dt);
 }
