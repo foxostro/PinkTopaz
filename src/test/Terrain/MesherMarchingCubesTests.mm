@@ -27,11 +27,11 @@
 #if 0
     // Enable this block to generate a new golden mesh.
     const auto bytes = meshSerializer.save(actualMesh);
-    saveBinaryFile("/Users/andrewfox/src/PinkTopaz/res/test_data/StaticMeshSerializerTestsGold.bin", bytes);
+    saveBinaryFile("/Users/andrewfox/src/PinkTopaz/res/test_data/MesherMarchingCubesTestsGold.bin", bytes);
 #endif
     
     // Load the "golden" mesh.
-    const auto goldMeshFileData = binaryFileContents("test_data/StaticMeshSerializerTestsGold.bin");
+    const auto goldMeshFileData = binaryFileContents("test_data/MesherMarchingCubesTestsGold.bin");
     StaticMesh expectedMesh = meshSerializer.load(goldMeshFileData);
     
     XCTAssert(expectedMesh == actualMesh);
