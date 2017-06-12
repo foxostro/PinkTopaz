@@ -24,9 +24,7 @@
 void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                         const std::shared_ptr<TaskDispatcher> &dispatcher)
 {
-    ThreadProfiler mainThreadProfiler;
-    
-    World gameWorld(graphicsDevice, dispatcher, mainThreadProfiler);
+    World gameWorld(graphicsDevice, dispatcher);
     
     // Send an event containing the initial window size and scale factor.
     // This will allow the render system to setup projection matrices and such.
@@ -43,7 +41,7 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
     while(!quit)
     {
-        PROFILER(mainThreadProfiler, frameScope, "Frame");
+        PROFILER(Frame);
         
         SDL_Event e;
         

@@ -11,39 +11,80 @@
 
 #include <string>
 #include <functional>
+#include "UniqueName.hpp"
 
-#define PROFILER_ENABLED 0
+// Change this macro to 1 to enable profiling with the PROFILER macro. Set to 0
+// disable this profiling at compile time. The profiling is fairly low overhead
+// so this shouldn't have a large impact on performance either way.
+#define PROFILER_ENABLED 1
 
-class ThreadProfiler
+// The Profiler class is useful for logging events during the execution of the
+// game. This can help provide signposts and context to profiling tool output.
+// For example, this is very useful when used along with the Instruments "Time
+// Profiler" and "Points of Interest" tools.
+class Profiler
 {
 public:
+    enum Label
+    {
+        Frame = 0,
+        Render,
+        InitWorld,
+    };
+    
     class Scope
     {
     public:
-        typedef std::function<void(const std::string &label, unsigned elapsedMs)> Handler;
+        Scope(Profiler &profiler, Label label)
+         : _profiler(profiler), _label(label)
+        {
+            _profiler.start(_label);
+        }
         
-        Scope(const std::string &label, const Handler &onDtor);
-        ~Scope();
+        ~Scope()
+        {
+            _profiler.end(_label);
+        }
         
     private:
-        const std::string _label;
-        const Handler _onDtor;
-        const unsigned _beginMs;
+        Profiler &_profiler;
+        const Label _label;
     };
     
-    ThreadProfiler();
-    ~ThreadProfiler() = default;
+    Profiler() = default;
+    virtual ~Profiler() = default;
     
-    Scope scope(const std::string &label);
+    // Return a scope object. This will log the beginning of an event,
+    // identified by `label', in the constructor and will log the end of that
+    // same event in the destructor.
+    // Use this with the PROFILER macro to easily log the beginning and end of
+    // a scope block.
+    inline Scope scope(Label label)
+    {
+        return Scope(*this, label);
+    }
     
-private:
-    size_t _level;
+    // Log the start of an event, identified by `label'.
+    virtual void start(Label label) = 0;
+    
+    // Log the end of an event, identified by `label'.
+    virtual void end(Label label) = 0;
+    
+    // Log an instantaneous event, identified by `label'.
+    virtual void signPost(Label label) = 0;
 };
 
 #if PROFILER_ENABLED
-#define PROFILER(profiler, name, label) auto name = (profiler).scope(label)
+
+// Returns the global profiler. There is one profiler for the entire app.
+std::shared_ptr<Profiler> getProfiler();
+
+// Log the beginning and end of an event that spans the scope where this macro
+// is defined. See also the Profiler::scope() method.
+#define PROFILER(label) auto PP_CAT(Profiler, __COUNTER__) = getProfiler()->scope(Profiler :: label)
+
 #else
-#define PROFILER(profiler, name, label)
+#define PROFILER(label)
 #endif
 
 #endif /* Profiler_hpp */

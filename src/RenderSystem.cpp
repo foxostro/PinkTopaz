@@ -14,21 +14,18 @@
 #include "RenderableStaticMesh.hpp"
 #include "TerrainComponent.hpp"
 #include "Exception.hpp"
+#include "Profiler.hpp"
 
 #include "SDL.h"
 #include <glm/gtc/matrix_transform.hpp> // for perspective()
 
-RenderSystem::RenderSystem(const std::shared_ptr<GraphicsDevice> &dev,
-                           ThreadProfiler &profiler)
+RenderSystem::RenderSystem(const std::shared_ptr<GraphicsDevice> &dev)
  : FONT_NAME("vegur/Vegur-Regular.otf"),
    FONT_SIZE(48),
    _graphicsDevice(dev),
    _stringRenderer(dev, FONT_NAME, FONT_SIZE),
-   _frameTimer(_stringRenderer),
-   _profiler(profiler)
-{
-    (void)_profiler; // Squelch the error about unused private field when PROFILER_ENABLED is 0.
-}
+   _frameTimer(_stringRenderer)
+{}
 
 void RenderSystem::configure(entityx::EventManager &em)
 {
@@ -41,7 +38,7 @@ void RenderSystem::update(entityx::EntityManager &es,
                           entityx::EventManager &events,
                           entityx::TimeDelta dt)
 {
-    PROFILER(_profiler, updateScope, "RenderSystem::update");
+    PROFILER(Render);
     
     glm::mat4x4 cameraTransform;
     if (_activeCamera.valid()) {

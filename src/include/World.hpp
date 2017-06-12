@@ -12,7 +12,6 @@
 #include <entityx/entityx.h>
 #include "Renderer/GraphicsDevice.hpp"
 #include "TaskDispatcher.hpp"
-#include "Profiler.hpp"
 
 // A World is the same thing as a game zone or level.
 // This is a collection of interacting entities and associated systems.
@@ -22,8 +21,7 @@ class World : public entityx::EntityX
 {
 public:
     explicit World(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
-                   const std::shared_ptr<TaskDispatcher> &dispatcher,
-                   ThreadProfiler &profiler);
+                   const std::shared_ptr<TaskDispatcher> &dispatcher);
         
     void update(entityx::TimeDelta dt);
 };

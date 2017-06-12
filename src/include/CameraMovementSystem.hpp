@@ -16,13 +16,12 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <map>
-#include "Profiler.hpp"
 #include "SDL.h"
     
 class CameraMovementSystem : public entityx::System<CameraMovementSystem>, public entityx::Receiver<CameraMovementSystem>
 {
 public:
-    CameraMovementSystem(ThreadProfiler &profiler);
+    CameraMovementSystem();
     void configure(entityx::EventManager &em) override;
     void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
     void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
@@ -37,7 +36,6 @@ private:
     glm::quat _rotation;
     std::map<SDL_Keycode, bool> _keys;
     entityx::Entity _activeCamera;
-    ThreadProfiler &_profiler;
 };
 
 #endif /* CameraMovementSystem_hpp */
