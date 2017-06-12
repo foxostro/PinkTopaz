@@ -9,8 +9,10 @@
 #ifndef GridAddressable_hpp
 #define GridAddressable_hpp
 
-#include <glm/vec3.hpp>
+#include "AABB.hpp"
 #include "Exception.hpp"
+#include <glm/vec3.hpp>
+#include <functional>
 
 // Exception thrown when attempting to access the grid at a point that is not in
 // the valid space of the grid.
@@ -24,10 +26,10 @@ public:
 template<typename TYPE> class GridAddressable
 {
 public:
-#ifdef NDEBUG
-    static constexpr bool EnableVerboseBoundsChecking = false;
-#else
+#ifndef NDEBUG
     static constexpr bool EnableVerboseBoundsChecking = true;
+#else
+    static constexpr bool EnableVerboseBoundsChecking = false;
 #endif
     
     virtual ~GridAddressable() = default;

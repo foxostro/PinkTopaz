@@ -35,6 +35,8 @@ set(SOURCE_FILES_TERRAIN
     "src/Terrain/MesherMarchingCubes.cpp" "src/include/Terrain/MesherMarchingCubes.hpp"
     "src/Terrain/MesherNaiveSurfaceNets.cpp" "src/include/Terrain/MesherNaiveSurfaceNets.hpp"
     "src/include/Terrain/Mesher.hpp"
+    "src/Terrain/VoxelDataGenerator.cpp" "src/include/Terrain/VoxelDataGenerator.hpp"
+    "src/Terrain/TerrainMeshes.cpp" "src/include/Terrain/TerrainMeshes.hpp"
     )
 
 set(SOURCE_FILES_OPENGL

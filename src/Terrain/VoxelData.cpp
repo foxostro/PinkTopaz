@@ -8,57 +8,47 @@
 
 #include "Terrain/VoxelData.hpp"
 
-VoxelData::VoxelData(const AABB &box, const glm::ivec3 &res)
- : _box(box),
-   _res(res),
-   _cellDim(box.extent.x * 2.0f / res.x,
-            box.extent.y * 2.0f / res.y,
-            box.extent.z * 2.0f / res.z),
-   _chunks(box, res / CHUNK_SIZE)
+VoxelData::VoxelData(const VoxelDataGenerator &generator)
+ : _generator(generator),
+   _chunks(generator.boundingBox(), _generator.gridResolution() / CHUNK_SIZE)
 {}
 
 const Voxel& VoxelData::get(const glm::vec3 &p) const
 {
-    const MaybeChunk &maybeChunk = _chunks.get(p);
+    const MaybeChunk &maybeChunk = chunkAtPoint(p);
+    assert(maybeChunk);
     const Voxel &voxel = maybeChunk->get(p);
     return voxel;
 }
 
 Voxel& VoxelData::mutableReference(const glm::vec3 &p)
 {
-    MaybeChunk &maybeChunk = _chunks.mutableReference(p);
+    MaybeChunk &maybeChunk = chunkAtPoint(p);
+    assert(maybeChunk);
     Voxel &voxel = maybeChunk->mutableReference(p);
     return voxel;
 }
 
 void VoxelData::set(const glm::vec3 &p, const Voxel &object)
 {
-    MaybeChunk &maybeChunk = _chunks.mutableReference(p);
-    
-    // If the chunk does not exist then create it now.
-    if (!maybeChunk) {
-        AABB chunkBoundingBox = _chunks.cellAtPoint(p);
-        glm::ivec3 numChunks = _chunks.gridResolution();
-        glm::ivec3 chunkRes = _res / numChunks;
-        maybeChunk.emplace(chunkBoundingBox, chunkRes);
-    }
-    
+    MaybeChunk &maybeChunk = chunkAtPoint(p);
+    assert(maybeChunk);
     maybeChunk->set(p, object);
 }
 
 glm::vec3 VoxelData::cellDimensions() const
 {
-    return _cellDim;
+    return _generator.cellDimensions();
 }
 
 AABB VoxelData::boundingBox() const
 {
-    return _box;
+    return _generator.boundingBox();
 }
 
 glm::ivec3 VoxelData::gridResolution() const
 {
-    return _res;
+    return _generator.gridResolution();
 }
 
 const GridView<Voxel> VoxelData::getView(const AABB &region) const
@@ -92,10 +82,32 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
     Array3D<Voxel> dst(adjustedRegion, res);
     assert(dst.inbounds(region));
     
-    // AFOX_TODO: Use direct array access here.
     dst.mutableForEachCell(adjustedRegion, [&](const AABB &cell){
         return get(cell.center);
     });
     
     return dst;
+}
+
+VoxelData::MaybeChunk& VoxelData::chunkAtPoint(const glm::vec3 &p) const
+{
+    // AFOX_TODO: Need a better way to lock chunks. This effectively serializes all chunk generation.
+    std::lock_guard<std::mutex> lock(_lockChunks);
+    
+    MaybeChunk &maybeChunk = _chunks.mutableReference(p);
+    
+    // If the chunk does not exist then create it now. The initial contents of
+    // the chunk are filled using the generator.
+    if (!maybeChunk) {
+        AABB chunkBoundingBox = _chunks.cellAtPoint(p);
+        glm::ivec3 numChunks = _chunks.gridResolution();
+        glm::ivec3 chunkRes = gridResolution() / numChunks;
+        maybeChunk.emplace(chunkBoundingBox, chunkRes);
+        maybeChunk->mutableForEachCell(chunkBoundingBox, [&](const AABB &cell){
+            return _generator.get(cell.center);
+        });
+    }
+    
+    assert(maybeChunk);
+    return maybeChunk;
 }

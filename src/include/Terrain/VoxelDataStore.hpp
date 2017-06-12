@@ -10,6 +10,7 @@
 #define VoxelDataStore_hpp
 
 #include "VoxelData.hpp"
+#include "VoxelDataGenerator.hpp"
 #include "ChangeLog.hpp"
 #include <shared_mutex>
 #include <functional>
@@ -19,21 +20,8 @@
 class VoxelDataStore
 {
 public:
-    // Constructor. Accepts a bounding box decribing the region of space
-    // this block of voxels represents. The space is divided into voxel
-    // cells at a resolution described by `resolution.' That is, there are
-    // `resolution.x' voxel cells along the X-axis, `resolution.y' voxel
-    // cells along the Y-axis, and `resolution.z' cells along the Z-axis.
-    VoxelDataStore(const AABB &box, const glm::ivec3 &resolution);
-    
-    // No default constructor.
-    VoxelDataStore() = delete;
-    
-    // Copy constructor is just the default.
-    VoxelDataStore(const VoxelDataStore &voxels) = default;
-    
-    // Move constructor is just the default.
-    VoxelDataStore(VoxelDataStore &&voxels) = default;
+    // Constructor.
+    VoxelDataStore();
     
     // Destructor is just the default.
     ~VoxelDataStore() = default;
@@ -53,9 +41,24 @@ public:
     // example, by rebuilding meshes.
     boost::signals2::signal<void (const ChangeLog &changeLog)> voxelDataChanged;
     
+    // Gets the dimensions of a single cell in the grid.
+    // Note that cells in the grid are always the same size.
+    inline glm::vec3 cellDimensions() const
+    {
+        return _data.cellDimensions();
+    }
+    
+    // Gets the region for which the grid is defined.
+    // Accesses to points outside this box is not permitted.
+    AABB boundingBox() const;
+    
+    // Gets the number of cells along each axis within the valid region.
+    glm::ivec3 gridResolution() const;
+    
 private:
-    ChangeLog _changeLog;
+    VoxelDataGenerator _generator;
     VoxelData _data;
+    ChangeLog _changeLog;
     mutable std::shared_mutex _mutex;
 };
 

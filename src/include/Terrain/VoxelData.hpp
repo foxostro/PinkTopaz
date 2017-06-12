@@ -12,7 +12,9 @@
 #include "Array3D.hpp"
 #include "Voxel.hpp"
 #include "GridView.hpp"
+#include "VoxelDataGenerator.hpp"
 #include <experimental/optional>
+#include <mutex>
 
 // A block of voxels in space.
 class VoxelData : public GridMutable<Voxel>
@@ -21,29 +23,25 @@ public:
     typedef Array3D<Voxel> Chunk;
     typedef typename std::experimental::optional<Chunk> MaybeChunk;
     
-    // Constructor. Accepts a bounding box decribing the region of space
-    // this block of voxels represents. The space is divided into voxel
-    // cells at a resolution described by `resolution.' That is, there are
-    // `resolution.x' voxel cells along the X-axis, `resolution.y' voxel
-    // cells along the Y-axis, and `resolution.z' cells along the Z-axis.
-    VoxelData(const AABB &box, const glm::ivec3 &resolution);
+    // Constructor. Accepts `generator' which can generate voxel terrain as
+    // needed to fill the chunks underlying VoxelData.
+    VoxelData(const VoxelDataGenerator &generator);
     
     // No default constructor.
     VoxelData() = delete;
     
-    // Copy constructor is just the default.
-    VoxelData(const VoxelData &voxels) = default;
-    
-    // Move constructor is just the default.
-    VoxelData(VoxelData &&voxels) = default;
-    
     // Destructor is just the default.
     ~VoxelData() = default;
     
-    // Each point in space corresponds to exactly one cell. Get the object.
+    // Get the object corresponding to the specified point in space.
+    // Note that each point in space corresponds to exactly one cell.
+    // Throws an exception if the point is not within this grid.
+    // Throws an exception if the chunk is not already present.
     const Voxel& get(const glm::vec3 &p) const override;
     
-    // Each point in space corresponds to exactly one cell. Get the (mutable) object.
+    // Each point in space corresponds to exactly one cell. Get the (mutable)
+    // object. Note that this will retrieve the chunk contents from the
+    // generator if the the chunk is not already present.
     Voxel& mutableReference(const glm::vec3 &p) override;
     
     // Each point in space corresponds to exactly one cell. Set the object.
@@ -72,13 +70,17 @@ public:
 private:
     static constexpr int CHUNK_SIZE = 32;
     
-    const AABB _box;
-    const glm::ivec3 _res;
-    const glm::vec3 _cellDim;
+    // Provides voxel data for regions of space where none is available yet.
+    const VoxelDataGenerator &_generator;
     
     // The voxel grid is broken into chunks where each chunk is a fixed-size
     // grid of voxels.
-    Array3D<MaybeChunk> _chunks;
+    mutable std::mutex _lockChunks;
+    mutable Array3D<MaybeChunk> _chunks;
+    
+    // Fetches the chunk at the specified point in space `p'. This may create
+    // the chunk. If so, it is filled using the generator.
+    MaybeChunk& chunkAtPoint(const glm::vec3 &p) const;
 };
 
 #endif /* VoxelData_hpp */

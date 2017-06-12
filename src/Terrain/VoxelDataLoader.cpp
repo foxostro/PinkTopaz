@@ -22,7 +22,7 @@ void VoxelDataLoader::retrieveDimensions(const std::vector<uint8_t> &bytes, AABB
     
     glm::vec3 half(header.w / 2.f, header.h / 2.f, header.d / 2.f);
     box = {
-        half,
+        half + glm::vec3(0.5f, 0.5f, 0.5f),
         half,
     };
     res = glm::ivec3(header.w, header.h, header.d);

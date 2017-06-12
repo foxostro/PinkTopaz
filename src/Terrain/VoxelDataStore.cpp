@@ -10,8 +10,8 @@
 #include "Profiler.hpp"
 #include <mutex> // for std::unique_lock
 
-VoxelDataStore::VoxelDataStore(const AABB &box, const glm::ivec3 &resolution)
- : _data(box, resolution)
+VoxelDataStore::VoxelDataStore()
+ : _data(_generator)
 {}
 
 void VoxelDataStore::readerTransaction(const AABB &region, const std::function<void(const Array3D<Voxel> &voxels)> &fn) const
@@ -29,4 +29,16 @@ void VoxelDataStore::writerTransaction(const AABB &region, const std::function<C
         changeLog = fn(view);
     }
     voxelDataChanged(changeLog);
+}
+
+AABB VoxelDataStore::boundingBox() const
+{
+    AABB box = _generator.boundingBox().inset(glm::vec3(16.f, 16.f, 16.f));
+    return box;
+}
+
+glm::ivec3 VoxelDataStore::gridResolution() const
+{
+    glm::ivec3 res = _generator.gridResolution() - glm::ivec3(32, 32, 32);
+    return res;
 }

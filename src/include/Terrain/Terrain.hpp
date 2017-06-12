@@ -11,30 +11,25 @@
 
 #include "Terrain/VoxelDataStore.hpp"
 #include "Terrain/Mesher.hpp"
+#include "Terrain/VoxelDataGenerator.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 #include "RenderableStaticMesh.hpp"
 #include "TaskDispatcher.hpp"
+#include "TerrainMeshes.hpp"
 #include <mutex>
 
 // This object represents the terrain of the world.
 class Terrain
 {
 public:
+    ~Terrain() = default;
+    
     // Constructor.
     Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             const std::shared_ptr<TaskDispatcher> &dispatcher);
     
     // No default constructor.
     Terrain() = delete;
-    
-    // Copy constructor is just the default.
-    Terrain(const Terrain &terrain) = default;
-    
-    // Move constructor is just the default.
-    Terrain(Terrain &&terrain) = default;
-    
-    // Destructor.
-    ~Terrain();
     
     // Pass a modelview and projection matrix down for use with the terrain.
     void setTerrainUniforms(const TerrainUniforms &uniforms);
@@ -43,25 +38,8 @@ public:
     void draw(const std::shared_ptr<CommandEncoder> &encoder) const;
     
 private:
-    static constexpr int MESH_CHUNK_SIZE = 16;
-    
-    void rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
-                                  const size_t index,
-                                  const AABB &meshBox);
-    
-    void rebuildMeshForChunkOuter(const size_t index,
-                                  const AABB &meshBox);
-    
-    std::shared_ptr<GraphicsDevice> _graphicsDevice;
-    std::shared_ptr<TaskDispatcher> _dispatcher;
-    std::unique_ptr<Mesher> _mesher;
-    std::unique_ptr<VoxelDataStore> _voxels;
-    
-    mutable std::mutex _lockMeshes;
-    std::unique_ptr<Array3D<RenderableStaticMesh>> _meshes;
-    RenderableStaticMesh _defaultMesh;
-    
-    void rebuildMesh(const ChangeLog &changeLog);
+    std::shared_ptr<VoxelDataStore> _voxels;
+    std::shared_ptr<TerrainMeshes> _meshes;
 };
 
 #endif /* Terrain_hpp */
