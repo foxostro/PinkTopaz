@@ -57,6 +57,7 @@ private:
     std::unique_ptr<Array3D<MaybeTerrainMesh>> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     TerrainMeshQueue _meshesToRebuild;
+    std::atomic<int> _meshFetchInFlight;
     
     // Kicks off asynchronous tasks to rebuild any meshes that are affected by
     // the specified changes.

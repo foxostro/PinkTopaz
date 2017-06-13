@@ -21,7 +21,8 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
  : _graphicsDevice(graphicsDevice),
    _dispatcher(dispatcher),
    _mesher(new MesherNaiveSurfaceNets),
-   _voxels(new VoxelDataStore)
+   _voxels(new VoxelDataStore),
+   _meshFetchInFlight(0)
 {
     // Load terrain texture array from a single image.
     // TODO: create a TextureArrayLoader class to encapsulate tex loading.
@@ -95,20 +96,29 @@ void Terrain::setTerrainUniforms(const TerrainUniforms &uniforms)
 
 void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
 {
-    // Update the draw list without blocking too long waiting on locks.
-    // If a mesh is missing then kick off an asynchronous task to generate it.
-    if (_lockMeshes.try_lock()) {
-        _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell){
-            const MaybeTerrainMesh &maybeTerrainMesh = _meshes->get(cell.center);
-            _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
-            if (!maybeTerrainMesh) {
-                asyncRebuildAnotherMesh(cell);
+    // If any meshes are missing then kick off an async task to fetch them.
+    // Limit the number of these tasks that can be in flight at once.
+    //
+    // There's bit of race between comparing the counter and incrementing it,
+    // but that doesn't matter since we merely want a good effort at limiting
+    // the number of these tasks in the queue.
+    if (_meshFetchInFlight < 1) {
+        _meshFetchInFlight++;
+        _dispatcher->async([=]{
+            if (_lockMeshes.try_lock()) {
+                _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell){
+                    const MaybeTerrainMesh &maybeTerrainMesh = _meshes->get(cell.center);
+                    _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
+                    if (!maybeTerrainMesh) {
+                        asyncRebuildAnotherMesh(cell);
+                    }
+                });
+                _lockMeshes.unlock();
             }
+            _meshFetchInFlight--;
         });
-        _lockMeshes.unlock();
     }
     
-    // Draw the meshes now.
     encoder->setShader(_defaultMesh->shader);
     encoder->setFragmentSampler(_defaultMesh->textureSampler, 0);
     encoder->setFragmentTexture(_defaultMesh->texture, 0);

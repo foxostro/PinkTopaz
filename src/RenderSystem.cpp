@@ -65,7 +65,7 @@ void RenderSystem::update(entityx::EntityManager &es,
         };
         terrain.terrain->setTerrainUniforms(uniforms);
     });
-        
+    
     // Render all meshes.
     RenderPassDescriptor desc = {
         true,
@@ -93,7 +93,7 @@ void RenderSystem::update(entityx::EntityManager &es,
     _stringRenderer.draw(encoder, _viewport);
     
     encoder->commit();
-
+    
     _graphicsDevice->swapBuffers();
     _frameTimer.tick();
 }
