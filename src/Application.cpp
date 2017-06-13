@@ -45,6 +45,7 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             switch(e.type)
             {
                 case SDL_QUIT:
+                    PROFILER_SIGNPOST(Quit);
                     SDL_Log("Received SDL_QUIT.");
                     quit = true;
                     dispatcher->shutdown();

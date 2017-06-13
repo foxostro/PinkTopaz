@@ -30,6 +30,7 @@ public:
         Frame = 0,
         Render,
         InitWorld,
+        Quit,
     };
     
     class Scope
@@ -79,11 +80,14 @@ public:
 // Returns the global profiler. There is one profiler for the entire app.
 std::shared_ptr<Profiler> getProfiler();
 
+#define PROFILER_SIGNPOST(label) do { getProfiler()->signPost(Profiler :: label); } while(false)
+
 // Log the beginning and end of an event that spans the scope where this macro
 // is defined. See also the Profiler::scope() method.
 #define PROFILER(label) auto PP_CAT(Profiler, __COUNTER__) = getProfiler()->scope(Profiler :: label)
 
 #else
+#define PROFILER_SIGNPOST(label)
 #define PROFILER(label)
 #endif
 
