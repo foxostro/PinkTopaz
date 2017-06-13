@@ -11,7 +11,6 @@
 #include "RetinaSupport.h"
 #include "World.hpp"
 #include "WindowSizeChangedEvent.hpp"
-#include "KeypressEvent.hpp"
 #include "Exception.hpp"
 #include "Profiler.hpp"
 
@@ -66,18 +65,6 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                             gameWorld.events.emit(event);
                         } break;
                     }
-                    break;
-                        
-                case SDL_KEYDOWN:
-                    gameWorld.events.emit(KeypressEvent(e.key.keysym.sym,
-                                                        true,
-                                                        SDL_GetTicks()));
-                    break;
-                        
-                case SDL_KEYUP:
-                    gameWorld.events.emit(KeypressEvent(e.key.keysym.sym,
-                                                        false,
-                                                        SDL_GetTicks()));
                     break;
             }
         }
