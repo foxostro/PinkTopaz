@@ -86,8 +86,6 @@ TerrainMeshes::TerrainMeshes(const std::shared_ptr<GraphicsDevice> &graphicsDevi
 
 void TerrainMeshes::setTerrainUniforms(const TerrainUniforms &uniforms)
 {
-    std::lock_guard<std::mutex> lock(_lockMeshes);
-    
     // The uniforms referenced in the default mesh are also referenced by other
     // meshes in the terrain. Setting it once here sets it for all of them.
     _defaultMesh->uniforms->replace(sizeof(uniforms), &uniforms);
@@ -95,7 +93,7 @@ void TerrainMeshes::setTerrainUniforms(const TerrainUniforms &uniforms)
 
 void TerrainMeshes::draw(const std::shared_ptr<CommandEncoder> &encoder) const
 {
-    std::lock_guard<std::mutex> lock(_lockMeshes);
+    nonblockingUpdateDrawList();
     
     // The following resources are referenced by and used by all meshes in the
     // terrain. We only need to set them once.
@@ -104,13 +102,37 @@ void TerrainMeshes::draw(const std::shared_ptr<CommandEncoder> &encoder) const
     encoder->setFragmentTexture(_defaultMesh->texture, 0);
     encoder->setVertexBuffer(_defaultMesh->uniforms, 1);
     
-    // Draw each mesh that is available.
-    // Request that each missing mesh be generated asynchronously.
+    for (const auto &mesh : _meshesToDraw) {
+        if (mesh.vertexCount > 0) {
+            encoder->setVertexBuffer(mesh.buffer, 0);
+            encoder->drawPrimitives(Triangles, 0, mesh.vertexCount, 1);
+        }
+    }
+}
+
+void TerrainMeshes::nonblockingUpdateDrawList() const
+{
+    // If we can snag the lock then update the draw list. Don't allow this to
+    // block the render thread at any point.
+    if (!_lockMeshes.try_lock()) {
+        return;
+    }
+    
+    _meshesToDraw.clear();
+    
     _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell){
-        const MaybeTerrainMesh &maybeMesh = _meshes->get(cell.center);
-        if (maybeMesh) {
-            maybeMesh->draw(encoder);
+        const MaybeTerrainMesh &maybeTerrainMesh = _meshes->get(cell.center);
+        if (maybeTerrainMesh) {
+            // The terrain mesh exists. If we can also get the renderable
+            // mesh with the GPU resources then add that to the draw list.
+            // Otherwise, skip it.
+            auto maybeRenderableMesh = maybeTerrainMesh->nonblockingGetMesh();
+            if (maybeRenderableMesh) {
+                const auto &renderableMesh = *maybeRenderableMesh;
+                _meshesToDraw.emplace_back(renderableMesh);
+            }
         } else {
+            // Kick off an asynchronous task to generate the terrain mesh.
             _dispatcher->async([=]{
                 std::lock_guard<std::mutex> lock(_lockMeshes);
                 MaybeTerrainMesh &maybeMesh = _meshes->mutableReference(cell.center);
@@ -125,6 +147,8 @@ void TerrainMeshes::draw(const std::shared_ptr<CommandEncoder> &encoder) const
             });
         }
     });
+    
+    _lockMeshes.unlock();
 }
 
 void TerrainMeshes::rebuildMesh(const ChangeLog &changeLog)
@@ -142,7 +166,7 @@ void TerrainMeshes::rebuildMesh(const ChangeLog &changeLog)
     // Kick off a task to rebuild each affected mesh.
     for (const AABB &cell : affectedMeshes) {
         _dispatcher->async([=]{
-            std::lock_guard<std::mutex> lock(_lockMeshes);
+            _lockMeshes.lock();
             MaybeTerrainMesh &maybeMesh = _meshes->mutableReference(cell.center);
             if (!maybeMesh) {
                 maybeMesh.emplace(cell,
@@ -151,6 +175,7 @@ void TerrainMeshes::rebuildMesh(const ChangeLog &changeLog)
                                   _mesher,
                                   _voxels);
             }
+            _lockMeshes.unlock();
             maybeMesh->rebuild();
         });
     }

@@ -54,9 +54,19 @@ private:
     std::shared_ptr<VoxelDataStore> _voxels;
     
     mutable std::mutex _lockMeshes;
+    mutable std::vector<RenderableStaticMesh> _meshesToDraw;
     std::unique_ptr<Array3D<MaybeTerrainMesh>> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     
+    // If we can snag the lock then update the draw list. Don't allow this to
+    // block the render thread at any point.
+    void nonblockingUpdateDrawList() const;
+    
+    // Unsafe. Update the draw list without taking the lock.
+    void unsafeUpdateDrawList() const;
+    
+    // Kicks off asynchronous tasks to rebuild any meshes that are affected by
+    // the specified changes.
     void rebuildMesh(const ChangeLog &changeLog);
 };
 

@@ -7,44 +7,73 @@
 //
 
 #include "Terrain/TerrainMesh.hpp"
+#include <thread>
 
 TerrainMesh::~TerrainMesh() {}
 
 TerrainMesh::TerrainMesh(const AABB &meshBox,
-                         const std::shared_ptr<RenderableStaticMesh> &defaultMesh,
+                         const std::shared_ptr<RenderableStaticMesh> &defMesh,
                          const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                          const std::shared_ptr<Mesher> &mesher,
                          const std::shared_ptr<VoxelDataStore> &voxels)
  : _graphicsDevice(graphicsDevice),
    _mesher(mesher),
    _voxels(voxels),
-   _defaultMesh(defaultMesh),
-   _mesh(*defaultMesh),
+   _defaultMesh(defMesh),
+   _mesh(*defMesh),
    _meshBox(meshBox)
-{
-    rebuild();
-}
+{}
 
-void TerrainMesh::setTerrainUniforms(const TerrainUniforms &uniforms)
-{
-    // The uniforms referenced in the default mesh are also referenced by other
-    // meshes in the terrain. Setting it once here sets it for all of them.
-    _defaultMesh->uniforms->replace(sizeof(uniforms), &uniforms);
-}
+TerrainMesh::TerrainMesh(const TerrainMesh &mesh)
+ : _graphicsDevice(mesh._graphicsDevice),
+   _mesher(mesh._mesher),
+   _voxels(mesh._voxels),
+   _defaultMesh(mesh._defaultMesh),
+   _mesh(mesh._mesh),
+   _meshBox(mesh._meshBox)
+{}
 
-void TerrainMesh::draw(const std::shared_ptr<CommandEncoder> &encoder) const
+TerrainMesh::TerrainMesh(TerrainMesh &&mesh)
+ : _graphicsDevice(mesh._graphicsDevice),
+   _mesher(mesh._mesher),
+   _voxels(mesh._voxels),
+   _defaultMesh(mesh._defaultMesh),
+   _mesh(mesh._mesh),
+   _meshBox(mesh._meshBox)
+{}
+
+TerrainMesh& TerrainMesh::operator=(const TerrainMesh &rhs)
 {
-    // Several resources are set before this call and are reused for all meshes.
-    // We expect the caller to take care of that for us.
-    
-    if (_mesh.vertexCount > 0) {
-        encoder->setVertexBuffer(_mesh.buffer, 0);
-        encoder->drawPrimitives(Triangles, 0, _mesh.vertexCount, 1);
+    if (this == &rhs) {
+        return *this;
     }
+    
+    _graphicsDevice = rhs._graphicsDevice;
+    _mesher = rhs._mesher;
+    _voxels = rhs._voxels;
+    _defaultMesh = rhs._defaultMesh;
+    _mesh = rhs._mesh;
+    _meshBox = rhs._meshBox;
+    
+    return *this;
+}
+
+TerrainMesh::MaybeMesh TerrainMesh::nonblockingGetMesh() const
+{
+    MaybeMesh mesh;
+    
+    if (_lockMesh.try_lock()) {
+        mesh.emplace(_mesh);
+        _lockMesh.unlock();
+    }
+    
+    return mesh;
 }
 
 void TerrainMesh::rebuild()
 {
+    std::lock_guard<std::mutex> lock(_lockMeshInFlight);
+    
     // We need a border of voxels around the region of the mesh in order to
     // perform surface extraction.
     const AABB voxelBox = _meshBox.inset(-glm::vec3(1, 1, 1));
@@ -71,7 +100,9 @@ void TerrainMesh::rebuild()
         renderableStaticMesh.vertexCount = mesh.getVertexCount();
         renderableStaticMesh.buffer = vertexBuffer;
         
-        // AFOX_TODO: Do I need to expose the updated mesh atomically?
-        _mesh = renderableStaticMesh;
+        {
+            std::lock_guard<std::mutex> lock(_lockMesh);
+            _mesh = renderableStaticMesh;
+        }
     });
 }

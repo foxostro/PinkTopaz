@@ -13,31 +13,42 @@
 #include "Renderer/GraphicsDevice.hpp"
 #include "Terrain/VoxelDataStore.hpp"
 #include "Terrain/Mesher.hpp"
+#include <experimental/optional>
 
 // Terrain is broken up into several meshes. This represents one of the meshes.
 class TerrainMesh
 {
 public:
+    typedef typename std::experimental::optional<RenderableStaticMesh> MaybeMesh;
+    
     ~TerrainMesh();
     
+    // Constructor.
+    // meshBox -- Bounding box for the associated chunk of terrain.
+    // defaultMesh -- Contains resources shared between meshes.
+    // graphicsDevice -- Used to create graphics resources for meshes.
+    // mesher -- Used to extract an isosurface from the voxel field.
+    // voxels -- The voxels fo the world.
     TerrainMesh(const AABB &meshBox,
                 const std::shared_ptr<RenderableStaticMesh> &defaultMesh,
                 const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                 const std::shared_ptr<Mesher> &mesher,
                 const std::shared_ptr<VoxelDataStore> &voxels);
     
-    TerrainMesh(const TerrainMesh &mesh) = default;
-    TerrainMesh(TerrainMesh &&mesh) = default;
+    // Default constructor is deleted
     TerrainMesh() = delete;
-    TerrainMesh& operator=(const TerrainMesh &rhs) = default;
     
-    // Passes in uniforms to use when rendering the terrain.
-    void setTerrainUniforms(const TerrainUniforms &uniforms);
+    // Copy constructor
+    TerrainMesh(const TerrainMesh &mesh);
     
-    // Draws this terrain mesh using the specified command encoder.
-    // Several resources are set before this call and are reused for all meshes.
-    // We expect the caller to take care of that for us.
-    void draw(const std::shared_ptr<CommandEncoder> &encoder) const;
+    // Move constructor
+    TerrainMesh(TerrainMesh &&mesh);
+    
+    // Copy-assignment operator
+    TerrainMesh& operator=(const TerrainMesh &rhs);
+    
+    // Gets the mesh so long as doing so would not require blocking on a lock.
+    MaybeMesh nonblockingGetMesh() const;
     
     // Causes the mesh to be rebuilt using the voxel data store.
     void rebuild();
@@ -57,6 +68,9 @@ private:
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     RenderableStaticMesh _mesh;
     AABB _meshBox;
+    
+    mutable std::mutex _lockMesh;
+    std::mutex _lockMeshInFlight;
 };
 
 #endif /* TerrainMesh_hpp */
