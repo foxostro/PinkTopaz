@@ -15,6 +15,7 @@
 #include "Terrain/VoxelDataStore.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include "Terrain/TerrainDrawList.hpp"
+#include "Terrain/TerrainMeshQueue.hpp"
 #include "RenderableStaticMesh.hpp"
 #include <experimental/optional>
 
@@ -55,13 +56,18 @@ private:
     std::mutex _lockMeshes;
     std::unique_ptr<Array3D<MaybeTerrainMesh>> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
+    TerrainMeshQueue _meshesToRebuild;
     
     // Kicks off asynchronous tasks to rebuild any meshes that are affected by
     // the specified changes.
     void asyncRebuildMeshes(const ChangeLog &changeLog);
     
-    // Rebuilds the one mesh associated with the specified cell.
-    void rebuildMesh(const AABB &cell);
+    // Kicks off an asynchronous task to rebuild the mesh at the specified cell.
+    void asyncRebuildAnotherMesh(const AABB &cell);
+    
+    // Examines `_meshesToRebuild' and rebuilds the best mesh, if any meshes
+    // are pending.
+    void rebuildNextMesh();
 };
 
 #endif /* Terrain_hpp */

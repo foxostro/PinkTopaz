@@ -100,9 +100,7 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
             const MaybeTerrainMesh &maybeTerrainMesh = _meshes->get(cell.center);
             _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
             if (!maybeTerrainMesh) {
-                _dispatcher->async([=]{
-                    rebuildMesh(cell);
-                });
+                asyncRebuildAnotherMesh(cell);
             }
         });
         _lockMeshes.unlock();
@@ -131,29 +129,37 @@ void Terrain::asyncRebuildMeshes(const ChangeLog &changeLog)
     
     // Kick off a task to rebuild each affected mesh.
     for (const AABB &cell : affectedMeshes) {
+        asyncRebuildAnotherMesh(cell);
+    }
+}
+
+void Terrain::asyncRebuildAnotherMesh(const AABB &cell)
+{
+    if (_meshesToRebuild.push(cell)) {
         _dispatcher->async([=]{
-            // AFOX_TODO: Keep a sorted list of dirty cells. Instead of
-            // directly specifying it here, have rebuildMesh() pull the next one
-            // off that list in order to decide what gets done next. This could
-            // be the chunk closest to the camera, for example.
-            rebuildMesh(cell);
+            rebuildNextMesh();
         });
     }
 }
 
-void Terrain::rebuildMesh(const AABB &cell)
+void Terrain::rebuildNextMesh()
 {
-    // Rebuild the mesh associated with the specified cell.
-    _lockMeshes.lock();
-    MaybeTerrainMesh &maybeTerrainMesh = _meshes->mutableReference(cell.center);
-    if (!maybeTerrainMesh) {
-        maybeTerrainMesh.emplace(cell,
-                                 _defaultMesh,
-                                 _graphicsDevice,
-                                 _mesher,
-                                 _voxels);
+    static const glm::vec3 cameraPosition(0.f); // AFOX_TODO: Feed in the camera position here.
+    auto maybeCell = _meshesToRebuild.pop(cameraPosition);
+    
+    if (maybeCell) {
+        const AABB &cell = *maybeCell;
+        _lockMeshes.lock();
+        MaybeTerrainMesh &maybeTerrainMesh = _meshes->mutableReference(cell.center);
+        if (!maybeTerrainMesh) {
+            maybeTerrainMesh.emplace(cell,
+                                     _defaultMesh,
+                                     _graphicsDevice,
+                                     _mesher,
+                                     _voxels);
+        }
+        _lockMeshes.unlock();
+        maybeTerrainMesh->rebuild();
+        _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
     }
-    _lockMeshes.unlock();
-    maybeTerrainMesh->rebuild();
-    _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
 }
