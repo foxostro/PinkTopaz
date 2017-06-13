@@ -28,8 +28,10 @@ void TerrainDrawList::tryUpdateDrawList(const MaybeTerrainMesh &maybeTerrainMesh
     if (maybeTerrainMesh) {
         auto maybeRenderableMesh = maybeTerrainMesh->nonblockingGetMesh();
         if (maybeRenderableMesh) {
-            std::lock_guard<std::mutex> lock(_lockDrawList);
-            _data.set(cell.center, *maybeRenderableMesh);
+            if (_lockDrawList.try_lock()) {
+                _data.set(cell.center, *maybeRenderableMesh);
+                _lockDrawList.unlock();
+            }
         }
     }
 }
