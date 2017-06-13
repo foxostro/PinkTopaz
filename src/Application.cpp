@@ -12,7 +12,6 @@
 #include "World.hpp"
 #include "WindowSizeChangedEvent.hpp"
 #include "KeypressEvent.hpp"
-#include "MouseMoveEvent.hpp"
 #include "Exception.hpp"
 #include "Profiler.hpp"
 
@@ -81,12 +80,6 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                     gameWorld.events.emit(KeypressEvent(e.key.keysym.sym,
                                                         false,
                                                         SDL_GetTicks()));
-                    break;
-                        
-                case SDL_MOUSEMOTION:
-                    gameWorld.events.emit(MouseMoveEvent(e.motion.xrel,
-                                                         e.motion.yrel,
-                                                         SDL_GetTicks()));
                     break;
             }
         }
