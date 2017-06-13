@@ -129,23 +129,23 @@ void TerrainMeshes::draw(const std::shared_ptr<CommandEncoder> &encoder) const
 
 void TerrainMeshes::rebuildMesh(const ChangeLog &changeLog)
 {
-    // Get the set of meshes (by index) which are affected by the changes.
-    // Only these meshes will need to be rebuilt.
-    std::set<std::pair<size_t, AABB>> affectedMeshes;
+    std::lock_guard<std::mutex> lock(_lockMeshes);
+    
+    // Get the set of meshes which are affected by the changes.
+    std::set<AABB> affectedMeshes;
     for (const auto &change : changeLog) {
-        const auto &region = change.affectedRegion;
-        const auto indices = _meshes->indicesOverRegion(region);
-        affectedMeshes.insert(indices.begin(), indices.end());
+        _meshes->forEachCell(change.affectedRegion, [&](const AABB &cell){
+            affectedMeshes.insert(cell);
+        });
     }
     
-    for (const std::pair<size_t, AABB> pair : affectedMeshes) {
-        // AFOX_TODO: pair.first is never used    
-        const AABB &meshBox = pair.second;
+    // Kick off a task to rebuild each affected mesh.
+    for (const AABB &cell : affectedMeshes) {
         _dispatcher->async([=]{
             std::lock_guard<std::mutex> lock(_lockMeshes);
-            MaybeTerrainMesh &maybeMesh = _meshes->mutableReference(meshBox.center);
+            MaybeTerrainMesh &maybeMesh = _meshes->mutableReference(cell.center);
             if (!maybeMesh) {
-                maybeMesh.emplace(meshBox,
+                maybeMesh.emplace(cell,
                                   _defaultMesh,
                                   _graphicsDevice,
                                   _mesher,

@@ -135,25 +135,6 @@ public:
         return (a.x * _res.y * _res.z) + (a.z * _res.y) + a.y;
     }
     
-    // Gets the set of all indices corresponding to the specified region.
-    // Returns a set of pairs where each pair has the index and the AABB of the
-    // affected cell.
-    auto indicesOverRegion(const AABB &region) const
-    {
-        if (EnableVerboseBoundsChecking && !inbounds(region)) {
-            throw OutOfBoundsException();
-        }
-        
-        std::set<std::pair<index_type, AABB>> indices;
-        
-        forEachCell(region, [&](const AABB &cell){
-            const auto index = indexAtPoint(cell.center);
-            indices.insert(std::make_pair(index, cell));
-        });
-        
-        return indices;
-    }
-    
     // Gets the object for the specified index, produced by `indexAtPoint'.
     inline const TYPE& get(index_type index) const
     {
