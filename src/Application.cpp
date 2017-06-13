@@ -36,8 +36,6 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
     bool quit = false;
     
-    unsigned ticksBeginMs = SDL_GetTicks();
-    
     while(!quit)
     {
         PROFILER(Frame);
@@ -83,13 +81,8 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                     break;
             }
         }
-            
-        unsigned ticksEndMs = SDL_GetTicks();
-        unsigned ticksElapsedMs = ticksEndMs - ticksBeginMs;
-        ticksBeginMs = ticksEndMs;
-        entityx::TimeDelta dt = ticksElapsedMs;
         
-        gameWorld.update(dt);
+        gameWorld.update(16.0);
     }
 }
     
