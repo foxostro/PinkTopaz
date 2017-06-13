@@ -9,12 +9,13 @@
 #ifndef TerrainMeshes_hpp
 #define TerrainMeshes_hpp
 
-#include "Terrain/VoxelDataStore.hpp"
-#include "Terrain/Mesher.hpp"
-#include "Terrain/VoxelDataGenerator.hpp"
 #include "Renderer/GraphicsDevice.hpp"
-#include "RenderableStaticMesh.hpp"
 #include "TaskDispatcher.hpp"
+#include "Terrain/Mesher.hpp"
+#include "Terrain/VoxelDataStore.hpp"
+#include "Terrain/TerrainMesh.hpp"
+#include "RenderableStaticMesh.hpp"
+#include <experimental/optional>
 
 // Terrain is broken up into several meshes.
 class TerrainMeshes
@@ -36,6 +37,8 @@ public:
     void draw(const std::shared_ptr<CommandEncoder> &encoder) const;
     
 private:
+    typedef typename std::experimental::optional<TerrainMesh> MaybeTerrainMesh;
+    
     static constexpr int MESH_CHUNK_SIZE = 16;
     
     void rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
@@ -47,12 +50,12 @@ private:
     
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<TaskDispatcher> _dispatcher;
-    std::unique_ptr<Mesher> _mesher;
+    std::shared_ptr<Mesher> _mesher;
     std::shared_ptr<VoxelDataStore> _voxels;
     
     mutable std::mutex _lockMeshes;
-    std::unique_ptr<Array3D<RenderableStaticMesh>> _meshes;
-    RenderableStaticMesh _defaultMesh;
+    std::unique_ptr<Array3D<MaybeTerrainMesh>> _meshes;
+    std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     
     void rebuildMesh(const ChangeLog &changeLog);
 };

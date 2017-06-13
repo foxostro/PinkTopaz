@@ -24,7 +24,6 @@ TerrainMeshes::TerrainMeshes(const std::shared_ptr<GraphicsDevice> &graphicsDevi
    _mesher(new MesherNaiveSurfaceNets),
    _voxels(voxels)
 {
-    
     // Load terrain texture array from a single image.
     // TODO: create a TextureArrayLoader class to encapsulate tex loading.
     SDL_Surface *surface = IMG_Load("terrain.png");
@@ -65,18 +64,17 @@ TerrainMeshes::TerrainMeshes(const std::shared_ptr<GraphicsDevice> &graphicsDevi
     uniformBuffer->addDebugMarker("Terrain Uniforms", 0, sizeof(uniforms));
     
     // We don't have vertices until the isosurface is extracted later.
-    _defaultMesh = (RenderableStaticMesh) {
-        0,
-        nullptr,
-        uniformBuffer,
-        shader,
-        texture,
-        sampler
-    };
+    _defaultMesh = std::make_shared<RenderableStaticMesh>();
+    _defaultMesh->vertexCount = 0;
+    _defaultMesh->buffer = nullptr;
+    _defaultMesh->uniforms = uniformBuffer;
+    _defaultMesh->shader = shader;
+    _defaultMesh->texture = texture;
+    _defaultMesh->textureSampler = sampler;
     
     const AABB box = _voxels->boundingBox();
     const glm::ivec3 res = _voxels->gridResolution() / MESH_CHUNK_SIZE;
-    _meshes = std::make_unique<Array3D<RenderableStaticMesh>>(box, res);
+    _meshes = std::make_unique<Array3D<MaybeTerrainMesh>>(box, res);
     
     // When voxels change, we need to extract a polygonal mesh representation
     // of the isosurface. This mesh is what we actually draw.
@@ -92,7 +90,7 @@ void TerrainMeshes::setTerrainUniforms(const TerrainUniforms &uniforms)
     
     // The uniforms referenced in the default mesh are also referenced by other
     // meshes in the terrain. Setting it once here sets it for all of them.
-    _defaultMesh.uniforms->replace(sizeof(uniforms), &uniforms);
+    _defaultMesh->uniforms->replace(sizeof(uniforms), &uniforms);
 }
 
 void TerrainMeshes::draw(const std::shared_ptr<CommandEncoder> &encoder) const
@@ -101,58 +99,31 @@ void TerrainMeshes::draw(const std::shared_ptr<CommandEncoder> &encoder) const
     
     // The following resources are referenced by and used by all meshes in the
     // terrain. We only need to set them once.
-    encoder->setShader(_defaultMesh.shader);
-    encoder->setFragmentSampler(_defaultMesh.textureSampler, 0);
-    encoder->setFragmentTexture(_defaultMesh.texture, 0);
-    encoder->setVertexBuffer(_defaultMesh.uniforms, 1);
+    encoder->setShader(_defaultMesh->shader);
+    encoder->setFragmentSampler(_defaultMesh->textureSampler, 0);
+    encoder->setFragmentTexture(_defaultMesh->texture, 0);
+    encoder->setVertexBuffer(_defaultMesh->uniforms, 1);
     
-    for (const RenderableStaticMesh &mesh : *_meshes) {
-        if (mesh.vertexCount > 0) {
-            encoder->setVertexBuffer(mesh.buffer, 0);
-            encoder->drawPrimitives(Triangles, 0, mesh.vertexCount, 1);
+    // Draw each mesh that is available.
+    // Request that each missing mesh be generated asynchronously.
+    _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell){
+        const MaybeTerrainMesh &maybeMesh = _meshes->get(cell.center);
+        if (maybeMesh) {
+            maybeMesh->draw(encoder);
+        } else {
+            _dispatcher->async([=]{
+                std::lock_guard<std::mutex> lock(_lockMeshes);
+                MaybeTerrainMesh &maybeMesh = _meshes->mutableReference(cell.center);
+                if (!maybeMesh) {
+                    maybeMesh.emplace(cell,
+                                      _defaultMesh,
+                                      _graphicsDevice,
+                                      _mesher,
+                                      _voxels);
+                    maybeMesh->rebuild();
+                }
+            });
         }
-    }
-}
-
-void TerrainMeshes::rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
-                                             const size_t index,
-                                             const AABB &meshBox)
-{
-    // The voxel file uses a binary SOLID/EMPTY flag for voxels.
-    // So, we get values that are either 0.0 or 1.0.
-    constexpr float isosurface = 0.5f;
-    
-    StaticMesh mesh = _mesher->extract(voxels, meshBox, isosurface);
-    
-    std::shared_ptr<Buffer> vertexBuffer = nullptr;
-    
-    if (mesh.getVertexCount() > 0) {
-        // AFOX_TODO: We may need to create graphics resources on the main thread, e.g., when using OpenGL.
-        auto vertexBufferData = mesh.getBufferData();
-        vertexBuffer = _graphicsDevice->makeBuffer(vertexBufferData,
-                                                   StaticDraw,
-                                                   ArrayBuffer);
-        vertexBuffer->addDebugMarker("Terrain Vertices", 0, vertexBufferData.size());
-    }
-    
-    RenderableStaticMesh renderableStaticMesh = _defaultMesh;
-    renderableStaticMesh.vertexCount = mesh.getVertexCount();
-    renderableStaticMesh.buffer = vertexBuffer;
-    
-    {
-        std::lock_guard<std::mutex> lock(_lockMeshes);
-        _meshes->set(index, renderableStaticMesh);
-    }
-}
-
-void TerrainMeshes::rebuildMeshForChunkOuter(const size_t index, const AABB &meshBox)
-{
-    // We need a border of voxels around the region of the mesh in order to
-    // perform surface extraction.
-    const AABB voxelBox = meshBox.inset(-glm::vec3(1, 1, 1));
-    
-    _voxels->readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
-        rebuildMeshForChunkInner(voxels, index, meshBox);
     });
 }
 
@@ -168,8 +139,19 @@ void TerrainMeshes::rebuildMesh(const ChangeLog &changeLog)
     }
     
     for (const std::pair<size_t, AABB> pair : affectedMeshes) {
+        // AFOX_TODO: pair.first is never used    
+        const AABB &meshBox = pair.second;
         _dispatcher->async([=]{
-            rebuildMeshForChunkOuter(pair.first, pair.second);
+            std::lock_guard<std::mutex> lock(_lockMeshes);
+            MaybeTerrainMesh &maybeMesh = _meshes->mutableReference(meshBox.center);
+            if (!maybeMesh) {
+                maybeMesh.emplace(meshBox,
+                                  _defaultMesh,
+                                  _graphicsDevice,
+                                  _mesher,
+                                  _voxels);
+            }
+            maybeMesh->rebuild();
         });
     }
 }
