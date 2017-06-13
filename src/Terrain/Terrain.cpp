@@ -42,6 +42,8 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     };
     auto texture = graphicsDevice->makeTexture(texDesc, surface->pixels);
     
+    SDL_FreeSurface(surface);
+    
     TextureSamplerDescriptor samplerDesc = {
         ClampToEdge,
         ClampToEdge,
