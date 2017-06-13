@@ -14,10 +14,10 @@
 #include "Terrain/Mesher.hpp"
 #include "Terrain/VoxelDataStore.hpp"
 #include "Terrain/TerrainMesh.hpp"
+#include "Terrain/TerrainDrawList.hpp"
 #include "RenderableStaticMesh.hpp"
 #include <experimental/optional>
 
-// Terrain is broken up into several meshes.
 class Terrain
 {
 public:
@@ -51,8 +51,7 @@ private:
     std::shared_ptr<TaskDispatcher> _dispatcher;
     std::shared_ptr<Mesher> _mesher;
     std::shared_ptr<VoxelDataStore> _voxels;
-    std::mutex _lockDrawList;
-    std::unique_ptr<Array3D<RenderableStaticMesh>> _drawList;
+    std::unique_ptr<TerrainDrawList> _drawList;
     std::mutex _lockMeshes;
     std::unique_ptr<Array3D<MaybeTerrainMesh>> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
@@ -63,11 +62,6 @@ private:
     
     // Rebuilds the one mesh associated with the specified cell.
     void rebuildMesh(const AABB &cell);
-    
-    // If we can get a hold of the underlying GPU resources then add them to the
-    // draw list.
-    void tryUpdateDrawList(const MaybeTerrainMesh &maybeTerrainMesh,
-                           const AABB &cell);
 };
 
 #endif /* Terrain_hpp */

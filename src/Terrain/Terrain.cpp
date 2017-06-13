@@ -73,7 +73,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
     const AABB box = _voxels->boundingBox();
     const glm::ivec3 res = _voxels->gridResolution() / MESH_CHUNK_SIZE;
-    _drawList = std::make_unique<Array3D<RenderableStaticMesh>>(box, res);
+    _drawList = std::make_unique<TerrainDrawList>(box, res);
     _meshes = std::make_unique<Array3D<MaybeTerrainMesh>>(box, res);
     
     // When voxels change, we need to extract a polygonal mesh representation
@@ -93,12 +93,12 @@ void Terrain::setTerrainUniforms(const TerrainUniforms &uniforms)
 
 void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
 {
-    // Update the draw list without blocking long on the meshes lock.
+    // Update the draw list without blocking too long waiting on locks.
     // If a mesh is missing then kick off an asynchronous task to generate it.
     if (_lockMeshes.try_lock()) {
         _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell){
             const MaybeTerrainMesh &maybeTerrainMesh = _meshes->get(cell.center);
-            tryUpdateDrawList(maybeTerrainMesh, cell);
+            _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
             if (!maybeTerrainMesh) {
                 _dispatcher->async([=]{
                     rebuildMesh(cell);
@@ -108,23 +108,12 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
         _lockMeshes.unlock();
     }
     
-    // The following resources are referenced by and used by all meshes in the
-    // terrain. We only need to set them once.
+    // Draw the meshes now.
     encoder->setShader(_defaultMesh->shader);
     encoder->setFragmentSampler(_defaultMesh->textureSampler, 0);
     encoder->setFragmentTexture(_defaultMesh->texture, 0);
     encoder->setVertexBuffer(_defaultMesh->uniforms, 1);
-    
-    // Draw all meshes in the draw list.
-    {
-        std::lock_guard<std::mutex> lock(_lockDrawList);
-        for (const auto &drawThis : *_drawList) {
-            if (drawThis.vertexCount > 0) {
-                encoder->setVertexBuffer(drawThis.buffer, 0);
-                encoder->drawPrimitives(Triangles, 0, drawThis.vertexCount, 1);
-            }
-        }
-    }
+    _drawList->draw(encoder);
 }
 
 void Terrain::asyncRebuildMeshes(const ChangeLog &changeLog)
@@ -166,18 +155,5 @@ void Terrain::rebuildMesh(const AABB &cell)
     }
     _lockMeshes.unlock();
     maybeTerrainMesh->rebuild();
-    tryUpdateDrawList(maybeTerrainMesh, cell);
+    _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
 }
-
-void Terrain::tryUpdateDrawList(const MaybeTerrainMesh &maybeTerrainMesh,
-                                const AABB &cell)
-{
-    if (maybeTerrainMesh) {
-        auto maybeRenderableMesh = maybeTerrainMesh->nonblockingGetMesh();
-        if (maybeRenderableMesh) {
-            std::lock_guard<std::mutex> lock(_lockDrawList);
-            _drawList->set(cell.center, *maybeRenderableMesh);
-        }
-    }
-}
-
