@@ -38,8 +38,6 @@ void RenderSystem::update(entityx::EntityManager &es,
                           entityx::EventManager &events,
                           entityx::TimeDelta dt)
 {
-    PROFILER(Render);
-    
     glm::mat4x4 cameraTransform;
     if (_activeCamera.valid()) {
         cameraTransform = _activeCamera.component<Transform>()->value;

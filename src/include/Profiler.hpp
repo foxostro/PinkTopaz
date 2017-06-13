@@ -15,8 +15,8 @@
 
 // Change this macro to 1 to enable profiling with the PROFILER macro. Set to 0
 // disable this profiling at compile time. The profiling is fairly low overhead
-// so this shouldn't have a large impact on performance either way.
-#define PROFILER_ENABLED 1
+// but can still take a millisecond or two per frame.
+#define PROFILER_ENABLED 0
 
 // The Profiler class is useful for logging events during the execution of the
 // game. This can help provide signposts and context to profiling tool output.
