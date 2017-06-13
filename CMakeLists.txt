@@ -36,7 +36,6 @@ set(SOURCE_FILES_TERRAIN
     "src/Terrain/MesherNaiveSurfaceNets.cpp" "src/include/Terrain/MesherNaiveSurfaceNets.hpp"
     "src/include/Terrain/Mesher.hpp"
     "src/Terrain/VoxelDataGenerator.cpp" "src/include/Terrain/VoxelDataGenerator.hpp"
-    "src/Terrain/TerrainMeshes.cpp" "src/include/Terrain/TerrainMeshes.hpp"
     "src/Terrain/TerrainMesh.cpp" "src/include/Terrain/TerrainMesh.hpp"
     )
 
