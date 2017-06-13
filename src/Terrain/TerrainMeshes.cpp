@@ -74,13 +74,14 @@ TerrainMeshes::TerrainMeshes(const std::shared_ptr<GraphicsDevice> &graphicsDevi
     
     const AABB box = _voxels->boundingBox();
     const glm::ivec3 res = _voxels->gridResolution() / MESH_CHUNK_SIZE;
+    _drawList = std::make_unique<Array3D<RenderableStaticMesh>>(box, res);
     _meshes = std::make_unique<Array3D<MaybeTerrainMesh>>(box, res);
     
     // When voxels change, we need to extract a polygonal mesh representation
     // of the isosurface. This mesh is what we actually draw.
     // For now, we extract the entire isosurface in one step.
     _voxels->voxelDataChanged.connect([&](const ChangeLog &changeLog){
-        rebuildMesh(changeLog);
+        asyncRebuildMeshes(changeLog);
     });
 }
 
@@ -91,9 +92,22 @@ void TerrainMeshes::setTerrainUniforms(const TerrainUniforms &uniforms)
     _defaultMesh->uniforms->replace(sizeof(uniforms), &uniforms);
 }
 
-void TerrainMeshes::draw(const std::shared_ptr<CommandEncoder> &encoder) const
+void TerrainMeshes::draw(const std::shared_ptr<CommandEncoder> &encoder)
 {
-    nonblockingUpdateDrawList();
+    // Update the draw list without blocking long on the meshes lock.
+    // If a mesh is missing then kick off an asynchronous task to generate it.
+    if (_lockMeshes.try_lock()) {
+        _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell){
+            const MaybeTerrainMesh &maybeTerrainMesh = _meshes->get(cell.center);
+            tryUpdateDrawList(maybeTerrainMesh, cell);
+            if (!maybeTerrainMesh) {
+                _dispatcher->async([=]{
+                    rebuildMesh(cell);
+                });
+            }
+        });
+        _lockMeshes.unlock();
+    }
     
     // The following resources are referenced by and used by all meshes in the
     // terrain. We only need to set them once.
@@ -102,81 +116,69 @@ void TerrainMeshes::draw(const std::shared_ptr<CommandEncoder> &encoder) const
     encoder->setFragmentTexture(_defaultMesh->texture, 0);
     encoder->setVertexBuffer(_defaultMesh->uniforms, 1);
     
-    for (const auto &mesh : _meshesToDraw) {
-        if (mesh.vertexCount > 0) {
-            encoder->setVertexBuffer(mesh.buffer, 0);
-            encoder->drawPrimitives(Triangles, 0, mesh.vertexCount, 1);
-        }
-    }
-}
-
-void TerrainMeshes::nonblockingUpdateDrawList() const
-{
-    // If we can snag the lock then update the draw list. Don't allow this to
-    // block the render thread at any point.
-    if (!_lockMeshes.try_lock()) {
-        return;
-    }
-    
-    _meshesToDraw.clear();
-    
-    _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell){
-        const MaybeTerrainMesh &maybeTerrainMesh = _meshes->get(cell.center);
-        if (maybeTerrainMesh) {
-            // The terrain mesh exists. If we can also get the renderable
-            // mesh with the GPU resources then add that to the draw list.
-            // Otherwise, skip it.
-            auto maybeRenderableMesh = maybeTerrainMesh->nonblockingGetMesh();
-            if (maybeRenderableMesh) {
-                const auto &renderableMesh = *maybeRenderableMesh;
-                _meshesToDraw.emplace_back(renderableMesh);
+    // Draw all meshes in the draw list.
+    {
+        std::lock_guard<std::mutex> lock(_lockDrawList);
+        for (const auto &drawThis : *_drawList) {
+            if (drawThis.vertexCount > 0) {
+                encoder->setVertexBuffer(drawThis.buffer, 0);
+                encoder->drawPrimitives(Triangles, 0, drawThis.vertexCount, 1);
             }
-        } else {
-            // Kick off an asynchronous task to generate the terrain mesh.
-            _dispatcher->async([=]{
-                std::lock_guard<std::mutex> lock(_lockMeshes);
-                MaybeTerrainMesh &maybeMesh = _meshes->mutableReference(cell.center);
-                if (!maybeMesh) {
-                    maybeMesh.emplace(cell,
-                                      _defaultMesh,
-                                      _graphicsDevice,
-                                      _mesher,
-                                      _voxels);
-                    maybeMesh->rebuild();
-                }
-            });
         }
-    });
-    
-    _lockMeshes.unlock();
+    }
 }
 
-void TerrainMeshes::rebuildMesh(const ChangeLog &changeLog)
+void TerrainMeshes::asyncRebuildMeshes(const ChangeLog &changeLog)
 {
-    std::lock_guard<std::mutex> lock(_lockMeshes);
-    
     // Get the set of meshes which are affected by the changes.
     std::set<AABB> affectedMeshes;
-    for (const auto &change : changeLog) {
-        _meshes->forEachCell(change.affectedRegion, [&](const AABB &cell){
-            affectedMeshes.insert(cell);
-        });
+    {
+        std::lock_guard<std::mutex> lock(_lockMeshes);
+        for (const auto &change : changeLog) {
+            _meshes->forEachCell(change.affectedRegion, [&](const AABB &cell){
+                affectedMeshes.insert(cell);
+            });
+        }
     }
     
     // Kick off a task to rebuild each affected mesh.
     for (const AABB &cell : affectedMeshes) {
         _dispatcher->async([=]{
-            _lockMeshes.lock();
-            MaybeTerrainMesh &maybeMesh = _meshes->mutableReference(cell.center);
-            if (!maybeMesh) {
-                maybeMesh.emplace(cell,
-                                  _defaultMesh,
-                                  _graphicsDevice,
-                                  _mesher,
-                                  _voxels);
-            }
-            _lockMeshes.unlock();
-            maybeMesh->rebuild();
+            // AFOX_TODO: Keep a sorted list of dirty cells. Instead of
+            // directly specifying it here, have rebuildMesh() pull the next one
+            // off that list in order to decide what gets done next. This could
+            // be the chunk closest to the camera, for example.
+            rebuildMesh(cell);
         });
     }
 }
+
+void TerrainMeshes::rebuildMesh(const AABB &cell)
+{
+    // Rebuild the mesh associated with the specified cell.
+    _lockMeshes.lock();
+    MaybeTerrainMesh &maybeTerrainMesh = _meshes->mutableReference(cell.center);
+    if (!maybeTerrainMesh) {
+        maybeTerrainMesh.emplace(cell,
+                                 _defaultMesh,
+                                 _graphicsDevice,
+                                 _mesher,
+                                 _voxels);
+    }
+    _lockMeshes.unlock();
+    maybeTerrainMesh->rebuild();
+    tryUpdateDrawList(maybeTerrainMesh, cell);
+}
+
+void TerrainMeshes::tryUpdateDrawList(const MaybeTerrainMesh &maybeTerrainMesh,
+                                      const AABB &cell)
+{
+    if (maybeTerrainMesh) {
+        auto maybeRenderableMesh = maybeTerrainMesh->nonblockingGetMesh();
+        if (maybeRenderableMesh) {
+            std::lock_guard<std::mutex> lock(_lockDrawList);
+            _drawList->set(cell.center, *maybeRenderableMesh);
+        }
+    }
+}
+

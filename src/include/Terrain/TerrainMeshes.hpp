@@ -34,7 +34,7 @@ public:
     void setTerrainUniforms(const TerrainUniforms &uniforms);
     
     // Draws the portions of the terrain which are in view.
-    void draw(const std::shared_ptr<CommandEncoder> &encoder) const;
+    void draw(const std::shared_ptr<CommandEncoder> &encoder);
     
 private:
     typedef typename std::experimental::optional<TerrainMesh> MaybeTerrainMesh;
@@ -52,22 +52,23 @@ private:
     std::shared_ptr<TaskDispatcher> _dispatcher;
     std::shared_ptr<Mesher> _mesher;
     std::shared_ptr<VoxelDataStore> _voxels;
-    
-    mutable std::mutex _lockMeshes;
-    mutable std::vector<RenderableStaticMesh> _meshesToDraw;
+    std::mutex _lockDrawList;
+    std::unique_ptr<Array3D<RenderableStaticMesh>> _drawList;
+    std::mutex _lockMeshes;
     std::unique_ptr<Array3D<MaybeTerrainMesh>> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     
-    // If we can snag the lock then update the draw list. Don't allow this to
-    // block the render thread at any point.
-    void nonblockingUpdateDrawList() const;
-    
-    // Unsafe. Update the draw list without taking the lock.
-    void unsafeUpdateDrawList() const;
-    
     // Kicks off asynchronous tasks to rebuild any meshes that are affected by
     // the specified changes.
-    void rebuildMesh(const ChangeLog &changeLog);
+    void asyncRebuildMeshes(const ChangeLog &changeLog);
+    
+    // Rebuilds the one mesh associated with the specified cell.
+    void rebuildMesh(const AABB &cell);
+    
+    // If we can get a hold of the underlying GPU resources then add them to the
+    // draw list.
+    void tryUpdateDrawList(const MaybeTerrainMesh &maybeTerrainMesh,
+                           const AABB &cell);
 };
 
 #endif /* TerrainMeshes_hpp */
