@@ -112,6 +112,7 @@ set(SOURCE_FILES_MISC
     "src/TaskDispatcher.cpp" "src/include/TaskDispatcher.hpp"
     "src/include/Profiler.hpp"
     "src/include/UniqueName.hpp"
+    "src/include/Stopwatch.hpp"
     )
 
 if(APPLE)
@@ -120,6 +121,7 @@ if(APPLE)
         "src/include/RetinaSupport.h" "src/osx/RetinaSupport.m"
         "src/osx/GraphicsDeviceFactory.mm"
         "src/osx/Profiler.cpp"
+        "src/osx/Stopwatch.cpp"
         )
 else(APPLE)
     set(SOURCE_FILES_PLATFORM_SUPPORT
