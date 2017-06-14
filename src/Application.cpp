@@ -13,6 +13,8 @@
 #include "WindowSizeChangedEvent.hpp"
 #include "Exception.hpp"
 #include "Profiler.hpp"
+#include "VideoRefreshRate.hpp"
+#include "Stopwatch.hpp"
 
 #include "SDL.h"
 #include <map>
@@ -22,6 +24,12 @@
 void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                         const std::shared_ptr<TaskDispatcher> &dispatcher)
 {
+    Stopwatch stopwatch;
+    
+    // Get the display refresh rate. This is usually 60 Hz.
+    const double refreshRate = getVideoRefreshRate();
+    const uint64_t videoRefreshPeriodNanos = (uint64_t)(Stopwatch::NANOS_PER_SEC / refreshRate);
+    
     World gameWorld(graphicsDevice, dispatcher);
     
     // Send an event containing the initial window size and scale factor.
@@ -33,12 +41,17 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
         gameWorld.events.emit(event);
     }
     
+    uint64_t currentTime = stopwatch.getCurrentTimeInNanos();
     bool quit = false;
     
     while(!quit)
     {
         PROFILER(Frame);
         
+        const uint64_t newTime = stopwatch.getCurrentTimeInNanos();
+        const uint64_t frameTime = newTime - currentTime;
+        currentTime = newTime;
+        const uint64_t nextTime = currentTime + videoRefreshPeriodNanos;
         SDL_Event e;
         
         if (SDL_PollEvent(&e)) {
@@ -50,13 +63,13 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                     quit = true;
                     dispatcher->shutdown();
                     break;
-                        
+                    
                 case SDL_WINDOWEVENT:
                     switch(e.window.event)
                     {
                         case SDL_WINDOWEVENT_RESIZED:
                             // fall through
-                                
+                            
                         case SDL_WINDOWEVENT_SIZE_CHANGED:
                         {
                             WindowSizeChangedEvent event;
@@ -70,7 +83,8 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             }
         }
         
-        gameWorld.update(16.0);
+        gameWorld.update(frameTime / Stopwatch::NANOS_PER_MILLISEC);
+        stopwatch.waitUntil(nextTime);
     }
 }
     
