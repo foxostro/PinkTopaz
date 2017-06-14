@@ -21,7 +21,8 @@ public:
     TerrainDrawList(const AABB &box, const glm::ivec3 &res);
     
     // Draw the meshes.
-    void draw(const std::shared_ptr<CommandEncoder> &encoder);
+    void draw(const std::shared_ptr<CommandEncoder> &encoder,
+              const glm::mat4x4 &modelViewProjection);
     
     // If we can get a hold of the underlying GPU resources then add them to the
     // draw list.

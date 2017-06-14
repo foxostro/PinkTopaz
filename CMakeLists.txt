@@ -108,6 +108,8 @@ set(SOURCE_FILES_MISC
     "src/include/RetinaSupport.h"
     "src/FrameTimer.cpp" "src/include/FrameTimer.hpp"
     "src/include/AABB.hpp"
+    "src/include/Plane.hpp"
+    "src/include/Frustum.hpp"
     "src/include/math.hpp"
     "src/TaskDispatcher.cpp" "src/include/TaskDispatcher.hpp"
     "src/include/Profiler.hpp"
@@ -243,6 +245,7 @@ if(APPLE)
                       src/test/Terrain/MesherMarchingCubesTests.mm
                       src/test/Terrain/MesherNaiveSurfaceNetsTests.mm
                       src/test/Renderer/StaticMeshSerializerTests.mm
+                      src/test/FrustumTests.mm
                       )
     xctest_add_test(XCTest.PinkTopaz PinkTopazTests)
 endif(APPLE)

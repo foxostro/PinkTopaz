@@ -58,6 +58,9 @@ private:
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     TerrainMeshQueue _meshesToRebuild;
     std::atomic<int> _meshFetchInFlight;
+    std::mutex _lockCameraPosition;
+    glm::vec3 _cameraPos;
+    glm::mat4x4 _modelViewProjection;
     
     // Kicks off asynchronous tasks to rebuild any meshes that are affected by
     // the specified changes.

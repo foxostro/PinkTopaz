@@ -92,6 +92,15 @@ void Terrain::setTerrainUniforms(const TerrainUniforms &uniforms)
     // The uniforms referenced in the default mesh are also referenced by other
     // meshes in the terrain. Setting it once here sets it for all of them.
     _defaultMesh->uniforms->replace(sizeof(uniforms), &uniforms);
+    
+    // Extract the camera position from the camera transform.
+    {
+        std::lock_guard<std::mutex> lock(_lockCameraPosition);
+        _cameraPos = glm::vec3(glm::inverse(uniforms.view)[3]);
+    }
+    
+    // We'll use the MVP later to extract the camera frustum.
+    _modelViewProjection = uniforms.proj * uniforms.view;
 }
 
 void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
@@ -123,7 +132,8 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     encoder->setFragmentSampler(_defaultMesh->textureSampler, 0);
     encoder->setFragmentTexture(_defaultMesh->texture, 0);
     encoder->setVertexBuffer(_defaultMesh->uniforms, 1);
-    _drawList->draw(encoder);
+    
+    _drawList->draw(encoder, _modelViewProjection);
 }
 
 void Terrain::asyncRebuildMeshes(const ChangeLog &changeLog)
@@ -156,7 +166,12 @@ void Terrain::asyncRebuildAnotherMesh(const AABB &cell)
 
 void Terrain::rebuildNextMesh()
 {
-    static const glm::vec3 cameraPosition(0.f); // AFOX_TODO: Feed in the camera position here.
+    static glm::vec3 cameraPosition;
+    {
+        std::lock_guard<std::mutex> lock(_lockCameraPosition);
+        cameraPosition = _cameraPos;
+    }
+    
     auto maybeCell = _meshesToRebuild.pop(cameraPosition);
     
     if (maybeCell) {
