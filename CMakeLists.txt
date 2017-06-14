@@ -113,6 +113,7 @@ set(SOURCE_FILES_MISC
     "src/include/Profiler.hpp"
     "src/include/UniqueName.hpp"
     "src/include/Stopwatch.hpp"
+    "src/include/VideoRefreshRate.hpp"
     )
 
 if(APPLE)
@@ -122,12 +123,14 @@ if(APPLE)
         "src/osx/GraphicsDeviceFactory.mm"
         "src/osx/Profiler.cpp"
         "src/osx/Stopwatch.cpp"
+        "src/osx/VideoRefreshRate.cpp"
         )
 else(APPLE)
     set(SOURCE_FILES_PLATFORM_SUPPORT
         "src/include/UnitTestDetector.h" "src/linux/UnitTestDetector.c"
         "src/include/RetinaSupport.h" "src/linux/RetinaSupport.c"
         "src/linux/GraphicsDeviceFactory.cpp"
+        "src/linux/VideoRefreshRate.cpp"
         )
 endif(APPLE)
 
