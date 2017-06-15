@@ -18,12 +18,12 @@ using namespace glm;
     Frustum frustum(viewProj);
     
     // Make sure we got the expected planes back.
-    XCTAssertEqual(frustum.planes[LeftPlane],   normalize(Plane(+1.f,  0.f,  0.f, 1.f)));
-    XCTAssertEqual(frustum.planes[RightPlane],  normalize(Plane(-1.f,  0.f,  0.f, 1.f)));
-    XCTAssertEqual(frustum.planes[BottomPlane], normalize(Plane( 0.f, +1.f,  0.f, 1.f)));
-    XCTAssertEqual(frustum.planes[TopPlane],    normalize(Plane( 0.f, -1.f,  0.f, 1.f)));
-    XCTAssertEqual(frustum.planes[NearPlane],   normalize(Plane( 0.f,  0.f, +1.f, 1.f)));
-    XCTAssertEqual(frustum.planes[FarPlane],    normalize(Plane( 0.f,  0.f, -1.f, 1.f)));
+    XCTAssertEqual(frustum.planes()[Frustum::LeftPlane],   normalize(Plane(+1.f,  0.f,  0.f, 1.f)));
+    XCTAssertEqual(frustum.planes()[Frustum::RightPlane],  normalize(Plane(-1.f,  0.f,  0.f, 1.f)));
+    XCTAssertEqual(frustum.planes()[Frustum::BottomPlane], normalize(Plane( 0.f, +1.f,  0.f, 1.f)));
+    XCTAssertEqual(frustum.planes()[Frustum::TopPlane],    normalize(Plane( 0.f, -1.f,  0.f, 1.f)));
+    XCTAssertEqual(frustum.planes()[Frustum::NearPlane],   normalize(Plane( 0.f,  0.f, +1.f, 1.f)));
+    XCTAssertEqual(frustum.planes()[Frustum::FarPlane],    normalize(Plane( 0.f,  0.f, -1.f, 1.f)));
     
     // Test a few points we expect to be inside the frustum.
     XCTAssertTrue(frustum.inside(vec3(0.0f, 0.0f,  0.2f)));
