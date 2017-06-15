@@ -116,6 +116,7 @@ set(SOURCE_FILES_MISC
     "src/include/UniqueName.hpp"
     "src/include/Stopwatch.hpp"
     "src/include/VideoRefreshRate.hpp"
+    "src/Octree.cpp" "src/include/Octree.hpp"
     )
 
 if(APPLE)

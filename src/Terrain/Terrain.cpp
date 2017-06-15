@@ -75,7 +75,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     _defaultMesh->textureSampler = sampler;
     
     const AABB box = _voxels->boundingBox();
-    const glm::ivec3 res = _voxels->gridResolution() / MESH_CHUNK_SIZE;
+    const glm::ivec3 res(8, 8, 8);
     _drawList = std::make_unique<TerrainDrawList>(box, res);
     _meshes = std::make_unique<Array3D<MaybeTerrainMesh>>(box, res);
     

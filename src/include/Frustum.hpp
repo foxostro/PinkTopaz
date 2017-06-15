@@ -64,7 +64,7 @@ public:
     }
     
     // Determine whether an axis-aligned bbox resides within the frustum.
-    bool inside(const AABB &box) const
+    bool boxIsInside(const AABB &box) const
     {
         for (size_t i = 0; i < NumPlanes; ++i) {
             const auto &plane = _planes[i];
@@ -85,7 +85,7 @@ public:
     }
     
     // Determine whether a point resides within the frustum.
-    bool inside(const glm::vec3 &point) const
+    bool pointIsInside(const glm::vec3 &point) const
     {
         // If the point is in the negative halfspace of any plane then it is not
         // in the frustum. We permit points which lie exactly on a plane.

@@ -12,6 +12,7 @@
 #include "RenderableStaticMesh.hpp"
 #include "Terrain/Array3D.hpp"
 #include "Terrain/TerrainMesh.hpp"
+#include "Octree.hpp"
 
 class TerrainDrawList
 {
@@ -32,6 +33,12 @@ public:
 private:
     std::mutex _lockDrawList;
     Array3D<RenderableStaticMesh> _data;
+    Octree _octree;
+    
+    // Make this a member so as to avoid heap allocation every frame in draw().
+    // This member is only ever used in draw() which is only ever used on the
+    // render thread.
+    std::vector<AABB> _cellsInFrustum;
 };
 
 #endif /* TerrainDrawList_hpp */

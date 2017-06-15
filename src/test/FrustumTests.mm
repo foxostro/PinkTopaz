@@ -26,33 +26,33 @@ using namespace glm;
     XCTAssertEqual(frustum.planes()[Frustum::FarPlane],    normalize(Plane( 0.f,  0.f, -1.f, 1.f)));
     
     // Test a few points we expect to be inside the frustum.
-    XCTAssertTrue(frustum.inside(vec3(0.0f, 0.0f,  0.2f)));
-    XCTAssertTrue(frustum.inside(vec3(0.0f, 0.0f, -0.2f)));
-    XCTAssertTrue(frustum.inside(vec3(0.0f, 0.0f,  1.f)));
-    XCTAssertTrue(frustum.inside(vec3(0.0f, 0.0f, -1.0f)));
-    XCTAssertTrue(frustum.inside(vec3(1.0f, 0.0f,  0.0f)));
-    XCTAssertTrue(frustum.inside(vec3(0.0f, 0.0f,  0.0f)));
+    XCTAssertTrue(frustum.pointIsInside(vec3(0.0f, 0.0f,  0.2f)));
+    XCTAssertTrue(frustum.pointIsInside(vec3(0.0f, 0.0f, -0.2f)));
+    XCTAssertTrue(frustum.pointIsInside(vec3(0.0f, 0.0f,  1.f)));
+    XCTAssertTrue(frustum.pointIsInside(vec3(0.0f, 0.0f, -1.0f)));
+    XCTAssertTrue(frustum.pointIsInside(vec3(1.0f, 0.0f,  0.0f)));
+    XCTAssertTrue(frustum.pointIsInside(vec3(0.0f, 0.0f,  0.0f)));
     
     // Test a few points we expect to be outside the frustum.
-    XCTAssertFalse(frustum.inside(vec3(0.0f, 0.0f, 100.0f)));
-    XCTAssertFalse(frustum.inside(vec3(0.0f, 0.0f, 1.1f)));
-    XCTAssertFalse(frustum.inside(vec3(0.0f, 0.0f, -1.1f)));
+    XCTAssertFalse(frustum.pointIsInside(vec3(0.0f, 0.0f, 100.0f)));
+    XCTAssertFalse(frustum.pointIsInside(vec3(0.0f, 0.0f, 1.1f)));
+    XCTAssertFalse(frustum.pointIsInside(vec3(0.0f, 0.0f, -1.1f)));
     
     // A box placed around the camera should be in the frustum.
     const AABB boxAroundCamera = { vec3(0.f), vec3(10.f) };
-    XCTAssertTrue(frustum.inside(boxAroundCamera));
+    XCTAssertTrue(frustum.boxIsInside(boxAroundCamera));
     
     // A box placed directly in front of the camera should be in the frustum.
     const AABB boxInFront = { vec3(0.0f, 0.0f, 0.1f), vec3(0.1f) };
-    XCTAssertTrue(frustum.inside(boxInFront));
+    XCTAssertTrue(frustum.boxIsInside(boxInFront));
     
     // A box placed behind the camera should not be in the frustum
     const AABB boxInBack = { vec3(0.0f, 0.0f, -1.f), vec3(0.1f) };
-    XCTAssertTrue(frustum.inside(boxInBack));
+    XCTAssertTrue(frustum.boxIsInside(boxInBack));
     
     // A box which straddles the far plane should be in the frustum (partially)
     const AABB boxStraddleFar = { vec3(0.0f, 0.0f, 1.1f), vec3(0.2f) };
-    XCTAssertTrue(frustum.inside(boxStraddleFar));
+    XCTAssertTrue(frustum.boxIsInside(boxStraddleFar));
 }
 
 - (void)testCameraPlaneExtraction2 {
@@ -74,39 +74,39 @@ using namespace glm;
     Frustum frustum(viewProj);
     
     // The camera center should be in the frustum.
-    XCTAssertTrue(frustum.inside(vec3(0.f, 0.f, 2.f)));
+    XCTAssertTrue(frustum.pointIsInside(vec3(0.f, 0.f, 2.f)));
     
     // As should any other point directly in front of the camera, within the near and far planes.
-    XCTAssertTrue(frustum.inside(vec3(0.f, 0.f, 5.f)));
+    XCTAssertTrue(frustum.pointIsInside(vec3(0.f, 0.f, 5.f)));
     
     // A point closer than the near plane should not be in the frustum.
-    XCTAssertFalse(frustum.inside(vec3(0.f, 0.f, 0.1f)));
+    XCTAssertFalse(frustum.pointIsInside(vec3(0.f, 0.f, 0.1f)));
     
     // A point past the far plane should not be in the frustum.
-    XCTAssertFalse(frustum.inside(vec3(0.f, 0.f, 1000.0f)));
+    XCTAssertFalse(frustum.pointIsInside(vec3(0.f, 0.f, 1000.0f)));
     
     // A point directly on the far plane should be in the frustum.
-    XCTAssertTrue(frustum.inside(vec3(0.f, 0.f, 10.f)));
+    XCTAssertTrue(frustum.pointIsInside(vec3(0.f, 0.f, 10.f)));
     
     // A point directly on the near plane should be in the frustum.
-    XCTAssertTrue(frustum.inside(vec3(0.f, 0.f, 1.f)));
+    XCTAssertTrue(frustum.pointIsInside(vec3(0.f, 0.f, 1.f)));
     
     // A point behind the camera not be in the frustum.
-    XCTAssertFalse(frustum.inside(vec3(0.f, 0.f, -1.f)));
+    XCTAssertFalse(frustum.pointIsInside(vec3(0.f, 0.f, -1.f)));
     
     // Test a few points far outside the sides of the frustum.
-    XCTAssertFalse(frustum.inside(vec3(-100.f, 0.f, 2.f)));
-    XCTAssertFalse(frustum.inside(vec3(+100.f, 0.f, 2.f)));
-    XCTAssertFalse(frustum.inside(vec3(0.f, -100.f, 2.f)));
-    XCTAssertFalse(frustum.inside(vec3(0.f, +100.f, 2.f)));
+    XCTAssertFalse(frustum.pointIsInside(vec3(-100.f, 0.f, 2.f)));
+    XCTAssertFalse(frustum.pointIsInside(vec3(+100.f, 0.f, 2.f)));
+    XCTAssertFalse(frustum.pointIsInside(vec3(0.f, -100.f, 2.f)));
+    XCTAssertFalse(frustum.pointIsInside(vec3(0.f, +100.f, 2.f)));
     
     // A box placed around the camera should be in the frustum.
     const AABB boxAroundCamera = { vec3(0.f), vec3(10.f) };
-    XCTAssertTrue(frustum.inside(boxAroundCamera));
+    XCTAssertTrue(frustum.boxIsInside(boxAroundCamera));
     
     // A box placed directly in front of the camera should be in the frustum.
     const AABB boxInFront = { vec3(0.0f, 0.0f, 2.0f), vec3(1.f) };
-    XCTAssertTrue(frustum.inside(boxInFront));
+    XCTAssertTrue(frustum.boxIsInside(boxInFront));
 }
 
 @end

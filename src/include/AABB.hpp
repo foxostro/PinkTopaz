@@ -10,6 +10,7 @@
 #define AABB_hpp
 
 #include <glm/glm.hpp>
+#include <vector>
 
 // An axis-aligned bounding box.
 template<typename TYPE>
@@ -55,6 +56,22 @@ struct _AABB
     inline _AABB<TYPE> inset(TYPE inset) const
     {
         return _AABB<TYPE>{center, extent - inset};
+    }
+    
+    auto octants() const
+    {
+        const glm::vec3 subExtent = extent * 0.50f;
+        const std::array<_AABB<TYPE>, 8> r = {{
+            { center + glm::vec3(-subExtent.x, -subExtent.y, -subExtent.z), subExtent},
+            { center + glm::vec3(-subExtent.x, -subExtent.y, +subExtent.z), subExtent},
+            { center + glm::vec3(-subExtent.x, +subExtent.y, -subExtent.z), subExtent},
+            { center + glm::vec3(-subExtent.x, +subExtent.y, +subExtent.z), subExtent},
+            { center + glm::vec3(+subExtent.x, -subExtent.y, -subExtent.z), subExtent},
+            { center + glm::vec3(+subExtent.x, -subExtent.y, +subExtent.z), subExtent},
+            { center + glm::vec3(+subExtent.x, +subExtent.y, -subExtent.z), subExtent},
+            { center + glm::vec3(+subExtent.x, +subExtent.y, +subExtent.z), subExtent}
+        }};
+        return r;
     }
 };
 
