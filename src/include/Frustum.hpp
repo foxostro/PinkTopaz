@@ -36,14 +36,16 @@ public:
     
     Frustum(const glm::mat4x4 &viewProj)
     {
-        // See <https://fgiesen.wordpress.com/2012/08/31/frustum-planes-from-the-projection-matrix/> for details.
+        // Extract the view-frustum planes from the view-projection matrix.
+        // See <https://fgiesen.wordpress.com/2012/08/31/frustum-planes-from-the-projection-matrix/>
+        // for details on how to derive this trick.
         
         planes[LeftPlane]   = glm::row(viewProj, 3) + glm::row(viewProj, 0);
         planes[RightPlane]  = glm::row(viewProj, 3) - glm::row(viewProj, 0);
         planes[BottomPlane] = glm::row(viewProj, 3) + glm::row(viewProj, 1);
         planes[TopPlane]    = glm::row(viewProj, 3) - glm::row(viewProj, 1);
-        planes[NearPlane]  = glm::row(viewProj, 3) + glm::row(viewProj, 2);
-        planes[FarPlane]   = glm::row(viewProj, 3) - glm::row(viewProj, 2);
+        planes[NearPlane]   = glm::row(viewProj, 3) + glm::row(viewProj, 2);
+        planes[FarPlane]    = glm::row(viewProj, 3) - glm::row(viewProj, 2);
         
         // We need to normalize the planes in order for distance calculations to
         // be correct.
@@ -51,8 +53,8 @@ public:
         planes[RightPlane]  = glm::normalize(planes[RightPlane]);
         planes[BottomPlane] = glm::normalize(planes[BottomPlane]);
         planes[TopPlane]    = glm::normalize(planes[TopPlane]);
-        planes[NearPlane]  = glm::normalize(planes[NearPlane]);
-        planes[FarPlane]   = glm::normalize(planes[FarPlane]);
+        planes[NearPlane]   = glm::normalize(planes[NearPlane]);
+        planes[FarPlane]    = glm::normalize(planes[FarPlane]);
     }
     
     bool inside(const AABB &box) const

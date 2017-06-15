@@ -22,8 +22,8 @@ using namespace glm;
     XCTAssertEqual(frustum.planes[RightPlane],  normalize(Plane(-1.f,  0.f,  0.f, 1.f)));
     XCTAssertEqual(frustum.planes[BottomPlane], normalize(Plane( 0.f, +1.f,  0.f, 1.f)));
     XCTAssertEqual(frustum.planes[TopPlane],    normalize(Plane( 0.f, -1.f,  0.f, 1.f)));
-    XCTAssertEqual(frustum.planes[NearPlane],  normalize(Plane( 0.f,  0.f, +1.f, 1.f)));
-    XCTAssertEqual(frustum.planes[FarPlane],   normalize(Plane( 0.f,  0.f, -1.f, 1.f)));
+    XCTAssertEqual(frustum.planes[NearPlane],   normalize(Plane( 0.f,  0.f, +1.f, 1.f)));
+    XCTAssertEqual(frustum.planes[FarPlane],    normalize(Plane( 0.f,  0.f, -1.f, 1.f)));
     
     // Test a few points we expect to be inside the frustum.
     XCTAssertTrue(frustum.inside(vec3(0.0f, 0.0f,  0.2f)));
