@@ -70,6 +70,5 @@ void TaskDispatcher::worker()
         }
         
         task();
-        _cvarTaskCompleted.notify_one();
     }
 }

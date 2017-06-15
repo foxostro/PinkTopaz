@@ -39,7 +39,6 @@ private:
     std::mutex _lockTaskPosted;
     std::condition_variable _cvarTaskPosted;
     std::mutex _lockTaskCompleted;
-    std::condition_variable _cvarTaskCompleted;
     std::queue<Task> _tasks;
     bool _threadShouldExit;
 };
