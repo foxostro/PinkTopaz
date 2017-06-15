@@ -17,7 +17,8 @@
 #include <glm/gtc/matrix_transform.hpp>
     
 World::World(const std::shared_ptr<GraphicsDevice> &device,
-             const std::shared_ptr<TaskDispatcher> &dispatcher)
+             const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
+             const std::shared_ptr<TaskDispatcher> &dispatcherLowPriority)
 {
     PROFILER(InitWorld);
     
@@ -40,7 +41,7 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
     
     // Create an entity to represent the terrain.
     TerrainComponent terrainComponent;
-    terrainComponent.terrain = std::make_shared<Terrain>(device, dispatcher);
+    terrainComponent.terrain = std::make_shared<Terrain>(device, dispatcherHighPriority, dispatcherLowPriority);
     entityx::Entity terrainEntity = entities.create();
     terrainEntity.assign<TerrainComponent>(terrainComponent);
     terrainEntity.assign<Transform>();

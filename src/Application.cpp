@@ -23,7 +23,8 @@
 #include "Application.hpp"
 
 void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
-                        const std::shared_ptr<TaskDispatcher> &dispatcher)
+                        const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
+                        const std::shared_ptr<TaskDispatcher> &dispatcherLowPriority)
 {
     Stopwatch stopwatch;
     
@@ -31,7 +32,7 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     const double refreshRate = getVideoRefreshRate();
     const uint64_t videoRefreshPeriodNanos = (uint64_t)(Stopwatch::NANOS_PER_SEC / refreshRate);
     
-    World gameWorld(graphicsDevice, dispatcher);
+    World gameWorld(graphicsDevice, dispatcherHighPriority, dispatcherLowPriority);
     
     // Send an event containing the initial window size and scale factor.
     // This will allow the render system to setup projection matrices and such.
@@ -62,7 +63,8 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                     PROFILER_SIGNPOST(Quit);
                     SDL_Log("Received SDL_QUIT.");
                     quit = true;
-                    dispatcher->shutdown();
+                    dispatcherHighPriority->shutdown();
+                    dispatcherLowPriority->shutdown();
                     break;
                     
                 case SDL_WINDOWEVENT:
@@ -129,6 +131,7 @@ void Application::run()
         }
     } else {
         inner(createDefaultGraphicsDevice(*_window),
+              std::make_shared<TaskDispatcher>(),
               std::make_shared<TaskDispatcher>());
     }
 

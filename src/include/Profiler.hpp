@@ -28,9 +28,11 @@ public:
     enum Label
     {
         Frame = 0,
-        Render,
-        InitWorld,
         Quit,
+        InitWorld,
+        TerrainAsyncRebuildMeshes,
+        TerrainRebuildNextMesh,
+        TerrainFetchMeshes,
     };
     
     class Scope

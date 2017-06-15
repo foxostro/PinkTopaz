@@ -9,17 +9,14 @@
 #include "Terrain/Terrain.hpp"
 #include "Terrain/MesherNaiveSurfaceNets.hpp"
 #include "SDL_image.h"
-
-Terrain::~Terrain()
-{
-    std::lock_guard<std::mutex> lock(_lockMeshes);
-    _dispatcher->shutdown();
-}
+#include "Profiler.hpp"
 
 Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
-                 const std::shared_ptr<TaskDispatcher> &dispatcher)
+                 const std::shared_ptr<TaskDispatcher> &dispatcher,
+                 const std::shared_ptr<TaskDispatcher> &dispatcherRebuildMesh)
  : _graphicsDevice(graphicsDevice),
    _dispatcher(dispatcher),
+   _dispatcherRebuildMesh(dispatcherRebuildMesh),
    _mesher(new MesherNaiveSurfaceNets),
    _voxels(new VoxelDataStore),
    _meshFetchInFlight(0)
@@ -94,10 +91,11 @@ void Terrain::setTerrainUniforms(const TerrainUniforms &uniforms)
     _defaultMesh->uniforms->replace(sizeof(uniforms), &uniforms);
     
     // Extract the camera position from the camera transform.
-    {
-        std::lock_guard<std::mutex> lock(_lockCameraPosition);
-        _cameraPos = glm::vec3(glm::inverse(uniforms.view)[3]);
-    }
+    const glm::vec3 cameraPos = glm::vec3(glm::inverse(uniforms.view)[3]);
+    _dispatcher->async([this, cameraPos]{
+        std::unique_lock<std::shared_mutex> lock(_lockCameraPosition);
+        _cameraPos = cameraPos;
+    });
     
     // We'll use the MVP later to extract the camera frustum.
     _modelViewProjection = uniforms.proj * uniforms.view;
@@ -113,17 +111,16 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     // the number of these tasks in the queue.
     if (_meshFetchInFlight < 1) {
         _meshFetchInFlight++;
-        _dispatcher->async([=]{
-            if (_lockMeshes.try_lock()) {
-                _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell){
-                    const MaybeTerrainMesh &maybeTerrainMesh = _meshes->get(cell.center);
-                    _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
-                    if (!maybeTerrainMesh) {
-                        asyncRebuildAnotherMesh(cell);
-                    }
-                });
-                _lockMeshes.unlock();
-            }
+        _dispatcherRebuildMesh->async([=]{
+            PROFILER(TerrainFetchMeshes);
+            std::lock_guard<std::mutex> lock(_lockMeshes);
+            _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell){
+                const MaybeTerrainMesh &maybeTerrainMesh = _meshes->get(cell.center);
+                _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
+                if (!maybeTerrainMesh) {
+                    asyncRebuildAnotherMesh(cell);
+                }
+            });
             _meshFetchInFlight--;
         });
     }
@@ -138,6 +135,8 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
 
 void Terrain::asyncRebuildMeshes(const ChangeLog &changeLog)
 {
+    PROFILER(TerrainAsyncRebuildMeshes);
+    
     // Get the set of meshes which are affected by the changes.
     std::set<AABB> affectedMeshes;
     {
@@ -158,7 +157,7 @@ void Terrain::asyncRebuildMeshes(const ChangeLog &changeLog)
 void Terrain::asyncRebuildAnotherMesh(const AABB &cell)
 {
     if (_meshesToRebuild.push(cell)) {
-        _dispatcher->async([=]{
+        _dispatcherRebuildMesh->async([=]{
             rebuildNextMesh();
         });
     }
@@ -166,9 +165,11 @@ void Terrain::asyncRebuildAnotherMesh(const AABB &cell)
 
 void Terrain::rebuildNextMesh()
 {
+    PROFILER(TerrainRebuildNextMesh);
+    
     static glm::vec3 cameraPosition;
     {
-        std::lock_guard<std::mutex> lock(_lockCameraPosition);
+        std::shared_lock<std::shared_mutex> lock(_lockCameraPosition);
         cameraPosition = _cameraPos;
     }
     
@@ -176,7 +177,7 @@ void Terrain::rebuildNextMesh()
     
     if (maybeCell) {
         const AABB &cell = *maybeCell;
-        _lockMeshes.lock();
+        std::lock_guard<std::mutex> lock(_lockMeshes);
         MaybeTerrainMesh &maybeTerrainMesh = _meshes->mutableReference(cell.center);
         if (!maybeTerrainMesh) {
             maybeTerrainMesh.emplace(cell,
@@ -185,7 +186,6 @@ void Terrain::rebuildNextMesh()
                                      _mesher,
                                      _voxels);
         }
-        _lockMeshes.unlock();
         maybeTerrainMesh->rebuild();
         _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
     }

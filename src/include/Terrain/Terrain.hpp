@@ -18,14 +18,16 @@
 #include "Terrain/TerrainMeshQueue.hpp"
 #include "RenderableStaticMesh.hpp"
 #include <experimental/optional>
+#include <shared_mutex>
 
 class Terrain
 {
 public:
-    ~Terrain();
+    ~Terrain() = default;
     
     Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
-            const std::shared_ptr<TaskDispatcher> &dispatcher);
+            const std::shared_ptr<TaskDispatcher> &dispatcher,
+            const std::shared_ptr<TaskDispatcher> &dispatcherRebuildMesh);
     
     // No default constructor.
     Terrain() = delete;
@@ -50,6 +52,7 @@ private:
     
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<TaskDispatcher> _dispatcher;
+    std::shared_ptr<TaskDispatcher> _dispatcherRebuildMesh;
     std::shared_ptr<Mesher> _mesher;
     std::shared_ptr<VoxelDataStore> _voxels;
     std::unique_ptr<TerrainDrawList> _drawList;
@@ -58,7 +61,7 @@ private:
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     TerrainMeshQueue _meshesToRebuild;
     std::atomic<int> _meshFetchInFlight;
-    std::mutex _lockCameraPosition;
+    std::shared_mutex _lockCameraPosition;
     glm::vec3 _cameraPos;
     glm::mat4x4 _modelViewProjection;
     
