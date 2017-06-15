@@ -98,8 +98,10 @@ public:
     // Each point in space corresponds to exactly one cell. Get the object.
     const TYPE& get(const glm::vec3 &p) const override
     {
-        if (EnableVerboseBoundsChecking && !inbounds(p)) {
-            throw OutOfBoundsException();
+        if constexpr (EnableVerboseBoundsChecking) {
+            if (!inbounds(p)) {
+                throw OutOfBoundsException();
+            }
         }
         return get(indexAtPoint(p));
     }
@@ -107,8 +109,10 @@ public:
     // Each point in space corresponds to exactly one cell. Get the (mutable) object.
     TYPE& mutableReference(const glm::vec3 &p) override
     {
-        if (EnableVerboseBoundsChecking && !inbounds(p)) {
-            throw OutOfBoundsException();
+        if constexpr (EnableVerboseBoundsChecking) {
+            if (!inbounds(p)) {
+                throw OutOfBoundsException();
+            }
         }
         return mutableReference(indexAtPoint(p));
     }
@@ -116,8 +120,10 @@ public:
     // Each point in space corresponds to exactly one cell. Set the object.
     void set(const glm::vec3 &p, const TYPE &object) override
     {
-        if (EnableVerboseBoundsChecking && !inbounds(p)) {
-            throw OutOfBoundsException();
+        if constexpr (EnableVerboseBoundsChecking) {
+            if (!inbounds(p)) {
+                throw OutOfBoundsException();
+            }
         }
         return set(indexAtPoint(p), object);
     }
@@ -125,8 +131,10 @@ public:
     // Gets the internal cell index for the specified point in space.
     inline index_type indexAtPoint(const glm::vec3 &point) const
     {
-        if (EnableVerboseBoundsChecking && !inbounds(point)) {
-            throw OutOfBoundsException();
+        if constexpr (EnableVerboseBoundsChecking) {
+            if (!inbounds(point)) {
+                throw OutOfBoundsException();
+            }
         }
         
         const glm::ivec3 a = cellCoordsAtPoint(point);
