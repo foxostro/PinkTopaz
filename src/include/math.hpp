@@ -13,20 +13,56 @@
 #include <glm/glm.hpp>
 
 #if __has_include(<x86intrin.h>)
-#include <x86intrin.h> // for __builtin_clzll
-static inline unsigned ilog2(unsigned x)
+#include <x86intrin.h>
+
+static inline uint32_t ilog2(uint32_t x)
 {
     // See <https://stackoverflow.com/a/11376759/2403342> for details.
-    return (unsigned)(8*sizeof(unsigned long long) - __builtin_clzll((x)) - 1);
+    return (uint32_t)(8*sizeof(unsigned long long) - __builtin_clzll((x)) - 1);
 }
-#else
-#error AFOX_TODO: implement ilog2() for MSVC
-#endif
 
-static inline bool isPowerOfTwo(unsigned x)
+static inline uint32_t roundUpToPowerOfTwo(uint32_t x)
 {
-    return (x & (x - 1)) == 0;
+    return 1 << (32 - __builtin_clz(x - 1));
 }
+
+static inline bool isPowerOfTwo(uint32_t x)
+{
+    return __builtin_popcount(x) == 1;
+}
+
+#else
+
+static inline uint32_t ilog2(uint32_t x)
+{
+    // See <http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogObvious>
+    uint32_t r = 0;
+    while (x >>= 1) {
+        r++;
+    }
+    return r;
+}
+
+static inline uint32_t roundUpToPowerOfTwo(uint32_t v)
+{
+    // See <http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2>
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+    return v;
+}
+
+static inline bool isPowerOfTwo(uint32_t x)
+{
+    // See <http://graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2>
+    return (x && !(x & (x - 1))) == 0;
+}
+
+#endif
 
 template<typename T>
 static inline const T& clamp(const T &value, const T &min, const T &max)

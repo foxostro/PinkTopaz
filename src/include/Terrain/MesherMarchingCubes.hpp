@@ -19,7 +19,7 @@ public:
     virtual ~MesherMarchingCubes() = default;
     
     // Returns a triangle mesh for the specified isosurface.
-    virtual StaticMesh extract(const Array3D<Voxel> &voxels,
+    virtual StaticMesh extract(const GridAddressable<Voxel> &voxels,
                                const AABB &region,
                                float isosurface) override;
     

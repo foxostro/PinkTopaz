@@ -20,6 +20,10 @@
 #include "SDL.h"
 #include <map>
 
+#if defined(__BMI2__)
+#include <x86intrin.h>
+#endif
+
 #include "Application.hpp"
 
 void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
@@ -93,6 +97,14 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
 void Application::run()
 {
+#if defined(__BMI2__)
+    // The app was built with BMI2 support and a variety of operations will be
+    // using these instructions. So, make sure the current machine supports it.
+    if (!__builtin_cpu_supports("avx2")) {
+        throw Exception("This application requires the BMI2 instruction set found on Intel Haswell chips, or newer.");
+    }
+#endif
+    
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_Init failed: %s\n", SDL_GetError());
     }

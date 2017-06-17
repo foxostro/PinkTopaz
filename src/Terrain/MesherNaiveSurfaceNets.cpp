@@ -140,7 +140,7 @@ MesherNaiveSurfaceNets::texCoordsForFace(const AABB &cell, size_t i)
 }
 
 glm::vec3
-MesherNaiveSurfaceNets::smoothVertex(const Array3D<Voxel> &voxels,
+MesherNaiveSurfaceNets::smoothVertex(const GridAddressable<Voxel> &voxels,
                                      float isosurface,
                                      const glm::vec3 &input)
 {
@@ -247,7 +247,7 @@ MesherNaiveSurfaceNets::smoothVertex(const Array3D<Voxel> &voxels,
 }
 
 std::array<glm::vec3, 4>
-MesherNaiveSurfaceNets::smoothQuad(const Array3D<Voxel> &voxels,
+MesherNaiveSurfaceNets::smoothQuad(const GridAddressable<Voxel> &voxels,
                                    float isosurface,
                                    const std::array<glm::vec3, 4> &input)
 {
@@ -261,7 +261,7 @@ MesherNaiveSurfaceNets::smoothQuad(const Array3D<Voxel> &voxels,
 }
 
 std::array<TerrainVertex, 6>
-MesherNaiveSurfaceNets::verticesForFace(const Array3D<Voxel> &voxels,
+MesherNaiveSurfaceNets::verticesForFace(const GridAddressable<Voxel> &voxels,
                                         float isosurface,
                                         const AABB &cell,
                                         size_t face)
@@ -325,7 +325,7 @@ MesherNaiveSurfaceNets::verticesForFace(const Array3D<Voxel> &voxels,
 }
 
 void MesherNaiveSurfaceNets::emitFace(StaticMesh &geometry,
-                                      const Array3D<Voxel> &voxels,
+                                      const GridAddressable<Voxel> &voxels,
                                       float isosurface,
                                       const AABB &cell,
                                       size_t face)
@@ -334,7 +334,7 @@ void MesherNaiveSurfaceNets::emitFace(StaticMesh &geometry,
     geometry.addVertices(vertices);
 }
 
-StaticMesh MesherNaiveSurfaceNets::extract(const Array3D<Voxel> &voxels,
+StaticMesh MesherNaiveSurfaceNets::extract(const GridAddressable<Voxel> &voxels,
                                            const AABB &aabb,
                                            float level)
 {

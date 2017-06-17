@@ -350,4 +350,33 @@ using glm::ivec3;
     });
 }
 
+- (void) testIndexing {
+    AABB box = {vec3(64.5f, 128.5f, 64.5f), vec3(80.f, 144.f, 80.f)};
+    ivec3 res(160, 288, 160);
+    Array3D<int> myArray(box, res);
+    XCTAssertEqual(myArray.gridResolution(), res);
+    XCTAssertEqual(myArray.boundingBox(), box);
+    XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
+    
+    size_t index;
+    
+    for (size_t x = 0; x < res.x; ++x) {
+        for (size_t y = 0; y < res.y; ++y) {
+            for (size_t z = 0; z < res.z; ++z) {
+                index = myArray.indexAtCellCoords(ivec3(x, y, z));
+                XCTAssertTrue(myArray.isValidIndex(index));
+            }
+        }
+    }
+    
+    XCTAssertFalse(myArray.isValidIndex(myArray.indexAtCellCoords(res)));
+    
+    vec3 point(-15.f, 241.f, -15.f);
+    index = myArray.indexAtPoint(point);
+    XCTAssertTrue(myArray.isValidIndex(index));
+    myArray.set(index, 42);
+    XCTAssertEqual(myArray.get(index), 42);
+    XCTAssertEqual(myArray.get(point), 42);
+}
+
 @end

@@ -10,6 +10,7 @@
 #define Array3D_hpp
 
 #include "AABB.hpp"
+#include "Morton.hpp"
 
 #define LOG_ARRAY_CTOR 0
 #if LOG_ARRAY_CTOR
@@ -53,7 +54,9 @@ public:
     // cells along the X-axis, `resolution.y' cells along the Y-axis, and
     // `resolution.z' cells along the Z-axis.
     Array3D(const AABB &box, const glm::ivec3 &res)
-     : _cells(res.x * res.y * res.z), _box(box), _res(res)
+     : _cells(numberOfInternalElements(res)),
+       _box(box),
+       _res(res)
     {
 #if LOG_ARRAY_CTOR
         SDL_Log("Array3D(const AABB &box, const glm::ivec3 &res) -- %p", this);
@@ -138,9 +141,19 @@ public:
         }
         
         const glm::ivec3 a = cellCoordsAtPoint(point);
-        
-        // Columns in the y-axis are contiguous in memory.
-        return (a.x * _res.y * _res.z) + (a.z * _res.y) + a.y;
+        const index_type index = indexAtCellCoords(a);
+        return index;
+    }
+    
+    // Gets the internal cell index for the specified cell coords.
+    inline index_type indexAtCellCoords(const glm::ivec3 &cellCoords) const
+    {
+        return (index_type)Morton3(cellCoords);
+    }
+    
+    inline bool isValidIndex(index_type index) const
+    {
+        return index < _cells.size();
     }
     
     // Gets the object for the specified index, produced by `indexAtPoint'.
@@ -184,6 +197,12 @@ private:
     container_type _cells;
     AABB _box;
     glm::ivec3 _res;
+    
+    // Get the number of elements to use in the internal array.
+    static inline size_t numberOfInternalElements(const glm::ivec3 &res)
+    {
+        return Morton3::encode(res - glm::ivec3(1, 1, 1)) + 1;
+    }
 };
 
 #endif /* Array3D_hpp */

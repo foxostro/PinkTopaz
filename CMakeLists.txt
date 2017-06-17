@@ -19,7 +19,7 @@ else()
     
     set(CMAKE_CXX_FLAGS_RELEASE "-g -Oz")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-    set(CMAKE_CXX_FLAGS "-Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-march=haswell -Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
 endif()
 
 set(SOURCE_FILES_TERRAIN
@@ -116,7 +116,7 @@ set(SOURCE_FILES_MISC
     "src/include/UniqueName.hpp"
     "src/include/Stopwatch.hpp"
     "src/include/VideoRefreshRate.hpp"
-    "src/Octree.cpp" "src/include/Octree.hpp"
+    "src/include/morton.hpp"
     )
 
 if(APPLE)
@@ -247,6 +247,7 @@ if(APPLE)
                       src/test/Terrain/MesherNaiveSurfaceNetsTests.mm
                       src/test/Renderer/StaticMeshSerializerTests.mm
                       src/test/FrustumTests.mm
+                      src/test/MortonTests.mm
                       )
     xctest_add_test(XCTest.PinkTopaz PinkTopazTests)
 endif(APPLE)

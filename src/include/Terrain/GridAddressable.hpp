@@ -11,6 +11,7 @@
 
 #include "AABB.hpp"
 #include "Exception.hpp"
+#include "Frustum.hpp"
 #include <glm/vec3.hpp>
 #include <functional>
 
@@ -157,6 +158,34 @@ public:
             for (cursor.x = min.x; cursor.x < max.x; cursor.x += dim.x) {
                 for (cursor.y = min.y; cursor.y < max.y; cursor.y += dim.y) {
                     fn(cellAtPoint(cursor));
+                }
+            }
+        }
+    }
+    
+    // Iterate over cells which fall within the specified frustum.
+    inline void forEachCell(const Frustum &frustum, std::function<void (const AABB &cell)> fn) const
+    {
+        const glm::ivec3 res = gridResolution();
+        assert((res.x == res.y) && (res.x == res.z));
+        assert(isPowerOfTwo(res.x));
+        
+        forEachCell(0, ilog2(res.x), boundingBox(), frustum, fn);
+    }
+    
+    // Iterate over cells which fall within the specified frustum.
+    void forEachCell(size_t depth,
+                     size_t depthOfLeaves,
+                     const AABB &box,
+                     const Frustum &frustum,
+                     std::function<void (const AABB &cell)> fn) const
+    {
+        if (frustum.boxIsInside(box)) {
+            if (depth == depthOfLeaves) {
+                fn(box);
+            } else {
+                for (auto &octant : box.octants()) {
+                    forEachCell(depth+1, depthOfLeaves, octant, frustum, fn);
                 }
             }
         }

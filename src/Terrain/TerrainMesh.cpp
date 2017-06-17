@@ -78,7 +78,7 @@ void TerrainMesh::rebuild()
     // perform surface extraction.
     const AABB voxelBox = _meshBox.inset(-glm::vec3(1, 1, 1));
     
-    _voxels->readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
+    _voxels->readerTransaction(voxelBox, [&](const GridAddressable<Voxel> &voxels){
         // The voxel file uses a binary SOLID/EMPTY flag for voxels.
         // So, we get values that are either 0.0 or 1.0.
         constexpr float isosurface = 0.5f;
