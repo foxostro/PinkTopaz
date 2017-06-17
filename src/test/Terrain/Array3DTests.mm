@@ -198,7 +198,7 @@ using glm::ivec3;
     
     std::vector<AABB> actualCells;
     
-    myArray.forEachCell(box, [&](const AABB &cell){
+    myArray.forEachCell(box, [&](const AABB &cell, Morton3 index, const int &value){
         actualCells.push_back(cell);
     });
     
@@ -208,7 +208,7 @@ using glm::ivec3;
     // Throws an exception when the region is not in-bounds.
     try {
         const AABB negCell = {vec3(-0.5f, -0.5f, -0.5f), vec3(0.5f, 0.5f, 0.5f)};
-        myArray.forEachCell(negCell, [&](const AABB &cell){
+        myArray.forEachCell(negCell, [&](const AABB &cell, Morton3 index, const int &value){
             SDL_Log("{(%.2f, %.2f, %.2f), (%.2f, %.2f, %.2f)}",
                     cell.center.x, cell.center.y, cell.center.z,
                     cell.extent.x, cell.extent.y, cell.extent.z);
@@ -221,7 +221,7 @@ using glm::ivec3;
     // If the region is a zero-sized box then we should iterate over no cells.
     const AABB zeroBox = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
     actualCells.clear();
-    myArray.forEachCell(zeroBox, [&](const AABB &cell){
+    myArray.forEachCell(zeroBox, [&](const AABB &cell, Morton3 index, const int &value){
         XCTFail("We expected to iterate over zero cells in this case.");
     });
 }
@@ -323,8 +323,10 @@ using glm::ivec3;
     XCTAssertEqual(desiredCells, actualCells);
     
     // Check to see that the grid cells got the new value we set above.
-    myArray.forEachCell(box, [&](const AABB &cell){
+    myArray.forEachCell(box, [&](const AABB &cell, Morton3 index, const int &value){
         XCTAssertEqual(42, myArray.get(cell.center));
+        XCTAssertEqual(42, myArray.get(index));
+        XCTAssertEqual(42, value);
     });
     
     // Throws an exception when the region is not in-bounds.
@@ -358,7 +360,7 @@ using glm::ivec3;
     XCTAssertEqual(myArray.boundingBox(), box);
     XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
     
-    size_t index;
+    Morton3 index;
     
     for (size_t x = 0; x < res.x; ++x) {
         for (size_t y = 0; y < res.y; ++y) {

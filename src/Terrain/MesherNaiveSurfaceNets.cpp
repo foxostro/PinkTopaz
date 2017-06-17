@@ -338,26 +338,25 @@ StaticMesh MesherNaiveSurfaceNets::extract(const GridAddressable<Voxel> &voxels,
                                            const AABB &aabb,
                                            float level)
 {
-    static const std::array<vec3, NUM_FACES> offsets = {{
-        vec3( 0.0f,  0.0f, +1.0f), // FRONT
-        vec3(-1.0f,  0.0f,  0.0f), // LEFT
-        vec3( 0.0f,  0.0f, -1.0f), // BACK
-        vec3(+1.0f,  0.0f,  0.0f), // RIGHT
-        vec3( 0.0f, +1.0f,  0.0f), // TOP
-        vec3( 0.0f, -1.0f,  0.0f)  // BOTTOM
-    }};
-    
-    const vec3 dim = voxels.cellDimensions();
-    
     StaticMesh geometry;
     
-    voxels.forEachCell(aabb, [&](const AABB &cell){
-        for (size_t i = 0; i < NUM_FACES; ++i) {
-            const Voxel &thisVoxel = voxels.get(cell.center);
-            const Voxel &thatVoxel = voxels.get(cell.center + dim * offsets[i]);
-            
-            if ((thisVoxel.value < level) && (thatVoxel.value >= level)) {
-                emitFace(geometry, voxels, level, cell, i);
+    voxels.forEachCell(aabb, [&](const AABB &cell, Morton3 thisIndex, const Voxel &thisVoxel){
+        if (thisVoxel.value < level) {
+            for (size_t i = 0; i < NUM_FACES; ++i) {
+                Morton3 thatIndex(thisIndex);
+                switch (i) {
+                    case 0: thatIndex.incZ(); break; // FRONT
+                    case 1: thatIndex.decX(); break; // LEFT
+                    case 2: thatIndex.decZ(); break; // BACK
+                    case 3: thatIndex.incX(); break; // RIGHT
+                    case 4: thatIndex.incY(); break; // TOP
+                    case 5: thatIndex.decY(); break; // BOTTOM
+                };
+                const Voxel &thatVoxel = voxels.get(thatIndex);
+                
+                if (thatVoxel.value >= level) {
+                    emitFace(geometry, voxels, level, cell, i);
+                }
             }
         }
     });

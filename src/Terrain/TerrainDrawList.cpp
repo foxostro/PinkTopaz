@@ -21,8 +21,7 @@ void TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
     
     // Draw each cell that is in the camera view-frustum.
     std::lock_guard<std::mutex> lock(_lockDrawList);
-    _data.forEachCell(frustum, [&](const AABB &cell){
-        const auto &drawThis = _data.get(cell.center);
+    _data.forEachCell(frustum, [&](const AABB &cell, Morton3 index, const RenderableStaticMesh &drawThis){
         if (drawThis.vertexCount > 0) {
             encoder->setVertexBuffer(drawThis.buffer, 0);
             encoder->drawPrimitives(Triangles, 0, drawThis.vertexCount, 1);

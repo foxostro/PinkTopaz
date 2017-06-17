@@ -114,8 +114,9 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
         _dispatcherRebuildMesh->async([=]{
             PROFILER(TerrainFetchMeshes);
             std::lock_guard<std::mutex> lock(_lockMeshes);
-            _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell){
-                const MaybeTerrainMesh &maybeTerrainMesh = _meshes->get(cell.center);
+            _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell,
+                                                             Morton3 index,
+                                                             const MaybeTerrainMesh &maybeTerrainMesh){
                 _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
                 if (!maybeTerrainMesh) {
                     asyncRebuildAnotherMesh(cell);
@@ -142,7 +143,7 @@ void Terrain::asyncRebuildMeshes(const ChangeLog &changeLog)
     {
         std::lock_guard<std::mutex> lock(_lockMeshes);
         for (const auto &change : changeLog) {
-            _meshes->forEachCell(change.affectedRegion, [&](const AABB &cell){
+            _meshes->forEachCell(change.affectedRegion, [&](const AABB &cell, Morton3 index, const MaybeTerrainMesh &maybeTerrainMesh){
                 affectedMeshes.insert(cell);
             });
         }

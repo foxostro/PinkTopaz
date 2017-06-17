@@ -23,12 +23,7 @@ const Voxel& VoxelData::get(const glm::vec3 &p) const
 
 const Voxel& VoxelData::get(const glm::ivec3 &cellCoords) const
 {
-    assert(!"unimplemented");
-}
-
-Voxel& VoxelData::mutableReference(const glm::ivec3 &cellCoords)
-{
-    assert(!"unimplemented");
+    return get(worldPosAtCellCoords(cellCoords));
 }
 
 Voxel& VoxelData::mutableReference(const glm::vec3 &p)
@@ -37,6 +32,11 @@ Voxel& VoxelData::mutableReference(const glm::vec3 &p)
     assert(maybeChunk);
     Voxel &voxel = maybeChunk->mutableReference(p);
     return voxel;
+}
+
+Voxel& VoxelData::mutableReference(const glm::ivec3 &cellCoords)
+{
+    return mutableReference(worldPosAtCellCoords(cellCoords));
 }
 
 void VoxelData::set(const glm::vec3 &p, const Voxel &object)
@@ -48,7 +48,7 @@ void VoxelData::set(const glm::vec3 &p, const Voxel &object)
 
 void VoxelData::set(const glm::ivec3 &cellCoords, const Voxel &object)
 {
-    assert(!"unimplemented");
+    set(worldPosAtCellCoords(cellCoords), object);
 }
 
 glm::vec3 VoxelData::cellDimensions() const

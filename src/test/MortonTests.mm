@@ -1,6 +1,6 @@
 #import <XCTest/XCTest.h>
 #import <glm/glm.hpp>
-#import "Morton.hpp"
+#import "morton.hpp"
 
 using namespace glm;
 
@@ -38,6 +38,29 @@ using namespace glm;
                    Morton3::decode(0b111111111000));
     XCTAssertEqual(ivec3(0b1010, 0b1111, 0b1111),
                    Morton3::decode(0b111110111110));
+}
+
+- (void)testIncDec {
+    const Morton3 a(ivec3(10, 11, 12));
+    Morton3 b(a);
+    
+    b.incX();
+    XCTAssertEqual(b.decode(), ivec3(11, 11, 12));
+    
+    b.incY();
+    XCTAssertEqual(b.decode(), ivec3(11, 12, 12));
+    
+    b.incZ();
+    XCTAssertEqual(b.decode(), ivec3(11, 12, 13));
+    
+    b.decX();
+    XCTAssertEqual(b.decode(), ivec3(10, 12, 13));
+    
+    b.decY();
+    XCTAssertEqual(b.decode(), ivec3(10, 11, 13));
+    
+    b.decZ();
+    XCTAssertEqual(b.decode(), ivec3(10, 11, 12));
 }
 
 @end

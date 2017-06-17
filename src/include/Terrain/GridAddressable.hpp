@@ -12,7 +12,7 @@
 #include "AABB.hpp"
 #include "Exception.hpp"
 #include "Frustum.hpp"
-#include "Morton.hpp"
+#include "morton.hpp"
 #include <functional>
 
 // Exception thrown when attempting to access the grid at a point that is not in
@@ -93,7 +93,7 @@ public:
     // This method will not throw an exception if the point is outside the valid
     // space of the grid. In this case, you will receive garbage results, but no
     // error will be reported.
-    virtual glm::ivec3 cellCoordsAtPoint(const glm::vec3 &point) const
+    inline glm::ivec3 cellCoordsAtPoint(const glm::vec3 &point) const
     {
         const AABB box = boundingBox();
         const glm::vec3 mins = box.mins();
@@ -101,6 +101,19 @@ public:
         const glm::ivec3 res = gridResolution();
         const glm::ivec3 a(p.x * res.x, p.y * res.y, p.z * res.z);
         return a;
+    }
+    
+    // Convert the specified cell coordinates into world-space coordinates.
+    // This method provides no error checking for the validity of the input.
+    inline const glm::vec3 worldPosAtCellCoords(const glm::ivec3 &cellCoords) const
+    {
+        const glm::vec3 dim = cellDimensions();
+        const glm::vec3 extent = dim * 0.5f;
+        const glm::vec3 min = boundingBox().mins() + extent;
+        const glm::vec3 worldPos = min + glm::vec3(cellCoords.x * dim.x,
+                                                   cellCoords.y * dim.y,
+                                                   cellCoords.z * dim.z);
+        return worldPos;
     }
     
     // Gets the center point of the cell in which the specified point resides.
@@ -178,7 +191,9 @@ public:
     // Iterate over cells in the specified region of the grid.
     // Throws an exception if the region is not within this grid.
     void forEachCell(const AABB &region,
-                     std::function<void (const AABB &cell)> fn) const
+                     std::function<void (const AABB &cell,
+                                         Morton3 index,
+                                         const TYPE &value)> fn) const
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(region)) {
@@ -187,20 +202,39 @@ public:
         }
         
         const auto dim = cellDimensions();
-        const auto min = region.mins();
-        const auto max = region.maxs();
+        const auto extent = dim * 0.5f;
+        const auto min = region.mins() + extent;
+        const auto max = region.maxs() - extent;
+        const auto minCellCoords = cellCoordsAtPoint(min);
         
-        for (glm::vec3 cursor = min; cursor.z < max.z; cursor.z += dim.z) {
-            for (cursor.x = min.x; cursor.x < max.x; cursor.x += dim.x) {
-                for (cursor.y = min.y; cursor.y < max.y; cursor.y += dim.y) {
-                    fn(cellAtPoint(cursor));
+        glm::ivec3 cellCoords;
+        glm::vec3 cursor;
+        
+        for (cursor = min, cellCoords = minCellCoords;
+             cursor.z <= max.z;
+             cursor.z += dim.z, ++cellCoords.z) {
+            
+            for (cursor.x = min.x, cellCoords.x = minCellCoords.x;
+                 cursor.x <= max.x;
+                 cursor.x += dim.x, ++cellCoords.x) {
+                
+                for (cursor.y = min.y, cellCoords.y = minCellCoords.y;
+                     cursor.y <= max.y;
+                     cursor.y += dim.y, ++cellCoords.y) {
+                    
+                    const AABB box = { cursor, extent };
+                    const Morton3 index(cellCoords);
+                    fn(box, index, get(index));
                 }
             }
         }
     }
     
     // Iterate over cells which fall within the specified frustum.
-    inline void forEachCell(const Frustum &frustum, std::function<void (const AABB &cell)> fn) const
+    inline void forEachCell(const Frustum &frustum,
+                            std::function<void (const AABB &cell,
+                                                Morton3 index,
+                                                const TYPE &value)> fn) const
     {
         const glm::ivec3 res = gridResolution();
         assert((res.x == res.y) && (res.x == res.z));
@@ -214,11 +248,17 @@ public:
                      size_t depthOfLeaves,
                      const AABB &box,
                      const Frustum &frustum,
-                     std::function<void (const AABB &cell)> fn) const
+                     std::function<void (const AABB &cell,
+                                         Morton3 index,
+                                         const TYPE &value)> fn) const
     {
         if (frustum.boxIsInside(box)) {
             if (depth == depthOfLeaves) {
-                fn(box);
+                // AFOX_TODO: I suspect the conversion from `box' to `index'
+                // could be accelerated with knowledge of the Z-order layout
+                // since it defines a linear octree traversal.
+                Morton3 index(cellCoordsAtPoint(box.center));
+                fn(box, index, get(index));
             } else {
                 for (auto &octant : box.octants()) {
                     forEachCell(depth+1, depthOfLeaves, octant, frustum, fn);

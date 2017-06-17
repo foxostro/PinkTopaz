@@ -10,7 +10,7 @@
 #define Array3D_hpp
 
 #include "AABB.hpp"
-#include "Morton.hpp"
+#include "morton.hpp"
 
 #define LOG_ARRAY_CTOR 0
 #if LOG_ARRAY_CTOR
