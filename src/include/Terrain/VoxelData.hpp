@@ -73,6 +73,9 @@ public:
     // Gets the number of cells along each axis within the valid region.
     glm::ivec3 gridResolution() const override;
     
+    // Returns an array which holds a copy of the contents of the subregion.
+    Array3D<Voxel> copy(const AABB &region) const;
+    
 private:
     static constexpr int CHUNK_SIZE = 32;
     

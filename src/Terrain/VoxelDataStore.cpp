@@ -17,7 +17,7 @@ VoxelDataStore::VoxelDataStore()
 void VoxelDataStore::readerTransaction(const AABB &region, const std::function<void(const GridAddressable<Voxel> &voxels)> &fn) const
 {
     std::shared_lock<std::shared_mutex> lock(_mutex);
-    fn(_data);
+    fn(_data.copy(region));
 }
 
 void VoxelDataStore::writerTransaction(const AABB &region, const std::function<ChangeLog(GridMutable<Voxel> &voxels)> &fn)
