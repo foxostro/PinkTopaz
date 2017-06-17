@@ -17,8 +17,7 @@ VoxelDataStore::VoxelDataStore()
 void VoxelDataStore::readerTransaction(const AABB &region, const std::function<void(const GridAddressable<Voxel> &voxels)> &fn) const
 {
     std::shared_lock<std::shared_mutex> lock(_mutex);
-    const GridView<Voxel> view = _data.getView(region);
-    fn(view);
+    fn(_data);
 }
 
 void VoxelDataStore::writerTransaction(const AABB &region, const std::function<ChangeLog(GridMutable<Voxel> &voxels)> &fn)
@@ -26,8 +25,7 @@ void VoxelDataStore::writerTransaction(const AABB &region, const std::function<C
     ChangeLog changeLog;
     {
         std::unique_lock<std::shared_mutex> lock(_mutex);
-        GridViewMutable<Voxel> view = _data.getView(region);
-        changeLog = fn(view);
+        changeLog = fn(_data);
     }
     voxelDataChanged(changeLog);
 }

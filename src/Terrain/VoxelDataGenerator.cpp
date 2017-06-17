@@ -42,6 +42,16 @@ const Voxel& VoxelDataGenerator::get(const glm::vec3 &p) const
     return _voxels->get(p);
 }
 
+const Voxel& VoxelDataGenerator::get(const glm::ivec3 &cellCoords) const
+{
+    return _voxels->get(cellCoords);
+}
+
+const Voxel& VoxelDataGenerator::get(Morton3 index) const
+{
+    return _voxels->get(index);
+}
+
 glm::vec3 VoxelDataGenerator::cellDimensions() const
 {
     glm::vec3 dim = _voxels->cellDimensions();

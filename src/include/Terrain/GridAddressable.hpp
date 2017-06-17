@@ -12,7 +12,7 @@
 #include "AABB.hpp"
 #include "Exception.hpp"
 #include "Frustum.hpp"
-#include <glm/vec3.hpp>
+#include "Morton.hpp"
 #include <functional>
 
 // Exception thrown when attempting to access the grid at a point that is not in
@@ -40,6 +40,42 @@ public:
     // Throws an exception if the point is not within this grid.
     virtual const TYPE& get(const glm::vec3 &p) const = 0;
     
+    // Get the cell associated with the given cell coordinates.
+    // Each cell in the grid can be addressed by cell coordinates which uniquely
+    // identify that cell.
+    // See also gridResolution() and cellCoordsAtPoint().
+    virtual const TYPE& get(const glm::ivec3 &cellCoords) const = 0;
+    
+    // Get the cell associated with the given morton code.
+    // Morton codes can be used to uniquely identify a cell in the grid. At the
+    // very least, this code can be used to encode cell coordinates. Sub-classes
+    // of GridAddressable may override this method to allow the code to be used
+    // to directly index some underlying grid array.
+    virtual const TYPE& get(Morton3 index) const
+    {
+        return get(index.decode());
+    }
+    
+    // Gets a morton code to identify the cell for the specified point in space.
+    inline Morton3 indexAtPoint(const glm::vec3 &point) const
+    {
+        if constexpr (EnableVerboseBoundsChecking) {
+            if (!inbounds(point)) {
+                throw OutOfBoundsException();
+            }
+        }
+        
+        const glm::ivec3 a = cellCoordsAtPoint(point);
+        const Morton3 index = indexAtCellCoords(a);
+        return index;
+    }
+    
+    // Gets a morton code to identify the cell for the specified grid cell.
+    inline Morton3 indexAtCellCoords(const glm::ivec3 &cellCoords) const
+    {
+        return Morton3(cellCoords);
+    }
+    
     // Gets the dimensions of a single cell in the grid.
     // Note that cells in the grid are always the same size.
     virtual glm::vec3 cellDimensions() const = 0;
@@ -57,7 +93,7 @@ public:
     // This method will not throw an exception if the point is outside the valid
     // space of the grid. In this case, you will receive garbage results, but no
     // error will be reported.
-    glm::ivec3 cellCoordsAtPoint(const glm::vec3 &point) const
+    virtual glm::ivec3 cellCoordsAtPoint(const glm::vec3 &point) const
     {
         const AABB box = boundingBox();
         const glm::vec3 mins = box.mins();
@@ -69,7 +105,7 @@ public:
     
     // Gets the center point of the cell in which the specified point resides.
     // Throws an exception if the point is not within this grid.
-    glm::vec3 cellCenterAtPoint(const glm::vec3 &point) const
+    inline glm::vec3 cellCenterAtPoint(const glm::vec3 &point) const
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(point)) {
@@ -87,7 +123,7 @@ public:
     
     // Gets the bounding box of the cell in which the specified point resides.
     // Throws an exception if the point is not within this grid.
-    AABB cellAtPoint(const glm::vec3 &point) const
+    inline AABB cellAtPoint(const glm::vec3 &point) const
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(point)) {
@@ -103,7 +139,7 @@ public:
     
     // Gets the number of cells along each axis within the specified region.
     // Throws an exception if the region is not within this grid.
-    glm::ivec3 countCellsInRegion(const AABB &region) const
+    inline glm::ivec3 countCellsInRegion(const AABB &region) const
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(region)) {
@@ -118,7 +154,7 @@ public:
     }
     
     // Returns true if the point is within the valid space of the grid.
-    bool inbounds(const glm::vec3 &point) const
+    inline bool inbounds(const glm::vec3 &point) const
     {
         const AABB box = boundingBox();
         const glm::vec3 mins = box.mins();
@@ -128,7 +164,7 @@ public:
     }
     
     // Returns true if the region is within the valid space of the grid.
-    bool inbounds(const AABB &region) const
+    inline bool inbounds(const AABB &region) const
     {
         if (!inbounds(region.mins())) {
             return false;
@@ -228,10 +264,43 @@ public:
     // Throws an exception if the point is not within this grid.
     virtual TYPE& mutableReference(const glm::vec3 &p) = 0;
     
+    // Get the (mutable) object associated with the given cell coordinates.
+    // Each cell in the grid can be addressed by cell coordinates which uniquely
+    // identify that cell.
+    // See also gridResolution() and cellCoordsAtPoint().
+    virtual TYPE& mutableReference(const glm::ivec3 &cellCoords) = 0;
+    
+    // Get the (mutable) object corresponding to the specified morton code.
+    // Morton codes can be used to uniquely identify a cell in the grid. At the
+    // very least, this code can be used to encode cell coordinates. Sub-classes
+    // of GridMutable may override this method to allow the code to be used to
+    // directly index some underlying grid array.
+    virtual TYPE& mutableReference(Morton3 index)
+    {
+        glm::ivec3 a = index.decode();
+        return mutableReference(a);
+    }
+    
     // Sets the object corresponding to the specified point in space.
     // Note that each point in space corresponds to exactly one cell.
     // Throws an exception if the point is not within this grid.
     virtual void set(const glm::vec3 &p, const TYPE &object) = 0;
+    
+    // Sets the cell associated with the given cell coordinates.
+    // Each cell in the grid can be addressed by cell coordinates which uniquely
+    // identify that cell.
+    // See also gridResolution() and cellCoordsAtPoint().
+    virtual void set(const glm::ivec3 &cellCoords, const TYPE &object) = 0;
+    
+    // Sets the object for the specified index, produced by `indexAtPoint'.
+    // Morton codes can be used to uniquely identify a cell in the grid. At the
+    // very least, this code can be used to encode cell coordinates. Sub-classes
+    // of GridMutable may override this method to allow the code to be used to
+    // directly index some underlying grid array.
+    virtual void set(Morton3 index, const TYPE &object)
+    {
+        set(index.decode(), object);
+    }
     
     // Serially iterate over cells in the specified sub-region of the box.
     // Throws an exception if the region is not within this grid.

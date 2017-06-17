@@ -21,6 +21,16 @@ const Voxel& VoxelData::get(const glm::vec3 &p) const
     return voxel;
 }
 
+const Voxel& VoxelData::get(const glm::ivec3 &cellCoords) const
+{
+    assert(!"unimplemented");
+}
+
+Voxel& VoxelData::mutableReference(const glm::ivec3 &cellCoords)
+{
+    assert(!"unimplemented");
+}
+
 Voxel& VoxelData::mutableReference(const glm::vec3 &p)
 {
     MaybeChunk &maybeChunk = chunkAtPoint(p);
@@ -36,6 +46,11 @@ void VoxelData::set(const glm::vec3 &p, const Voxel &object)
     maybeChunk->set(p, object);
 }
 
+void VoxelData::set(const glm::ivec3 &cellCoords, const Voxel &object)
+{
+    assert(!"unimplemented");
+}
+
 glm::vec3 VoxelData::cellDimensions() const
 {
     return _generator.cellDimensions();
@@ -49,22 +64,6 @@ AABB VoxelData::boundingBox() const
 glm::ivec3 VoxelData::gridResolution() const
 {
     return _generator.gridResolution();
-}
-
-const GridView<Voxel> VoxelData::getView(const AABB &region) const
-{
-    if (!inbounds(region)) {
-        throw OutOfBoundsException();
-    }
-    return GridView<Voxel>(*this, region);
-}
-
-GridViewMutable<Voxel> VoxelData::getView(const AABB &region)
-{
-    if (!inbounds(region)) {
-        throw OutOfBoundsException();
-    }
-    return GridViewMutable<Voxel>(*this, region);
 }
 
 VoxelData::MaybeChunk& VoxelData::chunkAtPoint(const glm::vec3 &p) const

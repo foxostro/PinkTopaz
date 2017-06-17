@@ -11,7 +11,6 @@
 
 #include "Array3D.hpp"
 #include "Voxel.hpp"
-#include "GridView.hpp"
 #include "VoxelDataGenerator.hpp"
 #include <experimental/optional>
 #include <mutex>
@@ -39,13 +38,31 @@ public:
     // Throws an exception if the chunk is not already present.
     const Voxel& get(const glm::vec3 &p) const override;
     
+    // Get the cell associated with the given cell coordinates.
+    // Each cell in the grid can be addressed by cell coordinates which uniquely
+    // identify that cell.
+    // See also gridResolution() and cellCoordsAtPoint().
+    const Voxel& get(const glm::ivec3 &cellCoords) const override;
+    
     // Each point in space corresponds to exactly one cell. Get the (mutable)
     // object. Note that this will retrieve the chunk contents from the
     // generator if the the chunk is not already present.
     Voxel& mutableReference(const glm::vec3 &p) override;
     
+    // Get the (mutable) object associated with the given cell coordinates.
+    // Each cell in the grid can be addressed by cell coordinates which uniquely
+    // identify that cell.
+    // See also gridResolution() and cellCoordsAtPoint().
+    Voxel& mutableReference(const glm::ivec3 &cellCoords) override;
+    
     // Each point in space corresponds to exactly one cell. Set the object.
     void set(const glm::vec3 &p, const Voxel &object) override;
+    
+    // Sets the cell associated with the given cell coordinates.
+    // Each cell in the grid can be addressed by cell coordinates which uniquely
+    // identify that cell.
+    // See also gridResolution() and cellCoordsAtPoint().
+    void set(const glm::ivec3 &cellCoords, const Voxel &object) override;
     
     // Gets the dimensions of a single cell. (All cells are the same size.)
     glm::vec3 cellDimensions() const override;
@@ -55,14 +72,6 @@ public:
     
     // Gets the number of cells along each axis within the valid region.
     glm::ivec3 gridResolution() const override;
-    
-    // Gets a view which can be used to constrain access to this voxel data to
-    // the specified region.
-    const GridView<Voxel> getView(const AABB &region) const;
-    
-    // Gets a view which can be used to constrain access to this voxel data to
-    // the specified region.
-    GridViewMutable<Voxel> getView(const AABB &region);
     
 private:
     static constexpr int CHUNK_SIZE = 32;

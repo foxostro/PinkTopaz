@@ -28,13 +28,14 @@ template<typename TYPE> class Array3D : public GridMutable<TYPE>
 {
 public:
     using GridMutable<TYPE>::EnableVerboseBoundsChecking;
+    using GridMutable<TYPE>::indexAtPoint;
+    using GridMutable<TYPE>::indexAtCellCoords;
     using GridMutable<TYPE>::inbounds;
     using GridMutable<TYPE>::forEachCell;
     using GridMutable<TYPE>::cellCoordsAtPoint;
     using GridMutable<TYPE>::mutableForEachCell;
     
     typedef std::vector<TYPE> container_type;
-    typedef typename container_type::size_type index_type;
     typedef typename container_type::iterator iterator;
     typedef typename container_type::const_iterator const_iterator;
     
@@ -109,6 +110,18 @@ public:
         return get(indexAtPoint(p));
     }
     
+    // Get the cell associated with the given cell coordinates.
+    const TYPE& get(const glm::ivec3 &cellCoords) const override
+    {
+        return get(indexAtCellCoords(cellCoords));
+    }
+    
+    // Gets the object for the specified index, produced by `indexAtPoint'.
+    const TYPE& get(Morton3 index) const override
+    {
+        return _cells[(size_t)index];
+    }
+    
     // Each point in space corresponds to exactly one cell. Get the (mutable) object.
     TYPE& mutableReference(const glm::vec3 &p) override
     {
@@ -118,6 +131,18 @@ public:
             }
         }
         return mutableReference(indexAtPoint(p));
+    }
+    
+    // Get the (mutable) object associated with the given cell coordinates.
+    TYPE& mutableReference(const glm::ivec3 &cellCoords) override
+    {
+        return mutableReference(indexAtCellCoords(cellCoords));
+    }
+    
+    // Gets the (mutable) object for the specified index, produced by `indexAtPoint'.
+    TYPE& mutableReference(Morton3 index) override
+    {
+        return _cells[(size_t)index];
     }
     
     // Each point in space corresponds to exactly one cell. Set the object.
@@ -131,47 +156,22 @@ public:
         return set(indexAtPoint(p), object);
     }
     
-    // Gets the internal cell index for the specified point in space.
-    inline index_type indexAtPoint(const glm::vec3 &point) const
+    // Sets the cell associated with the given cell coordinates.
+    void set(const glm::ivec3 &cellCoords, const TYPE &object) override
     {
-        if constexpr (EnableVerboseBoundsChecking) {
-            if (!inbounds(point)) {
-                throw OutOfBoundsException();
-            }
-        }
-        
-        const glm::ivec3 a = cellCoordsAtPoint(point);
-        const index_type index = indexAtCellCoords(a);
-        return index;
-    }
-    
-    // Gets the internal cell index for the specified cell coords.
-    inline index_type indexAtCellCoords(const glm::ivec3 &cellCoords) const
-    {
-        return (index_type)Morton3(cellCoords);
-    }
-    
-    inline bool isValidIndex(index_type index) const
-    {
-        return index < _cells.size();
-    }
-    
-    // Gets the object for the specified index, produced by `indexAtPoint'.
-    inline const TYPE& get(index_type index) const
-    {
-        return _cells[index];
-    }
-    
-    // Gets the (mutable) object for the specified index, produced by `indexAtPoint'.
-    inline TYPE& mutableReference(index_type index)
-    {
-        return _cells[index];
+        set(indexAtCellCoords(cellCoords), object);
     }
     
     // Sets the object for the specified index, produced by `indexAtPoint'.
-    inline void set(index_type index, const TYPE &object)
+    void set(Morton3 index, const TYPE &object) override
     {
-        _cells[index] = object;
+        _cells[(size_t)index] = object;
+    }
+    
+    // Determine whether a given index is valid.
+    inline bool isValidIndex(Morton3 index) const
+    {
+        return (size_t)index < _cells.size();
     }
     
     // Gets the dimensions of a single cell. (All cells are the same size.)
