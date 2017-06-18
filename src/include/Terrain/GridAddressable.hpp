@@ -191,9 +191,8 @@ public:
     // Iterate over cells in the specified region of the grid.
     // Throws an exception if the region is not within this grid.
     void forEachCell(const AABB &region,
-                     std::function<void (const AABB &cell,
-                                         Morton3 index,
-                                         const TYPE &value)> fn) const
+                     const std::function<void (const AABB &cell,
+                                               Morton3 index)> &fn) const
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(region)) {
@@ -224,10 +223,22 @@ public:
                     
                     const AABB box = { cursor, extent };
                     const Morton3 index(cellCoords);
-                    fn(box, index, get(index));
+                    fn(box, index);
                 }
             }
         }
+    }
+    
+    // Iterate over cells in the specified region of the grid.
+    // Throws an exception if the region is not within this grid.
+    void forEachCell(const AABB &region,
+                     const std::function<void (const AABB &cell,
+                                               Morton3 index,
+                                               const TYPE &value)> &fn) const
+    {
+        forEachCell(region, [&](const AABB &cell, Morton3 index){
+            fn(cell, index, get(index));
+        });
     }
     
     // Iterate over cells which fall within the specified frustum.
@@ -301,6 +312,7 @@ public:
     using GridAddressable<TYPE>::cellAtPoint;
     using GridAddressable<TYPE>::cellCoordsAtPoint;
     using GridAddressable<TYPE>::indexAtPoint;
+    using GridAddressable<TYPE>::forEachCell;
     
     // Get the (mutable) object corresponding to the specified point in space.
     // Throws an exception if the point is not within this grid.
@@ -349,43 +361,13 @@ public:
     // `fn' paramter is the bounding box of the cell.
     // `fn' returns the new value for the specified cell.
     void mutableForEachCell(const AABB &region,
-                            std::function<void (const AABB &cell,
-                                                Morton3 index,
-                                                TYPE &value)> fn)
+                            const std::function<void (const AABB &cell,
+                                                      Morton3 index,
+                                                      TYPE &value)> &fn)
     {
-        if constexpr (EnableVerboseBoundsChecking) {
-            if (!inbounds(region)) {
-                throw OutOfBoundsException();
-            }
-        }
-        
-        const auto dim = cellDimensions();
-        const auto extent = dim * 0.5f;
-        const auto min = region.mins() + extent;
-        const auto max = region.maxs() - extent;
-        const auto minCellCoords = cellCoordsAtPoint(min);
-        
-        glm::ivec3 cellCoords;
-        glm::vec3 cursor;
-        
-        for (cursor = min, cellCoords = minCellCoords;
-             cursor.z <= max.z;
-             cursor.z += dim.z, ++cellCoords.z) {
-            
-            for (cursor.x = min.x, cellCoords.x = minCellCoords.x;
-                 cursor.x <= max.x;
-                 cursor.x += dim.x, ++cellCoords.x) {
-                
-                for (cursor.y = min.y, cellCoords.y = minCellCoords.y;
-                     cursor.y <= max.y;
-                     cursor.y += dim.y, ++cellCoords.y) {
-                    
-                    const AABB box = { cursor, extent };
-                    const Morton3 index(cellCoords);
-                    fn(box, index, mutableReference(index));
-                }
-            }
-        }
+        forEachCell(region, [&](const AABB &cell, Morton3 index){
+            fn(cell, index, mutableReference(index));
+        });
     }
 };
 
