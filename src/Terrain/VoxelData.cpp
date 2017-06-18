@@ -2,7 +2,7 @@
 //  VoxelData.cpp
 //  PinkTopaz
 //
-//  Created by Andrew Fox on 3/13/16.
+//  Created by Andrew Fox on 3/13/17.
 //
 //
 
@@ -102,17 +102,24 @@ VoxelData::MaybeChunk& VoxelData::chunkAtPoint(const glm::vec3 &p) const
 {
     // AFOX_TODO: Need a better way to lock chunks. This effectively serializes all chunk generation.
     std::lock_guard<std::mutex> lock(_lockChunks);
-    
     MaybeChunk &maybeChunk = _chunks.mutableReference(p);
-    
+    emplaceChunkIfNecessary(p, maybeChunk);
+    return maybeChunk;
+}
+
+void VoxelData::emplaceChunkIfNecessary(const glm::vec3 &p,
+                                        MaybeChunk &maybeChunk) const
+{
     // If the chunk does not exist then create it now. The initial contents of
     // the chunk are filled using the generator.
     if (!maybeChunk) {
-        AABB chunkBoundingBox = _chunks.cellAtPoint(p);
+        const AABB chunkBoundingBox = _chunks.cellAtPoint(p);
         glm::ivec3 numChunks = _chunks.gridResolution();
         glm::ivec3 chunkRes = gridResolution() / numChunks;
         maybeChunk.emplace(chunkBoundingBox, chunkRes);
-        maybeChunk->mutableForEachCell(chunkBoundingBox, [&](const AABB &cell, Morton3 index, Voxel &value){
+        maybeChunk->mutableForEachCell(chunkBoundingBox, [&](const AABB &cell,
+                                                             Morton3 index,
+                                                             Voxel &value){
             // We need to use get(vec3) because the index is only valid within
             // this one chunk.
             // AFOX_TODO: A bulk API for getting voxels from the generator would
@@ -122,5 +129,4 @@ VoxelData::MaybeChunk& VoxelData::chunkAtPoint(const glm::vec3 &p) const
     }
     
     assert(maybeChunk);
-    return maybeChunk;
 }

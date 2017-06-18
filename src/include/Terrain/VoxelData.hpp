@@ -2,7 +2,7 @@
 //  VoxelData.hpp
 //  PinkTopaz
 //
-//  Created by Andrew Fox on 3/13/16.
+//  Created by Andrew Fox on 3/13/17.
 //
 //
 
@@ -92,6 +92,11 @@ private:
     // Fetches the chunk at the specified point in space `p'. This may create
     // the chunk. If so, it is filled using the generator.
     MaybeChunk& chunkAtPoint(const glm::vec3 &p) const;
+    
+    // If the chunk is not valid then emplace a new one filled using the voxel
+    // data generator. This assumes the lock has already been taken.
+    void emplaceChunkIfNecessary(const glm::vec3 &p,
+                                 MaybeChunk &maybeChunk) const;
 };
 
 #endif /* VoxelData_hpp */
