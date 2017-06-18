@@ -134,6 +134,17 @@ public:
         return p;
     }
     
+    // Gets the center point of the cell at the specified cell coordinates.
+    inline glm::vec3 cellCenterAtCellCoords(const glm::ivec3 &a) const
+    {
+        const glm::vec3 cellDim = cellDimensions();
+        const glm::vec3 cellExtent = cellDim * 0.5f;
+        const AABB box = boundingBox();
+        const glm::vec3 q(a.x * cellDim.x, a.y * cellDim.y, a.z * cellDim.z);
+        const glm::vec3 p = q + box.mins() + cellExtent;
+        return p;
+    }
+    
     // Gets the bounding box of the cell in which the specified point resides.
     // Throws an exception if the point is not within this grid.
     inline AABB cellAtPoint(const glm::vec3 &point) const
@@ -202,35 +213,30 @@ public:
         
         const auto dim = cellDimensions();
         const auto extent = dim * 0.5f;
-        const auto min = region.mins() + extent;
-        const auto max = region.maxs() - extent;
+        const auto min = region.mins();
+        const auto max = region.maxs();
         const auto minCellCoords = cellCoordsAtPoint(min);
+        const auto maxCellCoords = cellCoordsAtPoint(max);
         
-        glm::ivec3 cellCoords;
-        glm::vec3 cursor;
-        
-        for (cursor = min, cellCoords = minCellCoords;
-             cursor.z <= max.z;
-             cursor.z += dim.z, ++cellCoords.z) {
-            
-            for (cursor.x = min.x, cellCoords.x = minCellCoords.x;
-                 cursor.x <= max.x;
-                 cursor.x += dim.x, ++cellCoords.x) {
-                
-                for (cursor.y = min.y, cellCoords.y = minCellCoords.y;
-                     cursor.y <= max.y;
-                     cursor.y += dim.y, ++cellCoords.y) {
-                    
 #ifndef NDEBUG
-                    const auto res = gridResolution();
-                    assert(cellCoords.x >= 0 && cellCoords.x < res.x);
-                    assert(cellCoords.y >= 0 && cellCoords.y < res.y);
-                    assert(cellCoords.z >= 0 && cellCoords.z < res.z);
+        const auto res = gridResolution();
+        assert(minCellCoords.x >= 0 && minCellCoords.x <= res.x);
+        assert(minCellCoords.y >= 0 && minCellCoords.y <= res.y);
+        assert(minCellCoords.z >= 0 && minCellCoords.z <= res.z);
+        assert(maxCellCoords.x >= 0 && maxCellCoords.x <= res.x);
+        assert(maxCellCoords.y >= 0 && maxCellCoords.y <= res.y);
+        assert(maxCellCoords.z >= 0 && maxCellCoords.z <= res.z);
+        assert(minCellCoords.x <= maxCellCoords.x);
+        assert(minCellCoords.y <= maxCellCoords.y);
+        assert(minCellCoords.z <= maxCellCoords.z);
 #endif
-                    
-                    const AABB box = { cursor, extent };
+        
+        for (glm::ivec3 cellCoords = minCellCoords; cellCoords.z < maxCellCoords.z; ++cellCoords.z) {
+            for (cellCoords.x = minCellCoords.x; cellCoords.x < maxCellCoords.x; ++cellCoords.x) {
+                for (cellCoords.y = minCellCoords.y; cellCoords.y < maxCellCoords.y; ++cellCoords.y) {
+                    const glm::vec3 center = cellCenterAtCellCoords(cellCoords);
                     const Morton3 index(cellCoords);
-                    fn(box, index);
+                    fn({center, extent}, index);
                 }
             }
         }

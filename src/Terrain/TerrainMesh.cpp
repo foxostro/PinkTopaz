@@ -76,7 +76,7 @@ void TerrainMesh::rebuild()
     
     // We need a border of voxels around the region of the mesh in order to
     // perform surface extraction.
-    const AABB voxelBox = _meshBox.inset(-glm::vec3(1, 1, 1));
+    const AABB voxelBox = _meshBox.inset(-_voxels->cellDimensions());
     
     _voxels->readerTransaction(voxelBox, [&](const GridAddressable<Voxel> &voxels){
         // The voxel file uses a binary SOLID/EMPTY flag for voxels.

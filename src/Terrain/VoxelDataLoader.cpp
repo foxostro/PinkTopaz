@@ -22,8 +22,8 @@ void VoxelDataLoader::retrieveDimensions(const std::vector<uint8_t> &bytes, AABB
     
     glm::vec3 half(header.w / 2.f, header.h / 2.f, header.d / 2.f);
     box = {
-        half + glm::vec3(0.5f, 0.5f, 0.5f),
         half,
+        half
     };
     res = glm::ivec3(header.w, header.h, header.d);
 }
@@ -47,8 +47,8 @@ void VoxelDataLoader::load(const std::vector<uint8_t> &bytes, GridMutable<Voxel>
     
     glm::vec3 half(header.w / 2.f, header.h / 2.f, header.d / 2.f);
     AABB box = {
-        half + glm::vec3(0.5f, 0.5f, 0.5f),
         half,
+        half
     };
     
     size_t i = 0;

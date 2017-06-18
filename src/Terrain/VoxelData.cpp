@@ -74,26 +74,58 @@ glm::ivec3 VoxelData::gridResolution() const
 
 Array3D<Voxel> VoxelData::copy(const AABB &region) const
 {
-    // Get an AABB which covers the cells which intersect `region'.
-    const glm::vec3 halfCellDim = cellDimensions() * 0.5f;
-    const glm::vec3 mins = cellCenterAtPoint(region.mins()) - halfCellDim;
-    const glm::vec3 maxs = cellCenterAtPoint(region.maxs()) + halfCellDim;
+    // Adjust the region so that it includes the full extent of all voxels that
+    // fall within it. For example, the region may only pass through a portion
+    // of some voxels on the edge, but the adjusted region should include all
+    // of those voxels.
+    const glm::vec3 cellEx = _generator.cellDimensions() * 0.5f;
+    const glm::vec3 mins = _generator.cellCenterAtPoint(region.mins()) - cellEx;
+    const glm::vec3 maxs = _generator.cellCenterAtPoint(region.maxs()) + cellEx;
     const glm::vec3 center = (maxs + mins) * 0.5f;
     const glm::vec3 extent = (maxs - mins) * 0.5f;
     const AABB adjustedRegion = {center, extent};
     
-    const glm::ivec3 res = countCellsInRegion(adjustedRegion);
+    // Count the number of voxels in the adjusted region. This will be the grid
+    // resolution of the destination array.
+    const glm::ivec3 res = _generator.countCellsInRegion(adjustedRegion);
     
+    // Construct the destination array.
     Array3D<Voxel> dst(adjustedRegion, res);
     assert(dst.inbounds(region));
     
+#if 0
+    // Iterate over all chunks in the region. For each of those chunks, build
+    // the chunk if it is missing and then iterate over voxels in the chunk that
+    // fall within the region. For each of those voxels, copy them into the
+    // destination array.
+    std::lock_guard<std::mutex> lock(_lockChunks);
+    _chunks.mutableForEachCell(region, [&](const AABB &chunkBoundingBox,
+                                           Morton3 chunkIndex,
+                                           MaybeChunk &maybeChunk){
+        
+        // Build the chunk if it is missing.
+        emplaceChunkIfNecessary(chunkBoundingBox.center, maybeChunk);
+        
+        // It is entirely possible that the sub-region is not the full size of
+        // the chunk. Iterate over chunk voxels that fall within the region.
+        // Copy each of those voxels into the destination array.
+        const AABB subRegion = chunkBoundingBox.intersect(region);
+        maybeChunk->forEachCell(subRegion, [&](const AABB &cell,
+                                               Morton3 voxelIndex,
+                                               const Voxel &voxel){
+            
+            // AFOX_TODO: I can reduce calls to indexAtPoint() by being clever
+            // with grid coordinates.
+            dst.set(cell.center, voxel);
+        });
+    });
+#else
     dst.mutableForEachCell(adjustedRegion, [&](const AABB &cell, Morton3 index, Voxel &value){
         // We need to use get(vec3) because the index is only valid within
         // this one chunk.
-        // AFOX_TODO: If we copied voxels from one chunk at a time then we could
-        // do a lot to improve copy performance.
         value = get(cell.center);
     });
+#endif
     
     return dst;
 }

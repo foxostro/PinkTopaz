@@ -10,6 +10,7 @@
 #define AABB_hpp
 
 #include <glm/glm.hpp>
+#include <glm/gtx/component_wise.hpp>
 #include <vector>
 
 // An axis-aligned bounding box.
@@ -27,9 +28,7 @@ struct _AABB
     
     bool operator==(const _AABB<TYPE> &other) const
     {
-        bool theSameCenter = (center == other.center);
-        bool theSameExtent = (extent == other.extent);
-        return theSameCenter && theSameExtent;
+        return (center == other.center) && (extent == other.extent);
     }
     
     bool operator!=(const _AABB<TYPE> &other) const
@@ -72,6 +71,24 @@ struct _AABB
             { center + glm::vec3(+subExtent.x, +subExtent.y, +subExtent.z), subExtent}
         }};
         return r;
+    }
+    
+    inline _AABB<TYPE> intersect(const _AABB<TYPE> &thatBox) const
+    {
+        const TYPE thisMin = mins();
+        const TYPE thatMin = thatBox.mins();
+        const TYPE thisMax = maxs();
+        const TYPE thatMax = thatBox.maxs();
+        // AFOX_TODO: Is there a good way to do a component-wise max of two glm vectors without needing to know the vectors' dimension?
+        const TYPE min = TYPE(std::max(thisMin.x, thatMin.x),
+                              std::max(thisMin.y, thatMin.y),
+                              std::max(thisMin.z, thatMin.z));
+        const TYPE max = TYPE(std::min(thisMax.x, thatMax.x),
+                              std::min(thisMax.y, thatMax.y),
+                              std::min(thisMax.z, thatMax.z));
+        const TYPE center = (max + min) * 0.5f;
+        const TYPE extent = (max - min) * 0.5f;
+        return {center, extent};
     }
 };
 

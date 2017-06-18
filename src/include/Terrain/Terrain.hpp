@@ -23,6 +23,8 @@
 class Terrain
 {
 public:
+    static constexpr size_t TERRAIN_CHUNK_SIZE = 16;
+    
     ~Terrain() = default;
     
     Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
@@ -40,8 +42,6 @@ public:
     
 private:
     typedef typename std::experimental::optional<TerrainMesh> MaybeTerrainMesh;
-    
-    static constexpr int MESH_CHUNK_SIZE = 16;
     
     void rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
                                   const size_t index,

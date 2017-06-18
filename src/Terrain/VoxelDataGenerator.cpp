@@ -21,10 +21,10 @@ VoxelDataGenerator::VoxelDataGenerator()
     VoxelDataLoader voxelDataLoader;
     voxelDataLoader.retrieveDimensions(bytes, box, res);
     
-    const int MESH_CHUNK_SIZE = 16;
-    const glm::vec3 chunkSize(MESH_CHUNK_SIZE, MESH_CHUNK_SIZE, MESH_CHUNK_SIZE);
+    const size_t TERRAIN_CHUNK_SIZE = 16; // AFOX_TODO: Use one TERRAIN_CHUNK_SIZE for entire app.
+    const glm::vec3 chunkSize(TERRAIN_CHUNK_SIZE, TERRAIN_CHUNK_SIZE, TERRAIN_CHUNK_SIZE);
     const AABB boxWithBorder = box.inset(-chunkSize);
-    const glm::ivec3 resWithBorder = res + glm::ivec3(MESH_CHUNK_SIZE, MESH_CHUNK_SIZE, MESH_CHUNK_SIZE)*2;
+    const glm::ivec3 resWithBorder = res + glm::ivec3(TERRAIN_CHUNK_SIZE, TERRAIN_CHUNK_SIZE, TERRAIN_CHUNK_SIZE)*2;
     
     _voxels = std::make_shared<Array3D<Voxel>>(boxWithBorder, resWithBorder);
     
