@@ -177,9 +177,11 @@ public:
     // Gets the dimensions of a single cell. (All cells are the same size.)
     glm::vec3 cellDimensions() const override
     {
-        return glm::vec3(_box.extent.x * 2.0f / _res.x,
-                         _box.extent.y * 2.0f / _res.y,
-                         _box.extent.z * 2.0f / _res.z);
+        const glm::vec3 boxSize = _box.extent * 2.0f;
+        const glm::vec3 dim(boxSize.x / _res.x,
+                            boxSize.y / _res.y,
+                            boxSize.z / _res.z);
+        return dim;
     }
     
     // Gets the region for which the grid is defined.
