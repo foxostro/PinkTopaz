@@ -221,6 +221,13 @@ public:
                      cursor.y <= max.y;
                      cursor.y += dim.y, ++cellCoords.y) {
                     
+#ifndef NDEBUG
+                    const auto res = gridResolution();
+                    assert(cellCoords.x >= 0 && cellCoords.x < res.x);
+                    assert(cellCoords.y >= 0 && cellCoords.y < res.y);
+                    assert(cellCoords.z >= 0 && cellCoords.z < res.z);
+#endif
+                    
                     const AABB box = { cursor, extent };
                     const Morton3 index(cellCoords);
                     fn(box, index);
