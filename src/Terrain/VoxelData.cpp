@@ -93,7 +93,6 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
     Array3D<Voxel> dst(adjustedRegion, res);
     assert(dst.inbounds(region));
     
-#if 0
     // Iterate over all chunks in the region. For each of those chunks, build
     // the chunk if it is missing and then iterate over voxels in the chunk that
     // fall within the region. For each of those voxels, copy them into the
@@ -119,13 +118,6 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
             dst.set(cell.center, voxel);
         });
     });
-#else
-    dst.mutableForEachCell(adjustedRegion, [&](const AABB &cell, Morton3 index, Voxel &value){
-        // We need to use get(vec3) because the index is only valid within
-        // this one chunk.
-        value = get(cell.center);
-    });
-#endif
     
     return dst;
 }

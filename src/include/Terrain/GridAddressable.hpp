@@ -103,6 +103,26 @@ public:
         return a;
     }
     
+    // Gets the coordinates of the cell in which the specified point resides.
+    // These integer coordinates can be used to locate the cell within the grid.
+    // Notably, make sure to round up to the next cell when the specified point
+    // is on the maximum edge of the cell.
+    //
+    // This method will not throw an exception if the point is outside the valid
+    // space of the grid. In this case, you will receive garbage results, but no
+    // error will be reported.
+    inline glm::ivec3 cellCoordsAtPointRoundUp(const glm::vec3 &point) const
+    {
+        const AABB box = boundingBox();
+        const glm::vec3 mins = box.mins();
+        const glm::vec3 p = (point - mins) / (box.extent*2.0f);
+        const glm::ivec3 res = gridResolution();
+        const glm::ivec3 a(ceilf(p.x * res.x),
+                           ceilf(p.y * res.y),
+                           ceilf(p.z * res.z));
+        return a;
+    }
+    
     // Convert the specified cell coordinates into world-space coordinates.
     // This method provides no error checking for the validity of the input.
     inline const glm::vec3 worldPosAtCellCoords(const glm::ivec3 &cellCoords) const
@@ -216,7 +236,7 @@ public:
         const auto min = region.mins();
         const auto max = region.maxs();
         const auto minCellCoords = cellCoordsAtPoint(min);
-        const auto maxCellCoords = cellCoordsAtPoint(max);
+        const auto maxCellCoords = cellCoordsAtPointRoundUp(max);
         
 #ifndef NDEBUG
         const auto res = gridResolution();
