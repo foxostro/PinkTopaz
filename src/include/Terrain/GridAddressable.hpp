@@ -13,6 +13,7 @@
 #include "Exception.hpp"
 #include "Frustum.hpp"
 #include "morton.hpp"
+#include "ChangeLog.hpp"
 #include <functional>
 
 // Exception thrown when attempting to access the grid at a point that is not in
@@ -23,7 +24,7 @@ public:
     OutOfBoundsException() : Exception("out of bounds") {}
 };
 
-// A regular grid in space where each cell is associated with some object of the templated type.
+// A GridAddressable is a regular grid of objects in space.
 template<typename TYPE> class GridAddressable
 {
 public:
@@ -336,6 +337,7 @@ public:
     }
 };
 
+// GridMutable provides API for mutating GridAddressable. It is a mutable grid.
 template<typename TYPE> class GridMutable : public GridAddressable<TYPE>
 {
 public:
@@ -402,6 +404,46 @@ public:
             fn(cell, index, mutableReference(index));
         });
     }
+};
+
+// GridTransactional provides wraps a mutable grid, providing access to that
+// grid only through atomic transactions.
+//
+// The simplest implementation would wrap the protect grid in a mutex or a
+// shared_mutex (reader/writer lock). More complicated implementations could do
+// something to permit concurrent writers by locking portions of the grid.
+template <typename TYPE> class GridTransactional
+{
+public:
+    typedef std::function<void(const GridAddressable<TYPE> &data)> Reader;
+    typedef std::function<ChangeLog(GridMutable<TYPE> &data)> Writer;
+    
+    virtual ~GridTransactional() = default;
+    
+    // Perform an atomic transaction as a "reader" with read-only access to the
+    // underlying voxel data in the specified region.
+    // r -- The region we will be reading from.
+    // fn -- Closure which will be doing the reading.
+    virtual void readerTransaction(const AABB &r, const Reader &fn) const = 0;
+    
+    // Perform an atomic transaction as a "writer" with read-write access to
+    // the underlying voxel data in the specified region. It is the
+    // responsibility of the caller to provide a closure which will update the
+    // change log accordingly.
+    // region -- The region we will be writing to.
+    // fn -- Closure which will be doing the writing.
+    virtual void writerTransaction(const AABB &region, const Writer &fn) = 0;
+    
+    // Gets the dimensions of a single cell in the grid.
+    // Note that cells in the grid are always the same size.
+    virtual glm::vec3 cellDimensions() const = 0;
+    
+    // Gets the region for which the grid is defined.
+    // Accesses to points outside this box is not permitted.
+    virtual AABB boundingBox() const = 0;
+    
+    // Gets the number of cells along each axis within the valid region.
+    virtual glm::ivec3 gridResolution() const = 0;
 };
 
 #endif /* GridAddressable_hpp */

@@ -14,13 +14,13 @@ VoxelDataStore::VoxelDataStore()
  : _data(_generator)
 {}
 
-void VoxelDataStore::readerTransaction(const AABB &region, const std::function<void(const GridAddressable<Voxel> &voxels)> &fn) const
+void VoxelDataStore::readerTransaction(const AABB &region, const Reader &fn) const
 {
     std::shared_lock<std::shared_mutex> lock(_mutex);
     fn(_data.copy(region));
 }
 
-void VoxelDataStore::writerTransaction(const AABB &region, const std::function<ChangeLog(GridMutable<Voxel> &voxels)> &fn)
+void VoxelDataStore::writerTransaction(const AABB &region, const Writer &fn)
 {
     ChangeLog changeLog;
     {
@@ -28,6 +28,11 @@ void VoxelDataStore::writerTransaction(const AABB &region, const std::function<C
         changeLog = fn(_data);
     }
     voxelDataChanged(changeLog);
+}
+
+glm::vec3 VoxelDataStore::cellDimensions() const
+{
+    return _data.cellDimensions();
 }
 
 AABB VoxelDataStore::boundingBox() const
