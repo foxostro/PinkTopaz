@@ -11,22 +11,65 @@
 #include <mutex> // for std::unique_lock
 
 VoxelDataStore::VoxelDataStore()
- : _data(_generator)
+ : _data(_generator),
+   _chunkLocks(_generator.boundingBox(), _generator.gridResolution())
 {}
+
+VoxelDataStore::Locks VoxelDataStore::locksForRegion(const AABB &region) const
+{
+    std::lock_guard<std::mutex> lock(_lockChunkLocks);
+    Locks locks;
+    _chunkLocks.mutableForEachCell(region, [&](const AABB &cell,
+                                               Morton3 index,
+                                               std::shared_ptr<std::shared_mutex> &cellLock){
+        if (!cellLock) {
+            cellLock = std::make_shared<std::shared_mutex>();
+        }
+        locks.push_back(cellLock);
+    });
+    
+    return locks;
+}
+
+void VoxelDataStore::acquireLocks(const Locks &locks, bool shared) const
+{
+    for (auto &lock : locks) {
+        if (shared) {
+            lock->lock_shared();
+        } else {
+            lock->lock();
+        }
+    }
+}
+
+void VoxelDataStore::releaseLocks(const Locks &locks, bool shared) const
+{
+    for (auto iter = locks.rbegin(); iter != locks.rend(); ++iter) {
+        auto &cellLock = *iter;
+        if (shared) {
+            cellLock->unlock_shared();
+        } else {
+            cellLock->unlock();
+        }
+    }
+}
 
 void VoxelDataStore::readerTransaction(const AABB &region, const Reader &fn) const
 {
-    std::shared_lock<std::shared_mutex> lock(_mutex);
+    // AFOX_TODO: This isn't exception-safe. I'm not sure if I care.
+    auto locks = locksForRegion(region);
+    acquireLocks(locks, true);
     fn(_data.copy(region));
+    releaseLocks(locks, true);
 }
 
 void VoxelDataStore::writerTransaction(const AABB &region, const Writer &fn)
 {
-    ChangeLog changeLog;
-    {
-        std::unique_lock<std::shared_mutex> lock(_mutex);
-        changeLog = fn(_data);
-    }
+    // AFOX_TODO: This isn't exception-safe. I'm not sure if I care.
+    auto locks = locksForRegion(region);
+    acquireLocks(locks, false);
+    ChangeLog changeLog = fn(_data);
+    releaseLocks(locks, false);
     voxelDataChanged(changeLog);
 }
 
@@ -37,12 +80,16 @@ glm::vec3 VoxelDataStore::cellDimensions() const
 
 AABB VoxelDataStore::boundingBox() const
 {
+    static constexpr size_t TERRAIN_CHUNK_SIZE = 16; // AFOX_TODO: Use one TERRAIN_CHUNK_SIZE for entire app.
+    const glm::vec3 chunkSize(TERRAIN_CHUNK_SIZE, TERRAIN_CHUNK_SIZE, TERRAIN_CHUNK_SIZE);
     AABB box = _generator.boundingBox().inset(glm::vec3(16.f, 16.f, 16.f));
     return box;
 }
 
 glm::ivec3 VoxelDataStore::gridResolution() const
 {
-    glm::ivec3 res = _generator.gridResolution() - glm::ivec3(32, 32, 32);
+    const size_t TERRAIN_CHUNK_SIZE = 16; // AFOX_TODO: Use one TERRAIN_CHUNK_SIZE for entire app.
+    const glm::ivec3 chunkSize(TERRAIN_CHUNK_SIZE, TERRAIN_CHUNK_SIZE, TERRAIN_CHUNK_SIZE);
+    glm::ivec3 res = _generator.gridResolution() - chunkSize*2;
     return res;
 }

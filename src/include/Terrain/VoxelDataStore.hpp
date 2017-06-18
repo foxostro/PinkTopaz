@@ -55,10 +55,22 @@ public:
     boost::signals2::signal<void (const ChangeLog &changeLog)> voxelDataChanged;
     
 private:
+    typedef std::vector<std::shared_ptr<std::shared_mutex>> Locks;
+    
+    // Get the ordered list of locks needed for the specified region.
+    Locks locksForRegion(const AABB &region) const;
+    
+    // Acquire the locks on the list in order.
+    void acquireLocks(const Locks &locks, bool shared) const;
+    
+    // Release the lcoks on the list in reverse-order.
+    void releaseLocks(const Locks &locks, bool shared) const;
+    
     VoxelDataGenerator _generator;
     VoxelData _data;
     ChangeLog _changeLog;
-    mutable std::shared_mutex _mutex;
+    mutable std::mutex _lockChunkLocks;
+    mutable Array3D<std::shared_ptr<std::shared_mutex>> _chunkLocks;
 };
 
 #endif /* VoxelDataStore_hpp */
