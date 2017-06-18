@@ -30,8 +30,8 @@ VoxelDataGenerator::VoxelDataGenerator()
     
     assert(_voxels->cellDimensions() == glm::vec3(1.0, 1.0, 1.0));
         
-    _voxels->mutableForEachCell(boxWithBorder, [&](const AABB &cell){
-        return Voxel();
+    _voxels->mutableForEachCell(boxWithBorder, [&](const AABB &cell, Morton3 index, Voxel &value){
+        value = Voxel();
     });
     
     voxelDataLoader.load(bytes, *_voxels);

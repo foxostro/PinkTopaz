@@ -87,8 +87,12 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
     Array3D<Voxel> dst(adjustedRegion, res);
     assert(dst.inbounds(region));
     
-    dst.mutableForEachCell(adjustedRegion, [&](const AABB &cell){
-        return get(cell.center);
+    dst.mutableForEachCell(adjustedRegion, [&](const AABB &cell, Morton3 index, Voxel &value){
+        // We need to use get(vec3) because the index is only valid within
+        // this one chunk.
+        // AFOX_TODO: If we copied voxels from one chunk at a time then we could
+        // do a lot to improve copy performance.
+        value = get(cell.center);
     });
     
     return dst;
@@ -108,8 +112,12 @@ VoxelData::MaybeChunk& VoxelData::chunkAtPoint(const glm::vec3 &p) const
         glm::ivec3 numChunks = _chunks.gridResolution();
         glm::ivec3 chunkRes = gridResolution() / numChunks;
         maybeChunk.emplace(chunkBoundingBox, chunkRes);
-        maybeChunk->mutableForEachCell(chunkBoundingBox, [&](const AABB &cell){
-            return _generator.get(cell.center);
+        maybeChunk->mutableForEachCell(chunkBoundingBox, [&](const AABB &cell, Morton3 index, Voxel &value){
+            // We need to use get(vec3) because the index is only valid within
+            // this one chunk.
+            // AFOX_TODO: A bulk API for getting voxels from the generator would
+            // allow is to more efficiently fill the chunk.
+            value = _generator.get(cell.center);
         });
     }
     

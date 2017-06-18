@@ -299,6 +299,8 @@ public:
     using GridAddressable<TYPE>::inbounds;
     using GridAddressable<TYPE>::cellDimensions;
     using GridAddressable<TYPE>::cellAtPoint;
+    using GridAddressable<TYPE>::cellCoordsAtPoint;
+    using GridAddressable<TYPE>::indexAtPoint;
     
     // Get the (mutable) object corresponding to the specified point in space.
     // Throws an exception if the point is not within this grid.
@@ -347,7 +349,9 @@ public:
     // `fn' paramter is the bounding box of the cell.
     // `fn' returns the new value for the specified cell.
     void mutableForEachCell(const AABB &region,
-                            std::function<TYPE (const AABB &cell)> fn)
+                            std::function<void (const AABB &cell,
+                                                Morton3 index,
+                                                TYPE &value)> fn)
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(region)) {
@@ -356,15 +360,29 @@ public:
         }
         
         const auto dim = cellDimensions();
-        const auto min = region.mins();
-        const auto max = region.maxs();
+        const auto extent = dim * 0.5f;
+        const auto min = region.mins() + extent;
+        const auto max = region.maxs() - extent;
+        const auto minCellCoords = cellCoordsAtPoint(min);
         
-        for (glm::vec3 cursor = min; cursor.z < max.z; cursor.z += dim.z) {
-            for (cursor.x = min.x; cursor.x < max.x; cursor.x += dim.x) {
-                for (cursor.y = min.y; cursor.y < max.y; cursor.y += dim.y) {
-                    const auto cell = cellAtPoint(cursor);
-                    const TYPE value = fn(cell);
-                    set(cell.center, value);
+        glm::ivec3 cellCoords;
+        glm::vec3 cursor;
+        
+        for (cursor = min, cellCoords = minCellCoords;
+             cursor.z <= max.z;
+             cursor.z += dim.z, ++cellCoords.z) {
+            
+            for (cursor.x = min.x, cellCoords.x = minCellCoords.x;
+                 cursor.x <= max.x;
+                 cursor.x += dim.x, ++cellCoords.x) {
+                
+                for (cursor.y = min.y, cellCoords.y = minCellCoords.y;
+                     cursor.y <= max.y;
+                     cursor.y += dim.y, ++cellCoords.y) {
+                    
+                    const AABB box = { cursor, extent };
+                    const Morton3 index(cellCoords);
+                    fn(box, index, mutableReference(index));
                 }
             }
         }

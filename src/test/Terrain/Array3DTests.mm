@@ -314,9 +314,9 @@ using glm::ivec3;
     
     std::vector<AABB> actualCells;
     
-    myArray.mutableForEachCell(box, [&](const AABB &cell){
+    myArray.mutableForEachCell(box, [&](const AABB &cell, Morton3 index, int &value){
         actualCells.push_back(cell);
-        return 42;
+        value = 42;
     });
     
     // Make sure we touched all the cells we intended to.
@@ -332,7 +332,7 @@ using glm::ivec3;
     // Throws an exception when the region is not in-bounds.
     try {
         const AABB negCell = {vec3(-0.5f, -0.5f, -0.5f), vec3(0.5f, 0.5f, 0.5f)};
-        myArray.mutableForEachCell(negCell, [&](const AABB &cell){
+        myArray.mutableForEachCell(negCell, [&](const AABB &cell, Morton3 index, int &value){
             SDL_Log("{(%.2f, %.2f, %.2f), (%.2f, %.2f, %.2f)}",
                     cell.center.x, cell.center.y, cell.center.z,
                     cell.extent.x, cell.extent.y, cell.extent.z);
@@ -346,9 +346,9 @@ using glm::ivec3;
     // If the region is a zero-sized box then we should iterate over no cells.
     const AABB zeroBox = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
     actualCells.clear();
-    myArray.mutableForEachCell(zeroBox, [&](const AABB &cell){
-    XCTFail("We expected to iterate over zero cells in this case.");
-        return 42;
+    myArray.mutableForEachCell(zeroBox, [&](const AABB &cell, Morton3 index, int &value){
+        XCTFail("We expected to iterate over zero cells in this case.");
+        value = 42;
     });
 }
 

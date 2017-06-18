@@ -19,6 +19,8 @@
 class VoxelData : public GridMutable<Voxel>
 {
 public:
+    using GridAddressable<Voxel>::get;
+    
     typedef Array3D<Voxel> Chunk;
     typedef typename std::experimental::optional<Chunk> MaybeChunk;
     

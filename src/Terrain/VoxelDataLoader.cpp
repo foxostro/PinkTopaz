@@ -53,11 +53,11 @@ void VoxelDataLoader::load(const std::vector<uint8_t> &bytes, GridMutable<Voxel>
     
     size_t i = 0;
     
-    output.mutableForEachCell(box, [&](const AABB &cell){
+    output.mutableForEachCell(box, [&](const AABB &cell, Morton3 index, Voxel &voxel){
         assert(i < (header.w * header.h * header.d));
         const FileVoxel &src = header.voxels[i++];
         const float value = (src.type == 0) ? 0.0f : 1.0f;
-        return Voxel(value);
+        voxel = Voxel(value);
     });
 }
 
@@ -72,8 +72,8 @@ Array3D<Voxel> VoxelDataLoader::createArray(const std::vector<uint8_t> &bytes, i
     
     Array3D<Voxel> voxels(boxWithBorder, resWithBorder);
     
-    voxels.mutableForEachCell(boxWithBorder, [&](const AABB &cell){
-        return Voxel();
+    voxels.mutableForEachCell(boxWithBorder, [&](const AABB &cell, Morton3 index, Voxel &value){
+        value = Voxel();
     });
     
     load(bytes, voxels);
