@@ -47,7 +47,7 @@ void VoxelDataLoader::load(const std::vector<uint8_t> &bytes, GridMutable<Voxel>
     
     glm::vec3 half(header.w / 2.f, header.h / 2.f, header.d / 2.f);
     AABB box = {
-        half,
+        half + glm::vec3(0.5f, 0.5f, 0.5f),
         half,
     };
     
