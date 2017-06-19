@@ -35,28 +35,34 @@ GLint textureSamplerFilterEnum(TextureSamplerFilter filter)
     }
 }
 
-TextureSamplerOpenGL::TextureSamplerOpenGL(const TextureSamplerDescriptor &desc)
-: _handle(0)
+TextureSamplerOpenGL::TextureSamplerOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                                           const TextureSamplerDescriptor &desc)
+ : _handle(0),
+   _commandQueue(commandQueue)
 {
     const GLint addressS = textureSamplerAddressModeEnum(desc.addressS);
     const GLint addressT = textureSamplerAddressModeEnum(desc.addressT);
     const GLint minFilter = textureSamplerFilterEnum(desc.minFilter);
     const GLint maxFilter = textureSamplerFilterEnum(desc.maxFilter);
     
-    GLuint sampler;
-    glGenSamplers(1, &sampler);
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, addressS);
-    glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, addressT);
-    glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter);
-    glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, maxFilter);
-    CHECK_GL_ERROR();
-    
-    _handle = sampler;
+    _commandQueue->enqueue([=]{
+        GLuint sampler;
+        glGenSamplers(1, &sampler);
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, addressS);
+        glSamplerParameteri(sampler, GL_TEXTURE_WRAP_T, addressT);
+        glSamplerParameteri(sampler, GL_TEXTURE_MIN_FILTER, minFilter);
+        glSamplerParameteri(sampler, GL_TEXTURE_MAG_FILTER, maxFilter);
+        CHECK_GL_ERROR();
+        
+        _handle = sampler;
+    });
 }
 
 TextureSamplerOpenGL::~TextureSamplerOpenGL()
 {
     GLuint handle = _handle;
-    glDeleteSamplers(1, &handle);
-    CHECK_GL_ERROR();
+    _commandQueue->enqueue([=]{
+        glDeleteSamplers(1, &handle);
+        CHECK_GL_ERROR();
+    });
 }

@@ -69,9 +69,12 @@ size_t textureDataTypeSize(TextureFormat format)
     }
 }
 
-TextureOpenGL::TextureOpenGL(const TextureDescriptor &desc,
+TextureOpenGL::TextureOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                             const TextureDescriptor &desc,
                              const void *data)
-: _target(0), _handle(0)
+ : _target(0),
+   _handle(0),
+   _commandQueue(commandQueue)
 {
     const size_t len = desc.width * desc.height * desc.depth * textureDataTypeSize(desc.format);
     std::vector<uint8_t> wrappedData(len);
@@ -80,9 +83,12 @@ TextureOpenGL::TextureOpenGL(const TextureDescriptor &desc,
     commonInit(desc, wrappedData);
 }
 
-TextureOpenGL::TextureOpenGL(const TextureDescriptor &desc,
+TextureOpenGL::TextureOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                             const TextureDescriptor &desc,
                              const std::vector<uint8_t> &data)
-: _target(0), _handle(0)
+ : _target(0),
+   _handle(0),
+   _commandQueue(commandQueue)
 {
     const size_t expectedLen = desc.width * desc.height * desc.depth * textureDataTypeSize(desc.format);
     const size_t dataLen = data.size();
@@ -96,51 +102,55 @@ TextureOpenGL::TextureOpenGL(const TextureDescriptor &desc,
 void TextureOpenGL::commonInit(const TextureDescriptor &desc,
                                const std::vector<uint8_t> &data)
 {
+    _commandQueue->enqueue([=]{
+        const GLenum target = _target = textureTargetEnum(desc.type);
+        constexpr GLint level = 0;
+        const GLint internalFormat = textureInternalFormat(desc.format);
+        constexpr GLint border = 0;
+        const GLint externalFormat = textureExternalFormat(desc.format);
+        const GLint dataType = textureDataType(desc.format);
+        
+        const void *bytes = &data[0];
+        
+        glPixelStorei(GL_UNPACK_ALIGNMENT, desc.unpackAlignment);
+        
+        GLuint texture;
+        glGenTextures(1, &texture);
+        glBindTexture(target, texture);
+        
+        switch (target)
+        {
+            case GL_TEXTURE_2D:
+                glTexImage2D(target, level, internalFormat, desc.width,
+                             desc.height, border, externalFormat, dataType,
+                             bytes);
+                break;
+                
+            case GL_TEXTURE_2D_ARRAY:
+                glTexImage3D(target, level, internalFormat, desc.width,
+                             desc.height, desc.depth, border, externalFormat,
+                             dataType, bytes);
+                break;
+        }
+        
+        if (desc.generateMipMaps) {
+            glGenerateMipmap(target);
+        }
+        
+        glBindTexture(target, 0);
+        CHECK_GL_ERROR();
     
-    const GLenum target = _target = textureTargetEnum(desc.type);
-    constexpr GLint level = 0;
-    const GLint internalFormat = textureInternalFormat(desc.format);
-    constexpr GLint border = 0;
-    const GLint externalFormat = textureExternalFormat(desc.format);
-    const GLint dataType = textureDataType(desc.format);
-    
-    const void *bytes = &data[0];
-    
-    glPixelStorei(GL_UNPACK_ALIGNMENT, desc.unpackAlignment);
-    
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(target, texture);
-    
-    switch (target)
-    {
-        case GL_TEXTURE_2D:
-            glTexImage2D(target, level, internalFormat, desc.width,
-                         desc.height, border, externalFormat, dataType, bytes);
-            break;
-            
-        case GL_TEXTURE_2D_ARRAY:
-            glTexImage3D(target, level, internalFormat, desc.width,
-                         desc.height, desc.depth, border, externalFormat,
-                         dataType, bytes);
-            break;
-    }
-    
-    if (desc.generateMipMaps) {
-        glGenerateMipmap(target);
-    }
-    
-    glBindTexture(target, 0);
-    CHECK_GL_ERROR();
-    
-    _handle = texture;
+        _handle = texture;
+    });
 }
 
 TextureOpenGL::~TextureOpenGL()
 {
     GLuint handle = _handle;
-    if (handle) {
-        glDeleteTextures(1, &handle);
-        CHECK_GL_ERROR();
-    }
+    _commandQueue->enqueue([=]{
+        if (handle) {
+            glDeleteTextures(1, &handle);
+            CHECK_GL_ERROR();
+        }
+    });
 }

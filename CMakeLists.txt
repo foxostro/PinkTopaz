@@ -49,6 +49,7 @@ set(SOURCE_FILES_OPENGL
     "src/Renderer/OpenGL/ShaderOpenGL.cpp" "src/include/Renderer/OpenGL/ShaderOpenGL.hpp"
     "src/Renderer/OpenGL/TextureOpenGL.cpp" "src/include/Renderer/OpenGL/TextureOpenGL.hpp"
     "src/Renderer/OpenGL/TextureSamplerOpenGL.cpp" "src/include/Renderer/OpenGL/TextureSamplerOpenGL.hpp"
+    "src/Renderer/OpenGL/CommandQueue.cpp" "src/include/Renderer/OpenGL/CommandQueue.hpp"
     )
 
 if(APPLE)

@@ -12,7 +12,7 @@
 #include "AABB.hpp"
 #include "Exception.hpp"
 #include "Frustum.hpp"
-#include "morton.hpp"
+#include "Morton.hpp"
 #include "ChangeLog.hpp"
 #include <functional>
 

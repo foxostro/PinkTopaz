@@ -12,11 +12,13 @@
 #include "Renderer/CommandEncoder.hpp"
 #include "Renderer/RenderPassDescriptor.hpp"
 #include "Renderer/OpenGL/ShaderOpenGL.hpp"
+#include "Renderer/OpenGL/CommandQueue.hpp"
 
 class CommandEncoderOpenGL : public CommandEncoder
 {
 public:
-    CommandEncoderOpenGL(const RenderPassDescriptor &desc);
+    CommandEncoderOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                         const RenderPassDescriptor &desc);
     
     void setViewport(const glm::ivec4 &viewport) override;
     void setShader(const std::shared_ptr<Shader> &shader) override;
@@ -33,7 +35,11 @@ private:
     // Call this after the VAO and VBO have both been bound.
     static void setupVertexAttributes(const VertexFormat &format);
     
+    void internalSetDepthTest(bool enable);
+    
     std::shared_ptr<ShaderOpenGL> _currentShader;
+    std::shared_ptr<CommandQueue> _mainCommandQueue;
+    CommandQueue _encoderCommandQueue;
 };
 
 #endif /* CommandEncoderOpenGL_hpp */

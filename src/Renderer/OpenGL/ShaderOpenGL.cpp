@@ -48,46 +48,53 @@ static void checkProgramLinkStatus(GLuint program)
     }
 }
 
-ShaderOpenGL::ShaderOpenGL(const VertexFormat &vertexFormat,
+ShaderOpenGL::ShaderOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                           const VertexFormat &vertexFormat,
                            const std::string &vertexShaderSource,
                            const std::string &fragmentShaderSource,
                            bool blending)
-: _program(0), _vertexFormat(vertexFormat), _blending(blending)
+ : _program(0),
+   _vertexFormat(vertexFormat),
+   _blending(blending),
+   _commandQueue(commandQueue)
 {
-    const GLchar *vert = (const GLchar *)vertexShaderSource.c_str();
-    const GLchar *frag = (const GLchar *)fragmentShaderSource.c_str();
-    
-    std::vector<std::pair<GLenum, const GLchar *> > shaderType = {
-        std::make_pair(GL_VERTEX_SHADER, vert),
-        std::make_pair(GL_FRAGMENT_SHADER, frag),
-    };
-    
-    GLuint program = glCreateProgram();
-    _program = program;
-    
-    for(auto p : shaderType)
-    {
-        GLuint shaderObject = glCreateShader(p.first);
-        glShaderSource(shaderObject, 1, &p.second, NULL);
+    _commandQueue->enqueue([=]{
+        const GLchar *vert = (const GLchar *)vertexShaderSource.c_str();
+        const GLchar *frag = (const GLchar *)fragmentShaderSource.c_str();
         
-        glCompileShader(shaderObject);
-        checkShaderCompileStatus(shaderObject);
+        std::vector<std::pair<GLenum, const GLchar *> > shaderType = {
+            std::make_pair(GL_VERTEX_SHADER, vert),
+            std::make_pair(GL_FRAGMENT_SHADER, frag),
+        };
         
-        glAttachShader(program, shaderObject);
-        glDeleteShader(shaderObject); // We can delete the shader as soon as the program has a reference to it.
-    }
-    
-    glLinkProgram(program);
-    checkProgramLinkStatus(program);
-    
-    CHECK_GL_ERROR();
+        GLuint program = glCreateProgram();
+        _program = program;
+        
+        for (auto p : shaderType) {
+            GLuint shaderObject = glCreateShader(p.first);
+            glShaderSource(shaderObject, 1, &p.second, NULL);
+            
+            glCompileShader(shaderObject);
+            checkShaderCompileStatus(shaderObject);
+            
+            glAttachShader(program, shaderObject);
+            glDeleteShader(shaderObject); // We can delete the shader as soon as the program has a reference to it.
+        }
+        
+        glLinkProgram(program);
+        checkProgramLinkStatus(program);
+        
+        CHECK_GL_ERROR();
+    });
 }
 
 ShaderOpenGL::~ShaderOpenGL()
 {
     GLuint program = _program;
-    if (program) {
-        glDeleteProgram(program);
-        CHECK_GL_ERROR();
-    }
+    _commandQueue->enqueue([=]{
+        if (program) {
+            glDeleteProgram(program);
+            CHECK_GL_ERROR();
+        }
+    });
 }

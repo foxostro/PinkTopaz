@@ -34,57 +34,79 @@ GLenum getBufferTypeEnum(BufferType type)
     }
 }
 
-BufferOpenGL::BufferOpenGL(const std::vector<uint8_t> &bufferData,
+BufferOpenGL::BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                           const std::vector<uint8_t> &bufferData,
                            BufferUsage usage,
                            BufferType bufferType)
-: _vao(0),
-_vbo(0),
-_usage(getUsageEnum(usage)),
-_bufferType(bufferType)
+ : _vao(0),
+   _vbo(0),
+   _usage(getUsageEnum(usage)),
+   _bufferType(bufferType),
+   _commandQueue(commandQueue)
 {
-    internalCreate(bufferData.size(), (void *)&bufferData[0]);
+    _commandQueue->enqueue([=]{
+        internalCreate(bufferData.size(), (void *)&bufferData[0]);
+    });
 }
 
-BufferOpenGL::BufferOpenGL(size_t bufferSize,
+BufferOpenGL::BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                           size_t bufferSize,
                            const void *bufferData,
                            BufferUsage usage,
                            BufferType bufferType)
-: _vao(0),
-_vbo(0),
-_usage(getUsageEnum(usage)),
-_bufferType(bufferType)
+ : _vao(0),
+   _vbo(0),
+   _usage(getUsageEnum(usage)),
+   _bufferType(bufferType),
+   _commandQueue(commandQueue)
 {
-    internalCreate(bufferSize, bufferData);
+    std::vector<uint8_t> wrappedData(bufferSize);
+    memcpy(&wrappedData[0], bufferData, bufferSize);
+    _commandQueue->enqueue([data{std::move(wrappedData)}, this]{
+        internalCreate(data.size(), (void *)&data[0]);
+    });
 }
 
-BufferOpenGL::BufferOpenGL(size_t bufferSize,
+BufferOpenGL::BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                           size_t bufferSize,
                            BufferUsage usage,
                            BufferType bufferType)
-: _vao(0),
-_vbo(0),
-_usage(getUsageEnum(usage)),
-_bufferType(bufferType)
+ : _vao(0),
+   _vbo(0),
+   _usage(getUsageEnum(usage)),
+   _bufferType(bufferType),
+   _commandQueue(commandQueue)
 {
-    internalCreate(bufferSize, nullptr);
+    _commandQueue->enqueue([=]{
+        internalCreate(bufferSize, nullptr);
+    });
 }
 
 void BufferOpenGL::internalCreate(size_t bufferSize, const void *bufferData)
 {
+    CHECK_GL_ERROR();
+    
     GLuint vao = 0, vbo = 0;
     GLenum target = getTargetEnum();
     
     if (_bufferType == ArrayBuffer) {
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
+        CHECK_GL_ERROR();
     }
     
     glGenBuffers(1, &vbo);
+    CHECK_GL_ERROR();
     glBindBuffer(target, vbo);
+    CHECK_GL_ERROR();
     glBufferData(target, bufferSize, bufferData, _usage);
+    CHECK_GL_ERROR();
     glBindBuffer(target, 0);
+    CHECK_GL_ERROR();
     
     if (_bufferType == ArrayBuffer) {
         glBindVertexArray(0);
+        CHECK_GL_ERROR();
     }
     
     _vao = vao;
@@ -116,30 +138,42 @@ void BufferOpenGL::internalReplace(size_t bufferSize, const void *bufferData)
     CHECK_GL_ERROR();
 }
 
-void BufferOpenGL::replace(const std::vector<uint8_t> &data)
+void BufferOpenGL::replace(const std::vector<uint8_t> &wrappedData)
 {
-    internalReplace(data.size(), &data[0]);
+    _commandQueue->enqueue([wrappedData, this]{
+        size_t n = wrappedData.size();
+        const void *p = (const void *)&wrappedData[0];
+        internalReplace(n, p);
+    });
 }
 
-void BufferOpenGL::replace(std::vector<uint8_t> &&data)
+void BufferOpenGL::replace(std::vector<uint8_t> &&wrappedData)
 {
-    internalReplace(data.size(), &data[0]);
+    _commandQueue->enqueue([data{std::move(wrappedData)}, this]{
+        size_t n = data.size();
+        const void *p = (const void *)&data[0];
+        internalReplace(n, p);
+    });
 }
 
 void BufferOpenGL::replace(size_t size, const void *data)
 {
-    internalReplace(size, data);
+    std::vector<uint8_t> wrappedData(size);
+    memcpy(&wrappedData[0], data, size);
+    replace(std::move(wrappedData));
 }
 
 BufferOpenGL::~BufferOpenGL()
 {
     GLuint vao = _vao, vbo = _vbo;
     
-    if (vbo) {
-        glDeleteBuffers(1, &vbo);
-    }
-    
-    if (vao) {
-        glDeleteVertexArrays(1, &vao);
-    }
+    _commandQueue->enqueue([=]{
+        if (vbo) {
+            glDeleteBuffers(1, &vbo);
+        }
+        
+        if (vao) {
+            glDeleteVertexArrays(1, &vao);
+        }
+    });
 }

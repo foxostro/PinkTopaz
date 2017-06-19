@@ -11,6 +11,7 @@
 
 #include "Renderer/Buffer.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
+#include "Renderer/OpenGL/CommandQueue.hpp"
 
 GLenum getBufferTypeEnum(BufferType type);
 
@@ -18,16 +19,19 @@ GLenum getBufferTypeEnum(BufferType type);
 class BufferOpenGL : public Buffer
 {
 public:
-    BufferOpenGL(const std::vector<uint8_t> &bufferData,
+    BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                 const std::vector<uint8_t> &bufferData,
                  BufferUsage usage,
                  BufferType bufferType);
     
-    BufferOpenGL(size_t bufferSize,
+    BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                 size_t bufferSize,
                  const void *bufferData,
                  BufferUsage usage,
                  BufferType bufferType);
     
-    BufferOpenGL(size_t bufferSize,
+    BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                 size_t bufferSize,
                  BufferUsage usage,
                  BufferType bufferType);
     
@@ -59,6 +63,7 @@ private:
     GLuint _vao, _vbo;
     GLenum _usage;
     const BufferType _bufferType;
+    std::shared_ptr<CommandQueue> _commandQueue;
     
     void internalCreate(size_t bufferSize, const void *bufferData);
     void internalReplace(size_t bufferSize, const void *bufferData);

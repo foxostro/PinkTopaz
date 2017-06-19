@@ -12,11 +12,13 @@
 #include "Renderer/Shader.hpp"
 #include "Renderer/VertexFormat.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
+#include "Renderer/OpenGL/CommandQueue.hpp"
 
 class ShaderOpenGL : public Shader
 {
 public:
-    ShaderOpenGL(const VertexFormat &vertexFormat,
+    ShaderOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                 const VertexFormat &vertexFormat,
                  const std::string &vertexShaderSource,
                  const std::string &fragmentShaderSource,
                  bool blending);
@@ -31,6 +33,7 @@ private:
     GLuint _program;
     VertexFormat _vertexFormat;
     bool _blending;
+    std::shared_ptr<CommandQueue> _commandQueue;
 };
 
 #endif /* ShaderOpenGL_hpp */

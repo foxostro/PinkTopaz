@@ -15,91 +15,105 @@
 #include "Exception.hpp"
 #include "SDL.h"
 
-CommandEncoderOpenGL::CommandEncoderOpenGL(const RenderPassDescriptor &desc)
+CommandEncoderOpenGL::CommandEncoderOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                                           const RenderPassDescriptor &desc)
+ : _mainCommandQueue(commandQueue)
 {
-    if (desc.clear) {
-        glClearColor(desc.clearColor.r, desc.clearColor.g,
-                     desc.clearColor.b, desc.clearColor.a);
+    _encoderCommandQueue.enqueue([=]{
+        if (desc.clear) {
+            glClearColor(desc.clearColor.r, desc.clearColor.g,
+                         desc.clearColor.b, desc.clearColor.a);
+            
+            // According to <https://www.khronos.org/opengl/wiki/Common_Mistakes#Swap_Buffers>
+            // it is important to clear all three buffers for best performance.
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        }
         
-        // According to <https://www.khronos.org/opengl/wiki/Common_Mistakes#Swap_Buffers>
-        // it is important to clear all three buffers for best performance.
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    }
-    
-    setDepthTest(true);
-    
-    CHECK_GL_ERROR();
+        internalSetDepthTest(true);
+        
+        CHECK_GL_ERROR();
+    });
 }
 
 void CommandEncoderOpenGL::setViewport(const glm::ivec4 &viewport)
 {
-    glViewport(viewport.x, viewport.y, viewport.z, viewport.w);
-    CHECK_GL_ERROR();
+    _encoderCommandQueue.enqueue([=]{
+        glViewport(viewport.x, viewport.y, viewport.z, viewport.w);
+        CHECK_GL_ERROR();
+    });
 }
 
 void CommandEncoderOpenGL::setShader(const std::shared_ptr<Shader> &abstractShader)
 {
     assert(abstractShader);
-    auto shader = std::dynamic_pointer_cast<ShaderOpenGL>(abstractShader);
-    GLuint program = shader->getProgram();
-    glUseProgram(program);
-    
-    if (shader->getBlending()) {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    } else {
-        glDisable(GL_BLEND);
-    }
-    
-    CHECK_GL_ERROR();
-    
-    _currentShader = shader;
+    _encoderCommandQueue.enqueue([=]{
+        auto shader = std::dynamic_pointer_cast<ShaderOpenGL>(abstractShader);
+        GLuint program = shader->getProgram();
+        glUseProgram(program);
+        
+        if (shader->getBlending()) {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        } else {
+            glDisable(GL_BLEND);
+        }
+        
+        CHECK_GL_ERROR();
+        
+        _currentShader = shader;
+    });
 }
 
 void CommandEncoderOpenGL::setFragmentTexture(const std::shared_ptr<Texture> &abstractTexture, size_t index)
 {
     assert(abstractTexture);
-    auto texture = std::dynamic_pointer_cast<TextureOpenGL>(abstractTexture);
-    GLuint handle = texture->getHandle();
-    glActiveTexture(GL_TEXTURE0 + (GLenum)index);
-    glBindTexture(texture->getTarget(), handle);
-    CHECK_GL_ERROR();
+    _encoderCommandQueue.enqueue([=]{
+        auto texture = std::dynamic_pointer_cast<TextureOpenGL>(abstractTexture);
+        GLuint handle = texture->getHandle();
+        glActiveTexture(GL_TEXTURE0 + (GLenum)index);
+        glBindTexture(texture->getTarget(), handle);
+        CHECK_GL_ERROR();
+    });
 }
 
 void CommandEncoderOpenGL::setFragmentSampler(const std::shared_ptr<TextureSampler> &abstractSampler, size_t index)
 {
     assert(abstractSampler);
-    auto sampler = std::dynamic_pointer_cast<TextureSamplerOpenGL>(abstractSampler);
-    GLuint handle = sampler->getHandle();
-    glBindSampler(index, handle);
-    CHECK_GL_ERROR();
+    _encoderCommandQueue.enqueue([=]{
+        auto sampler = std::dynamic_pointer_cast<TextureSamplerOpenGL>(abstractSampler);
+        GLuint handle = sampler->getHandle();
+        glBindSampler(index, handle);
+        CHECK_GL_ERROR();
+    });
 }
 
 void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
 {
     assert(abstractBuffer);
     
-    if (!_currentShader) {
-        throw Exception("Must bind a shader before calling setVertexBuffer().");
-    }
-    
-    auto buffer = std::dynamic_pointer_cast<BufferOpenGL>(abstractBuffer);
-    const GLuint vbo = buffer->getHandleVBO();
-    const GLenum target = buffer->getTargetEnum();
-    
-    if (UniformBuffer == buffer->getType()) {
-        glBindBufferBase(target, 0, vbo);
-    } else {
-        GLuint vao = buffer->getHandleVAO();
-        glBindVertexArray(vao);
-        glBindBuffer(target, vbo);
+    _encoderCommandQueue.enqueue([=]{
+        if (!_currentShader) {
+            throw Exception("Must bind a shader before calling setVertexBuffer().");
+        }
         
-        const VertexFormat &format = _currentShader->getVertexFormat();
-        setupVertexAttributes(format);
+        auto buffer = std::dynamic_pointer_cast<BufferOpenGL>(abstractBuffer);
+        const GLuint vbo = buffer->getHandleVBO();
+        const GLenum target = buffer->getTargetEnum();
         
-        glBindBuffer(target, 0);
-    }
-    CHECK_GL_ERROR();
+        if (UniformBuffer == buffer->getType()) {
+            glBindBufferBase(target, 0, vbo);
+        } else {
+            GLuint vao = buffer->getHandleVAO();
+            glBindVertexArray(vao);
+            glBindBuffer(target, vbo);
+            
+            const VertexFormat &format = _currentShader->getVertexFormat();
+            setupVertexAttributes(format);
+            
+            glBindBuffer(target, 0);
+        }
+        CHECK_GL_ERROR();
+    });
 }
 
 void CommandEncoderOpenGL::setFragmentBuffer(const std::shared_ptr<Buffer> &abstractBuffer, size_t index)
@@ -111,19 +125,22 @@ void CommandEncoderOpenGL::setFragmentBuffer(const std::shared_ptr<Buffer> &abst
 
 void CommandEncoderOpenGL::drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances)
 {
-    GLenum mode;
-    
-    switch (type) {
-        case Triangles:
-            mode = GL_TRIANGLES;
-            break;
-            
-        default:
-            throw Exception("Invalid primitive type %d in call to drawPrimitives.\n", (int)type);
-    }
-    
-    glDrawArrays(mode, (GLint)first, (GLsizei)count);
-    CHECK_GL_ERROR();
+    _encoderCommandQueue.enqueue([=]{
+        GLenum mode;
+        
+        switch (type) {
+            case Triangles:
+                mode = GL_TRIANGLES;
+                break;
+                
+            default:
+                throw Exception("Invalid primitive type %d in call to drawPrimitives.\n", (int)type);
+        }
+        
+        CHECK_GL_ERROR();
+        glDrawArrays(mode, (GLint)first, (GLsizei)count);
+        CHECK_GL_ERROR();
+    });
 }
 
 void CommandEncoderOpenGL::setupVertexAttributes(const VertexFormat &format)
@@ -159,9 +176,19 @@ void CommandEncoderOpenGL::setupVertexAttributes(const VertexFormat &format)
     }
 }
 
-void CommandEncoderOpenGL::commit() {}
+void CommandEncoderOpenGL::commit()
+{
+    _mainCommandQueue->enqueue(_encoderCommandQueue);
+}
 
 void CommandEncoderOpenGL::setDepthTest(bool enable)
+{
+    _encoderCommandQueue.enqueue([=]{
+        internalSetDepthTest(enable);
+    });
+}
+
+void CommandEncoderOpenGL::internalSetDepthTest(bool enable)
 {
     if (enable) {
         glEnable(GL_DEPTH_TEST);

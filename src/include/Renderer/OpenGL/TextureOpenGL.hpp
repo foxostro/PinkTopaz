@@ -11,6 +11,7 @@
 
 #include "Renderer/Texture.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
+#include "Renderer/OpenGL/CommandQueue.hpp"
 
 #include <vector>
 
@@ -47,10 +48,12 @@ public:
     // data -- A pointer to the bytes of data used in the texture. This is
     //         copied when received to prevent problems should the OpenGL
     //         commands run at a later time or on a different thread.
-    TextureOpenGL(const TextureDescriptor &desc,
+    TextureOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                  const TextureDescriptor &desc,
                   const void *data);
     
-    TextureOpenGL(const TextureDescriptor &desc,
+    TextureOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                  const TextureDescriptor &desc,
                   const std::vector<uint8_t> &data);
     
     virtual ~TextureOpenGL();
@@ -64,6 +67,7 @@ private:
     
     GLenum _target;
     GLuint _handle;
+    std::shared_ptr<CommandQueue> _commandQueue;
 };
 
 #endif /* TextureOpenGL_hpp */

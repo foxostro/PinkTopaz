@@ -11,6 +11,7 @@
 
 #include "Renderer/TextureSampler.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
+#include "Renderer/OpenGL/CommandQueue.hpp"
 
 // The OpenGL address mode to use when sampling, as implied by `mode'.
 GLint texturSamplerAddressModeEnum(TextureSamplerAddressMode mode);
@@ -22,7 +23,8 @@ GLint textureSamplerFilterEnum(TextureSamplerFilter filter);
 class TextureSamplerOpenGL : public TextureSampler
 {
 public:
-    TextureSamplerOpenGL(const TextureSamplerDescriptor &desc);
+    TextureSamplerOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+                         const TextureSamplerDescriptor &desc);
     
     virtual ~TextureSamplerOpenGL();
     
@@ -30,6 +32,7 @@ public:
     
 private:
     GLuint _handle;
+    std::shared_ptr<CommandQueue> _commandQueue;
 };
 
 #endif /* TextureSamplerOpenGL_hpp */

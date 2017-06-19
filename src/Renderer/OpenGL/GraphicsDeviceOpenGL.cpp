@@ -20,7 +20,8 @@
 #include <vector>
 
 GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(SDL_Window &window)
-: _window(window)
+ : _window(window),
+   _commandQueue(std::make_shared<CommandQueue>())
 {
     // VMWare provides OpenGL 3.3. So, this is our minimum OpenGL version.
     // The next lowest is macOS, which provides 4.1.
@@ -70,13 +71,13 @@ GraphicsDeviceOpenGL::~GraphicsDeviceOpenGL()
 
 std::shared_ptr<CommandEncoder> GraphicsDeviceOpenGL::encoder(const RenderPassDescriptor &desc)
 {
-    auto encoder = std::make_shared<CommandEncoderOpenGL>(desc);
+    auto encoder = std::make_shared<CommandEncoderOpenGL>(_commandQueue, desc);
     return std::dynamic_pointer_cast<CommandEncoder>(encoder);
 }
 
 void GraphicsDeviceOpenGL::swapBuffers()
 {
-    CHECK_GL_ERROR();
+    _commandQueue->execute();
     SDL_GL_SwapWindow(&_window);
 }
 
@@ -92,7 +93,8 @@ GraphicsDeviceOpenGL::makeShader(const VertexFormat &vertexFormat,
     std::string fragmentProgramSourceFileName = fragmentProgramName + ".glsl";
     std::string fragmentShaderSource = stringFromFileContents(fragmentProgramSourceFileName.c_str());
     
-    auto shader = std::make_shared<ShaderOpenGL>(vertexFormat,
+    auto shader = std::make_shared<ShaderOpenGL>(_commandQueue,
+                                                 vertexFormat,
                                                  vertexShaderSource,
                                                  fragmentShaderSource,
                                                  blending);
@@ -101,20 +103,20 @@ GraphicsDeviceOpenGL::makeShader(const VertexFormat &vertexFormat,
 
 std::shared_ptr<Texture> GraphicsDeviceOpenGL::makeTexture(const TextureDescriptor &desc, const void *data)
 {
-    auto texture = std::make_shared<TextureOpenGL>(desc, data);
+    auto texture = std::make_shared<TextureOpenGL>(_commandQueue, desc, data);
     return std::dynamic_pointer_cast<Texture>(texture);
 }
 
 std::shared_ptr<Texture> GraphicsDeviceOpenGL::makeTexture(const TextureDescriptor &desc, const std::vector<uint8_t> &data)
 {
-    auto texture = std::make_shared<TextureOpenGL>(desc, data);
+    auto texture = std::make_shared<TextureOpenGL>(_commandQueue, desc, data);
     return std::dynamic_pointer_cast<Texture>(texture);
 }
 
 std::shared_ptr<TextureSampler>
 GraphicsDeviceOpenGL::makeTextureSampler(const TextureSamplerDescriptor &desc)
 {
-    auto sampler = std::make_shared<TextureSamplerOpenGL>(desc);
+    auto sampler = std::make_shared<TextureSamplerOpenGL>(_commandQueue, desc);
     return std::dynamic_pointer_cast<TextureSampler>(sampler);
 }
 
@@ -123,7 +125,8 @@ GraphicsDeviceOpenGL::makeBuffer(const std::vector<uint8_t> &data,
                                  BufferUsage usage,
                                  BufferType bufferType)
 {
-    auto buffer = std::make_shared<BufferOpenGL>(data, usage, bufferType);
+    auto buffer = std::make_shared<BufferOpenGL>(_commandQueue, data,
+                                                 usage, bufferType);
     return std::dynamic_pointer_cast<Buffer>(buffer);
 }
 
@@ -133,8 +136,8 @@ GraphicsDeviceOpenGL::makeBuffer(size_t bufferSize,
                                  BufferUsage usage,
                                  BufferType bufferType)
 {
-    auto buffer = std::make_shared<BufferOpenGL>(bufferSize, bufferData,
-                                                 usage, bufferType);
+    auto buffer = std::make_shared<BufferOpenGL>(_commandQueue, bufferSize,
+                                                 bufferData, usage, bufferType);
     return std::dynamic_pointer_cast<Buffer>(buffer);
 }
 
@@ -143,9 +146,8 @@ GraphicsDeviceOpenGL::makeBuffer(size_t bufferSize,
                                  BufferUsage usage,
                                  BufferType bufferType)
 {
-    auto buffer = std::make_shared<BufferOpenGL>(bufferSize,
-                                                 usage,
-                                                 bufferType);
+    auto buffer = std::make_shared<BufferOpenGL>(_commandQueue, bufferSize,
+                                                 usage, bufferType);
     return std::dynamic_pointer_cast<Buffer>(buffer);
 }
 

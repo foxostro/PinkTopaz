@@ -15,6 +15,7 @@
 #include "SDL.h"
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/CommandEncoder.hpp"
+#include "Renderer/OpenGL/CommandQueue.hpp"
 
 class GraphicsDeviceOpenGL : public GraphicsDevice
 {
@@ -90,6 +91,7 @@ public:
 private:
     SDL_Window &_window;
     SDL_GLContext _glContext;
+    std::shared_ptr<CommandQueue> _commandQueue;
 };
 
 #endif /* GraphicsDeviceOpenGL_hpp */
