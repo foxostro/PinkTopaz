@@ -18,8 +18,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
    _dispatcher(dispatcher),
    _dispatcherRebuildMesh(dispatcherRebuildMesh),
    _mesher(new MesherNaiveSurfaceNets),
-   _voxels(new VoxelDataStore),
-   _meshFetchInFlight(0)
+   _voxels(new VoxelDataStore)
 {
     // Load terrain texture array from a single image.
     // TODO: create a TextureArrayLoader class to encapsulate tex loading.
@@ -109,22 +108,18 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     // There's bit of race between comparing the counter and incrementing it,
     // but that doesn't matter since we merely want a good effort at limiting
     // the number of these tasks in the queue.
-    if (_meshFetchInFlight < 1) {
-        _meshFetchInFlight++;
-        _dispatcherRebuildMesh->async([=]{
-            PROFILER(TerrainFetchMeshes);
-            std::lock_guard<std::mutex> lock(_lockMeshes);
-            _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell,
-                                                             Morton3 index,
-                                                             const MaybeTerrainMesh &maybeTerrainMesh){
-                _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
-                if (!maybeTerrainMesh) {
-                    asyncRebuildAnotherMesh(cell);
-                }
-            });
-            _meshFetchInFlight--;
+    _dispatcherRebuildMesh->async([=]{
+        PROFILER(TerrainFetchMeshes);
+        std::lock_guard<std::mutex> lock(_lockMeshes);
+        _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell,
+                                                         Morton3 index,
+                                                         const MaybeTerrainMesh &maybeTerrainMesh){
+            _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
+            if (!maybeTerrainMesh) {
+                asyncRebuildAnotherMesh(cell);
+            }
         });
-    }
+    });
     
     encoder->setShader(_defaultMesh->shader);
     encoder->setFragmentSampler(_defaultMesh->textureSampler, 0);

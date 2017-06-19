@@ -60,7 +60,6 @@ private:
     std::unique_ptr<Array3D<MaybeTerrainMesh>> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     TerrainMeshQueue _meshesToRebuild;
-    std::atomic<int> _meshFetchInFlight;
     std::shared_mutex _lockCameraPosition;
     glm::vec3 _cameraPos;
     glm::mat4x4 _modelViewProjection;

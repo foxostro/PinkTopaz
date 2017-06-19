@@ -33,6 +33,8 @@ public:
         TerrainAsyncRebuildMeshes,
         TerrainRebuildNextMesh,
         TerrainFetchMeshes,
+        VoxelDataStoreReader,
+        VoxelDataStoreWriter,
     };
     
     class Scope

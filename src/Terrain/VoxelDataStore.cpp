@@ -8,7 +8,6 @@
 
 #include "Terrain/VoxelDataStore.hpp"
 #include "Profiler.hpp"
-#include <mutex> // for std::unique_lock
 
 VoxelDataStore::VoxelDataStore()
  : _data(_generator),
@@ -21,9 +20,9 @@ VoxelDataStore::Locks VoxelDataStore::locksForRegion(const AABB &region) const
     Locks locks;
     _chunkLocks.mutableForEachCell(region, [&](const AABB &cell,
                                                Morton3 index,
-                                               std::shared_ptr<std::shared_mutex> &cellLock){
+                                               std::shared_ptr<std::mutex> &cellLock){
         if (!cellLock) {
-            cellLock = std::make_shared<std::shared_mutex>();
+            cellLock = std::make_shared<std::mutex>();
         }
         locks.push_back(cellLock);
     });
@@ -31,45 +30,39 @@ VoxelDataStore::Locks VoxelDataStore::locksForRegion(const AABB &region) const
     return locks;
 }
 
-void VoxelDataStore::acquireLocks(const Locks &locks, bool shared) const
+void VoxelDataStore::acquireLocks(const Locks &locks) const
 {
     for (auto &lock : locks) {
-        if (shared) {
-            lock->lock_shared();
-        } else {
-            lock->lock();
-        }
+        lock->lock();
     }
 }
 
-void VoxelDataStore::releaseLocks(const Locks &locks, bool shared) const
+void VoxelDataStore::releaseLocks(const Locks &locks) const
 {
     for (auto iter = locks.rbegin(); iter != locks.rend(); ++iter) {
         auto &cellLock = *iter;
-        if (shared) {
-            cellLock->unlock_shared();
-        } else {
-            cellLock->unlock();
-        }
+        cellLock->unlock();
     }
 }
 
 void VoxelDataStore::readerTransaction(const AABB &region, const Reader &fn) const
 {
     // AFOX_TODO: This isn't exception-safe. I'm not sure if I care.
+    PROFILER(VoxelDataStoreReader);
     auto locks = locksForRegion(region);
-    acquireLocks(locks, true);
+    acquireLocks(locks);
     fn(_data.copy(region));
-    releaseLocks(locks, true);
+    releaseLocks(locks);
 }
 
 void VoxelDataStore::writerTransaction(const AABB &region, const Writer &fn)
 {
     // AFOX_TODO: This isn't exception-safe. I'm not sure if I care.
+    PROFILER(VoxelDataStoreWriter);
     auto locks = locksForRegion(region);
-    acquireLocks(locks, false);
+    acquireLocks(locks);
     ChangeLog changeLog = fn(_data);
-    releaseLocks(locks, false);
+    releaseLocks(locks);
     voxelDataChanged(changeLog);
 }
 

@@ -93,14 +93,24 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
     Array3D<Voxel> dst(adjustedRegion, res);
     assert(dst.inbounds(region));
     
-    // Iterate over all chunks in the region. For each of those chunks, build
-    // the chunk if it is missing and then iterate over voxels in the chunk that
-    // fall within the region. For each of those voxels, copy them into the
-    // destination array.
-    std::lock_guard<std::mutex> lock(_lockChunks);
-    _chunks.mutableForEachCell(region, [&](const AABB &chunkBoundingBox,
-                                           Morton3 chunkIndex,
-                                           MaybeChunk &maybeChunk){
+    // The chunks themselves have already been locked by the VoxelDataStore,
+    // but we'll still need to protect accesses to `_chunks'. Let's collect the
+    // chunks under the lock and then process the chunks afterward.
+    std::vector<std::pair<AABB, std::reference_wrapper<MaybeChunk>>> chunks;
+    {
+        std::lock_guard<std::mutex> lock(_lockChunks);
+        _chunks.mutableForEachCell(region, [&](const AABB &chunkBoundingBox,
+                                               Morton3 chunkIndex,
+                                               MaybeChunk &maybeChunk){
+            auto pair = std::make_pair(chunkBoundingBox, std::reference_wrapper<MaybeChunk>(maybeChunk));
+            chunks.push_back(pair);
+        });
+    }
+    
+    // Iterate over all chunks in the region.
+    for (auto &pair : chunks) {
+        const auto &chunkBoundingBox = pair.first;
+        MaybeChunk &maybeChunk = pair.second;
         
         // Build the chunk if it is missing.
         emplaceChunkIfNecessary(chunkBoundingBox.center, maybeChunk);
@@ -117,18 +127,22 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
             // with grid coordinates.
             dst.set(cell.center, voxel);
         });
-    });
+    }
     
     return dst;
 }
 
 VoxelData::MaybeChunk& VoxelData::chunkAtPoint(const glm::vec3 &p) const
 {
-    // AFOX_TODO: Need a better way to lock chunks. This effectively serializes all chunk generation.
-    std::lock_guard<std::mutex> lock(_lockChunks);
-    MaybeChunk &maybeChunk = _chunks.mutableReference(p);
-    emplaceChunkIfNecessary(p, maybeChunk);
-    return maybeChunk;
+    // The chunk itself will already have been locked by the VoxelDataStore at
+    // this point. We only need to protect access to `_chunks' itself.
+    MaybeChunk *pMaybeChunk;
+    {
+        std::lock_guard<std::mutex> lock(_lockChunks);
+        pMaybeChunk = &_chunks.mutableReference(p);
+    }
+    emplaceChunkIfNecessary(p, *pMaybeChunk);
+    return *pMaybeChunk;
 }
 
 void VoxelData::emplaceChunkIfNecessary(const glm::vec3 &p,
