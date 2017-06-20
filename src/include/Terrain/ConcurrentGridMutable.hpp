@@ -10,6 +10,7 @@
 #define ConcurrentGridMutable_hpp
 
 #include "GridAddressable.hpp"
+#include "GridView.hpp"
 
 #include <mutex>
 #include <vector>
@@ -86,12 +87,15 @@ public:
     
     // Perform an atomic transaction as a "reader" with read-only access to the
     // underlying data in the specified region.
-    // r -- The region we will be reading from.
+    // region -- The region we will be reading from.
     // fn -- Closure which will be doing the reading.
     inline void readerTransaction(const AABB &region, const Reader &fn) const
     {
+        // AFOX_TODO: What if we want to copy the region to an Array3D instead
+        // of using a GridView?
         LockSet locks(locksForRegion(region));
-        fn(*_array); // AFOX_TODO: What if we want to copy the region to an Array3D?
+        GridView<ElementType> view(*_array, region);
+        fn(view);
     }
     
     // Perform an atomic transaction as a "writer" with read-write access to
@@ -103,7 +107,8 @@ public:
     inline void writerTransaction(const AABB &region, const Writer &fn)
     {
         LockSet locks(locksForRegion(region));
-        ChangeLog changeLog = fn(*_array);
+        GridViewMutable<ElementType> view(*_array, region);
+        ChangeLog changeLog = fn(view);
         onWriterTransaction(changeLog);
     }
     

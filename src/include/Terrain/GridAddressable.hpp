@@ -208,6 +208,20 @@ public:
                point.x < maxs.x && point.y < maxs.y && point.z < maxs.z;
     }
     
+    // Returns true if the point is within the valid space of the grid.
+    inline bool inbounds(const glm::ivec3 &a) const
+    {
+        const auto res = gridResolution();
+        return a.x >= 0 && a.y >= 0 && a.z >= 0 &&
+               a.x < res.x && a.y < res.y && a.z < res.z;
+    }
+    
+    // Returns true if the point is within the valid space of the grid.
+    inline bool inbounds(Morton3 index) const
+    {
+        return inbounds(index.decode());
+    }
+    
     // Returns true if the region is within the valid space of the grid.
     inline bool inbounds(const AABB &region) const
     {
@@ -240,13 +254,8 @@ public:
         const auto maxCellCoords = cellCoordsAtPointRoundUp(max);
         
 #ifndef NDEBUG
-        const auto res = gridResolution();
-        assert(minCellCoords.x >= 0 && minCellCoords.x <= res.x);
-        assert(minCellCoords.y >= 0 && minCellCoords.y <= res.y);
-        assert(minCellCoords.z >= 0 && minCellCoords.z <= res.z);
-        assert(maxCellCoords.x >= 0 && maxCellCoords.x <= res.x);
-        assert(maxCellCoords.y >= 0 && maxCellCoords.y <= res.y);
-        assert(maxCellCoords.z >= 0 && maxCellCoords.z <= res.z);
+        assert(inbounds(minCellCoords));
+        assert(inbounds(minCellCoords));
         assert(minCellCoords.x <= maxCellCoords.x);
         assert(minCellCoords.y <= maxCellCoords.y);
         assert(minCellCoords.z <= maxCellCoords.z);
