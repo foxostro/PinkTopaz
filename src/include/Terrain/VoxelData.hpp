@@ -26,7 +26,8 @@ public:
     
     // Constructor. Accepts `generator' which can generate voxel terrain as
     // needed to fill the chunks underlying VoxelData.
-    VoxelData(const VoxelDataGenerator &generator);
+    VoxelData(const std::shared_ptr<VoxelDataGenerator> &generator,
+              unsigned chunkSize);
     
     // No default constructor.
     VoxelData() = delete;
@@ -79,10 +80,8 @@ public:
     Array3D<Voxel> copy(const AABB &region) const;
     
 private:
-    static constexpr int CHUNK_SIZE = 32;
-    
     // Provides voxel data for regions of space where none is available yet.
-    const VoxelDataGenerator &_generator;
+    const std::shared_ptr<VoxelDataGenerator> &_generator;
     
     // The voxel grid is broken into chunks where each chunk is a fixed-size
     // grid of voxels.

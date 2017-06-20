@@ -12,6 +12,7 @@
 #include "Renderer/GraphicsDevice.hpp"
 #include "TaskDispatcher.hpp"
 #include "Terrain/Mesher.hpp"
+#include "Terrain/VoxelDataGenerator.hpp"
 #include "Terrain/VoxelDataStore.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include "Terrain/TerrainDrawList.hpp"
@@ -23,7 +24,7 @@
 class Terrain
 {
 public:
-    static constexpr size_t TERRAIN_CHUNK_SIZE = 16;
+    static constexpr unsigned TERRAIN_CHUNK_SIZE = 16;
     
     ~Terrain() = default;
     
@@ -54,6 +55,7 @@ private:
     std::shared_ptr<TaskDispatcher> _dispatcher;
     std::shared_ptr<TaskDispatcher> _dispatcherRebuildMesh;
     std::shared_ptr<Mesher> _mesher;
+    std::shared_ptr<VoxelDataGenerator> _voxelDataGenerator;
     std::shared_ptr<VoxelDataStore> _voxels;
     std::unique_ptr<TerrainDrawList> _drawList;
     std::mutex _lockMeshes;

@@ -18,7 +18,8 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
    _dispatcher(dispatcher),
    _dispatcherRebuildMesh(dispatcherRebuildMesh),
    _mesher(new MesherNaiveSurfaceNets),
-   _voxels(new VoxelDataStore)
+   _voxelDataGenerator(new VoxelDataGenerator),
+   _voxels(new VoxelDataStore(_voxelDataGenerator, TERRAIN_CHUNK_SIZE))
 {
     // Load terrain texture array from a single image.
     // TODO: create a TextureArrayLoader class to encapsulate tex loading.
@@ -78,7 +79,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     // When voxels change, we need to extract a polygonal mesh representation
     // of the isosurface. This mesh is what we actually draw.
     // For now, we extract the entire isosurface in one step.
-    _voxels->voxelDataChanged.connect([&](const ChangeLog &changeLog){
+    _voxels->onWriterTransaction.connect([&](const ChangeLog &changeLog){
         asyncRebuildMeshes(changeLog);
     });
 }

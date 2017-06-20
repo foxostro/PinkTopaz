@@ -8,9 +8,10 @@
 
 #include "Terrain/VoxelData.hpp"
 
-VoxelData::VoxelData(const VoxelDataGenerator &generator)
+VoxelData::VoxelData(const std::shared_ptr<VoxelDataGenerator> &generator,
+                     unsigned chunkSize)
  : _generator(generator),
-   _chunks(generator.boundingBox(), _generator.gridResolution() / CHUNK_SIZE)
+   _chunks(generator->boundingBox(), _generator->gridResolution() / (int)chunkSize)
 {}
 
 const Voxel& VoxelData::get(const glm::vec3 &p) const
@@ -59,17 +60,17 @@ void VoxelData::set(const glm::ivec3 &cellCoords, const Voxel &object)
 
 glm::vec3 VoxelData::cellDimensions() const
 {
-    return _generator.cellDimensions();
+    return _generator->cellDimensions();
 }
 
 AABB VoxelData::boundingBox() const
 {
-    return _generator.boundingBox();
+    return _generator->boundingBox();
 }
 
 glm::ivec3 VoxelData::gridResolution() const
 {
-    return _generator.gridResolution();
+    return _generator->gridResolution();
 }
 
 Array3D<Voxel> VoxelData::copy(const AABB &region) const
@@ -78,16 +79,16 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
     // fall within it. For example, the region may only pass through a portion
     // of some voxels on the edge, but the adjusted region should include all
     // of those voxels.
-    const glm::vec3 cellEx = _generator.cellDimensions() * 0.5f;
-    const glm::vec3 mins = _generator.cellCenterAtPoint(region.mins()) - cellEx;
-    const glm::vec3 maxs = _generator.cellCenterAtPoint(region.maxs()) + cellEx;
+    const glm::vec3 cellEx = _generator->cellDimensions() * 0.5f;
+    const glm::vec3 mins = _generator->cellCenterAtPoint(region.mins()) - cellEx;
+    const glm::vec3 maxs = _generator->cellCenterAtPoint(region.maxs()) + cellEx;
     const glm::vec3 center = (maxs + mins) * 0.5f;
     const glm::vec3 extent = (maxs - mins) * 0.5f;
     const AABB adjustedRegion = {center, extent};
     
     // Count the number of voxels in the adjusted region. This will be the grid
     // resolution of the destination array.
-    const glm::ivec3 res = _generator.countCellsInRegion(adjustedRegion);
+    const glm::ivec3 res = _generator->countCellsInRegion(adjustedRegion);
     
     // Construct the destination array.
     Array3D<Voxel> dst(adjustedRegion, res);
@@ -162,7 +163,7 @@ void VoxelData::emplaceChunkIfNecessary(const glm::vec3 &p,
             // this one chunk.
             // AFOX_TODO: A bulk API for getting voxels from the generator would
             // allow is to more efficiently fill the chunk.
-            value = _generator.get(cell.center);
+            value = _generator->get(cell.center);
         });
     }
     
