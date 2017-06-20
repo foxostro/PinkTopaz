@@ -19,6 +19,9 @@
 std::shared_ptr<GraphicsDevice> createDefaultGraphicsDevice(SDL_Window &w)
 {
     auto concrete = std::make_shared<DEVICE_TYPE>(w);
+    SDL_LogInfo(SDL_LOG_CATEGORY_RENDER,
+                "Created graphics device: %s",
+                concrete->getName().c_str());
     auto abstract = std::dynamic_pointer_cast<GraphicsDevice>(concrete);
     return abstract;
 }

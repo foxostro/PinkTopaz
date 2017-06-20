@@ -96,6 +96,13 @@ public:
     // a cuboid [-1,+1] x [-1,+1] x [0,+1].
     const glm::mat4& getProjectionAdjustMatrix() const override;
     
+    // Get the name of this type of graphics device.
+    // Mostly useful for debugging.
+    std::string getName() const override
+    {
+        return std::string("Metal");
+    }
+    
 private:
     void rebuildDepthTexture();
     

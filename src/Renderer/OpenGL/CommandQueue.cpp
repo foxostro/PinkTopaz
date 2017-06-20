@@ -11,40 +11,38 @@
 #include "Exception.hpp"
 
 CommandQueue::CommandQueue()
- : _mainThreadId(std::this_thread::get_id()),
-   _executing(false)
+ : _mainThreadId(std::this_thread::get_id())
 {}
 
 void CommandQueue::execute()
 {
-    _executing = true;
-    
-    std::lock_guard<std::mutex> lock(_queueLock);
-    
-    while (!_queue.empty()) {
-        auto command = std::move(_queue.front());
-        CHECK_GL_ERROR();
-        command();
-        CHECK_GL_ERROR();
-        _queue.pop();
+    if (std::this_thread::get_id() != _mainThreadId) {
+        throw Exception("This command queue can only be executed on the " \
+                        "thread on which it was constructed. This is expected" \
+                        " to be the OpenGL thread.");
     }
     
-    _executing = false;
+    // Under lock, move `_queue' to `queue'. This will let us execute commands
+    // on the main thread here while we continue to enqueue additional commands
+    // on background threads. We cannot do something like execute those commands
+    // now because then commands would interleave inappropriately.
+    std::queue<std::function<void()>> queue;
+    {
+        std::lock_guard<std::mutex> lock(_queueLock);
+        queue = std::move(_queue);
+    }
+    
+    while (!queue.empty()) {
+        auto command = std::move(queue.front());
+        command();
+        queue.pop();
+    }
 }
 
 void CommandQueue::enqueue(std::function<void()> &&task)
 {
-    // If the queue is currently executing and we're on the main thread then a
-    // call to enqueue has been made from within another task. In this case,
-    // run the task immediately.
-    // In practice, these recursive enqueues are usually destructors being run
-    // because some object in a shared_ptr is now being destroyed.
-    if (_executing && std::this_thread::get_id() == _mainThreadId) {
-        task();
-    } else {
-        std::lock_guard<std::mutex> lock(_queueLock);
-        _queue.push(std::move(task));
-    }
+    std::lock_guard<std::mutex> lock(_queueLock);
+    _queue.push(std::move(task));
 }
 
 void CommandQueue::enqueue(CommandQueue &otherQueue)

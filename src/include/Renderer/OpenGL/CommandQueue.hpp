@@ -30,7 +30,6 @@ public:
     
 private:
     std::thread::id _mainThreadId;
-    std::atomic<bool> _executing;
     std::mutex _queueLock;
     std::queue<std::function<void()>> _queue;
 };

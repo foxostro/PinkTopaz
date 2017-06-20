@@ -94,6 +94,10 @@ public:
     // cube [-1,+1] x [-1,+1] x [-1,+1] and Metal uses an NDC space that's
     // a cuboid [-1,+1] x [-1,+1] x [0,+1].
     virtual const glm::mat4& getProjectionAdjustMatrix() const = 0;
+    
+    // Get the name of this type of graphics device.
+    // Mostly useful for debugging.
+    virtual std::string getName() const = 0;
 };
 
 // Create a default graphics device for the system.
