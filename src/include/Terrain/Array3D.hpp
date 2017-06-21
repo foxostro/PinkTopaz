@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <set>
+#include <mutex>
 #include <glm/vec3.hpp>
 #include "Exception.hpp"
 #include "GridAddressable.hpp"
@@ -93,6 +94,7 @@ public:
 #if LOG_ARRAY_CTOR
         SDL_Log("Array3D<TYPE>& operator=(const Array3D<TYPE> &array) -- %p", this);
 #endif
+        std::lock_guard<std::mutex> lock(_mutex);
         _cells = array._cells;
         _box = array._box;
         _res = array._res;
@@ -119,6 +121,7 @@ public:
     // Gets the object for the specified index, produced by `indexAtPoint'.
     const TYPE& get(Morton3 index) const override
     {
+        std::lock_guard<std::mutex> lock(_mutex);
         return _cells[(size_t)index];
     }
     
@@ -142,18 +145,21 @@ public:
     // Gets the (mutable) object for the specified index, produced by `indexAtPoint'.
     TYPE& mutableReference(Morton3 index) override
     {
+        std::lock_guard<std::mutex> lock(_mutex);
         return _cells[(size_t)index];
     }
     
     // Determine whether a given index is valid.
     inline bool isValidIndex(Morton3 index) const
     {
+        std::lock_guard<std::mutex> lock(_mutex);
         return (size_t)index < _cells.size();
     }
     
     // Gets the dimensions of a single cell. (All cells are the same size.)
     glm::vec3 cellDimensions() const override
     {
+        std::lock_guard<std::mutex> lock(_mutex);
         const glm::vec3 boxSize = _box.extent * 2.0f;
         const glm::vec3 dim(boxSize.x / _res.x,
                             boxSize.y / _res.y,
@@ -162,20 +168,48 @@ public:
     }
     
     // Gets the region for which the grid is defined.
-    AABB boundingBox() const override { return _box; }
+    AABB boundingBox() const override
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _box;
+    }
     
     // Gets the number of cells along each axis within the valid region.
-    glm::ivec3 gridResolution() const override { return _res; }
+    glm::ivec3 gridResolution() const override
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _res;
+    }
     
-    inline iterator begin() { return _cells.begin(); }
-    inline const_iterator begin() const { return _cells.begin(); }
-    inline iterator end() { return _cells.end(); }
-    inline const_iterator end() const { return _cells.end(); }
+    inline iterator begin()
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _cells.begin();
+    }
+    
+    inline const_iterator begin() const
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _cells.begin();
+    }
+    
+    inline iterator end()
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _cells.end();
+    }
+    
+    inline const_iterator end() const
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _cells.end();
+    }
     
 private:
     container_type _cells;
     AABB _box;
     glm::ivec3 _res;
+    mutable std::mutex _mutex;
     
     // Get the number of elements to use in the internal array.
     static inline size_t numberOfInternalElements(const glm::ivec3 &res)
