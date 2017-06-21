@@ -170,8 +170,7 @@ MesherNaiveSurfaceNets::smoothVertex(const GridAddressable<Voxel> &voxels,
         input + posOffset[7]
     };
     
-    // AFOX_TODO: We can probably speed this part up a bit by calculating index
-    // offsets ahead of time like we do for Marching Cubes.
+    // AFOX_TODO: We can speed this up by taking advantage of the Morton3 methods for incrementing the index in various direction.
     const std::array<CubeVertex, NUM_CUBE_VERTS> cube = {{
         CubeVertex(voxels.get(vertexPositions[0]), vertexPositions[0], vec3(0.0f, 0.0f, 1.0f)),
         CubeVertex(voxels.get(vertexPositions[1]), vertexPositions[1], vec3(1.0f, 0.0f, 1.0f)),
