@@ -10,7 +10,7 @@
 #include "Terrain/VoxelDataLoader.hpp"
 #include "FileUtilities.hpp"
 
-VoxelDataGenerator::VoxelDataGenerator()
+VoxelDataGenerator::VoxelDataGenerator(unsigned chunkSize)
 {
     // Create a voxel data store. We want to fill this with voxel values we read
     // from file. Before we can do that, we need to initialize the data store to
@@ -21,10 +21,9 @@ VoxelDataGenerator::VoxelDataGenerator()
     VoxelDataLoader voxelDataLoader;
     voxelDataLoader.retrieveDimensions(bytes, box, res);
     
-    const size_t TERRAIN_CHUNK_SIZE = 16; // AFOX_TODO: Use one TERRAIN_CHUNK_SIZE for entire app.
-    const glm::vec3 chunkSize(TERRAIN_CHUNK_SIZE, TERRAIN_CHUNK_SIZE, TERRAIN_CHUNK_SIZE);
-    const AABB boxWithBorder = box.inset(-chunkSize);
-    const glm::ivec3 resWithBorder = res + glm::ivec3(TERRAIN_CHUNK_SIZE, TERRAIN_CHUNK_SIZE, TERRAIN_CHUNK_SIZE)*2;
+    const glm::vec3 chunkDim(chunkSize, chunkSize, chunkSize);
+    const AABB boxWithBorder = box.inset(-chunkDim);
+    const glm::ivec3 resWithBorder = res + glm::ivec3(chunkSize, chunkSize, chunkSize)*2;
     
     _voxels = std::make_shared<Array3D<Voxel>>(boxWithBorder, resWithBorder);
     

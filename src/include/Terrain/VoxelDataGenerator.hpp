@@ -16,7 +16,8 @@
 class VoxelDataGenerator : public GridAddressable<Voxel>
 {
 public:
-    VoxelDataGenerator();
+    VoxelDataGenerator(unsigned chunkSize);
+    VoxelDataGenerator() = delete;
     ~VoxelDataGenerator() = default;
     
     // Get the object corresponding to the specified point in space.
