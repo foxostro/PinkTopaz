@@ -31,7 +31,7 @@ public:
     
     // A vector which contains references to mutexes. This is used to pass
     // around references to locks in the locks array itself.
-    typedef std::vector<std::shared_ptr<std::mutex>> LockVector;
+    typedef std::vector<std::reference_wrapper<std::mutex>> LockVector;
     
     // An ordered collection of locks which need to be acquired simultaneously.
     // Acquires locks in the constructor and releases in the destructor.
@@ -42,16 +42,17 @@ public:
     public:
         LockSet(LockVector &&theLocks) : locks(theLocks)
         {
-            for (auto &lock : locks) {
-                lock->lock();
+            for (auto iter = locks.begin(); iter != locks.end(); ++iter) {
+                std::mutex &lock = *iter;
+                lock.lock();
             }
         }
         
         ~LockSet()
         {
             for (auto iter = locks.rbegin(); iter != locks.rend(); ++iter) {
-                auto &lock = *iter;
-                lock->unlock();
+                std::mutex &lock = *iter;
+                lock.unlock();
             }
         }
         
@@ -89,7 +90,7 @@ public:
     // underlying data in the specified region.
     // region -- The region we will be reading from.
     // fn -- Closure which will be doing the reading.
-    inline void readerTransaction(const AABB &region, const Reader &fn) const
+    virtual void readerTransaction(const AABB &region, const Reader &fn) const
     {
         // AFOX_TODO: What if we want to copy the region to an Array3D instead
         // of using a GridView?
@@ -104,11 +105,14 @@ public:
     // change log accordingly.
     // region -- The region we will be writing to.
     // fn -- Closure which will be doing the writing.
-    inline void writerTransaction(const AABB &region, const Writer &fn)
+    virtual void writerTransaction(const AABB &region, const Writer &fn)
     {
-        LockSet locks(locksForRegion(region));
-        GridViewMutable<ElementType> view(*_array, region);
-        ChangeLog changeLog = fn(view);
+        ChangeLog changeLog;
+        {
+            LockSet locks(locksForRegion(region));
+            GridViewMutable<ElementType> view(*_array, region);
+            changeLog = fn(view);
+        }
         onWriterTransaction(changeLog);
     }
     
@@ -145,7 +149,7 @@ private:
     // Locks for the array contents.
     // We use a shared_ptr here because there is no copy-assignment operator for
     // std::mutex.
-    mutable Array3D<std::shared_ptr<std::mutex>> _arrayLocks;
+    mutable Array3D<std::mutex> _arrayLocks;
     
     // An array for which we intend to provide concurrent access.
     std::unique_ptr<GridMutable<ElementType>> _array;
@@ -166,11 +170,8 @@ private:
         
         _arrayLocks.mutableForEachCell(region, [&](const AABB &cell,
                                                    Morton3 index,
-                                                   std::shared_ptr<std::mutex> &lock){
-            if (!lock) {
-                lock = std::make_shared<std::mutex>();
-            }
-            locks.push_back(lock);
+                                                   std::mutex &lock){
+            locks.push_back(std::reference_wrapper<std::mutex>(lock));
         });
         
         return locks;
