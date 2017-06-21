@@ -44,20 +44,6 @@ Voxel& VoxelData::mutableReference(const glm::ivec3 &cellCoords)
     return mutableReference(worldPosAtCellCoords(cellCoords));
 }
 
-void VoxelData::set(const glm::vec3 &p, const Voxel &object)
-{
-    MaybeChunk &maybeChunk = chunkAtPoint(p);
-    assert(maybeChunk);
-    maybeChunk->set(p, object);
-}
-
-void VoxelData::set(const glm::ivec3 &cellCoords, const Voxel &object)
-{
-    // Could potentially be more elegant. Let's avoid any confusion about which
-    // grid coords we're using by converting back to world space immediately.
-    set(worldPosAtCellCoords(cellCoords), object);
-}
-
 glm::vec3 VoxelData::cellDimensions() const
 {
     return _generator->cellDimensions();
@@ -126,7 +112,7 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
             
             // AFOX_TODO: I can reduce calls to indexAtPoint() by being clever
             // with grid coordinates.
-            dst.set(cell.center, voxel);
+            dst.mutableReference(cell.center) = voxel;
         });
     }
     

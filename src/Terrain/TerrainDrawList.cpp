@@ -35,7 +35,7 @@ void TerrainDrawList::tryUpdateDrawList(const MaybeTerrainMesh &maybeTerrainMesh
         auto maybeRenderableMesh = maybeTerrainMesh->nonblockingGetMesh();
         if (maybeRenderableMesh) {
             if (_lockDrawList.try_lock()) {
-                _data.set(cell.center, *maybeRenderableMesh);
+                _data.mutableReference(cell.center) = *maybeRenderableMesh;
                 _lockDrawList.unlock();
             }
         }

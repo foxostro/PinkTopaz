@@ -379,27 +379,6 @@ public:
         return mutableReference(a);
     }
     
-    // Sets the object corresponding to the specified point in space.
-    // Note that each point in space corresponds to exactly one cell.
-    // Throws an exception if the point is not within this grid.
-    virtual void set(const glm::vec3 &p, const TYPE &object) = 0;
-    
-    // Sets the cell associated with the given cell coordinates.
-    // Each cell in the grid can be addressed by cell coordinates which uniquely
-    // identify that cell.
-    // See also gridResolution() and cellCoordsAtPoint().
-    virtual void set(const glm::ivec3 &cellCoords, const TYPE &object) = 0;
-    
-    // Sets the object for the specified index, produced by `indexAtPoint'.
-    // Morton codes can be used to uniquely identify a cell in the grid. At the
-    // very least, this code can be used to encode cell coordinates. Sub-classes
-    // of GridMutable may override this method to allow the code to be used to
-    // directly index some underlying grid array.
-    virtual void set(Morton3 index, const TYPE &object)
-    {
-        set(index.decode(), object);
-    }
-    
     // Serially iterate over cells in the specified sub-region of the box.
     // Throws an exception if the region is not within this grid.
     // `fn' paramter is the bounding box of the cell.

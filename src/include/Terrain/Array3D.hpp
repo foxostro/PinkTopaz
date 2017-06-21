@@ -145,29 +145,6 @@ public:
         return _cells[(size_t)index];
     }
     
-    // Each point in space corresponds to exactly one cell. Set the object.
-    void set(const glm::vec3 &p, const TYPE &object) override
-    {
-        if constexpr (EnableVerboseBoundsChecking) {
-            if (!inbounds(p)) {
-                throw OutOfBoundsException();
-            }
-        }
-        return set(indexAtPoint(p), object);
-    }
-    
-    // Sets the cell associated with the given cell coordinates.
-    void set(const glm::ivec3 &cellCoords, const TYPE &object) override
-    {
-        set(indexAtCellCoords(cellCoords), object);
-    }
-    
-    // Sets the object for the specified index, produced by `indexAtPoint'.
-    void set(Morton3 index, const TYPE &object) override
-    {
-        _cells[(size_t)index] = object;
-    }
-    
     // Determine whether a given index is valid.
     inline bool isValidIndex(Morton3 index) const
     {

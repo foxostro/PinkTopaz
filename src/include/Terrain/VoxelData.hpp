@@ -58,15 +58,6 @@ public:
     // See also gridResolution() and cellCoordsAtPoint().
     Voxel& mutableReference(const glm::ivec3 &cellCoords) override;
     
-    // Each point in space corresponds to exactly one cell. Set the object.
-    void set(const glm::vec3 &p, const Voxel &object) override;
-    
-    // Sets the cell associated with the given cell coordinates.
-    // Each cell in the grid can be addressed by cell coordinates which uniquely
-    // identify that cell.
-    // See also gridResolution() and cellCoordsAtPoint().
-    void set(const glm::ivec3 &cellCoords, const Voxel &object) override;
-    
     // Gets the dimensions of a single cell. (All cells are the same size.)
     glm::vec3 cellDimensions() const override;
     

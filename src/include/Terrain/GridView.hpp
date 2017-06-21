@@ -88,6 +88,22 @@ public:
         return _backing.get(p);
     }
     
+    const TYPE& get(const glm::ivec3 &cellCoords) const override
+    {
+        if (!inbounds(cellCoords)) {
+            throw OutOfBoundsException();
+        }
+        return _backing.get(cellCoords);
+    }
+    
+    const TYPE& get(Morton3 index) const override
+    {
+        if (!inbounds(index)) {
+            throw OutOfBoundsException();
+        }
+        return _backing.get(index);
+    }
+    
     TYPE& mutableReference(const glm::vec3 &p) override
     {
         if (!inbounds(p)) {
@@ -110,30 +126,6 @@ public:
             throw OutOfBoundsException();
         }
         return _backing.mutableReference(index);
-    }
-    
-    void set(const glm::vec3 &p, const TYPE &object) override
-    {
-        if (!inbounds(p)) {
-            throw OutOfBoundsException();
-        }
-        _backing.set(p, object);
-    }
-    
-    void set(const glm::ivec3 &cellCoords, const TYPE &object) override
-    {
-        if (!inbounds(cellCoords)) {
-            throw OutOfBoundsException();
-        }
-        _backing.set(cellCoords, object);
-    }
-    
-    void set(Morton3 index, const TYPE &object) override
-    {
-        if (!inbounds(index)) {
-            throw OutOfBoundsException();
-        }
-        _backing.set(index, object);
     }
     
     glm::vec3 cellDimensions() const override
