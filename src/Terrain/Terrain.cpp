@@ -184,6 +184,11 @@ void Terrain::rebuildNextMesh()
                                      _voxels);
         }
         maybeTerrainMesh->rebuild();
+        
+        // AFOX_TODO: If I cannot successfully update the draw list here then
+        // will I leave meshes on the floor? Scenario: we have one mesh left,
+        // we fail to get the lock, and then we never see another call to
+        // rebuildNextMesh(). The mesh is never drawn.
         _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
     }
 }
