@@ -16,6 +16,30 @@
 #include "ChangeLog.hpp"
 #include <functional>
 
+template<typename PointType>
+static inline bool
+isPointInsideBox(const PointType &point,
+                 const PointType &mins,
+                 const PointType &maxs)
+{
+    return point.x >= mins.x && point.y >= mins.y && point.z >= mins.z &&
+           point.x < maxs.x && point.y < maxs.y && point.z < maxs.z;
+}
+
+static inline bool
+isPointInsideBox(Morton3 index,
+                 const glm::ivec3 &mins,
+                 const glm::ivec3 &maxs)
+{
+    return isPointInsideBox(index.decode(), mins, maxs);
+}
+
+static inline bool
+isPointInsideBox(const glm::vec3 &point, const AABB &box)
+{
+    return isPointInsideBox(point, box.mins(), box.maxs());
+}
+
 // Exception thrown when attempting to access the grid at a point that is not in
 // the valid space of the grid.
 class OutOfBoundsException : public Exception
@@ -201,19 +225,13 @@ public:
     // Returns true if the point is within the valid space of the grid.
     inline bool inbounds(const glm::vec3 &point) const
     {
-        const AABB box = boundingBox();
-        const glm::vec3 mins = box.mins();
-        const glm::vec3 maxs = box.maxs();
-        return point.x >= mins.x && point.y >= mins.y && point.z >= mins.z &&
-               point.x < maxs.x && point.y < maxs.y && point.z < maxs.z;
+        return isPointInsideBox(point, boundingBox());
     }
     
     // Returns true if the point is within the valid space of the grid.
     inline bool inbounds(const glm::ivec3 &a) const
     {
-        const auto res = gridResolution();
-        return a.x >= 0 && a.y >= 0 && a.z >= 0 &&
-               a.x < res.x && a.y < res.y && a.z < res.z;
+        return isPointInsideBox(a, glm::ivec3(0, 0, 0), gridResolution());
     }
     
     // Returns true if the point is within the valid space of the grid.

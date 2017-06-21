@@ -16,12 +16,14 @@ VoxelDataStore::VoxelDataStore(const std::shared_ptr<VoxelDataGenerator> &genera
                                 chunkSize)
 {}
 
-void VoxelDataStore::readerTransaction(const AABB &region, const Reader &fn) const
+void VoxelDataStore::readerTransaction(const AABB &region, const ArrayReader &fn) const
 {
-    // AFOX_TODO: What if we want to copy the region to an Array3D instead
-    // of using a GridView?
     PROFILER(VoxelDataStoreReader);
-    ConcurrentGridMutable<Voxel>::readerTransaction(region, fn);
+    LockSet locks(locksForRegion(region));
+    auto rawPointer = (VoxelData *)_array.get();
+    assert(rawPointer != nullptr);
+    const Array3D<Voxel> data = rawPointer->copy(region);
+    fn(data);
 }
 
 void VoxelDataStore::writerTransaction(const AABB &region, const Writer &fn)

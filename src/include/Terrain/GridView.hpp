@@ -20,12 +20,13 @@ public:
     GridView(const GridAddressable<TYPE> &backing, const AABB &subregion)
      : _backing(backing),
        _subregion(subregion),
-       _res(backing.countCellsInRegion(subregion))
+      _minCellCoords(backing.cellCoordsAtPoint(subregion.mins())),
+      _maxCellCoords(backing.cellCoordsAtPoint(subregion.maxs()))
     {}
     
     const TYPE& get(const glm::vec3 &p) const override
     {
-        if (!inbounds(p)) {
+        if (!isPointInsideBox(p, _subregion)) {
             throw OutOfBoundsException();
         }
         return _backing.get(p);
@@ -33,7 +34,7 @@ public:
     
     const TYPE& get(const glm::ivec3 &cellCoords) const override
     {
-        if (!inbounds(cellCoords)) {
+        if (!isPointInsideBox(cellCoords, _minCellCoords, _maxCellCoords)) {
             throw OutOfBoundsException();
         }
         return _backing.get(cellCoords);
@@ -41,7 +42,7 @@ public:
     
     const TYPE& get(Morton3 index) const override
     {
-        if (!inbounds(index)) {
+        if (!isPointInsideBox(index, _minCellCoords, _maxCellCoords)) {
             throw OutOfBoundsException();
         }
         return _backing.get(index);
@@ -54,18 +55,24 @@ public:
     
     AABB boundingBox() const override
     {
-        return _subregion;
+        return _backing.boundingBox();
     }
     
     glm::ivec3 gridResolution() const override
     {
-        return _res;
+        return _backing.gridResolution();
+    }
+    
+    inline const AABB &getSubregion() const
+    {
+        return _subregion;
     }
     
 private:
     const GridAddressable<TYPE> &_backing;
     const AABB _subregion;
-    const glm::ivec3 _res;
+    const glm::ivec3 _minCellCoords;
+    const glm::ivec3 _maxCellCoords;
 };
 
 // Constrains access to a single underlying GridMutable object.
@@ -77,12 +84,13 @@ public:
     GridViewMutable(GridMutable<TYPE> &backing, const AABB &subregion)
      : _backing(backing),
        _subregion(subregion),
-       _res(backing.countCellsInRegion(subregion))
+      _minCellCoords(backing.cellCoordsAtPoint(subregion.mins())),
+      _maxCellCoords(backing.cellCoordsAtPoint(subregion.maxs()))
     {}
     
     const TYPE& get(const glm::vec3 &p) const override
     {
-        if (!inbounds(p)) {
+        if (!isPointInsideBox(p, _subregion)) {
             throw OutOfBoundsException();
         }
         return _backing.get(p);
@@ -90,7 +98,7 @@ public:
     
     const TYPE& get(const glm::ivec3 &cellCoords) const override
     {
-        if (!inbounds(cellCoords)) {
+        if (!isPointInsideBox(cellCoords, _minCellCoords, _maxCellCoords)) {
             throw OutOfBoundsException();
         }
         return _backing.get(cellCoords);
@@ -98,7 +106,7 @@ public:
     
     const TYPE& get(Morton3 index) const override
     {
-        if (!inbounds(index)) {
+        if (!isPointInsideBox(index, _minCellCoords, _maxCellCoords)) {
             throw OutOfBoundsException();
         }
         return _backing.get(index);
@@ -106,7 +114,7 @@ public:
     
     TYPE& mutableReference(const glm::vec3 &p) override
     {
-        if (!inbounds(p)) {
+        if (!isPointInsideBox(p, _subregion)) {
             throw OutOfBoundsException();
         }
         return _backing.mutableReference(p);
@@ -114,7 +122,7 @@ public:
     
     TYPE& mutableReference(const glm::ivec3 &cellCoords) override
     {
-        if (!inbounds(cellCoords)) {
+        if (!isPointInsideBox(cellCoords, _minCellCoords, _maxCellCoords)) {
             throw OutOfBoundsException();
         }
         return _backing.mutableReference(cellCoords);
@@ -122,7 +130,7 @@ public:
     
     TYPE& mutableReference(Morton3 index) override
     {
-        if (!inbounds(index)) {
+       if (!isPointInsideBox(index, _minCellCoords, _maxCellCoords)) {
             throw OutOfBoundsException();
         }
         return _backing.mutableReference(index);
@@ -135,18 +143,19 @@ public:
     
     AABB boundingBox() const override
     {
-        return _subregion;
+        return _backing.boundingBox();
     }
     
     glm::ivec3 gridResolution() const override
     {
-        return _res;
+        return _backing.gridResolution();
     }
     
 private:
     GridMutable<TYPE> &_backing;
     const AABB _subregion;
-    const glm::ivec3 _res;
+    const glm::ivec3 _minCellCoords;
+    const glm::ivec3 _maxCellCoords;
 };
 
 #endif /* GridView_hpp */

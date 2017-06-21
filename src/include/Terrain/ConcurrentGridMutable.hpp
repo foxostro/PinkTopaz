@@ -141,7 +141,7 @@ public:
         return _gridResolution;
     }
     
-private:
+protected:
     const glm::vec3 _cellDimensions;
     const AABB _boundingBox;
     const glm::ivec3 _gridResolution;

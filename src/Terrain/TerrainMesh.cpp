@@ -78,7 +78,7 @@ void TerrainMesh::rebuild()
     // perform surface extraction.
     const AABB voxelBox = _meshBox.inset(-_voxels->cellDimensions());
     
-    _voxels->readerTransaction(voxelBox, [&](const GridAddressable<Voxel> &voxels){
+    _voxels->readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
         // The voxel file uses a binary SOLID/EMPTY flag for voxels.
         // So, we get values that are either 0.0 or 1.0.
         constexpr float isosurface = 0.5f;
@@ -88,7 +88,6 @@ void TerrainMesh::rebuild()
         std::shared_ptr<Buffer> vertexBuffer = nullptr;
         
         if (mesh.getVertexCount() > 0) {
-            // AFOX_TODO: We may need to create graphics resources on the main thread, e.g., when using OpenGL.
             auto vertexBufferData = mesh.getBufferData();
             vertexBuffer = _graphicsDevice->makeBuffer(vertexBufferData,
                                                        StaticDraw,
