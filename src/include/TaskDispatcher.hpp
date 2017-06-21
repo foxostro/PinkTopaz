@@ -19,9 +19,6 @@
 class TaskDispatcher
 {
 public:
-    // AFOX_TODO: Remove `ForceSerialDispatch'.
-    static constexpr bool ForceSerialDispatch = false;
-    
     typedef std::function<void()> Task;
     
     TaskDispatcher();

@@ -35,15 +35,11 @@ void TaskDispatcher::shutdown()
 
 void TaskDispatcher::async(Task &&task)
 {
-    if (ForceSerialDispatch) {
-        task();
-    } else {
-        {
-            std::unique_lock<std::mutex> lock(_lockTaskPosted);
-            _tasks.push(task);
-        }
-        _cvarTaskPosted.notify_one();
+    {
+        std::unique_lock<std::mutex> lock(_lockTaskPosted);
+        _tasks.push(task);
     }
+    _cvarTaskPosted.notify_one();
 }
 
 void TaskDispatcher::worker()

@@ -92,8 +92,6 @@ public:
     // fn -- Closure which will be doing the reading.
     virtual void readerTransaction(const AABB &region, const Reader &fn) const
     {
-        // AFOX_TODO: What if we want to copy the region to an Array3D instead
-        // of using a GridView?
         LockSet locks(locksForRegion(region));
         GridView<ElementType> view(*_array, region);
         fn(view);
