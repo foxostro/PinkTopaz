@@ -58,8 +58,7 @@ private:
     std::shared_ptr<VoxelDataGenerator> _voxelDataGenerator;
     std::shared_ptr<VoxelDataStore> _voxels;
     std::unique_ptr<TerrainDrawList> _drawList;
-    std::mutex _lockMeshes;
-    std::unique_ptr<Array3D<MaybeTerrainMesh>> _meshes;
+    std::unique_ptr<ConcurrentGridMutable<MaybeTerrainMesh>> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     TerrainMeshQueue _meshesToRebuild;
     std::shared_mutex _lockCameraPosition;

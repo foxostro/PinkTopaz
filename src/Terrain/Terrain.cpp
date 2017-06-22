@@ -74,7 +74,8 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     const AABB box = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
     const glm::ivec3 res(8, 8, 8);
     _drawList = std::make_unique<TerrainDrawList>(box, res);
-    _meshes = std::make_unique<Array3D<MaybeTerrainMesh>>(box, res);
+    auto meshesArray = std::make_unique<Array3D<MaybeTerrainMesh>>(box, res);
+    _meshes = std::make_unique<ConcurrentGridMutable<MaybeTerrainMesh>>(std::move(meshesArray), 1);
     
     // When voxels change, we need to extract a polygonal mesh representation
     // of the isosurface. This mesh is what we actually draw.
@@ -111,15 +112,18 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     // the number of these tasks in the queue.
     _dispatcherRebuildMesh->async([=]{
         PROFILER(TerrainFetchMeshes);
-        std::lock_guard<std::mutex> lock(_lockMeshes);
-        _meshes->forEachCell(_meshes->boundingBox(), [&](const AABB &cell,
-                                                         Morton3 index,
-                                                         const MaybeTerrainMesh &maybeTerrainMesh){
-            _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
-            if (!maybeTerrainMesh) {
-                asyncRebuildAnotherMesh(cell);
-            }
-        });
+        const AABB region = _meshes->boundingBox();
+        auto fn = [&](const GridAddressable<MaybeTerrainMesh> &data){
+            data.forEachCell(region, [&](const AABB &cell,
+                                         Morton3 index,
+                                         const MaybeTerrainMesh &maybe){
+                _drawList->tryUpdateDrawList(maybe, cell);
+                if (!maybe) {
+                    asyncRebuildAnotherMesh(cell);
+                }
+            });
+        };
+        _meshes->readerTransaction(region, fn);
     });
     
     encoder->setShader(_defaultMesh->shader);
@@ -134,20 +138,14 @@ void Terrain::asyncRebuildMeshes(const ChangeLog &changeLog)
 {
     PROFILER(TerrainAsyncRebuildMeshes);
     
-    // Get the set of meshes which are affected by the changes.
-    std::set<AABB> affectedMeshes;
-    {
-        std::lock_guard<std::mutex> lock(_lockMeshes);
-        for (const auto &change : changeLog) {
-            _meshes->forEachCell(change.affectedRegion, [&](const AABB &cell, Morton3 index, const MaybeTerrainMesh &maybeTerrainMesh){
-                affectedMeshes.insert(cell);
-            });
-        }
-    }
-    
     // Kick off a task to rebuild each affected mesh.
-    for (const AABB &cell : affectedMeshes) {
-        asyncRebuildAnotherMesh(cell);
+    for (const auto &change : changeLog) {
+        const AABB &region = change.affectedRegion;
+        _meshes->readerTransaction(region, [&](const GridAddressable<MaybeTerrainMesh> &data){
+            data.forEachCell(region, [&](const AABB &cell, Morton3){
+                asyncRebuildAnotherMesh(cell);
+            });
+        });
     }
 }
 
@@ -174,21 +172,25 @@ void Terrain::rebuildNextMesh()
     
     if (maybeCell) {
         const AABB &cell = *maybeCell;
-        std::lock_guard<std::mutex> lock(_lockMeshes);
-        MaybeTerrainMesh &maybeTerrainMesh = _meshes->mutableReference(cell.center);
-        if (!maybeTerrainMesh) {
-            maybeTerrainMesh.emplace(cell,
-                                     _defaultMesh,
-                                     _graphicsDevice,
-                                     _mesher,
-                                     _voxels);
-        }
-        maybeTerrainMesh->rebuild();
         
-        // AFOX_TODO: If I cannot successfully update the draw list here then
-        // will I leave meshes on the floor? Scenario: we have one mesh left,
-        // we fail to get the lock, and then we never see another call to
-        // rebuildNextMesh(). The mesh is never drawn.
-        _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
+        _meshes->writerTransaction(cell, [&](GridMutable<MaybeTerrainMesh> &data){
+            MaybeTerrainMesh &maybeTerrainMesh = data.mutableReference(cell.center);
+            if (!maybeTerrainMesh) {
+                maybeTerrainMesh.emplace(cell,
+                                         _defaultMesh,
+                                         _graphicsDevice,
+                                         _mesher,
+                                         _voxels);
+            }
+            maybeTerrainMesh->rebuild();
+            
+            // AFOX_TODO: If I cannot successfully update the draw list here then
+            // will I leave meshes on the floor? Scenario: we have one mesh left,
+            // we fail to get the lock, and then we never see another call to
+            // rebuildNextMesh(). The mesh is never drawn.
+            _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
+            
+            return ChangeLog(); // Change logs are not being used for `_meshes'.
+        });
     }
 }
