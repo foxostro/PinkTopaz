@@ -280,7 +280,6 @@ public:
         
 #ifndef NDEBUG
         assert(inbounds(minCellCoords));
-        assert(inbounds(minCellCoords));
         assert(minCellCoords.x <= maxCellCoords.x);
         assert(minCellCoords.y <= maxCellCoords.y);
         assert(minCellCoords.z <= maxCellCoords.z);
@@ -290,8 +289,40 @@ public:
             for (cellCoords.x = minCellCoords.x; cellCoords.x < maxCellCoords.x; ++cellCoords.x) {
                 for (cellCoords.y = minCellCoords.y; cellCoords.y < maxCellCoords.y; ++cellCoords.y) {
                     const glm::vec3 center = cellCenterAtCellCoords(cellCoords);
-                    const Morton3 index(cellCoords);
+                    const auto index = indexAtCellCoords(cellCoords);
                     fn({center, extent}, index);
+                }
+            }
+        }
+    }
+    
+    // Iterate over cells in the specified region of the grid.
+    // Throws an exception if the region is not within this grid.
+    void forEachCell(const AABB &region,
+                     const std::function<void (const glm::ivec3 &a)> &fn) const
+    {
+        if constexpr (EnableVerboseBoundsChecking) {
+            if (!inbounds(region)) {
+                throw OutOfBoundsException();
+            }
+        }
+        
+        const auto min = region.mins();
+        const auto max = region.maxs();
+        const auto minCellCoords = cellCoordsAtPoint(min);
+        const auto maxCellCoords = cellCoordsAtPointRoundUp(max);
+        
+#ifndef NDEBUG
+        assert(inbounds(minCellCoords));
+        assert(minCellCoords.x <= maxCellCoords.x);
+        assert(minCellCoords.y <= maxCellCoords.y);
+        assert(minCellCoords.z <= maxCellCoords.z);
+#endif
+        
+        for (glm::ivec3 cellCoords = minCellCoords; cellCoords.z < maxCellCoords.z; ++cellCoords.z) {
+            for (cellCoords.x = minCellCoords.x; cellCoords.x < maxCellCoords.x; ++cellCoords.x) {
+                for (cellCoords.y = minCellCoords.y; cellCoords.y < maxCellCoords.y; ++cellCoords.y) {
+                    fn(cellCoords);
                 }
             }
         }
@@ -426,8 +457,8 @@ public:
     
     // Serially iterate over cells in the specified sub-region of the box.
     // Throws an exception if the region is not within this grid.
-    // `fn' paramter is the bounding box of the cell.
-    // `fn' returns the new value for the specified cell.
+    // `fn' parameters are the bounding box of the cell, the cell index, and a
+    // mutable reference to the value.
     void mutableForEachCell(const AABB &region,
                             const std::function<void (const AABB &cell,
                                                       Morton3 index,

@@ -57,26 +57,19 @@ Array3D<Voxel> VoxelDataGenerator::copy(const AABB &region) const
     
     // Count the number of voxels in the adjusted region. This will be the grid
     // resolution of the destination array.
-    const glm::ivec3 res = countCellsInRegion(adjusted);
+    const auto res = countCellsInRegion(adjusted);
     
     // Construct the destination array.
     Array3D<Voxel> dst(adjusted, res);
     assert(dst.inbounds(region));
     
-    const glm::ivec3 ourMinCellCoords = cellCoordsAtPoint(adjusted.mins());
+    const auto ourMinCellCoords = cellCoordsAtPoint(adjusted.mins());
     
-    dst.mutableForEachCell(adjusted, [&](const AABB &cell,
-                                         Morton3 index,
-                                         Voxel &value){
+    dst.forEachCell(adjusted, [&](const glm::ivec3 &dstCellCoords){
         // We can translate cell coords in the space of the destination array
-        // to cell coords in the space of the generator. This requires us to
-        // decode the destination index and reencode after the transformation.
-        // AFOX_TODO:  Maybe there's a way to avoid those steps and add morton
-        // codes directly?
-        glm::ivec3 dstCellCoords = index.decode();
-        glm::ivec3 ourCellCoords = ourMinCellCoords + dstCellCoords;
-        Morton3 ourIndex = indexAtCellCoords(ourCellCoords);
-        value = get(ourIndex);
+        // to cell coords in the space of the generator.
+        const auto ourCellCoords = ourMinCellCoords + dstCellCoords;
+        dst.mutableReference(dstCellCoords) = get(ourCellCoords);
     });
     
     return dst;
