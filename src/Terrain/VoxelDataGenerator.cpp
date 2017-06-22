@@ -53,23 +53,30 @@ const Voxel& VoxelDataGenerator::get(Morton3 index) const
 
 Array3D<Voxel> VoxelDataGenerator::copy(const AABB &region) const
 {
-    const AABB adjustedRegion = snapRegionToCellBoundaries(region);
+    const AABB adjusted = snapRegionToCellBoundaries(region);
     
     // Count the number of voxels in the adjusted region. This will be the grid
     // resolution of the destination array.
-    const glm::ivec3 res = countCellsInRegion(adjustedRegion);
+    const glm::ivec3 res = countCellsInRegion(adjusted);
     
     // Construct the destination array.
-    Array3D<Voxel> dst(adjustedRegion, res);
+    Array3D<Voxel> dst(adjusted, res);
     assert(dst.inbounds(region));
     
-    dst.mutableForEachCell(adjustedRegion, [&](const AABB &cell,
-                                               Morton3 index,
-                                               Voxel &value){
-        // We need to use get(vec3) because the index is only valid within
-        // this one chunk.
-        // AFOX_TODO: Do something clever here with indices so reduce calls to indexAtPoint().
-        value = get(cell.center);
+    const glm::ivec3 ourMinCellCoords = cellCoordsAtPoint(adjusted.mins());
+    
+    dst.mutableForEachCell(adjusted, [&](const AABB &cell,
+                                         Morton3 index,
+                                         Voxel &value){
+        // We can translate cell coords in the space of the destination array
+        // to cell coords in the space of the generator. This requires us to
+        // decode the destination index and reencode after the transformation.
+        // AFOX_TODO:  Maybe there's a way to avoid those steps and add morton
+        // codes directly?
+        glm::ivec3 dstCellCoords = index.decode();
+        glm::ivec3 ourCellCoords = ourMinCellCoords + dstCellCoords;
+        Morton3 ourIndex = indexAtCellCoords(ourCellCoords);
+        value = get(ourIndex);
     });
     
     return dst;
