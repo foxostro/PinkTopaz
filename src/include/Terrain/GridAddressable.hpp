@@ -205,10 +205,17 @@ public:
     // valid space of the grid.
     inline AABB snapRegionToCellBoundaries(const AABB &region) const
     {
+        // Zero size boxes are a special case. Return a zero size box at the
+        // center of the cell on which region.center resides.
+        static const glm::vec3 zero(0.f, 0.f, 0.f);
+        if (region.extent == zero) {
+            return {cellCenterAtPoint(region.center), zero};
+        }
+        
         const AABB minCell = cellAtPoint(region.mins());
         const AABB maxCell = cellAtPoint(region.maxs());
         const glm::vec3 minCorner = minCell.mins();
-        const glm::vec3 maxCorner = maxCell.mins();
+        const glm::vec3 maxCorner = maxCell.maxs();
         const glm::vec3 center = (maxCorner + minCorner) * 0.5f;
         const glm::vec3 extent = (maxCorner - minCorner) * 0.5f;
         const AABB adjustedRegion = {center, extent};

@@ -172,17 +172,17 @@ using glm::ivec3;
     AABB a, b;
     
     // If we pass in the exact bounding box then we should get the original box
-    // since that's already snapped to cell boundaries.
+    // since it's already snapped to cell boundaries.
     XCTAssertEqual(box, myArray.snapRegionToCellBoundaries(box));
     
-    // Try a couple of boxes that have zero size.
+    // A zero size box is snapped to the center of the cell that its center
+    // falls within.
     const AABB zeroBox1 = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
-    XCTAssertEqual(zeroBox1, myArray.snapRegionToCellBoundaries(zeroBox1));
+    a = {vec3(0.5f, 0.5f, 0.5f), vec3(0.0f, 0.0f, 0.0f)};
+    b = myArray.snapRegionToCellBoundaries(zeroBox1);
+    XCTAssertEqual(a, b);
     
-    const AABB zeroBox2 = {vec3(2.0f, 2.0f, 2.0f), vec3(0.0f, 0.0f, 0.0f)};
-    XCTAssertEqual(zeroBox2, myArray.snapRegionToCellBoundaries(zeroBox2));
-    
-    // Try a box that inclides only one cell.
+    // Try a box that includes only one cell.
     const AABB oneCellBox = {vec3(0.5, 0.5, 0.5f), vec3(0.1f, 0.1f, 0.1f)};
     a = myArray.cellAtPoint(oneCellBox.center);
     b = myArray.snapRegionToCellBoundaries(oneCellBox);
