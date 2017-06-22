@@ -26,7 +26,7 @@ const Voxel& VoxelData::get(const glm::ivec3 &cellCoords) const
 {
     // Could potentially be more elegant. Let's avoid any confusion about which
     // grid coords we're using by converting back to world space immediately.
-    return get(worldPosAtCellCoords(cellCoords));
+    return get(cellCenterAtCellCoords(cellCoords));
 }
 
 Voxel& VoxelData::mutableReference(const glm::vec3 &p)
@@ -41,7 +41,7 @@ Voxel& VoxelData::mutableReference(const glm::ivec3 &cellCoords)
 {
     // Could potentially be more elegant. Let's avoid any confusion about which
     // grid coords we're using by converting back to world space immediately.
-    return mutableReference(worldPosAtCellCoords(cellCoords));
+    return mutableReference(cellCenterAtCellCoords(cellCoords));
 }
 
 glm::vec3 VoxelData::cellDimensions() const

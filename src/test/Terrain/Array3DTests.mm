@@ -58,33 +58,6 @@ using glm::ivec3;
     XCTAssertEqual(a, b);
 }
 
-- (void)testWorldPosAtCellCoords {
-    AABB box = {vec3(2.0f, 2.0f, 2.0f), vec3(2.0f, 2.0f, 2.0f)};
-    ivec3 res(4, 4, 4);
-    Array3D<int> myArray(box, res);
-    XCTAssertEqual(myArray.gridResolution(), res);
-    XCTAssertEqual(myArray.boundingBox(), box);
-    XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
-    
-    vec3 a, b;
-    ivec3 c;
-    
-    a = vec3(0.0f, 0.0f, 0.0f);
-    c = myArray.cellCoordsAtPoint(a);
-    b = myArray.worldPosAtCellCoords(c);
-    XCTAssertEqual(a, b);
-    
-    a = vec3(2.0f, 2.0f, 2.0f);
-    c = myArray.cellCoordsAtPoint(a);
-    b = myArray.worldPosAtCellCoords(c);
-    XCTAssertEqual(a, b);
-    
-    a = vec3(4.0f, 4.0f, 4.0f);
-    c = myArray.cellCoordsAtPoint(a);
-    b = myArray.worldPosAtCellCoords(c);
-    XCTAssertEqual(a, b);
-}
-
 - (void)testCellCenterAtCellCoords {
     AABB box = {vec3(2.0f, 2.0f, 2.0f), vec3(2.0f, 2.0f, 2.0f)};
     ivec3 res(4, 4, 4);

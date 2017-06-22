@@ -146,21 +146,6 @@ public:
         return a;
     }
     
-    // Convert the specified cell coordinates into world-space coordinates.
-    //
-    // This method does not check that `cellCoords' actually resides in the
-    // valid space of the grid.
-    inline const glm::vec3 worldPosAtCellCoords(const glm::ivec3 &cellCoords) const
-    {
-        const glm::vec3 dim = cellDimensions();
-        const glm::vec3 extent = dim * 0.5f;
-        const glm::vec3 min = boundingBox().mins() + extent;
-        const glm::vec3 worldPos = min + glm::vec3(cellCoords.x * dim.x,
-                                                   cellCoords.y * dim.y,
-                                                   cellCoords.z * dim.z);
-        return worldPos;
-    }
-    
     // Gets the center point of the cell at the specified cell coordinates.
     //
     // This method does not check that cell coords `a' actually resides in the
