@@ -115,9 +115,8 @@ public:
     // Gets the coordinates of the cell in which the specified point resides.
     // These integer coordinates can be used to locate the cell within the grid.
     //
-    // This method will not throw an exception if the point is outside the valid
-    // space of the grid. In this case, you will receive garbage results, but no
-    // error will be reported.
+    // This method does not check that `point' actually resides in the
+    // valid space of the grid.
     inline glm::ivec3 cellCoordsAtPoint(const glm::vec3 &point) const
     {
         const AABB box = boundingBox();
@@ -133,9 +132,8 @@ public:
     // Notably, make sure to round up to the next cell when the specified point
     // is on the maximum edge of the cell.
     //
-    // This method will not throw an exception if the point is outside the valid
-    // space of the grid. In this case, you will receive garbage results, but no
-    // error will be reported.
+    // This method does not check that `point' actually resides in the
+    // valid space of the grid.
     inline glm::ivec3 cellCoordsAtPointRoundUp(const glm::vec3 &point) const
     {
         const AABB box = boundingBox();
@@ -149,7 +147,9 @@ public:
     }
     
     // Convert the specified cell coordinates into world-space coordinates.
-    // This method provides no error checking for the validity of the input.
+    //
+    // This method does not check that `cellCoords' actually resides in the
+    // valid space of the grid.
     inline const glm::vec3 worldPosAtCellCoords(const glm::ivec3 &cellCoords) const
     {
         const glm::vec3 dim = cellDimensions();
@@ -161,25 +161,10 @@ public:
         return worldPos;
     }
     
-    // Gets the center point of the cell in which the specified point resides.
-    // Throws an exception if the point is not within this grid.
-    inline glm::vec3 cellCenterAtPoint(const glm::vec3 &point) const
-    {
-        if constexpr (EnableVerboseBoundsChecking) {
-            if (!inbounds(point)) {
-                throw OutOfBoundsException();
-            }
-        }
-        
-        const glm::vec3 cellDim = cellDimensions();
-        const AABB box = boundingBox();
-        const glm::ivec3 a = cellCoordsAtPoint(point);
-        const glm::vec3 q(a.x * cellDim.x, a.y * cellDim.y, a.z * cellDim.z);
-        const glm::vec3 p = q + box.mins() + (cellDim*0.5f);
-        return p;
-    }
-    
     // Gets the center point of the cell at the specified cell coordinates.
+    //
+    // This method does not check that cell coords `a' actually resides in the
+    // valid space of the grid.
     inline glm::vec3 cellCenterAtCellCoords(const glm::ivec3 &a) const
     {
         const glm::vec3 cellDim = cellDimensions();
@@ -190,16 +175,26 @@ public:
         return p;
     }
     
+    // Gets the center point of the cell in which the specified point resides.
+    //
+    // This method does not check that `point' actually resides in the
+    // valid space of the grid.
+    inline glm::vec3 cellCenterAtPoint(const glm::vec3 &point) const
+    {
+        const glm::vec3 cellDim = cellDimensions();
+        const AABB box = boundingBox();
+        const glm::ivec3 a = cellCoordsAtPoint(point);
+        const glm::vec3 q(a.x * cellDim.x, a.y * cellDim.y, a.z * cellDim.z);
+        const glm::vec3 p = q + box.mins() + (cellDim*0.5f);
+        return p;
+    }
+    
     // Gets the bounding box of the cell in which the specified point resides.
-    // Throws an exception if the point is not within this grid.
+    //
+    // This method does not check that `point' actually resides in the
+    // valid space of the grid.
     inline AABB cellAtPoint(const glm::vec3 &point) const
     {
-        if constexpr (EnableVerboseBoundsChecking) {
-            if (!inbounds(point)) {
-                throw OutOfBoundsException();
-            }
-        }
-        
         const glm::vec3 cellCenter = cellCenterAtPoint(point);
         const glm::vec3 cellExtent = cellDimensions() * 0.5f;
         const AABB cell = {cellCenter, cellExtent};
@@ -207,19 +202,32 @@ public:
     }
     
     // Gets the number of cells along each axis within the specified region.
-    // Throws an exception if the region is not within this grid.
+    //
+    // This method does not check that `region' actually resides in the
+    // valid space of the grid.
     inline glm::ivec3 countCellsInRegion(const AABB &region) const
     {
-        if constexpr (EnableVerboseBoundsChecking) {
-            if (!inbounds(region)) {
-                throw OutOfBoundsException();
-            }
-        }
-        
         const glm::ivec3 mins = cellCoordsAtPoint(region.mins());
         const glm::ivec3 maxs = cellCoordsAtPoint(region.maxs());
         const glm::ivec3 size = maxs - mins;
         return size;
+    }
+    
+    // Adjusts the specified box so that it includes the space for all cells
+    // which fall within that region.
+    //
+    // This method does not check that `cellCoords' actually resides in the
+    // valid space of the grid.
+    inline AABB snapRegionToCellBoundaries(const AABB &region) const
+    {
+        const AABB minCell = cellAtPoint(region.mins());
+        const AABB maxCell = cellAtPoint(region.maxs());
+        const glm::vec3 minCorner = minCell.mins();
+        const glm::vec3 maxCorner = maxCell.mins();
+        const glm::vec3 center = (maxCorner + minCorner) * 0.5f;
+        const glm::vec3 extent = (maxCorner - minCorner) * 0.5f;
+        const AABB adjustedRegion = {center, extent};
+        return adjustedRegion;
     }
     
     // Returns true if the point is within the valid space of the grid.
@@ -361,6 +369,26 @@ public:
                 }
             }
         }
+    }
+    
+    // Get a box in cell-coordinate space which includes all cells that fall in
+    // the specified region. For any cell-coordinate in this box, the specified
+    // region will include that cell.
+    inline _AABB<int> cellsInRegion(const AABB &region) const
+    {
+        const auto min = region.mins();
+        const auto max = region.maxs();
+        const auto minCellCoords = cellCoordsAtPoint(min);
+        const auto maxCellCoords = cellCoordsAtPointRoundUp(max);
+        
+        const auto center = (maxCellCoords + minCellCoords) / 2;
+        const auto extent = (maxCellCoords - minCellCoords) / 2;
+        
+        assert(minCellCoords == (center - extent));
+        assert(maxCellCoords == (center + extent));
+        
+        _AABB<int> cellBox = {center, extent};
+        return cellBox;
     }
 };
 

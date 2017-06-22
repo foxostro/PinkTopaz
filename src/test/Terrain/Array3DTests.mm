@@ -34,6 +34,75 @@ using glm::ivec3;
     XCTAssertEqual(a, b);
 }
 
+- (void)testCellCoordsAtPointRoundUp {
+    AABB box = {vec3(2.0f, 2.0f, 2.0f), vec3(2.0f, 2.0f, 2.0f)};
+    ivec3 res(4, 4, 4);
+    Array3D<int> myArray(box, res);
+    XCTAssertEqual(myArray.gridResolution(), res);
+    XCTAssertEqual(myArray.boundingBox(), box);
+    XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
+    
+    ivec3 a, b;
+    
+    // Adding the cell dimensions to the cell's minimum-corner takes us to the
+    // neighboring cell. The range is not inclusive.
+    a = myArray.cellCoordsAtPointRoundUp(vec3(0.0f, 0.0f, 0.0f));
+    b = myArray.cellCoordsAtPointRoundUp(myArray.cellDimensions());
+    XCTAssertEqual(a + ivec3(1, 1, 1), b);
+    
+    // We round up each coordinate so a cell at <0.5, 0.5, 0.5> will return the
+    // coordinates for the cell at <1, 1, 1> and not <0, 0, 0> as we would see
+    // with `cellCoordsAtPoint'.
+    a = ivec3(1, 1, 1);
+    b = myArray.cellCoordsAtPointRoundUp(myArray.cellDimensions() * 0.5f);
+    XCTAssertEqual(a, b);
+}
+
+- (void)testWorldPosAtCellCoords {
+    AABB box = {vec3(2.0f, 2.0f, 2.0f), vec3(2.0f, 2.0f, 2.0f)};
+    ivec3 res(4, 4, 4);
+    Array3D<int> myArray(box, res);
+    XCTAssertEqual(myArray.gridResolution(), res);
+    XCTAssertEqual(myArray.boundingBox(), box);
+    XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
+    
+    vec3 a, b;
+    ivec3 c;
+    
+    a = vec3(0.0f, 0.0f, 0.0f);
+    c = myArray.cellCoordsAtPoint(a);
+    b = myArray.worldPosAtCellCoords(c);
+    XCTAssertEqual(a, b);
+    
+    a = vec3(2.0f, 2.0f, 2.0f);
+    c = myArray.cellCoordsAtPoint(a);
+    b = myArray.worldPosAtCellCoords(c);
+    XCTAssertEqual(a, b);
+    
+    a = vec3(4.0f, 4.0f, 4.0f);
+    c = myArray.cellCoordsAtPoint(a);
+    b = myArray.worldPosAtCellCoords(c);
+    XCTAssertEqual(a, b);
+}
+
+- (void)testCellCenterAtCellCoords {
+    AABB box = {vec3(2.0f, 2.0f, 2.0f), vec3(2.0f, 2.0f, 2.0f)};
+    ivec3 res(4, 4, 4);
+    Array3D<int> myArray(box, res);
+    XCTAssertEqual(myArray.gridResolution(), res);
+    XCTAssertEqual(myArray.boundingBox(), box);
+    XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
+    
+    XCTAssertEqual(myArray.cellCenterAtCellCoords(ivec3(0, 0, 0)),
+                   vec3(0.5f, 0.5f, 0.5f));
+    
+    XCTAssertEqual(myArray.cellCenterAtCellCoords(ivec3(2, 2, 2)),
+                   vec3(2.5f, 2.5f, 2.5f));
+    
+    XCTAssertEqual(myArray.cellCenterAtCellCoords(ivec3(3, 3, 3)),
+                   vec3(3.5f, 3.5f, 3.5f));
+}
+
 - (void)testCellCenterAtPoint {
     AABB box = {vec3(2.0f, 2.0f, 2.0f), vec3(2.0f, 2.0f, 2.0f)};
     ivec3 res(4, 4, 4);
@@ -54,25 +123,6 @@ using glm::ivec3;
     // exclusive so this edge is actually in a different cell.
     XCTAssertNotEqual(myArray.cellCenterAtPoint(vec3(1.0f, 1.0f, 1.0f)),
                       vec3(0.5f, 0.5f, 0.5f));
-    
-    // Make sure the method throws an exception when given a point which is not
-    // in the valid space of the grid.
-    try {
-        myArray.cellCenterAtPoint(vec3(-10.0f, 0.0f, 0.0f));
-        XCTFail("We expected an exception before reaching this line.");
-    } catch(const OutOfBoundsException &e) {
-        // Swallow the exception without failing the test.
-    }
-    
-    // Repeat the above scenario using the maximum-corner of the entire grid.
-    // Like individual cells, this is exclusive and should not be considered to
-    // be a part of the valid space of the grid.
-    try {
-        myArray.cellCenterAtPoint(vec3(4.0f, 4.0f, 4.0f));
-        XCTFail("We expected an exception before reaching this line.");
-    } catch(const OutOfBoundsException &e) {
-        // Swallow the exception without failing the test.
-    }
 }
 
 - (void) testCellAtPoint {
@@ -136,15 +186,41 @@ using glm::ivec3;
     const AABB tenthBox2 = {vec3(1.0f, 1.0f, 1.0f), vec3(0.1f, 0.1f, 0.1f)};
     c = myArray.countCellsInRegion(tenthBox2);
     XCTAssertEqual(ivec3(1, 1, 1), c);
+}
+
+- (void)testSnapRegionToCellBoundaries {
+    AABB box = {vec3(2.0f, 2.0f, 2.0f), vec3(2.0f, 2.0f, 2.0f)};
+    ivec3 res(4, 4, 4);
+    Array3D<int> myArray(box, res);
+    XCTAssertEqual(myArray.gridResolution(), res);
+    XCTAssertEqual(myArray.boundingBox(), box);
+    XCTAssertEqual(myArray.cellDimensions(), vec3(1.0, 1.0f, 1.0f));
     
-    // Passing in an invalid region causes an exception to be thrown.
-    const AABB negCell = {vec3(-0.5f, -0.5f, -0.5f), vec3(0.5f, 0.5f, 0.5f)};
-    try {
-        myArray.countCellsInRegion(negCell);
-        XCTFail("We expected an exception before reaching this line.");
-    } catch(const OutOfBoundsException &e) {
-        // Swallow the exception without failing the test.
-    }
+    AABB a, b;
+    
+    // If we pass in the exact bounding box then we should get the original box
+    // since that's already snapped to cell boundaries.
+    XCTAssertEqual(box, myArray.snapRegionToCellBoundaries(box));
+    
+    // Try a couple of boxes that have zero size.
+    const AABB zeroBox1 = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
+    XCTAssertEqual(zeroBox1, myArray.snapRegionToCellBoundaries(zeroBox1));
+    
+    const AABB zeroBox2 = {vec3(2.0f, 2.0f, 2.0f), vec3(0.0f, 0.0f, 0.0f)};
+    XCTAssertEqual(zeroBox2, myArray.snapRegionToCellBoundaries(zeroBox2));
+    
+    // Try a box that inclides only one cell.
+    const AABB oneCellBox = {vec3(0.5, 0.5, 0.5f), vec3(0.1f, 0.1f, 0.1f)};
+    a = myArray.cellAtPoint(oneCellBox.center);
+    b = myArray.snapRegionToCellBoundaries(oneCellBox);
+    XCTAssertEqual(a, b);
+    
+    // Try a box that covers several cells and which does not already cover
+    // exact cell dimensions.
+    const AABB box2 = {vec3(0.9f, 0.9f, 0.9f), vec3(1.0f, 1.0f, 1.0f)};
+    a = myArray.snapRegionToCellBoundaries(box2);
+    b = {vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f)};
+    XCTAssertEqual(a, b);
 }
 
 - (void) testInbounds {
@@ -376,7 +452,7 @@ using glm::ivec3;
     vec3 point(-15.f, 241.f, -15.f);
     index = myArray.indexAtPoint(point);
     XCTAssertTrue(myArray.isValidIndex(index));
-    myArray.set(index, 42);
+    myArray.mutableReference(index) = 42;
     XCTAssertEqual(myArray.get(index), 42);
     XCTAssertEqual(myArray.get(point), 42);
 }

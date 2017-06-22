@@ -138,19 +138,7 @@ void VoxelData::emplaceChunkIfNecessary(const glm::vec3 &p,
     // If the chunk does not exist then create it now. The initial contents of
     // the chunk are filled using the generator.
     if (!maybeChunk) {
-        const AABB chunkBoundingBox = _chunks.cellAtPoint(p);
-        glm::ivec3 numChunks = _chunks.gridResolution();
-        glm::ivec3 chunkRes = gridResolution() / numChunks;
-        maybeChunk.emplace(chunkBoundingBox, chunkRes);
-        maybeChunk->mutableForEachCell(chunkBoundingBox, [&](const AABB &cell,
-                                                             Morton3 index,
-                                                             Voxel &value){
-            // We need to use get(vec3) because the index is only valid within
-            // this one chunk.
-            // AFOX_TODO: A bulk API for getting voxels from the generator would
-            // allow is to more efficiently fill the chunk.
-            value = _generator->get(cell.center);
-        });
+        maybeChunk.emplace(_generator->copy(_chunks.cellAtPoint(p)));
     }
     
     assert(maybeChunk);

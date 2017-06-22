@@ -1,6 +1,6 @@
 #import <XCTest/XCTest.h>
 #import <glm/glm.hpp>
-#import "morton.hpp"
+#import "Morton.hpp"
 
 using namespace glm;
 

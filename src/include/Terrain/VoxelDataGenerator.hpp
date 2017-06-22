@@ -35,6 +35,9 @@ public:
     // Gets the object for the specified index, produced by `indexAtPoint'.
     const Voxel& get(Morton3 index) const override;
     
+    // Returns an array which holds a copy of the contents of the subregion.
+    Array3D<Voxel> copy(const AABB &region) const;
+    
     // Gets the dimensions of a single cell in the grid.
     // Note that cells in the grid are always the same size.
     glm::vec3 cellDimensions() const override;

@@ -51,6 +51,30 @@ const Voxel& VoxelDataGenerator::get(Morton3 index) const
     return _voxels->get(index);
 }
 
+Array3D<Voxel> VoxelDataGenerator::copy(const AABB &region) const
+{
+    const AABB adjustedRegion = snapRegionToCellBoundaries(region);
+    
+    // Count the number of voxels in the adjusted region. This will be the grid
+    // resolution of the destination array.
+    const glm::ivec3 res = countCellsInRegion(adjustedRegion);
+    
+    // Construct the destination array.
+    Array3D<Voxel> dst(adjustedRegion, res);
+    assert(dst.inbounds(region));
+    
+    dst.mutableForEachCell(adjustedRegion, [&](const AABB &cell,
+                                               Morton3 index,
+                                               Voxel &value){
+        // We need to use get(vec3) because the index is only valid within
+        // this one chunk.
+        // AFOX_TODO: Do something clever here with indices so reduce calls to indexAtPoint().
+        value = get(cell.center);
+    });
+    
+    return dst;
+}
+
 glm::vec3 VoxelDataGenerator::cellDimensions() const
 {
     glm::vec3 dim = _voxels->cellDimensions();
