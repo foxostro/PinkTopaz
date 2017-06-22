@@ -212,13 +212,20 @@ public:
             return {cellCenterAtPoint(region.center), zero};
         }
         
-        const AABB minCell = cellAtPoint(region.mins());
-        const AABB maxCell = cellAtPoint(region.maxs());
-        const glm::vec3 minCorner = minCell.mins();
-        const glm::vec3 maxCorner = maxCell.maxs();
-        const glm::vec3 center = (maxCorner + minCorner) * 0.5f;
-        const glm::vec3 extent = (maxCorner - minCorner) * 0.5f;
+        const auto minCellCoords = cellCoordsAtPoint(region.mins());
+        const auto maxCellCoords = cellCoordsAtPointRoundUp(region.maxs()) - glm::ivec3(1, 1, 1);
+        
+        const auto cellExtent = cellDimensions() * 0.5f;
+        const AABB minCell = {cellCenterAtCellCoords(minCellCoords), cellExtent};
+        const AABB maxCell = {cellCenterAtCellCoords(maxCellCoords), cellExtent};
+        
+        const auto minCorner = minCell.mins();
+        const auto maxCorner = maxCell.maxs();
+        
+        const auto center = (maxCorner + minCorner) * 0.5f;
+        const auto extent = (maxCorner - minCorner) * 0.5f;
         const AABB adjustedRegion = {center, extent};
+        
         return adjustedRegion;
     }
     

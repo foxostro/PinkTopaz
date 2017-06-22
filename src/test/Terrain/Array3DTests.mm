@@ -173,7 +173,9 @@ using glm::ivec3;
     
     // If we pass in the exact bounding box then we should get the original box
     // since it's already snapped to cell boundaries.
-    XCTAssertEqual(box, myArray.snapRegionToCellBoundaries(box));
+    a = box;
+    b = myArray.snapRegionToCellBoundaries(box);
+    XCTAssertEqual(a, b);
     
     // A zero size box is snapped to the center of the cell that its center
     // falls within.
