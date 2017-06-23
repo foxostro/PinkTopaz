@@ -49,7 +49,7 @@ public:
         std::shared_ptr<Buffer> uniforms;
     };
     
-    typedef std::list<String>::iterator StringHandle;
+    using StringHandle = std::list<String>::iterator;
     
     StringRenderer(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                    const boost::filesystem::path &fontName,

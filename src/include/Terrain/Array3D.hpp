@@ -35,9 +35,9 @@ public:
     using GridMutable<TYPE>::cellCoordsAtPoint;
     using GridMutable<TYPE>::mutableForEachCell;
     
-    typedef std::vector<TYPE> container_type;
-    typedef typename container_type::iterator iterator;
-    typedef typename container_type::const_iterator const_iterator;
+    using container_type = std::vector<TYPE>;
+    using iterator = typename container_type::iterator;
+    using const_iterator = typename container_type::const_iterator;
     
     ~Array3D()
     {

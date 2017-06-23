@@ -42,7 +42,7 @@ public:
     void draw(const std::shared_ptr<CommandEncoder> &encoder);
     
 private:
-    typedef typename std::experimental::optional<TerrainMesh> MaybeTerrainMesh;
+    using MaybeTerrainMesh = typename std::experimental::optional<TerrainMesh>;
     
     void rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
                                   const size_t index,

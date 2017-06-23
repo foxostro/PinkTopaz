@@ -24,9 +24,9 @@ public:
         AABB affectedRegion;
     };
     
-    typedef std::vector<Change> container_type;
-    typedef container_type::iterator iterator;
-    typedef container_type::const_iterator const_iterator;
+    using container_type = std::vector<Change>;
+    using iterator = container_type::iterator;
+    using const_iterator = container_type::const_iterator;
     
     static ChangeLog make(const std::string &type, const AABB &affectedRegion);
     

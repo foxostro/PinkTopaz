@@ -21,8 +21,8 @@ class VoxelData : public GridMutable<Voxel>
 public:
     using GridAddressable<Voxel>::get;
     
-    typedef Array3D<Voxel> Chunk;
-    typedef typename std::experimental::optional<Chunk> MaybeChunk;
+    using Chunk = Array3D<Voxel>;
+    using MaybeChunk = typename std::experimental::optional<Chunk>;
     
     // Constructor. Accepts `generator' which can generate voxel terrain as
     // needed to fill the chunks underlying VoxelData.

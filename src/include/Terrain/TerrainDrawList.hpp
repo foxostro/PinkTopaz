@@ -16,7 +16,7 @@
 class TerrainDrawList
 {
 public:
-    typedef typename std::experimental::optional<TerrainMesh> MaybeTerrainMesh;
+    using MaybeTerrainMesh = typename std::experimental::optional<TerrainMesh>;
     
     TerrainDrawList(const AABB &box, const glm::ivec3 &res);
     

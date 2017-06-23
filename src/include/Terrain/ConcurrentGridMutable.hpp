@@ -26,12 +26,12 @@ template<typename ElementType>
 class ConcurrentGridMutable
 {
 public:
-    typedef std::function<void(const GridAddressable<ElementType> &data)> Reader;
-    typedef std::function<ChangeLog(GridMutable<ElementType> &data)> Writer;
+    using Reader = std::function<void(const GridAddressable<ElementType> &data)>;
+    using Writer = std::function<ChangeLog(GridMutable<ElementType> &data)>;
     
     // A vector which contains references to mutexes. This is used to pass
     // around references to locks in the locks array itself.
-    typedef std::vector<std::reference_wrapper<std::mutex>> LockVector;
+    using LockVector = std::vector<std::reference_wrapper<std::mutex>>;
     
     // An ordered collection of locks which need to be acquired simultaneously.
     // Acquires locks in the constructor and releases in the destructor.

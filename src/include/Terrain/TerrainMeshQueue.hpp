@@ -18,7 +18,7 @@
 class TerrainMeshQueue
 {
 public:
-    typedef typename std::experimental::optional<AABB> MaybeAABB;
+    using MaybeAABB = typename std::experimental::optional<AABB>;
     
     TerrainMeshQueue() = default;
     

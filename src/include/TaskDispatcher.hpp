@@ -19,7 +19,7 @@
 class TaskDispatcher
 {
 public:
-    typedef std::function<void()> Task;
+    using Task = std::function<void()>;
     
     TaskDispatcher();
     ~TaskDispatcher();

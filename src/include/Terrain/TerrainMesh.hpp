@@ -19,7 +19,7 @@
 class TerrainMesh
 {
 public:
-    typedef typename std::experimental::optional<RenderableStaticMesh> MaybeMesh;
+    using MaybeMesh = typename std::experimental::optional<RenderableStaticMesh>;
     
     ~TerrainMesh();
     

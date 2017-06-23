@@ -16,7 +16,7 @@
 class VoxelDataStore : public ConcurrentGridMutable<Voxel>
 {
 public:
-    typedef std::function<void(const Array3D<Voxel> &data)> ArrayReader;
+    using ArrayReader = std::function<void(const Array3D<Voxel> &data)>;
     
     VoxelDataStore(const std::shared_ptr<VoxelDataGenerator> &generator,
                    unsigned chunkSize);
