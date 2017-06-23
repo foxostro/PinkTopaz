@@ -97,6 +97,17 @@ public:
         fn(view);
     }
     
+    // Perform an atomic transaction as a "reader" with read-only access to the
+    // underlying data in the specified region.
+    // region -- The region we will be reading from.
+    // fn -- Closure which will be doing the reading.
+    virtual void readerTransaction(const Frustum &region, const Reader &fn) const
+    {
+        LockSet locks(locksForRegion(region));
+        // AFOX_TODO: GridView which can accept a frustum for the subregion.
+        fn(*_array);
+    }
+    
     // Perform an atomic transaction as a "writer" with read-write access to
     // the underlying voxel data in the specified region. It is the
     // responsibility of the caller to provide a closure which will update the
@@ -153,17 +164,9 @@ protected:
     std::unique_ptr<GridMutable<ElementType>> _array;
     
     // Returns an ordered list of the locks protecting the specified region.
-    // Throws an exception if the region is not contained within the grid.
-    LockVector locksForRegion(const AABB &region) const
+    template<typename RegionType>
+    LockVector locksForRegion(const RegionType &region) const
     {
-        if (!_array->inbounds(region)) {
-            throw OutOfBoundsException();
-        }
-        
-        if (!_arrayLocks.inbounds(region)) {
-            throw OutOfBoundsException();
-        }
-        
         LockVector locks;
         
         _arrayLocks.mutableForEachCell(region, [&](const AABB &cell,

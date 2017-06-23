@@ -35,6 +35,15 @@ public:
     
     // Perform an atomic transaction as a "reader" with read-only access to the
     // underlying data in the specified region.
+    // region -- The region we will be reading from.
+    // fn -- Closure which will be doing the reading.
+    void readerTransaction(const Frustum &region, const Reader &fn) const override
+    {
+        ConcurrentGridMutable<Voxel>::readerTransaction(region, fn);
+    }
+    
+    // Perform an atomic transaction as a "reader" with read-only access to the
+    // underlying data in the specified region.
     // Copies the data to a temporary array for more efficient access to the
     // underlying voxels.
     // region -- The region we will be reading from.

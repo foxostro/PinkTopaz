@@ -329,11 +329,11 @@ public:
     }
     
     // Iterate over cells in the specified region of the grid.
-    // Throws an exception if the region is not within this grid.
-    void forEachCell(const AABB &region,
-                     const std::function<void (const AABB &cell,
-                                               Morton3 index,
-                                               const TYPE &value)> &fn) const
+    template<typename RegionType>
+    inline void forEachCell(const RegionType &region,
+                            const std::function<void (const AABB &cell,
+                                                      Morton3 index,
+                                                      const TYPE &value)> &fn) const
     {
         forEachCell(region, [&](const AABB &cell, Morton3 index){
             fn(cell, index, get(index));
@@ -342,9 +342,8 @@ public:
     
     // Iterate over cells which fall within the specified frustum.
     inline void forEachCell(const Frustum &frustum,
-                            std::function<void (const AABB &cell,
-                                                Morton3 index,
-                                                const TYPE &value)> fn) const
+                            const std::function<void (const AABB &cell,
+                                                      Morton3 index)> &fn) const
     {
         const glm::ivec3 res = gridResolution();
         assert((res.x == res.y) && (res.x == res.z));
@@ -358,17 +357,16 @@ public:
                      size_t depthOfLeaves,
                      const AABB &box,
                      const Frustum &frustum,
-                     std::function<void (const AABB &cell,
-                                         Morton3 index,
-                                         const TYPE &value)> fn) const
+                     const std::function<void (const AABB &cell,
+                                               Morton3 index)> &fn) const
     {
         if (frustum.boxIsInside(box)) {
             if (depth == depthOfLeaves) {
                 // AFOX_TODO: I suspect the conversion from `box' to `index'
                 // could be accelerated with knowledge of the Z-order layout
                 // since it defines a linear octree traversal.
-                Morton3 index(cellCoordsAtPoint(box.center));
-                fn(box, index, get(index));
+                auto index = indexAtPoint(box.center);
+                fn(box, index);
             } else {
                 for (auto &octant : box.octants()) {
                     forEachCell(depth+1, depthOfLeaves, octant, frustum, fn);
@@ -459,10 +457,8 @@ public:
     // Throws an exception if the region is not within this grid.
     // `fn' parameters are the bounding box of the cell, the cell index, and a
     // mutable reference to the value.
-    void mutableForEachCell(const AABB &region,
-                            const std::function<void (const AABB &cell,
-                                                      Morton3 index,
-                                                      TYPE &value)> &fn)
+    template<typename RegionType, typename FuncType>
+    inline void mutableForEachCell(const RegionType &region, const FuncType &fn)
     {
         forEachCell(region, [&](const AABB &cell, Morton3 index){
             fn(cell, index, mutableReference(index));

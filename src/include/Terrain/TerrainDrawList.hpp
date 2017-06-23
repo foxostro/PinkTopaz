@@ -28,8 +28,7 @@ public:
     void updateDrawList(const TerrainMesh &mesh, const AABB &cell);
     
 private:
-    std::mutex _lockDrawList;
-    Array3D<RenderableStaticMesh> _data;
+    ConcurrentGridMutable<RenderableStaticMesh> _meshes;
     
     // Make this a member so as to avoid heap allocation every frame in draw().
     // This member is only ever used in draw() which is only ever used on the
