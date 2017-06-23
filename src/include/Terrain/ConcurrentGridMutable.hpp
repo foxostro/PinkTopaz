@@ -108,6 +108,21 @@ public:
         fn(*_array);
     }
     
+    // Perform an atomic transaction as a "reader" with read-only access to the
+    // underlying data in the specified region. Syntactic sugar for the common
+    // use-case where the client immediately calls forEachCell inside the
+    // transaction.
+    template<typename RegionType>
+    inline void readerTransaction(const RegionType &region,
+                                  const std::function<void (const AABB &cell,
+                                                            Morton3 index,
+                                                            const ElementType &value)> &fn) const
+    {
+        readerTransaction(region, [&](const GridAddressable<ElementType> &data){
+            data.forEachCell(region, fn);
+        });
+    }
+    
     // Perform an atomic transaction as a "writer" with read-write access to
     // the underlying voxel data in the specified region. It is the
     // responsibility of the caller to provide a closure which will update the
@@ -123,6 +138,42 @@ public:
             changeLog = fn(view);
         }
         onWriterTransaction(changeLog);
+    }
+    
+    // Perform an atomic transaction as a "writer" with read-write access to
+    // the underlying voxel data in the specified region. It is the
+    // responsibility of the caller to provide a closure which will update the
+    // change log accordingly.
+    // region -- The region we will be writing to.
+    // fn -- Closure which will be doing the writing.
+    virtual void writerTransaction(const Frustum &region, const Writer &fn)
+    {
+        ChangeLog changeLog;
+        {
+            LockSet locks(locksForRegion(region));
+            // AFOX_TODO: GridViewMutable which can accept a frustum for the subregion.
+            changeLog = fn(*_array);
+        }
+        onWriterTransaction(changeLog);
+    }
+    
+    // Perform an atomic transaction as a "writer" with read-write access to
+    // the underlying voxel data in the specified region. Syntactic sugar for
+    // the common use-case where the client immediately calls mutableForEachCell
+    // inside the transaction.
+    template<typename RegionType>
+    inline void writerTransaction(const RegionType &region,
+                                  const std::function<void (const AABB &cell,
+                                                            Morton3 index,
+                                                            ElementType &value)> &fn)
+    {
+        writerTransaction(region, [&](GridMutable<ElementType> &data){
+            data.mutableForEachCell(region, fn);
+            
+            // Return an empty changelog. So, this call is not appropriate for
+            // cases where a real changelog is necessary.
+            return ChangeLog();
+        });
     }
     
     // This signal fires when a "writer" transaction finishes. This provides the

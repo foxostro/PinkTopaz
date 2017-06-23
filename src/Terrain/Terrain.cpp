@@ -113,18 +113,15 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     _dispatcherRebuildMesh->async([=]{
         PROFILER(TerrainFetchMeshes);
         const AABB region = _meshes->boundingBox();
-        auto fn = [&](const GridAddressable<MaybeTerrainMesh> &data){
-            data.forEachCell(region, [&](const AABB &cell,
-                                         Morton3 index,
-                                         const MaybeTerrainMesh &maybe){
-                if (maybe) {
-                    _drawList->updateDrawList(*maybe, cell);
-                } else {
-                    asyncRebuildAnotherMesh(cell);
-                }
-            });
-        };
-        _meshes->readerTransaction(region, fn);
+        _meshes->readerTransaction(region, [&](const AABB &cell,
+                                               Morton3 index,
+                                               const MaybeTerrainMesh &maybe){
+            if (maybe) {
+                _drawList->updateDrawList(*maybe, cell);
+            } else {
+                asyncRebuildAnotherMesh(cell);
+            }
+        });
     });
     
     encoder->setShader(_defaultMesh->shader);
@@ -142,6 +139,7 @@ void Terrain::asyncRebuildMeshes(const ChangeLog &changeLog)
     // Kick off a task to rebuild each affected mesh.
     for (const auto &change : changeLog) {
         const AABB &region = change.affectedRegion;
+        // AFOX_TODO: Can I get the syntactic sugar version of readerTransaction() to work here? If I do then this becomes a little more readable.
         _meshes->readerTransaction(region, [&](const GridAddressable<MaybeTerrainMesh> &data){
             data.forEachCell(region, [&](const AABB &cell, Morton3){
                 asyncRebuildAnotherMesh(cell);
@@ -172,23 +170,15 @@ void Terrain::rebuildNextMesh()
     auto maybeCell = _meshesToRebuild.pop(cameraPosition);
     
     if (maybeCell) {
-        const AABB &cell = *maybeCell;
-        
-        _meshes->writerTransaction(cell, [&](GridMutable<MaybeTerrainMesh> &data){
-            MaybeTerrainMesh &maybeTerrainMesh = data.mutableReference(cell.center);
-            if (!maybeTerrainMesh) {
-                maybeTerrainMesh.emplace(cell,
-                                         _defaultMesh,
-                                         _graphicsDevice,
-                                         _mesher,
-                                         _voxels);
+        const AABB &cell = *maybeCell;        
+        _meshes->writerTransaction(cell, [&](const AABB &cell,
+                                             Morton3 index,
+                                             MaybeTerrainMesh &maybe){
+            if (!maybe) {
+                maybe.emplace(cell, _defaultMesh, _graphicsDevice, _mesher, _voxels);
             }
-            maybeTerrainMesh->rebuild();
-            _drawList->updateDrawList(*maybeTerrainMesh, cell);
-            
-            ChangeLog changeLog;
-            changeLog.add("emplace", cell);
-            return changeLog;
+            maybe->rebuild();
+            _drawList->updateDrawList(*maybe, cell);
         });
     }
 }
