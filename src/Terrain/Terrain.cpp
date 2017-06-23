@@ -117,8 +117,9 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
             data.forEachCell(region, [&](const AABB &cell,
                                          Morton3 index,
                                          const MaybeTerrainMesh &maybe){
-                _drawList->updateDrawList(maybe, cell);
-                if (!maybe) {
+                if (maybe) {
+                    _drawList->updateDrawList(*maybe, cell);
+                } else {
                     asyncRebuildAnotherMesh(cell);
                 }
             });
@@ -183,7 +184,7 @@ void Terrain::rebuildNextMesh()
                                          _voxels);
             }
             maybeTerrainMesh->rebuild();
-            _drawList->updateDrawList(maybeTerrainMesh, cell);
+            _drawList->updateDrawList(*maybeTerrainMesh, cell);
             
             ChangeLog changeLog;
             changeLog.add("emplace", cell);

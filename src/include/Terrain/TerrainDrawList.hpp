@@ -25,7 +25,7 @@ public:
               const glm::mat4x4 &modelViewProjection);
     
     // Update the draw list to include the specified GPU resources.
-    void updateDrawList(const MaybeTerrainMesh &mesh, const AABB &cell);
+    void updateDrawList(const TerrainMesh &mesh, const AABB &cell);
     
 private:
     std::mutex _lockDrawList;

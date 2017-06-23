@@ -29,13 +29,11 @@ void TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
     });
 }
 
-void TerrainDrawList::updateDrawList(const MaybeTerrainMesh &maybeTerrainMesh, const AABB &cell)
+void TerrainDrawList::updateDrawList(const TerrainMesh &mesh, const AABB &cell)
 {
-    if (maybeTerrainMesh) {
-        auto maybeRenderableMesh = maybeTerrainMesh->getMesh();
-        if (maybeRenderableMesh) {
-            std::lock_guard<std::mutex> lock(_lockDrawList);
-            _data.mutableReference(cell.center) = *maybeRenderableMesh;
-        }
+    auto maybeRenderableMesh = mesh.getMesh();
+    if (maybeRenderableMesh) {
+        std::lock_guard<std::mutex> lock(_lockDrawList);
+        _data.mutableReference(cell.center) = *maybeRenderableMesh;
     }
 }
