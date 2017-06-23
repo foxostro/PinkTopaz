@@ -17,7 +17,7 @@ else()
     set(APPLE_FLAGS "")
     endif(APPLE)
     
-    set(CMAKE_CXX_FLAGS_RELEASE "-g -Oz")
+    set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
     set(CMAKE_CXX_FLAGS "-march=haswell -Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
 endif()
