@@ -58,16 +58,10 @@ TerrainMesh& TerrainMesh::operator=(const TerrainMesh &rhs)
     return *this;
 }
 
-TerrainMesh::MaybeMesh TerrainMesh::nonblockingGetMesh() const
+TerrainMesh::MaybeMesh TerrainMesh::getMesh() const
 {
-    MaybeMesh mesh;
-    
-    if (_lockMesh.try_lock()) {
-        mesh.emplace(_mesh);
-        _lockMesh.unlock();
-    }
-    
-    return mesh;
+    std::lock_guard<std::mutex> lock(_lockMesh);
+    return MaybeMesh(_mesh);
 }
 
 void TerrainMesh::rebuild()

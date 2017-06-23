@@ -117,7 +117,7 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
             data.forEachCell(region, [&](const AABB &cell,
                                          Morton3 index,
                                          const MaybeTerrainMesh &maybe){
-                _drawList->tryUpdateDrawList(maybe, cell);
+                _drawList->updateDrawList(maybe, cell);
                 if (!maybe) {
                     asyncRebuildAnotherMesh(cell);
                 }
@@ -183,14 +183,11 @@ void Terrain::rebuildNextMesh()
                                          _voxels);
             }
             maybeTerrainMesh->rebuild();
+            _drawList->updateDrawList(maybeTerrainMesh, cell);
             
-            // AFOX_TODO: If I cannot successfully update the draw list here then
-            // will I leave meshes on the floor? Scenario: we have one mesh left,
-            // we fail to get the lock, and then we never see another call to
-            // rebuildNextMesh(). The mesh is never drawn.
-            _drawList->tryUpdateDrawList(maybeTerrainMesh, cell);
-            
-            return ChangeLog(); // Change logs are not being used for `_meshes'.
+            ChangeLog changeLog;
+            changeLog.add("emplace", cell);
+            return changeLog;
         });
     }
 }

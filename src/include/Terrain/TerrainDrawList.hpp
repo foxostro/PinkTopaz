@@ -24,10 +24,8 @@ public:
     void draw(const std::shared_ptr<CommandEncoder> &encoder,
               const glm::mat4x4 &modelViewProjection);
     
-    // If we can get a hold of the underlying GPU resources then add them to the
-    // draw list.
-    void tryUpdateDrawList(const MaybeTerrainMesh &maybeTerrainMesh,
-                           const AABB &cell);
+    // Update the draw list to include the specified GPU resources.
+    void updateDrawList(const MaybeTerrainMesh &mesh, const AABB &cell);
     
 private:
     std::mutex _lockDrawList;

@@ -47,8 +47,8 @@ public:
     // Copy-assignment operator
     TerrainMesh& operator=(const TerrainMesh &rhs);
     
-    // Gets the mesh so long as doing so would not require blocking on a lock.
-    MaybeMesh nonblockingGetMesh() const;
+    // Returns an optional that contains the mesh, if the mesh is present.
+    MaybeMesh getMesh() const;
     
     // Causes the mesh to be rebuilt using the voxel data store.
     void rebuild();
