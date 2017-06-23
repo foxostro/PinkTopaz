@@ -111,7 +111,8 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
                                                const Voxel &voxel){
             
             // AFOX_TODO: I can reduce calls to indexAtPoint() by being clever
-            // with grid coordinates.
+            // with grid coordinates. These calls account for 10% of all time
+            // spent in rebuildNextMesh(), and 32% of the time spent in copy().
             dst.mutableReference(cell.center) = voxel;
         });
     }
