@@ -19,7 +19,7 @@
 class VoxelData : public GridMutable<Voxel>
 {
 public:
-    using GridAddressable<Voxel>::get;
+    using GridMutable<Voxel>::get;
     
     using Chunk = Array3D<Voxel>;
     using MaybeChunk = typename std::experimental::optional<Chunk>;
@@ -58,15 +58,6 @@ public:
     // See also gridResolution() and cellCoordsAtPoint().
     Voxel& mutableReference(const glm::ivec3 &cellCoords) override;
     
-    // Gets the dimensions of a single cell. (All cells are the same size.)
-    glm::vec3 cellDimensions() const override;
-    
-    // Gets the region for which the grid is defined.
-    AABB boundingBox() const override;
-    
-    // Gets the number of cells along each axis within the valid region.
-    glm::ivec3 gridResolution() const override;
-    
     // Returns an array which holds a copy of the contents of the subregion.
     Array3D<Voxel> copy(const AABB &region) const;
     
@@ -76,6 +67,7 @@ private:
     
     // The voxel grid is broken into chunks where each chunk is a fixed-size
     // grid of voxels.
+    // AFOX_TODO: Replace _chunks and _lockChunks with something that uses ConcurrentMutableGrid<MaybeChunk>.
     mutable std::mutex _lockChunks;
     mutable Array3D<MaybeChunk> _chunks;
     

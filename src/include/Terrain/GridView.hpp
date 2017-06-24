@@ -18,10 +18,11 @@ public:
     using GridAddressable<TYPE>::inbounds;
     
     GridView(const GridAddressable<TYPE> &backing, const AABB &subregion)
-     : _backing(backing),
+     : GridAddressable<TYPE>(backing.boundingBox(), backing.gridResolution()),
+       _backing(backing),
        _subregion(subregion),
-      _minCellCoords(backing.cellCoordsAtPoint(subregion.mins())),
-      _maxCellCoords(backing.cellCoordsAtPoint(subregion.maxs()))
+       _minCellCoords(backing.cellCoordsAtPoint(subregion.mins())),
+       _maxCellCoords(backing.cellCoordsAtPoint(subregion.maxs()))
     {}
     
     const TYPE& get(const glm::vec3 &p) const override
@@ -48,21 +49,6 @@ public:
         return _backing.get(index);
     }
     
-    glm::vec3 cellDimensions() const override
-    {
-        return _backing.cellDimensions();
-    }
-    
-    AABB boundingBox() const override
-    {
-        return _backing.boundingBox();
-    }
-    
-    glm::ivec3 gridResolution() const override
-    {
-        return _backing.gridResolution();
-    }
-    
     inline const AABB &getSubregion() const
     {
         return _subregion;
@@ -79,10 +65,11 @@ private:
 template<typename TYPE> class GridViewMutable : public GridMutable<TYPE>
 {
 public:
-    using GridAddressable<TYPE>::inbounds;
+    using GridMutable<TYPE>::inbounds;
     
     GridViewMutable(GridMutable<TYPE> &backing, const AABB &subregion)
-     : _backing(backing),
+     : GridMutable<TYPE>(backing.boundingBox(), backing.gridResolution()),
+       _backing(backing),
        _subregion(subregion),
       _minCellCoords(backing.cellCoordsAtPoint(subregion.mins())),
       _maxCellCoords(backing.cellCoordsAtPoint(subregion.maxs()))
@@ -134,21 +121,6 @@ public:
             throw OutOfBoundsException();
         }
         return _backing.mutableReference(index);
-    }
-    
-    glm::vec3 cellDimensions() const override
-    {
-        return _backing.cellDimensions();
-    }
-    
-    AABB boundingBox() const override
-    {
-        return _backing.boundingBox();
-    }
-    
-    glm::ivec3 gridResolution() const override
-    {
-        return _backing.gridResolution();
     }
     
 private:

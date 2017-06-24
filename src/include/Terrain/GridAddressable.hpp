@@ -6,6 +6,8 @@
 //
 //
 
+// AFOX_TODO: Change the name of this file to Grid.hpp
+
 #ifndef GridAddressable_hpp
 #define GridAddressable_hpp
 
@@ -15,6 +17,7 @@
 #include "Morton.hpp"
 #include "ChangeLog.hpp"
 #include <functional>
+
 
 template<typename PointType>
 static inline bool
@@ -26,6 +29,7 @@ isPointInsideBox(const PointType &point,
            point.x < maxs.x && point.y < maxs.y && point.z < maxs.z;
 }
 
+
 static inline bool
 isPointInsideBox(Morton3 index,
                  const glm::ivec3 &mins,
@@ -34,11 +38,13 @@ isPointInsideBox(Morton3 index,
     return isPointInsideBox(index.decode(), mins, maxs);
 }
 
+
 static inline bool
 isPointInsideBox(const glm::vec3 &point, const AABB &box)
 {
     return isPointInsideBox(point, box.mins(), box.maxs());
 }
+
 
 // Exception thrown when attempting to access the grid at a point that is not in
 // the valid space of the grid.
@@ -48,8 +54,13 @@ public:
     OutOfBoundsException() : Exception("out of bounds") {}
 };
 
-// A GridAddressable is a regular grid of objects in space.
-template<typename TYPE> class GridAddressable
+
+// A "Grid" is an object that divides space into a regular grid with equal sized
+// cells where each cell is associated with an object. The GridIndexer deals
+// with mapping from 3D world space to a 3D cell coordinate space and from cell
+// coordinate space to the 1D index space. This is all entirely independent
+// of the actual storage and retrieval of elements in a grid.
+class GridIndexer
 {
 public:
 #ifdef NDEBUG
@@ -58,27 +69,35 @@ public:
     static constexpr bool EnableVerboseBoundsChecking = true;
 #endif
     
-    virtual ~GridAddressable() = default;
+    ~GridIndexer() = default;
     
-    // Get the object corresponding to the specified point in space.
-    // Note that each point in space corresponds to exactly one cell.
-    // Throws an exception if the point is not within this grid.
-    virtual const TYPE& get(const glm::vec3 &p) const = 0;
+    GridIndexer(const AABB &boundingBox,
+                const glm::ivec3 &gridResolution)
+     : _boundingBox(boundingBox),
+       _gridResolution(gridResolution),
+       _cellDimensions((boundingBox.extent * 2.0f).x / gridResolution.x,
+                       (boundingBox.extent * 2.0f).y / gridResolution.y,
+                       (boundingBox.extent * 2.0f).z / gridResolution.z)
+    {}
     
-    // Get the cell associated with the given cell coordinates.
-    // Each cell in the grid can be addressed by cell coordinates which uniquely
-    // identify that cell.
-    // See also gridResolution() and cellCoordsAtPoint().
-    virtual const TYPE& get(const glm::ivec3 &cellCoords) const = 0;
-    
-    // Get the cell associated with the given morton code.
-    // Morton codes can be used to uniquely identify a cell in the grid. At the
-    // very least, this code can be used to encode cell coordinates. Sub-classes
-    // of GridAddressable may override this method to allow the code to be used
-    // to directly index some underlying grid array.
-    virtual const TYPE& get(Morton3 index) const
+    // Gets the region for which the grid is defined.
+    // Accesses to points outside this box is not permitted.
+    inline const AABB& boundingBox() const
     {
-        return get(index.decode());
+        return _boundingBox;
+    }
+    
+    // Gets the number of cells along each axis within the valid region.
+    inline const glm::ivec3& gridResolution() const
+    {
+        return _gridResolution;
+    }
+    
+    // Gets the dimensions of a single cell in the grid.
+    // Note that cells in the grid are always the same size.
+    inline const glm::vec3& cellDimensions() const
+    {
+        return _cellDimensions;
     }
     
     // Gets a morton code to identify the cell for the specified point in space.
@@ -100,17 +119,6 @@ public:
     {
         return Morton3(cellCoords);
     }
-    
-    // Gets the dimensions of a single cell in the grid.
-    // Note that cells in the grid are always the same size.
-    virtual glm::vec3 cellDimensions() const = 0;
-    
-    // Gets the region for which the grid is defined.
-    // Accesses to points outside this box is not permitted.
-    virtual AABB boundingBox() const = 0;
-    
-    // Gets the number of cells along each axis within the valid region.
-    virtual glm::ivec3 gridResolution() const = 0;
     
     // Gets the coordinates of the cell in which the specified point resides.
     // These integer coordinates can be used to locate the cell within the grid.
@@ -262,6 +270,34 @@ public:
     // Iterate over cells in the specified region of the grid.
     // Throws an exception if the region is not within this grid.
     void forEachCell(const AABB &region,
+                     const std::function<void (const AABB &cell)> &fn) const
+    {
+        if constexpr (EnableVerboseBoundsChecking) {
+            if (!inbounds(region)) {
+                throw OutOfBoundsException();
+            }
+        }
+        
+        const auto dim = cellDimensions();
+        const auto extent = dim * 0.5f;
+        const auto min = region.mins();
+        const auto max = region.maxs();
+        const auto minCellCoords = cellCoordsAtPoint(min);
+        const auto maxCellCoords = cellCoordsAtPointRoundUp(max);
+        
+        for (glm::ivec3 cellCoords = minCellCoords; cellCoords.z < maxCellCoords.z; ++cellCoords.z) {
+            for (cellCoords.x = minCellCoords.x; cellCoords.x < maxCellCoords.x; ++cellCoords.x) {
+                for (cellCoords.y = minCellCoords.y; cellCoords.y < maxCellCoords.y; ++cellCoords.y) {
+                    const glm::vec3 center = cellCenterAtCellCoords(cellCoords);
+                    fn({center, extent});
+                }
+            }
+        }
+    }
+    
+    // Iterate over cells in the specified region of the grid.
+    // Throws an exception if the region is not within this grid.
+    void forEachCell(const AABB &region,
                      const std::function<void (const AABB &cell,
                                                Morton3 index)> &fn) const
     {
@@ -277,13 +313,6 @@ public:
         const auto max = region.maxs();
         const auto minCellCoords = cellCoordsAtPoint(min);
         const auto maxCellCoords = cellCoordsAtPointRoundUp(max);
-        
-#ifndef NDEBUG
-        assert(inbounds(minCellCoords));
-        assert(minCellCoords.x <= maxCellCoords.x);
-        assert(minCellCoords.y <= maxCellCoords.y);
-        assert(minCellCoords.z <= maxCellCoords.z);
-#endif
         
         for (glm::ivec3 cellCoords = minCellCoords; cellCoords.z < maxCellCoords.z; ++cellCoords.z) {
             for (cellCoords.x = minCellCoords.x; cellCoords.x < maxCellCoords.x; ++cellCoords.x) {
@@ -312,13 +341,6 @@ public:
         const auto minCellCoords = cellCoordsAtPoint(min);
         const auto maxCellCoords = cellCoordsAtPointRoundUp(max);
         
-#ifndef NDEBUG
-        assert(inbounds(minCellCoords));
-        assert(minCellCoords.x <= maxCellCoords.x);
-        assert(minCellCoords.y <= maxCellCoords.y);
-        assert(minCellCoords.z <= maxCellCoords.z);
-#endif
-        
         for (glm::ivec3 cellCoords = minCellCoords; cellCoords.z < maxCellCoords.z; ++cellCoords.z) {
             for (cellCoords.x = minCellCoords.x; cellCoords.x < maxCellCoords.x; ++cellCoords.x) {
                 for (cellCoords.y = minCellCoords.y; cellCoords.y < maxCellCoords.y; ++cellCoords.y) {
@@ -326,18 +348,6 @@ public:
                 }
             }
         }
-    }
-    
-    // Iterate over cells in the specified region of the grid.
-    template<typename RegionType>
-    inline void forEachCell(const RegionType &region,
-                            const std::function<void (const AABB &cell,
-                                                      Morton3 index,
-                                                      const TYPE &value)> &fn) const
-    {
-        forEachCell(region, [&](const AABB &cell, Morton3 index){
-            fn(cell, index, get(index));
-        });
     }
     
     // Iterate over cells which fall within the specified frustum.
@@ -399,38 +409,77 @@ public:
         }
     }
     
-    // Get a box in cell-coordinate space which includes all cells that fall in
-    // the specified region. For any cell-coordinate in this box, the specified
-    // region will include that cell.
-    inline _AABB<int> cellsInRegion(const AABB &region) const
+private:
+    const AABB _boundingBox;
+    const glm::ivec3 _gridResolution;
+    const glm::vec3 _cellDimensions;
+};
+
+
+// A "Grid" is an object that divides space into a regular grid with equal sized
+// cells where each cell is associated with an object. The GridAddressable is
+// an abstract class which implements GridIndexer and specifies an interface to
+// retrieve objects of the grid through const references, providing read-only
+// access.
+template<typename TYPE> class GridAddressable : public GridIndexer
+{
+public:
+    virtual ~GridAddressable() = default;
+    
+    // Constructor.
+    // boundingBox -- The valid world space extent of the grid.
+    // gridResolution -- The number of cells along each major axis.
+    GridAddressable(const AABB &boundingBox, const glm::ivec3 &gridResolution)
+     : GridIndexer(boundingBox, gridResolution)
+    {}
+    
+    // Get the object corresponding to the specified point in space.
+    // Note that each point in space corresponds to exactly one cell.
+    // Throws an exception if the point is not within this grid.
+    virtual const TYPE& get(const glm::vec3 &p) const = 0;
+    
+    // Get the cell associated with the given cell coordinates.
+    // Each cell in the grid can be addressed by cell coordinates which uniquely
+    // identify that cell.
+    // See also gridResolution() and cellCoordsAtPoint().
+    virtual const TYPE& get(const glm::ivec3 &cellCoords) const = 0;
+    
+    // Get the cell associated with the given morton code.
+    // Morton codes can be used to uniquely identify a cell in the grid. At the
+    // very least, this code can be used to encode cell coordinates. Sub-classes
+    // of GridAddressable may override this method to allow the code to be used
+    // to directly index some underlying grid array.
+    virtual const TYPE& get(Morton3 index) const
     {
-        const auto min = region.mins();
-        const auto max = region.maxs();
-        const auto minCellCoords = cellCoordsAtPoint(min);
-        const auto maxCellCoords = cellCoordsAtPointRoundUp(max);
-        
-        const auto center = (maxCellCoords + minCellCoords) / 2;
-        const auto extent = (maxCellCoords - minCellCoords) / 2;
-        
-        assert(minCellCoords == (center - extent));
-        assert(maxCellCoords == (center + extent));
-        
-        _AABB<int> cellBox = {center, extent};
-        return cellBox;
+        return get(index.decode());
+    }
+    
+    // Iterate over cells in the specified region of the grid.
+    // The specified function `fn' is executed for each cell in the region. It
+    // accepts as parameters the bounding box of the cell, the 1D index of the
+    // cell, and a reference to the object associated with the cell.
+    template<typename RegionType, typename FuncType>
+    inline void forEachCell(const RegionType &region, const FuncType &fn) const
+    {
+        GridIndexer::forEachCell(region, [&](const AABB &cell, Morton3 index){
+            fn(cell, index, get(index));
+        });
     }
 };
 
-// GridMutable provides API for mutating GridAddressable. It is a mutable grid.
+
+// A "Grid" is an object that divides space into a regular grid with equal sized
+// cells where each cell is associated with an object. The GridMutable is
+// an abstract class which extends GridAddressable to also specifies an API to
+// mutate objects of the grid.
 template<typename TYPE> class GridMutable : public GridAddressable<TYPE>
 {
 public:
-    using GridAddressable<TYPE>::EnableVerboseBoundsChecking;
-    using GridAddressable<TYPE>::inbounds;
-    using GridAddressable<TYPE>::cellDimensions;
-    using GridAddressable<TYPE>::cellAtPoint;
-    using GridAddressable<TYPE>::cellCoordsAtPoint;
-    using GridAddressable<TYPE>::indexAtPoint;
     using GridAddressable<TYPE>::forEachCell;
+    
+    GridMutable(const AABB &boundingBox, const glm::ivec3 &gridResolution)
+     : GridAddressable<TYPE>(boundingBox, gridResolution)
+    {}
     
     // Get the (mutable) object corresponding to the specified point in space.
     // Throws an exception if the point is not within this grid.
@@ -460,7 +509,7 @@ public:
     template<typename RegionType, typename FuncType>
     inline void mutableForEachCell(const RegionType &region, const FuncType &fn)
     {
-        forEachCell(region, [&](const AABB &cell, Morton3 index){
+        GridIndexer::forEachCell(region, [&](const AABB &cell, Morton3 index){
             fn(cell, index, mutableReference(index));
         });
     }

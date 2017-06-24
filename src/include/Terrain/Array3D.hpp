@@ -12,11 +12,6 @@
 #include "AABB.hpp"
 #include "Morton.hpp"
 
-#define LOG_ARRAY_CTOR 0
-#if LOG_ARRAY_CTOR
-#include "SDL.h"
-#endif
-
 #include <vector>
 #include <set>
 #include <glm/vec3.hpp>
@@ -39,12 +34,7 @@ public:
     using iterator = typename container_type::iterator;
     using const_iterator = typename container_type::const_iterator;
     
-    ~Array3D()
-    {
-#if LOG_ARRAY_CTOR
-        SDL_Log("~Array3D -- %p", this);
-#endif
-    }
+    ~Array3D() = default;
     
     // No default constructor.
     Array3D() = delete;
@@ -55,47 +45,35 @@ public:
     // cells along the X-axis, `resolution.y' cells along the Y-axis, and
     // `resolution.z' cells along the Z-axis.
     Array3D(const AABB &box, const glm::ivec3 &res)
-     : _cells(numberOfInternalElements(res)),
+     : GridMutable<TYPE>(box, res),
+       _cells(numberOfInternalElements(res)),
        _box(box),
        _res(res)
-    {
-#if LOG_ARRAY_CTOR
-        SDL_Log("Array3D(const AABB &box, const glm::ivec3 &res) -- %p", this);
-#endif
-    }
+    {}
     
     // Copy constructor.
     Array3D(const Array3D<TYPE> &array)
      : _cells(array._cells),
        _box(array._box),
        _res(array._res)
-    {
-#if LOG_ARRAY_CTOR
-        SDL_Log("Array3D(const Array3D<TYPE> &array) -- %p", this);
-#endif
-    }
+    {}
     
     // Move constructor.
     Array3D(Array3D<TYPE> &&array)
-     : _cells(std::move(array._cells)),
-       _box(array._box),
-       _res(array._res)
-    {
-#if LOG_ARRAY_CTOR
-        SDL_Log("Array3D(Array3D<TYPE> &&array) -- %p", this);
-#endif
-    }
+     : GridMutable<TYPE>(array._box, array._res),
+        _cells(std::move(array._cells)),
+        _box(array._box),
+        _res(array._res)
+    {}
     
     // Copy assignment operator.
     // We need this because we have a user-declared move constructor.
+    // The bounding box and grid resolution of the two arrays must be the same.
     Array3D<TYPE>& operator=(const Array3D<TYPE> &array)
     {
-#if LOG_ARRAY_CTOR
-        SDL_Log("Array3D<TYPE>& operator=(const Array3D<TYPE> &array) -- %p", this);
-#endif
+        assert(_box == array._box);
+        assert(_res == array._res);
         _cells = array._cells;
-        _box = array._box;
-        _res = array._res;
         return *this;
     }
     
@@ -151,28 +129,6 @@ public:
         return (size_t)index < _cells.size();
     }
     
-    // Gets the dimensions of a single cell. (All cells are the same size.)
-    glm::vec3 cellDimensions() const override
-    {
-        glm::vec3 boxSize = _box.extent * 2.0f;
-        const glm::vec3 dim(boxSize.x / _res.x,
-                            boxSize.y / _res.y,
-                            boxSize.z / _res.z);
-        return dim;
-    }
-    
-    // Gets the region for which the grid is defined.
-    AABB boundingBox() const override
-    {
-        return _box;
-    }
-    
-    // Gets the number of cells along each axis within the valid region.
-    glm::ivec3 gridResolution() const override
-    {
-        return _res;
-    }
-    
     inline iterator begin()
     {
         return _cells.begin();
@@ -195,8 +151,8 @@ public:
     
 private:
     container_type _cells;
-    AABB _box;
-    glm::ivec3 _res;
+    const AABB _box;
+    const glm::ivec3 _res;
     
     // Get the number of elements to use in the internal array.
     static inline size_t numberOfInternalElements(const glm::ivec3 &res)

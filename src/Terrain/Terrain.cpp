@@ -18,7 +18,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
    _dispatcher(dispatcher),
    _dispatcherRebuildMesh(dispatcherRebuildMesh),
    _mesher(new MesherNaiveSurfaceNets),
-   _voxelDataGenerator(new VoxelDataGenerator(TERRAIN_CHUNK_SIZE)),
+   _voxelDataGenerator(new VoxelDataGenerator(/* random seed = */ 0)),
    _voxels(new VoxelDataStore(_voxelDataGenerator, TERRAIN_CHUNK_SIZE))
 {
     // Load terrain texture array from a single image.
@@ -139,11 +139,10 @@ void Terrain::asyncRebuildMeshes(const ChangeLog &changeLog)
     // Kick off a task to rebuild each affected mesh.
     for (const auto &change : changeLog) {
         const AABB &region = change.affectedRegion;
-        // AFOX_TODO: Can I get the syntactic sugar version of readerTransaction() to work here? If I do then this becomes a little more readable.
-        _meshes->readerTransaction(region, [&](const GridAddressable<MaybeTerrainMesh> &data){
-            data.forEachCell(region, [&](const AABB &cell, Morton3){
-                asyncRebuildAnotherMesh(cell);
-            });
+        _meshes->readerTransaction(region, [&](const AABB &cell,
+                                               Morton3 index,
+                                               const MaybeTerrainMesh &value){
+            asyncRebuildAnotherMesh(cell);
         });
     }
 }

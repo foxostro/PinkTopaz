@@ -118,7 +118,9 @@ set(SOURCE_FILES_MISC
     "src/include/UniqueName.hpp"
     "src/include/Stopwatch.hpp"
     "src/include/VideoRefreshRate.hpp"
-    "src/include/morton.hpp"
+    "src/include/Morton.hpp"
+    "src/Noise.cpp" "src/include/Noise.hpp"
+    "src/snoise3.c" "src/include/snoise3.h"
     )
 
 if(APPLE)

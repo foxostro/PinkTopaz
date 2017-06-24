@@ -8,10 +8,11 @@
 
 #include "Terrain/VoxelData.hpp"
 
-VoxelData::VoxelData(const std::shared_ptr<VoxelDataGenerator> &generator,
+VoxelData::VoxelData(const std::shared_ptr<VoxelDataGenerator> &gen,
                      unsigned chunkSize)
- : _generator(generator),
-   _chunks(generator->boundingBox(), _generator->gridResolution() / (int)chunkSize)
+ : GridMutable<Voxel>(gen->boundingBox(), gen->gridResolution()),
+   _generator(gen),
+   _chunks(gen->boundingBox(), gen->gridResolution() / (int)chunkSize)
 {}
 
 const Voxel& VoxelData::get(const glm::vec3 &p) const
@@ -44,21 +45,6 @@ Voxel& VoxelData::mutableReference(const glm::ivec3 &cellCoords)
     return mutableReference(cellCenterAtCellCoords(cellCoords));
 }
 
-glm::vec3 VoxelData::cellDimensions() const
-{
-    return _generator->cellDimensions();
-}
-
-AABB VoxelData::boundingBox() const
-{
-    return _generator->boundingBox();
-}
-
-glm::ivec3 VoxelData::gridResolution() const
-{
-    return _generator->gridResolution();
-}
-
 Array3D<Voxel> VoxelData::copy(const AABB &region) const
 {
     // Adjust the region so that it includes the full extent of all voxels that
@@ -83,6 +69,7 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
     // The chunks themselves have already been locked by the VoxelDataStore,
     // but we'll still need to protect accesses to `_chunks'. Let's collect the
     // chunks under the lock and then process the chunks afterward.
+    // AFOX_TODO: I'm not sure I need to do this step at all.
     std::vector<std::pair<AABB, std::reference_wrapper<MaybeChunk>>> chunks;
     {
         std::lock_guard<std::mutex> lock(_lockChunks);
