@@ -86,8 +86,8 @@ static void generateTerrainVoxel(const Noise &noiseSource0,
 }
 
 VoxelDataGenerator::VoxelDataGenerator(unsigned seed)
- : GridIndexer(AABB{glm::vec3(64.f, 128.f, 64.f), glm::vec3(80.f, 144.f, 80.f)},
-               glm::ivec3(160, 288, 160)),
+ : GridIndexer(AABB{glm::vec3(0.f, 0.f, 0.f), glm::vec3(512.f, 144.f, 512.f)},
+               glm::ivec3(1024, 288, 1024)),
    _noiseSource0(seed),
    _noiseSource1(seed + 1)
 {}
