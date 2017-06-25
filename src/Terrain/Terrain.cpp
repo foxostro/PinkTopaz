@@ -72,7 +72,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     _defaultMesh->textureSampler = sampler;
     
     const AABB box = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
-    const glm::ivec3 res(8, 8, 8);
+    const glm::ivec3 res = _voxelDataGenerator->countCellsInRegion(box) / (int)TERRAIN_CHUNK_SIZE;
     _drawList = std::make_unique<TerrainDrawList>(box, res);
     auto meshesArray = std::make_unique<Array3D<MaybeTerrainMesh>>(box, res);
     _meshes = std::make_unique<ConcurrentGridMutable<MaybeTerrainMesh>>(std::move(meshesArray), 1);
@@ -106,10 +106,6 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
 {
     // If any meshes are missing then kick off an async task to fetch them.
     // Limit the number of these tasks that can be in flight at once.
-    //
-    // There's bit of race between comparing the counter and incrementing it,
-    // but that doesn't matter since we merely want a good effort at limiting
-    // the number of these tasks in the queue.
     _dispatcherRebuildMesh->async([=]{
         PROFILER(TerrainFetchMeshes);
         const AABB region = _meshes->boundingBox();
