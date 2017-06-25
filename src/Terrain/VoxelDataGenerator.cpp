@@ -12,6 +12,11 @@
 
 using namespace glm;
 
+static constexpr int size = 256;
+static constexpr int border = 16;
+static constexpr int extent = size + border;
+static constexpr int res = (size + border) * 2;
+
 // Return a value between -1 and +1 so that a line through the y-axis maps to a
 // smooth gradient of values from -1 to +1.
 static inline float groundGradient(float terrainHeight, const vec3 &p)
@@ -86,8 +91,8 @@ static void generateTerrainVoxel(const Noise &noiseSource0,
 }
 
 VoxelDataGenerator::VoxelDataGenerator(unsigned seed)
- : GridIndexer(AABB{glm::vec3(0.f, 0.f, 0.f), glm::vec3(512.f, 144.f, 512.f)},
-               glm::ivec3(1024, 288, 1024)),
+ : GridIndexer(AABB{glm::vec3(0.f, 0.f, 0.f), glm::vec3((float)extent, (float)extent, (float)extent)},
+               glm::ivec3(res, res, res)),
    _noiseSource0(seed),
    _noiseSource1(seed + 1)
 {}
