@@ -15,8 +15,6 @@ TerrainDrawList::TerrainDrawList(const AABB &box, const glm::ivec3 &res)
 void TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
                            const glm::mat4x4 &modelViewProjection)
 {
-    // Get the list of cells that are in the camera view-frustum. Use an octree
-    // to drastically reduce the number of boxes we have to cull.
     Frustum frustum(modelViewProjection);
     
     // Draw each cell that is in the camera view-frustum.
