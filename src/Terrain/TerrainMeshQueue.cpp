@@ -49,13 +49,13 @@ bool TerrainMeshQueue::push(const AABB &cell)
     return result.second;
 }
 
-bool TerrainMeshQueue::push(const std::vector<AABB> &cells)
+size_t TerrainMeshQueue::push(const std::vector<AABB> &cells)
 {
-    bool anyInserted = false;
+    size_t numberInserted = 0;
     std::lock_guard<std::mutex> lock(_lock);
     for (const auto &cell : cells) {
         auto result = _cells.insert(cell);
-        anyInserted = anyInserted || result.second;
+        numberInserted += (result.second) ? 1 : 0;
     }
-    return anyInserted;
+    return numberInserted;
 }

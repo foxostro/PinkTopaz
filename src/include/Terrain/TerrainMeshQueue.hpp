@@ -34,8 +34,8 @@ public:
     // Returns false in the case where the cell was already in the queue.
     bool push(const AABB &cell);
     
-    // Add cells to the list. Returns true if any cell was added to the queue.
-    bool push(const std::vector<AABB> &cells);
+    // Add cells to the list. Returns the number of cells successfully inserted.
+    size_t push(const std::vector<AABB> &cells);
     
 private:
     mutable std::mutex _lock;

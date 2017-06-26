@@ -30,7 +30,7 @@ public:
         Frame = 0,
         Quit,
         InitWorld,
-        TerrainAsyncRebuildMeshes,
+        TerrainRebuildMeshInResponseToChanges,
         TerrainRebuildNextMesh,
         TerrainFetchMeshes,
         VoxelDataStoreReader,

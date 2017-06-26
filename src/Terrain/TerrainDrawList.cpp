@@ -13,10 +13,8 @@ TerrainDrawList::TerrainDrawList(const AABB &box, const glm::ivec3 &res)
 {}
 
 void TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
-                           const glm::mat4x4 &modelViewProjection)
+                           const Frustum &frustum)
 {
-    Frustum frustum(modelViewProjection);
-    
     // Draw each cell that is in the camera view-frustum.
     _meshes.readerTransaction(frustum, [&](const AABB &cell, Morton3 index, const RenderableStaticMesh &drawThis){
         if (drawThis.vertexCount > 0) {

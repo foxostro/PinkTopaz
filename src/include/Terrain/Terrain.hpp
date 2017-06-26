@@ -67,13 +67,9 @@ private:
     
     // Kicks off asynchronous tasks to rebuild any meshes that are affected by
     // the specified changes.
-    void asyncRebuildMeshes(const ChangeLog &changeLog);
+    void rebuildMeshInResponseToChanges(const ChangeLog &changeLog);
     
-    // Kicks off an asynchronous task to rebuild the mesh at the specified cell.
-    void asyncRebuildAnotherMesh(const AABB &cell);
-    
-    // Examines `_meshesToRebuild' and rebuilds the best mesh, if any meshes
-    // are pending.
+    // Rebuilds the next pending mesh in the queue.
     void rebuildNextMesh();
 };
 

@@ -81,7 +81,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     // of the isosurface. This mesh is what we actually draw.
     // For now, we extract the entire isosurface in one step.
     _voxels->onWriterTransaction.connect([&](const ChangeLog &changeLog){
-        asyncRebuildMeshes(changeLog);
+        rebuildMeshInResponseToChanges(changeLog);
     });
 }
 
@@ -104,18 +104,28 @@ void Terrain::setTerrainUniforms(const TerrainUniforms &uniforms)
 
 void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
 {
-    // If any meshes are missing then kick off an async task to fetch them.
-    // Limit the number of these tasks that can be in flight at once.
-    _dispatcherRebuildMesh->async([=]{
+    Frustum frustum(_modelViewProjection);
+    
+    // Update the draw list. If any meshes are missing then kick off tasks
+    // to fetch them asynchronously.
+    _dispatcher->async([=]{
         PROFILER(TerrainFetchMeshes);
-        const AABB region = _meshes->boundingBox();
-        _meshes->readerTransaction(region, [&](const AABB &cell,
-                                               Morton3 index,
-                                               const MaybeTerrainMesh &maybe){
-            if (maybe) {
-                _drawList->updateDrawList(*maybe, cell);
-            } else {
-                asyncRebuildAnotherMesh(cell);
+        _meshes->readerTransaction(frustum, [&](const GridAddressable<MaybeTerrainMesh> &data){
+            std::vector<AABB> missingMeshes;
+            
+            data.forEachCell(frustum, [&](const AABB &cell,
+                                          Morton3 index,
+                                          const MaybeTerrainMesh &maybe){
+                if (maybe) {
+                    _drawList->updateDrawList(*maybe, cell);
+                } else {
+                    missingMeshes.push_back(cell);
+                }
+            });
+            
+            // Kick off a task to rebuild each mesh that was missing.
+            for (size_t i = 0, n = _meshesToRebuild.push(missingMeshes); i < n; ++i) {
+                _dispatcherRebuildMesh->async([=]{ rebuildNextMesh(); });
             }
         });
     });
@@ -125,12 +135,12 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     encoder->setFragmentTexture(_defaultMesh->texture, 0);
     encoder->setVertexBuffer(_defaultMesh->uniforms, 1);
     
-    _drawList->draw(encoder, _modelViewProjection);
+    _drawList->draw(encoder, frustum);
 }
 
-void Terrain::asyncRebuildMeshes(const ChangeLog &changeLog)
+void Terrain::rebuildMeshInResponseToChanges(const ChangeLog &changeLog)
 {
-    PROFILER(TerrainAsyncRebuildMeshes);
+    PROFILER(TerrainRebuildMeshInResponseToChanges);
     
     // Kick off a task to rebuild each affected mesh.
     for (const auto &change : changeLog) {
@@ -138,16 +148,11 @@ void Terrain::asyncRebuildMeshes(const ChangeLog &changeLog)
         _meshes->readerTransaction(region, [&](const AABB &cell,
                                                Morton3 index,
                                                const MaybeTerrainMesh &value){
-            asyncRebuildAnotherMesh(cell);
-        });
-    }
-}
-
-void Terrain::asyncRebuildAnotherMesh(const AABB &cell)
-{
-    if (_meshesToRebuild.push(cell)) {
-        _dispatcherRebuildMesh->async([=]{
-            rebuildNextMesh();
+            if (_meshesToRebuild.push(cell)) {
+                _dispatcherRebuildMesh->async([=]{
+                    rebuildNextMesh();
+                });
+            }
         });
     }
 }

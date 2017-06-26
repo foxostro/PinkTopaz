@@ -22,7 +22,7 @@ public:
     
     // Draw the meshes.
     void draw(const std::shared_ptr<CommandEncoder> &encoder,
-              const glm::mat4x4 &modelViewProjection);
+              const Frustum &frustum);
     
     // Update the draw list to include the specified GPU resources.
     void updateDrawList(const TerrainMesh &mesh, const AABB &cell);
