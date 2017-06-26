@@ -14,29 +14,14 @@ bool TerrainMeshQueue::empty() const
     return _cells.empty();
 }
 
-TerrainMeshQueue::MaybeAABB TerrainMeshQueue::pop(const glm::vec3 &cameraPos)
+TerrainMeshQueue::MaybeAABB TerrainMeshQueue::pop()
 {
     std::lock_guard<std::mutex> lock(_lock);
-    
-    float bestDist = std::numeric_limits<float>::infinity();
-    auto best = _cells.end();
-    
-    // Scan to find the cell closest to the camera.
-    for(auto iter = _cells.begin(); iter != _cells.end(); ++iter) {
-        const AABB &thisCell = *iter;
-        const float thisDist = glm::distance(cameraPos, thisCell.center);
-        
-        if (thisDist < bestDist) {
-            best = iter;
-            bestDist = thisDist;
-        }
-    }
-    
-    // If we found a cell then return it.
     MaybeAABB result;
-    if (best != _cells.end()) {
-        const AABB cell = *best;
-        _cells.erase(best);
+    if (!_cells.empty()) {
+        auto iter = _cells.begin();
+        const AABB cell = *iter;
+        _cells.erase(iter);
         result = std::experimental::make_optional(cell);
     }
     return result;

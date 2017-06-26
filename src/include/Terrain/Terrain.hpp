@@ -18,9 +18,51 @@
 #include "Terrain/TerrainDrawList.hpp"
 #include "Terrain/TerrainMeshQueue.hpp"
 #include "RenderableStaticMesh.hpp"
+#include <entityx/entityx.h> // for TimeDelta
 #include <experimental/optional>
 #include <shared_mutex>
+#include <algorithm>
 
+// The terrain horizon scrolls away from the camera as chunks are loaded.
+class TerrainHorizonDistance
+{
+public:
+    TerrainHorizonDistance()
+     : _targetHorizonDistance(STEP),
+       _horizonDistance(STEP)
+    {}
+    
+    // Gets the horizon distance. Takes the lock so this is thread-safe.
+    float get() const
+    {
+        std::shared_lock<std::shared_mutex> lock(_lockHorizonDistance);
+        return _horizonDistance;
+    }
+    
+    // Increments the horizon distance by the step.
+    // Takes the lock so this is thread-safe.
+    void increment()
+    {
+        std::unique_lock<std::shared_mutex> lock(_lockHorizonDistance);
+        _targetHorizonDistance += STEP;
+    }
+    
+    // The horizon distance moves away smoothly over time.
+    void update(entityx::TimeDelta dt)
+    {
+        std::unique_lock<std::shared_mutex> lock(_lockHorizonDistance);
+        _horizonDistance = std::min((float)(_horizonDistance + dt * STEP_PER_MS), _targetHorizonDistance);
+    }
+    
+private:
+    static constexpr float STEP = 16.0f;
+    static constexpr float STEP_PER_MS = STEP / 1000.0f;
+    mutable std::shared_mutex _lockHorizonDistance;
+    float _targetHorizonDistance;
+    float _horizonDistance;
+};
+
+// Object represents the voxel terrain of the world.
 class Terrain
 {
 public:
@@ -35,11 +77,18 @@ public:
     // No default constructor.
     Terrain() = delete;
     
+    // Updates terrain over time.
+    void update(entityx::TimeDelta dt);
+    
     // Passes uniforms down to all terrain meshes.
     void setTerrainUniforms(const TerrainUniforms &uniforms);
     
     // Draws the portions of the terrain which are in view.
     void draw(const std::shared_ptr<CommandEncoder> &encoder);
+    
+    // The terrain system changes the fog density to hide the horizon of loading
+    // terrain chunks.
+    float getFogDensity() const;
     
 private:
     using MaybeTerrainMesh = typename std::experimental::optional<TerrainMesh>;
@@ -61,9 +110,9 @@ private:
     std::unique_ptr<ConcurrentGridMutable<MaybeTerrainMesh>> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     TerrainMeshQueue _meshesToRebuild;
-    std::shared_mutex _lockCameraPosition;
-    glm::vec3 _cameraPos;
     glm::mat4x4 _modelViewProjection;
+    std::atomic<glm::vec3> _cameraPosition;
+    TerrainHorizonDistance _horizonDistance;
     
     // Kicks off asynchronous tasks to rebuild any meshes that are affected by
     // the specified changes.

@@ -14,6 +14,7 @@
 #include <boost/filesystem.hpp>
 
 #include "ActiveCamera.hpp"
+#include "TerrainComponent.hpp"
 #include "WindowSizeChangedEvent.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/StringRenderer.hpp"
@@ -36,6 +37,7 @@ private:
     
     glm::ivec4 _viewport;
     glm::mat4x4 _proj;
+    entityx::Entity _terrainEntity;
     entityx::Entity _activeCamera;
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     StringRenderer _stringRenderer;

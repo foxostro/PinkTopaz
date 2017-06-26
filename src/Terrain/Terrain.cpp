@@ -85,6 +85,11 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     });
 }
 
+void Terrain::update(entityx::TimeDelta dt)
+{
+    _horizonDistance.update(dt);
+}
+
 void Terrain::setTerrainUniforms(const TerrainUniforms &uniforms)
 {
     // The uniforms referenced in the default mesh are also referenced by other
@@ -94,8 +99,7 @@ void Terrain::setTerrainUniforms(const TerrainUniforms &uniforms)
     // Extract the camera position from the camera transform.
     const glm::vec3 cameraPos = glm::vec3(glm::inverse(uniforms.view)[3]);
     _dispatcher->async([this, cameraPos]{
-        std::unique_lock<std::shared_mutex> lock(_lockCameraPosition);
-        _cameraPos = cameraPos;
+        _cameraPosition = cameraPos;
     });
     
     // We'll use the MVP later to extract the camera frustum.
@@ -113,19 +117,31 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
         _meshes->readerTransaction(frustum, [&](const GridAddressable<MaybeTerrainMesh> &data){
             std::vector<AABB> missingMeshes;
             
-            data.forEachCell(frustum, [&](const AABB &cell,
-                                          Morton3 index,
-                                          const MaybeTerrainMesh &maybe){
+            const glm::vec3 cameraPos = _cameraPosition;
+            const float horizonDistance = _horizonDistance.get();
+            
+            data.forEachCell(data.boundingBox(), [&](const AABB &cell,
+                                                     Morton3 index,
+                                                     const MaybeTerrainMesh &maybe){
                 if (maybe) {
                     _drawList->updateDrawList(*maybe, cell);
                 } else {
-                    missingMeshes.push_back(cell);
+                    const float dist = glm::distance(cameraPos, cell.center);
+                    if (dist < horizonDistance) {
+                        missingMeshes.push_back(cell);
+                    }
                 }
             });
             
-            // Kick off a task to rebuild each mesh that was missing.
-            for (size_t i = 0, n = _meshesToRebuild.push(missingMeshes); i < n; ++i) {
-                _dispatcherRebuildMesh->async([=]{ rebuildNextMesh(); });
+            const size_t n = _meshesToRebuild.push(missingMeshes);
+            
+            if (n > 0) {
+                // Kick off a task to rebuild each mesh that was missing.
+                for (size_t i = 0; i < n; ++i) {
+                    _dispatcherRebuildMesh->async([=]{ rebuildNextMesh(); });
+                }
+            } else {
+                _horizonDistance.increment();
             }
         });
     });
@@ -136,6 +152,21 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     encoder->setVertexBuffer(_defaultMesh->uniforms, 1);
     
     _drawList->draw(encoder, frustum);
+}
+
+float Terrain::getFogDensity() const
+{
+    // Fog density decreases as the terrain horizon distance increases.
+    // The density falls along an exponential decay curve. These particular
+    // tuning values were picked because they look pretty good.
+    constexpr float initialValue = 0.3f;
+    constexpr float floorValue = 0.003f;
+    constexpr float decayRate = -8.f;
+    const float maxHorizon = glm::length(_voxels->boundingBox().extent);
+    const float horizonDistance = _horizonDistance.get();
+    const float t = std::min(horizonDistance / maxHorizon, 1.0f);
+    const float fogDensity = initialValue * std::exp(decayRate * t) + floorValue;
+    return fogDensity;
 }
 
 void Terrain::rebuildMeshInResponseToChanges(const ChangeLog &changeLog)
@@ -161,13 +192,7 @@ void Terrain::rebuildNextMesh()
 {
     PROFILER(TerrainRebuildNextMesh);
     
-    static glm::vec3 cameraPosition;
-    {
-        std::shared_lock<std::shared_mutex> lock(_lockCameraPosition);
-        cameraPosition = _cameraPos;
-    }
-    
-    auto maybeCell = _meshesToRebuild.pop(cameraPosition);
+    auto maybeCell = _meshesToRebuild.pop();
     
     if (maybeCell) {
         const AABB &cell = *maybeCell;        

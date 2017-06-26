@@ -42,9 +42,24 @@ void RenderSystem::update(entityx::EntityManager &es,
     if (_activeCamera.valid()) {
         cameraTransform = _activeCamera.component<Transform>()->value;
     }
-        
+    
     // Update the uniform buffers so they include the most recent matrices.
     const glm::mat4 adjust = _graphicsDevice->getProjectionAdjustMatrix();
+    
+    float fogDensity = 0.0f;
+    es.each<TerrainComponent, Transform>([&](entityx::Entity entity,
+                                             TerrainComponent &terrain,
+                                             Transform &transform) {
+        terrain.terrain->update(dt);
+        fogDensity = terrain.terrain->getFogDensity();
+        
+        TerrainUniforms uniforms = {
+            cameraTransform * transform.value,
+            adjust * _proj,
+            fogDensity
+        };
+        terrain.terrain->setTerrainUniforms(uniforms);
+    });
     
     es.each<RenderableStaticMesh, Transform>([&](entityx::Entity entity,
                                                  RenderableStaticMesh &mesh,
@@ -52,24 +67,15 @@ void RenderSystem::update(entityx::EntityManager &es,
         TerrainUniforms uniforms = {
             cameraTransform * transform.value,
             adjust * _proj,
+            fogDensity
         };
         mesh.uniforms->replace(sizeof(uniforms), &uniforms);
     });
     
-    es.each<TerrainComponent, Transform>([&](entityx::Entity entity,
-                                             TerrainComponent &terrain,
-                                             Transform &transform) {
-        TerrainUniforms uniforms = {
-            cameraTransform * transform.value,
-            adjust * _proj,
-        };
-        terrain.terrain->setTerrainUniforms(uniforms);
-    });
-    
     // Render all meshes.
     RenderPassDescriptor desc = {
-        true,
-        glm::vec4(0.2f, 0.4f, 0.5f, 1.0f)
+        /* clear = */ true,
+        /* clear color = */ glm::vec4(0.2f, 0.4f, 0.5f, 1.0f)
     };
     auto encoder = _graphicsDevice->encoder(desc);
     
@@ -97,7 +103,7 @@ void RenderSystem::update(entityx::EntityManager &es,
     _graphicsDevice->swapBuffers();
     _frameTimer.tick();
 }
-    
+
 void RenderSystem::receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)
 {
     _activeCamera = event.entity;

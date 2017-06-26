@@ -19,11 +19,13 @@ struct TerrainProjectedVertex
     float4 position [[position]];
     float4 color;
     float3 texCoord;
+    float fogDensity;
 };
 
 struct TerrainUniforms
 {
     float4x4 view, proj;
+    float fogDensity;
 };
 
 vertex TerrainProjectedVertex vert(TerrainVertex inVert [[stage_in]],
@@ -33,11 +35,11 @@ vertex TerrainProjectedVertex vert(TerrainVertex inVert [[stage_in]],
     outVert.position = u.proj * u.view * inVert.vp;
     outVert.color = inVert.vc;
     outVert.texCoord = inVert.vt;
+    outVert.fogDensity = u.fogDensity;
     return outVert;
 }
 
-constant float4 fogColor = float4(0.7, 0.7, 0.7, 1.0);
-constant float fogDensity = 0.003;
+constant float4 fogColor = float4(0.2, 0.4, 0.5, 1.0);
 constant float e = 2.71828182845904523536028747135266249;
 
 fragment float4 frag(TerrainProjectedVertex vert [[stage_in]],
@@ -54,7 +56,7 @@ fragment float4 frag(TerrainProjectedVertex vert [[stage_in]],
     // necessary so that fog drawn with the Metal shader has the same density
     // as fog drawn with the GLSL shader.
     float depth = 2*vert.position.z / vert.position.w;
-    float f = pow(e, -pow(depth * fogDensity, 2.0));
+    float f = pow(e, -pow(depth * vert.fogDensity, 2.0));
     return mix(fogColor, baseColor, f);
 }
 

@@ -44,9 +44,10 @@ private:
     }
 };
 
-struct TerrainUniforms
+struct alignas(16) TerrainUniforms
 {
     glm::mat4 view, proj;
+    float fogDensity;
 };
 
 #endif /* TerrainVertex_hpp */

@@ -26,9 +26,7 @@ public:
     bool empty() const;
     
     // Get the cell for the next mesh to generate.
-    // `cameraPosition' is provided so we can make sure we generate meshes close
-    // to the camera before generating meshes further away.
-    MaybeAABB pop(const glm::vec3 &cameraPosition);
+    MaybeAABB pop();
     
     // Add another cell to the list. Returns true if the insert succeeded.
     // Returns false in the case where the cell was already in the queue.

@@ -6,15 +6,18 @@ layout (location=2) in vec3 vt;
 
 out vec3 texCoord;
 out vec4 color;
+out float vertexFogDensity;
 
 layout (std140) uniform TerrainUniforms
 {
-	mat4 view, proj;
+    mat4 view, proj;
+    float fogDensity;
 };
 
 void main()
 {
     texCoord = vt;
     color = vc;
+    vertexFogDensity = fogDensity;
     gl_Position = proj * view * vp;
 }
