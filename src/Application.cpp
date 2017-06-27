@@ -60,7 +60,7 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
         const uint64_t nextTime = currentTime + videoRefreshPeriodNanos;
         SDL_Event e;
         
-        if (SDL_PollEvent(&e)) {
+        while (SDL_PollEvent(&e)) {
             switch(e.type)
             {
                 case SDL_QUIT:
