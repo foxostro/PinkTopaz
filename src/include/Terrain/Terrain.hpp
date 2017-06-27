@@ -68,7 +68,7 @@ class Terrain
 public:
     static constexpr unsigned TERRAIN_CHUNK_SIZE = 16;
     
-    ~Terrain() = default;
+    ~Terrain();
     
     Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             const std::shared_ptr<TaskDispatcher> &dispatcher,

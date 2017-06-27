@@ -11,6 +11,12 @@
 #include "SDL_image.h"
 #include "Profiler.hpp"
 
+Terrain::~Terrain()
+{
+    _dispatcher->shutdown();
+    _dispatcherRebuildMesh->shutdown();
+}
+
 Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                  const std::shared_ptr<TaskDispatcher> &dispatcher,
                  const std::shared_ptr<TaskDispatcher> &dispatcherRebuildMesh)
