@@ -48,10 +48,8 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     }
     
     uint64_t currentTime = stopwatch.getCurrentTimeInNanos();
-    bool quit = false;
     
-    while(!quit)
-    {
+    while (true) {
         PROFILER(Frame);
         
         const uint64_t newTime = stopwatch.getCurrentTimeInNanos();
@@ -66,10 +64,7 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                 case SDL_QUIT:
                     PROFILER_SIGNPOST(Quit);
                     SDL_Log("Received SDL_QUIT.");
-                    quit = true;
-                    dispatcherHighPriority->shutdown();
-                    dispatcherLowPriority->shutdown();
-                    break;
+                    return;
                     
                 case SDL_WINDOWEVENT:
                     switch(e.window.event)
@@ -85,6 +80,8 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                             event.windowScaleFactor = windowScaleFactor(_window);
                             gameWorld.events.emit(event);
                         } break;
+                        
+                        // AFOX_TODO: Bring back KeyboardEvent and MouseEvent now that it seems clear the real problem was only processing one input event per frame. Previously, we were only calling SDL_PollEvent() once per frame.
                     }
                     break;
             }
