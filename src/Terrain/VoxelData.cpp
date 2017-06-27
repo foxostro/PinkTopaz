@@ -67,7 +67,6 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
     assert(dst.inbounds(region));
     
     // Iterate over all chunks in the region.
-    std::lock_guard<std::mutex> lock(_lockChunks);
     _chunks.mutableForEachCell(region, [&](const AABB &chunkBoundingBox,
                                            Morton3 chunkIndex,
                                            MaybeChunk &maybeChunk){
@@ -96,13 +95,9 @@ VoxelData::MaybeChunk& VoxelData::chunkAtPoint(const glm::vec3 &p) const
 {
     // The chunk itself will already have been locked by the VoxelDataStore at
     // this point. We only need to protect access to `_chunks' itself.
-    MaybeChunk *pMaybeChunk;
-    {
-        std::lock_guard<std::mutex> lock(_lockChunks);
-        pMaybeChunk = &_chunks.mutableReference(p);
-    }
-    emplaceChunkIfNecessary(p, *pMaybeChunk);
-    return *pMaybeChunk;
+    MaybeChunk &maybeChunk = _chunks.mutableReference(p);
+    emplaceChunkIfNecessary(p, maybeChunk);
+    return maybeChunk;
 }
 
 void VoxelData::emplaceChunkIfNecessary(const glm::vec3 &p,

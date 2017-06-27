@@ -67,8 +67,6 @@ private:
     
     // The voxel grid is broken into chunks where each chunk is a fixed-size
     // grid of voxels.
-    // AFOX_TODO: Replace _chunks and _lockChunks with something that uses ConcurrentMutableGrid<MaybeChunk>.
-    mutable std::mutex _lockChunks;
     mutable Array3D<MaybeChunk> _chunks;
     
     // Fetches the chunk at the specified point in space `p'. This may create
