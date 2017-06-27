@@ -9,6 +9,7 @@
 #include "Renderer/OpenGL/TextureSamplerOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
+#include "SDL.h"
 
 GLint textureSamplerAddressModeEnum(TextureSamplerAddressMode mode)
 {
@@ -46,6 +47,7 @@ TextureSamplerOpenGL::TextureSamplerOpenGL(const std::shared_ptr<CommandQueue> &
     const GLint maxFilter = textureSamplerFilterEnum(desc.maxFilter);
     
     _commandQueue->enqueue([=]{
+        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "TextureSamplerOpenGL::TextureSamplerOpenGL");
         GLuint sampler;
         glGenSamplers(1, &sampler);
         glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, addressS);
@@ -62,6 +64,7 @@ TextureSamplerOpenGL::~TextureSamplerOpenGL()
 {
     GLuint handle = _handle;
     _commandQueue->enqueue([=]{
+        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "TextureSamplerOpenGL::~TextureSamplerOpenGL");
         glDeleteSamplers(1, &handle);
         CHECK_GL_ERROR();
     });

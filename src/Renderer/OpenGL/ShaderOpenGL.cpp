@@ -11,6 +11,7 @@
 #include "Exception.hpp"
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
+#include "SDL.h"
 
 static void checkShaderCompileStatus(GLuint shader)
 {
@@ -59,6 +60,8 @@ ShaderOpenGL::ShaderOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
    _commandQueue(commandQueue)
 {
     _commandQueue->enqueue([=]{
+        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "ShaderOpenGL::ShaderOpenGL");
+        
         const GLchar *vert = (const GLchar *)vertexShaderSource.c_str();
         const GLchar *frag = (const GLchar *)fragmentShaderSource.c_str();
         
@@ -92,6 +95,7 @@ ShaderOpenGL::~ShaderOpenGL()
 {
     GLuint program = _program;
     _commandQueue->enqueue([=]{
+        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "ShaderOpenGL::~ShaderOpenGL");
         if (program) {
             glDeleteProgram(program);
             CHECK_GL_ERROR();

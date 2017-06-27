@@ -9,6 +9,7 @@
 #include "Renderer/OpenGL/TextureOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
+#include "SDL.h"
 
 GLenum textureTargetEnum(TextureType type)
 {
@@ -103,6 +104,7 @@ void TextureOpenGL::commonInit(const TextureDescriptor &desc,
                                const std::vector<uint8_t> &data)
 {
     _commandQueue->enqueue([=]{
+        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "TextureOpenGL::commonInit");
         const GLenum target = _target = textureTargetEnum(desc.type);
         constexpr GLint level = 0;
         const GLint internalFormat = textureInternalFormat(desc.format);
@@ -148,6 +150,7 @@ TextureOpenGL::~TextureOpenGL()
 {
     GLuint handle = _handle;
     _commandQueue->enqueue([=]{
+        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "TextureOpenGL::~TextureOpenGL");
         if (handle) {
             glDeleteTextures(1, &handle);
             CHECK_GL_ERROR();

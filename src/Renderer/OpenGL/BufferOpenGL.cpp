@@ -9,6 +9,7 @@
 #include "Renderer/OpenGL/BufferOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
+#include "SDL.h"
 
 static GLenum getUsageEnum(BufferUsage usage)
 {
@@ -30,7 +31,7 @@ GLenum getBufferTypeEnum(BufferType type)
         case UniformBuffer: return GL_UNIFORM_BUFFER;
             
         default:
-            throw Exception("Unsupported buffer type %d\n", (int)type);
+            throw Exception("Unsupported buffer type %x\n", (int)type);
     }
 }
 
@@ -45,6 +46,7 @@ BufferOpenGL::BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
    _commandQueue(commandQueue)
 {
     _commandQueue->enqueue([=]{
+        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "BufferOpenGL::BufferOpenGL 1");
         internalCreate(bufferData.size(), (void *)&bufferData[0]);
     });
 }
@@ -78,6 +80,7 @@ BufferOpenGL::BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
    _commandQueue(commandQueue)
 {
     _commandQueue->enqueue([=]{
+        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "BufferOpenGL::BufferOpenGL 2");
         internalCreate(bufferSize, nullptr);
     });
 }
@@ -167,7 +170,10 @@ BufferOpenGL::~BufferOpenGL()
 {
     GLuint vao = _vao, vbo = _vbo;
     
+    // AFOX_TODO: What if other tasks previously submitted to the command queue have not completed?
+    
     _commandQueue->enqueue([=]{
+        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "BufferOpenGL::~BufferOpenGL");
         if (vbo) {
             glDeleteBuffers(1, &vbo);
         }
