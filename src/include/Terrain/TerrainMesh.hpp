@@ -21,7 +21,7 @@ class TerrainMesh
 public:
     using MaybeMesh = typename std::experimental::optional<RenderableStaticMesh>;
     
-    ~TerrainMesh();
+    ~TerrainMesh() = default;
     
     // Constructor.
     // meshBox -- Bounding box for the associated chunk of terrain.
@@ -48,7 +48,7 @@ public:
     TerrainMesh& operator=(const TerrainMesh &rhs);
     
     // Returns an optional that contains the mesh, if the mesh is present.
-    MaybeMesh getMesh() const;
+    RenderableStaticMesh getMesh() const;
     
     // Causes the mesh to be rebuilt using the voxel data store.
     void rebuild();

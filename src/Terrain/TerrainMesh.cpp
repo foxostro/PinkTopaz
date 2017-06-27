@@ -9,8 +9,6 @@
 #include "Terrain/TerrainMesh.hpp"
 #include <thread>
 
-TerrainMesh::~TerrainMesh() {}
-
 TerrainMesh::TerrainMesh(const AABB &meshBox,
                          const std::shared_ptr<RenderableStaticMesh> &defMesh,
                          const std::shared_ptr<GraphicsDevice> &graphicsDevice,
@@ -58,10 +56,10 @@ TerrainMesh& TerrainMesh::operator=(const TerrainMesh &rhs)
     return *this;
 }
 
-TerrainMesh::MaybeMesh TerrainMesh::getMesh() const
+RenderableStaticMesh TerrainMesh::getMesh() const
 {
     std::lock_guard<std::mutex> lock(_lockMesh);
-    return MaybeMesh(_mesh);
+    return _mesh;
 }
 
 void TerrainMesh::rebuild()

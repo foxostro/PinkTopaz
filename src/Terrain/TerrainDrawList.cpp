@@ -26,13 +26,9 @@ void TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
 
 void TerrainDrawList::updateDrawList(const TerrainMesh &mesh, const AABB &cell)
 {
-    auto maybeRenderableMesh = mesh.getMesh();
-    if (maybeRenderableMesh) {
-        auto thisMesh = *maybeRenderableMesh;
-        _meshes.writerTransaction(cell, [&](const AABB &cell,
-                                            Morton3 index,
-                                            RenderableStaticMesh &value){
-            value = thisMesh;
-        });
-    }
+    _meshes.writerTransaction(cell, [&](const AABB &cell,
+                                        Morton3 index,
+                                        RenderableStaticMesh &value){
+        value = mesh.getMesh();
+    });
 }
