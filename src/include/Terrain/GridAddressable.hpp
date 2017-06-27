@@ -6,8 +6,6 @@
 //
 //
 
-// AFOX_TODO: Change the name of this file to Grid.hpp
-
 #ifndef GridAddressable_hpp
 #define GridAddressable_hpp
 

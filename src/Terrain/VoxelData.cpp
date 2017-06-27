@@ -66,26 +66,11 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
     Array3D<Voxel> dst(adjustedRegion, res);
     assert(dst.inbounds(region));
     
-    // The chunks themselves have already been locked by the VoxelDataStore,
-    // but we'll still need to protect accesses to `_chunks'. Let's collect the
-    // chunks under the lock and then process the chunks afterward.
-    // AFOX_TODO: I'm not sure I need to do this step at all.
-    std::vector<std::pair<AABB, std::reference_wrapper<MaybeChunk>>> chunks;
-    {
-        std::lock_guard<std::mutex> lock(_lockChunks);
-        _chunks.mutableForEachCell(region, [&](const AABB &chunkBoundingBox,
-                                               Morton3 chunkIndex,
-                                               MaybeChunk &maybeChunk){
-            auto pair = std::make_pair(chunkBoundingBox, std::reference_wrapper<MaybeChunk>(maybeChunk));
-            chunks.push_back(pair);
-        });
-    }
-    
     // Iterate over all chunks in the region.
-    for (auto &pair : chunks) {
-        const auto &chunkBoundingBox = pair.first;
-        MaybeChunk &maybeChunk = pair.second;
-        
+    std::lock_guard<std::mutex> lock(_lockChunks);
+    _chunks.mutableForEachCell(region, [&](const AABB &chunkBoundingBox,
+                                           Morton3 chunkIndex,
+                                           MaybeChunk &maybeChunk){
         // Build the chunk if it is missing.
         emplaceChunkIfNecessary(chunkBoundingBox.center, maybeChunk);
         
@@ -102,7 +87,7 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
             // spent in rebuildNextMesh(), and 32% of the time spent in copy().
             dst.mutableReference(cell.center) = voxel;
         });
-    }
+    });
     
     return dst;
 }
