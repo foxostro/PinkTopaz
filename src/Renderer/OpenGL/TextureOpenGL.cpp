@@ -70,10 +70,12 @@ size_t textureDataTypeSize(TextureFormat format)
     }
 }
 
-TextureOpenGL::TextureOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+TextureOpenGL::TextureOpenGL(unsigned id,
+                             const std::shared_ptr<CommandQueue> &commandQueue,
                              const TextureDescriptor &desc,
                              const void *data)
- : _target(0),
+ : _id(id),
+   _target(0),
    _handle(0),
    _commandQueue(commandQueue)
 {
@@ -84,10 +86,12 @@ TextureOpenGL::TextureOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
     commonInit(desc, wrappedData);
 }
 
-TextureOpenGL::TextureOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+TextureOpenGL::TextureOpenGL(unsigned id,
+                             const std::shared_ptr<CommandQueue> &commandQueue,
                              const TextureDescriptor &desc,
                              const std::vector<uint8_t> &data)
- : _target(0),
+ : _id(id),
+   _target(0),
    _handle(0),
    _commandQueue(commandQueue)
 {
@@ -103,7 +107,7 @@ TextureOpenGL::TextureOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
 void TextureOpenGL::commonInit(const TextureDescriptor &desc,
                                const std::vector<uint8_t> &data)
 {
-    _commandQueue->enqueue([=]{
+    _commandQueue->enqueue(_id, [=]{
         SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "TextureOpenGL::commonInit");
         const GLenum target = _target = textureTargetEnum(desc.type);
         constexpr GLint level = 0;
@@ -148,8 +152,9 @@ void TextureOpenGL::commonInit(const TextureDescriptor &desc,
 
 TextureOpenGL::~TextureOpenGL()
 {
-    GLuint handle = _handle;
-    _commandQueue->enqueue([=]{
+    const GLuint handle = _handle;
+    _commandQueue->cancel(_id);
+    _commandQueue->enqueue(0, [handle]{
         SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "TextureOpenGL::~TextureOpenGL");
         if (handle) {
             glDeleteTextures(1, &handle);

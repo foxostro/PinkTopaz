@@ -96,6 +96,9 @@ public:
     }
     
 private:
+    unsigned nextId();
+    
+    std::atomic<unsigned> _nextId;
     SDL_Window &_window;
     SDL_GLContext _glContext;
     std::shared_ptr<CommandQueue> _commandQueue;

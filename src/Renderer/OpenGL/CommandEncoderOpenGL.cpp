@@ -15,11 +15,13 @@
 #include "Exception.hpp"
 #include "SDL.h"
 
-CommandEncoderOpenGL::CommandEncoderOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+CommandEncoderOpenGL::CommandEncoderOpenGL(unsigned id,
+                                           const std::shared_ptr<CommandQueue> &commandQueue,
                                            const RenderPassDescriptor &desc)
- : _mainCommandQueue(commandQueue)
+ : _id(id),
+   _mainCommandQueue(commandQueue)
 {
-    _encoderCommandQueue.enqueue([=]{
+    _encoderCommandQueue.enqueue(_id, [=]{
         if (desc.clear) {
             glClearColor(desc.clearColor.r, desc.clearColor.g,
                          desc.clearColor.b, desc.clearColor.a);
@@ -37,7 +39,7 @@ CommandEncoderOpenGL::CommandEncoderOpenGL(const std::shared_ptr<CommandQueue> &
 
 void CommandEncoderOpenGL::setViewport(const glm::ivec4 &viewport)
 {
-    _encoderCommandQueue.enqueue([=]{
+    _encoderCommandQueue.enqueue(_id, [=]{
         glViewport(viewport.x, viewport.y, viewport.z, viewport.w);
         CHECK_GL_ERROR();
     });
@@ -46,7 +48,7 @@ void CommandEncoderOpenGL::setViewport(const glm::ivec4 &viewport)
 void CommandEncoderOpenGL::setShader(const std::shared_ptr<Shader> &abstractShader)
 {
     assert(abstractShader);
-    _encoderCommandQueue.enqueue([=]{
+    _encoderCommandQueue.enqueue(_id, [=]{
         auto shader = std::dynamic_pointer_cast<ShaderOpenGL>(abstractShader);
         GLuint program = shader->getProgram();
         glUseProgram(program);
@@ -67,7 +69,7 @@ void CommandEncoderOpenGL::setShader(const std::shared_ptr<Shader> &abstractShad
 void CommandEncoderOpenGL::setFragmentTexture(const std::shared_ptr<Texture> &abstractTexture, size_t index)
 {
     assert(abstractTexture);
-    _encoderCommandQueue.enqueue([=]{
+    _encoderCommandQueue.enqueue(_id, [=]{
         auto texture = std::dynamic_pointer_cast<TextureOpenGL>(abstractTexture);
         GLuint handle = texture->getHandle();
         glActiveTexture(GL_TEXTURE0 + (GLenum)index);
@@ -79,7 +81,7 @@ void CommandEncoderOpenGL::setFragmentTexture(const std::shared_ptr<Texture> &ab
 void CommandEncoderOpenGL::setFragmentSampler(const std::shared_ptr<TextureSampler> &abstractSampler, size_t index)
 {
     assert(abstractSampler);
-    _encoderCommandQueue.enqueue([=]{
+    _encoderCommandQueue.enqueue(_id, [=]{
         auto sampler = std::dynamic_pointer_cast<TextureSamplerOpenGL>(abstractSampler);
         GLuint handle = sampler->getHandle();
         glBindSampler(index, handle);
@@ -91,7 +93,7 @@ void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstra
 {
     assert(abstractBuffer);
     
-    _encoderCommandQueue.enqueue([=]{
+    _encoderCommandQueue.enqueue(_id, [=]{
         if (!_currentShader) {
             throw Exception("Must bind a shader before calling setVertexBuffer().");
         }
@@ -125,7 +127,7 @@ void CommandEncoderOpenGL::setFragmentBuffer(const std::shared_ptr<Buffer> &abst
 
 void CommandEncoderOpenGL::drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances)
 {
-    _encoderCommandQueue.enqueue([=]{
+    _encoderCommandQueue.enqueue(_id, [=]{
         GLenum mode;
         
         switch (type) {
@@ -183,7 +185,7 @@ void CommandEncoderOpenGL::commit()
 
 void CommandEncoderOpenGL::setDepthTest(bool enable)
 {
-    _encoderCommandQueue.enqueue([=]{
+    _encoderCommandQueue.enqueue(_id, [=]{
         internalSetDepthTest(enable);
     });
 }

@@ -35,28 +35,32 @@ GLenum getBufferTypeEnum(BufferType type)
     }
 }
 
-BufferOpenGL::BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+BufferOpenGL::BufferOpenGL(unsigned id,
+                           const std::shared_ptr<CommandQueue> &commandQueue,
                            const std::vector<uint8_t> &bufferData,
                            BufferUsage usage,
                            BufferType bufferType)
- : _vao(0),
+ : _id(id),
+   _vao(0),
    _vbo(0),
    _usage(getUsageEnum(usage)),
    _bufferType(bufferType),
    _commandQueue(commandQueue)
 {
-    _commandQueue->enqueue([=]{
+    _commandQueue->enqueue(_id, [=]{
         SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "BufferOpenGL::BufferOpenGL 1");
         internalCreate(bufferData.size(), (void *)&bufferData[0]);
     });
 }
 
-BufferOpenGL::BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+BufferOpenGL::BufferOpenGL(unsigned id,
+                           const std::shared_ptr<CommandQueue> &commandQueue,
                            size_t bufferSize,
                            const void *bufferData,
                            BufferUsage usage,
                            BufferType bufferType)
- : _vao(0),
+: _id(id),
+   _vao(0),
    _vbo(0),
    _usage(getUsageEnum(usage)),
    _bufferType(bufferType),
@@ -64,22 +68,24 @@ BufferOpenGL::BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
 {
     std::vector<uint8_t> wrappedData(bufferSize);
     memcpy(&wrappedData[0], bufferData, bufferSize);
-    _commandQueue->enqueue([data{std::move(wrappedData)}, this]{
+    _commandQueue->enqueue(_id, [data{std::move(wrappedData)}, this]{
         internalCreate(data.size(), (void *)&data[0]);
     });
 }
 
-BufferOpenGL::BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+BufferOpenGL::BufferOpenGL(unsigned id,
+                           const std::shared_ptr<CommandQueue> &commandQueue,
                            size_t bufferSize,
                            BufferUsage usage,
                            BufferType bufferType)
- : _vao(0),
+ : _id(id),
+   _vao(0),
    _vbo(0),
    _usage(getUsageEnum(usage)),
    _bufferType(bufferType),
    _commandQueue(commandQueue)
 {
-    _commandQueue->enqueue([=]{
+    _commandQueue->enqueue(_id, [=]{
         SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "BufferOpenGL::BufferOpenGL 2");
         internalCreate(bufferSize, nullptr);
     });
@@ -143,7 +149,7 @@ void BufferOpenGL::internalReplace(size_t bufferSize, const void *bufferData)
 
 void BufferOpenGL::replace(const std::vector<uint8_t> &wrappedData)
 {
-    _commandQueue->enqueue([wrappedData, this]{
+    _commandQueue->enqueue(_id, [wrappedData, this]{
         size_t n = wrappedData.size();
         const void *p = (const void *)&wrappedData[0];
         internalReplace(n, p);
@@ -152,7 +158,7 @@ void BufferOpenGL::replace(const std::vector<uint8_t> &wrappedData)
 
 void BufferOpenGL::replace(std::vector<uint8_t> &&wrappedData)
 {
-    _commandQueue->enqueue([data{std::move(wrappedData)}, this]{
+    _commandQueue->enqueue(_id, [data{std::move(wrappedData)}, this]{
         size_t n = data.size();
         const void *p = (const void *)&data[0];
         internalReplace(n, p);
@@ -168,12 +174,15 @@ void BufferOpenGL::replace(size_t size, const void *data)
 
 BufferOpenGL::~BufferOpenGL()
 {
-    GLuint vao = _vao, vbo = _vbo;
+    const unsigned id = _id;
+    const GLuint vao = _vao;
+    const GLuint vbo = _vbo;
     
-    // AFOX_TODO: What if other tasks previously submitted to the command queue have not completed?
+    _commandQueue->cancel(id);
     
-    _commandQueue->enqueue([=]{
+    _commandQueue->enqueue(0, [vao, vbo]{
         SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "BufferOpenGL::~BufferOpenGL");
+        
         if (vbo) {
             glDeleteBuffers(1, &vbo);
         }

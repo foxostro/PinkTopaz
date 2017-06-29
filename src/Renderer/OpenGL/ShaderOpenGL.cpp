@@ -49,17 +49,19 @@ static void checkProgramLinkStatus(GLuint program)
     }
 }
 
-ShaderOpenGL::ShaderOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+ShaderOpenGL::ShaderOpenGL(unsigned id,
+                           const std::shared_ptr<CommandQueue> &commandQueue,
                            const VertexFormat &vertexFormat,
                            const std::string &vertexShaderSource,
                            const std::string &fragmentShaderSource,
                            bool blending)
- : _program(0),
+ : _id(id),
+   _program(0),
    _vertexFormat(vertexFormat),
    _blending(blending),
    _commandQueue(commandQueue)
 {
-    _commandQueue->enqueue([=]{
+    _commandQueue->enqueue(_id, [=]{
         SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "ShaderOpenGL::ShaderOpenGL");
         
         const GLchar *vert = (const GLchar *)vertexShaderSource.c_str();
@@ -93,8 +95,9 @@ ShaderOpenGL::ShaderOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
 
 ShaderOpenGL::~ShaderOpenGL()
 {
-    GLuint program = _program;
-    _commandQueue->enqueue([=]{
+    const GLuint program = _program;
+    _commandQueue->cancel(_id);
+    _commandQueue->enqueue(0, [program]{
         SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "ShaderOpenGL::~ShaderOpenGL");
         if (program) {
             glDeleteProgram(program);

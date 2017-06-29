@@ -17,7 +17,8 @@
 class ShaderOpenGL : public Shader
 {
 public:
-    ShaderOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+    ShaderOpenGL(unsigned id,
+                 const std::shared_ptr<CommandQueue> &commandQueue,
                  const VertexFormat &vertexFormat,
                  const std::string &vertexShaderSource,
                  const std::string &fragmentShaderSource,
@@ -30,6 +31,7 @@ public:
     inline bool getBlending() const { return _blending; }
     
 private:
+    unsigned _id;
     GLuint _program;
     VertexFormat _vertexFormat;
     bool _blending;

@@ -17,7 +17,8 @@
 class CommandEncoderOpenGL : public CommandEncoder
 {
 public:
-    CommandEncoderOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+    CommandEncoderOpenGL(unsigned id,
+                         const std::shared_ptr<CommandQueue> &commandQueue,
                          const RenderPassDescriptor &desc);
     
     void setViewport(const glm::ivec4 &viewport) override;
@@ -37,6 +38,7 @@ private:
     
     void internalSetDepthTest(bool enable);
     
+    unsigned _id;
     std::shared_ptr<ShaderOpenGL> _currentShader;
     std::shared_ptr<CommandQueue> _mainCommandQueue;
     CommandQueue _encoderCommandQueue;

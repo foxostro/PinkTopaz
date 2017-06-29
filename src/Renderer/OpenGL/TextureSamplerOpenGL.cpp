@@ -36,9 +36,11 @@ GLint textureSamplerFilterEnum(TextureSamplerFilter filter)
     }
 }
 
-TextureSamplerOpenGL::TextureSamplerOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+TextureSamplerOpenGL::TextureSamplerOpenGL(unsigned id,
+                                           const std::shared_ptr<CommandQueue> &commandQueue,
                                            const TextureSamplerDescriptor &desc)
- : _handle(0),
+ : _id(id),
+   _handle(0),
    _commandQueue(commandQueue)
 {
     const GLint addressS = textureSamplerAddressModeEnum(desc.addressS);
@@ -46,7 +48,7 @@ TextureSamplerOpenGL::TextureSamplerOpenGL(const std::shared_ptr<CommandQueue> &
     const GLint minFilter = textureSamplerFilterEnum(desc.minFilter);
     const GLint maxFilter = textureSamplerFilterEnum(desc.maxFilter);
     
-    _commandQueue->enqueue([=]{
+    _commandQueue->enqueue(_id, [=]{
         SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "TextureSamplerOpenGL::TextureSamplerOpenGL");
         GLuint sampler;
         glGenSamplers(1, &sampler);
@@ -62,10 +64,13 @@ TextureSamplerOpenGL::TextureSamplerOpenGL(const std::shared_ptr<CommandQueue> &
 
 TextureSamplerOpenGL::~TextureSamplerOpenGL()
 {
-    GLuint handle = _handle;
-    _commandQueue->enqueue([=]{
+    const GLuint handle = _handle;
+    _commandQueue->cancel(_id);
+    _commandQueue->enqueue(0, [handle]{
         SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "TextureSamplerOpenGL::~TextureSamplerOpenGL");
-        glDeleteSamplers(1, &handle);
-        CHECK_GL_ERROR();
+        if (handle) {
+            glDeleteSamplers(1, &handle);
+            CHECK_GL_ERROR();
+        }
     });
 }

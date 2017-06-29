@@ -19,18 +19,21 @@ GLenum getBufferTypeEnum(BufferType type);
 class BufferOpenGL : public Buffer
 {
 public:
-    BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+    BufferOpenGL(unsigned id,
+                 const std::shared_ptr<CommandQueue> &commandQueue,
                  const std::vector<uint8_t> &bufferData,
                  BufferUsage usage,
                  BufferType bufferType);
     
-    BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+    BufferOpenGL(unsigned id,
+                 const std::shared_ptr<CommandQueue> &commandQueue,
                  size_t bufferSize,
                  const void *bufferData,
                  BufferUsage usage,
                  BufferType bufferType);
     
-    BufferOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+    BufferOpenGL(unsigned id,
+                 const std::shared_ptr<CommandQueue> &commandQueue,
                  size_t bufferSize,
                  BufferUsage usage,
                  BufferType bufferType);
@@ -60,6 +63,7 @@ public:
     BufferType getType() const override { return _bufferType; }
     
 private:
+    unsigned _id;
     GLuint _vao, _vbo;
     GLenum _usage;
     const BufferType _bufferType;

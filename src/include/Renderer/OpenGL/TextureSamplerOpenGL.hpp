@@ -23,7 +23,8 @@ GLint textureSamplerFilterEnum(TextureSamplerFilter filter);
 class TextureSamplerOpenGL : public TextureSampler
 {
 public:
-    TextureSamplerOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+    TextureSamplerOpenGL(unsigned id,
+                         const std::shared_ptr<CommandQueue> &commandQueue,
                          const TextureSamplerDescriptor &desc);
     
     virtual ~TextureSamplerOpenGL();
@@ -31,6 +32,7 @@ public:
     inline GLuint getHandle() const { return _handle; }
     
 private:
+    unsigned _id;
     GLuint _handle;
     std::shared_ptr<CommandQueue> _commandQueue;
 };

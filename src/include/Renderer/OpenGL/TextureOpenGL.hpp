@@ -48,11 +48,13 @@ public:
     // data -- A pointer to the bytes of data used in the texture. This is
     //         copied when received to prevent problems should the OpenGL
     //         commands run at a later time or on a different thread.
-    TextureOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+    TextureOpenGL(unsigned id,
+                  const std::shared_ptr<CommandQueue> &commandQueue,
                   const TextureDescriptor &desc,
                   const void *data);
     
-    TextureOpenGL(const std::shared_ptr<CommandQueue> &commandQueue,
+    TextureOpenGL(unsigned id,
+                  const std::shared_ptr<CommandQueue> &commandQueue,
                   const TextureDescriptor &desc,
                   const std::vector<uint8_t> &data);
     
@@ -65,6 +67,7 @@ private:
     void commonInit(const TextureDescriptor &desc,
                     const std::vector<uint8_t> &data);
     
+    unsigned _id;
     GLenum _target;
     GLuint _handle;
     std::shared_ptr<CommandQueue> _commandQueue;
