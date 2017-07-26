@@ -11,7 +11,7 @@
 
 TaskDispatcher::TaskDispatcher() : _threadShouldExit(false)
 {
-    for (unsigned i = 0, numTheads = std::max(1u, std::thread::hardware_concurrency()); i < numTheads; ++i) {
+    for (unsigned i = 0, numTheads = std::max(1u, 4*std::thread::hardware_concurrency()); i < numTheads; ++i) {
         _threads.emplace_back([this]{
             worker();
         });

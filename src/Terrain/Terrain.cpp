@@ -120,6 +120,11 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     // to fetch them asynchronously.
     _dispatcher->async([=]{
         PROFILER(TerrainFetchMeshes);
+        
+        // TODO: Add API to do a transaction for all cells for which we can get
+        // the lock without blocking. We assume the other cells are missing and
+        // skip those. This will reduce lock contention.
+        
         _meshes->readerTransaction(frustum, [&](const GridAddressable<MaybeTerrainMesh> &data){
             std::vector<AABB> missingMeshes;
             
@@ -209,7 +214,6 @@ void Terrain::rebuildNextMesh()
                 maybe.emplace(cell, _defaultMesh, _graphicsDevice, _mesher, _voxels);
             }
             maybe->rebuild();
-            _drawList->updateDrawList(*maybe, cell);
         });
     }
 }
