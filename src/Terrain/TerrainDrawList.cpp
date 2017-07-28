@@ -31,9 +31,10 @@ void TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder, const
     });
 }
 
-void TerrainDrawList::updateDrawList(const TerrainMesh &mesh, const AABB &cell)
+void TerrainDrawList::updateDrawList(const TerrainMesh &mesh)
 {
     std::shared_lock<std::shared_mutex> lock(_lock);
+    const AABB &cell = mesh.boundingBox();
     _back->writerTransaction(cell, [&](const AABB &cell,
                                        Morton3 index,
                                        RenderableStaticMesh &value){

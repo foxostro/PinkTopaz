@@ -11,6 +11,7 @@
 
 #include "GridAddressable.hpp"
 #include "GridView.hpp"
+#include "Array3D.hpp"
 
 #include <mutex>
 #include <vector>

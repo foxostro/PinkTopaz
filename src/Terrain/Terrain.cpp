@@ -81,7 +81,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     const glm::ivec3 res = _voxelDataGenerator->countCellsInRegion(box) / (int)TERRAIN_CHUNK_SIZE;
     _drawList = std::make_unique<TerrainDrawList>(box, res);
     auto meshesArray = std::make_unique<Array3D<MaybeTerrainMesh>>(box, res);
-    _meshes = std::make_unique<ConcurrentGridMutable<MaybeTerrainMesh>>(std::move(meshesArray), 1);
+    _meshes = std::make_unique<TerrainMeshGrid>(std::move(meshesArray), 1);
     
     // When voxels change, we need to extract a polygonal mesh representation
     // of the isosurface. This mesh is what we actually draw.
@@ -121,40 +121,38 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     _dispatcher->async([=]{
         PROFILER(TerrainFetchMeshes);
         
-        // TODO: Add API to do a transaction for all cells for which we can get
-        // the lock without blocking. We assume the other cells are missing and
-        // skip those. This will reduce lock contention.
+        size_t numMissing = 0;
         
-        _meshes->readerTransaction(frustum, [&](const GridAddressable<MaybeTerrainMesh> &data){
-            std::vector<AABB> missingMeshes;
-            
-            const glm::vec3 cameraPos = _cameraPosition;
-            const float horizonDistance = _horizonDistance.get();
-            
-            data.forEachCell(data.boundingBox(), [&](const AABB &cell,
-                                                     Morton3 index,
-                                                     const MaybeTerrainMesh &maybe){
-                if (maybe) {
-                    _drawList->updateDrawList(*maybe, cell);
-                } else {
-                    const float dist = glm::distance(cameraPos, cell.center);
-                    if (dist < horizonDistance) {
-                        missingMeshes.push_back(cell);
-                    }
-                }
-            });
-            
-            const size_t n = _meshesToRebuild.push(missingMeshes);
-            
-            if (n > 0) {
-                // Kick off a task to rebuild each mesh that was missing.
-                for (size_t i = 0; i < n; ++i) {
-                    _dispatcherRebuildMesh->async([=]{ rebuildNextMesh(); });
-                }
-            } else {
-                _horizonDistance.increment();
+        const glm::vec3 cameraPos = _cameraPosition;
+        const float horizonDistance = _horizonDistance.get();
+        const AABB horizonBox = {cameraPos, glm::vec3(horizonDistance, horizonDistance, horizonDistance)};
+        const AABB activeRegion = _meshes->boundingBox().intersect(horizonBox);
+        
+        // For each mesh that is present, update the draw list to include that
+        // mesh.
+        auto onPresent = [&](const TerrainMesh &terrainMesh){
+            _drawList->updateDrawList(terrainMesh);
+        };
+        
+        // For each mesh that is missing, or for which we cannot take the lock
+        // without blocking, check the distance to the camera. If the missing
+        // mesh is within the horizon distance then kick off a task to fetch it
+        // asynchronously. We'll pick it up after that task has completed.
+        auto onMissing = [&](const AABB &cell){
+            const float dist = glm::distance(cameraPos, cell.center);
+            if (dist < horizonDistance) {
+                _meshesToRebuild.push(cell);
+                _dispatcherRebuildMesh->async([=]{ rebuildNextMesh(); });
             }
-        });
+        };
+        
+        _meshes->readerTransactionTry(activeRegion, onPresent, onMissing);
+        
+        // If no meshes were missing then increase the horizon distance so
+        // we can fetch meshes further away next time.
+        if (numMissing == 0) {
+            _horizonDistance.increment();
+        }
     });
     
     encoder->setShader(_defaultMesh->shader);

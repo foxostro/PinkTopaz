@@ -53,6 +53,11 @@ public:
     // Causes the mesh to be rebuilt using the voxel data store.
     void rebuild();
     
+    inline const AABB& boundingBox() const
+    {
+        return _meshBox;
+    }
+
 private:
     void rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
                                   const size_t index,

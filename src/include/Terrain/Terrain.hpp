@@ -17,9 +17,9 @@
 #include "Terrain/TerrainMesh.hpp"
 #include "Terrain/TerrainDrawList.hpp"
 #include "Terrain/TerrainMeshQueue.hpp"
+#include "Terrain/TerrainMeshGrid.hpp"
 #include "RenderableStaticMesh.hpp"
 #include <entityx/entityx.h> // for TimeDelta
-#include <experimental/optional>
 #include <shared_mutex>
 #include <algorithm>
 
@@ -107,7 +107,7 @@ private:
     std::shared_ptr<VoxelDataGenerator> _voxelDataGenerator;
     std::shared_ptr<VoxelDataStore> _voxels;
     std::unique_ptr<TerrainDrawList> _drawList;
-    std::unique_ptr<ConcurrentGridMutable<MaybeTerrainMesh>> _meshes;
+    std::unique_ptr<TerrainMeshGrid> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     TerrainMeshQueue _meshesToRebuild;
     glm::mat4x4 _modelViewProjection;

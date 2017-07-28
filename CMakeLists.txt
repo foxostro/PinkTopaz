@@ -40,6 +40,7 @@ set(SOURCE_FILES_TERRAIN
     "src/Terrain/TerrainMesh.cpp" "src/include/Terrain/TerrainMesh.hpp"
     "src/Terrain/TerrainMeshQueue.cpp" "src/include/Terrain/TerrainMeshQueue.hpp"
     "src/Terrain/TerrainDrawList.cpp" "src/include/Terrain/TerrainDrawList.hpp"
+    "src/Terrain/TerrainMeshGrid.cpp" "src/include/Terrain/TerrainMeshGrid.hpp"
     )
 
 set(SOURCE_FILES_OPENGL

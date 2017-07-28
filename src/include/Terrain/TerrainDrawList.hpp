@@ -32,7 +32,7 @@ public:
     // Update the back draw list to include the specified GPU resources.
     // Updates here will eventually show up in the front draw list once we're
     // able to swap the two lists in the draw method.
-    void updateDrawList(const TerrainMesh &mesh, const AABB &cell);
+    void updateDrawList(const TerrainMesh &mesh);
     
 private:
     std::shared_mutex _lock;

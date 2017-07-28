@@ -43,9 +43,9 @@ public:
     
     const TYPE& get(Morton3 index) const override
     {
-        if (!isPointInsideBox(index, _minCellCoords, _maxCellCoords)) {
-            throw OutOfBoundsException();
-        }
+        //if (!isPointInsideBox(index, _minCellCoords, _maxCellCoords)) {
+        //    throw OutOfBoundsException();
+        //}
         return _backing.get(index);
     }
     
