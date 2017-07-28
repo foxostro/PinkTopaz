@@ -33,7 +33,7 @@ public:
     {}
     
     // Gets the horizon distance. Takes the lock so this is thread-safe.
-    float get() const
+    inline float get() const
     {
         std::shared_lock<std::shared_mutex> lock(_lockHorizonDistance);
         return _horizonDistance;
@@ -41,15 +41,16 @@ public:
     
     // Increments the horizon distance by the step.
     // Takes the lock so this is thread-safe.
-    float increment()
+    inline float increment_clamp(float max)
     {
         std::unique_lock<std::shared_mutex> lock(_lockHorizonDistance);
         _targetHorizonDistance += STEP;
+        _targetHorizonDistance = std::min(_targetHorizonDistance, max);
         return _targetHorizonDistance;
     }
     
     // The horizon distance moves away smoothly over time.
-    void update(entityx::TimeDelta dt)
+    inline void update(entityx::TimeDelta dt)
     {
         std::unique_lock<std::shared_mutex> lock(_lockHorizonDistance);
         _horizonDistance = std::min((float)(_horizonDistance + dt * STEP_PER_MS), _targetHorizonDistance);
@@ -68,6 +69,7 @@ class Terrain
 {
 public:
     static constexpr unsigned TERRAIN_CHUNK_SIZE = 16;
+    static constexpr float ACTIVE_REGION_SIZE = 256.0f;
     
     ~Terrain();
     

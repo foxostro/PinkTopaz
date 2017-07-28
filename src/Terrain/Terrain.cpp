@@ -151,8 +151,7 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     // If no meshes were missing then increase the horizon distance so
     // we can fetch meshes further away next time.
     if (!_drawList->draw(encoder, frustum, activeRegion)) {
-        float distance = _horizonDistance.increment();
-        SDL_Log("Increasing horizon distance to %.2f.", distance);
+        _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
     }
 }
 
@@ -196,8 +195,17 @@ void Terrain::rebuildNextMesh()
     
     auto maybeCell = _meshesToRebuild.pop();
     
-    if (maybeCell) {
-        const AABB &cell = *maybeCell;        
+    if (!maybeCell) {
+        return;
+    }
+    
+    const AABB &cell = *maybeCell;
+    const glm::vec3 cameraPos = _cameraPosition;
+    const float horizonDistance = _horizonDistance.get();
+    const AABB horizonBox = {cameraPos, glm::vec3(horizonDistance, horizonDistance, horizonDistance)};
+    
+    // Cancel the rebuilding of meshes that are now beyond the horizon.
+    if (doBoxesIntersect(horizonBox, cell)) {
         _meshes->writerTransaction(cell, [&](const AABB &cell,
                                              Morton3 index,
                                              MaybeTerrainMesh &maybe){
