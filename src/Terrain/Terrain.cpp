@@ -194,26 +194,26 @@ void Terrain::rebuildNextMesh()
 {
     PROFILER(TerrainRebuildNextMesh);
     
-    auto maybeCell = _meshesToRebuild.pop();
-    
-    if (!maybeCell) {
-        return;
-    }
-    
-    const AABB &cell = *maybeCell;
     const glm::vec3 cameraPos = _cameraPosition;
     const float horizonDistance = _horizonDistance.get();
     const AABB horizonBox = {cameraPos, glm::vec3(horizonDistance, horizonDistance, horizonDistance)};
+    AABB cell;
     
-    // Cancel the rebuilding of meshes that are now beyond the horizon.
-    if (doBoxesIntersect(horizonBox, cell)) {
-        _meshes->writerTransaction(cell, [&](const AABB &cell,
-                                             Morton3 index,
-                                             MaybeTerrainMesh &maybe){
-            if (!maybe) {
-                maybe.emplace(cell, _defaultMesh, _graphicsDevice, _mesher, _voxels);
-            }
-            maybe->rebuild();
-        });
-    }
+    // Grab the next mesh to rebuild that is inside the horizon.
+    do {
+        auto maybeCell = _meshesToRebuild.pop();
+        if (!maybeCell) {
+            return; // Bail if there are no meshes to rebuild.
+        }
+        cell = *maybeCell;
+    } while (!doBoxesIntersect(horizonBox, cell));
+    
+    _meshes->writerTransaction(cell, [&](const AABB &cell,
+                                         Morton3 index,
+                                         MaybeTerrainMesh &maybe){
+        if (!maybe) {
+            maybe.emplace(cell, _defaultMesh, _graphicsDevice, _mesher, _voxels);
+        }
+        maybe->rebuild();
+    });
 }
