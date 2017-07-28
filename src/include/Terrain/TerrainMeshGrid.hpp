@@ -34,12 +34,9 @@ public:
     // Perform an atomic transaction as a "reader" with read-only access to the
     // underlying data in the specified region.
     // region -- The region we will be reading from.
-    // onPresent -- Execute this for each item that is present.
-    // onMissing -- Execute this for each item that is missing, or for which we
-    //              cannot take the lock.
+    // onPresent -- Execute this for each item that is present, or could be locked.
     void readerTransactionTry(const AABB &region,
-                              const std::function<void(const TerrainMesh &terrainMesh)> &onPresent,
-                              const std::function<void(const AABB &cell)> &onMissing) const;
+                              const std::function<void(const TerrainMesh &terrainMesh)> &onPresent) const;
 };
 
 #endif /* TerrainMeshGrid_hpp */

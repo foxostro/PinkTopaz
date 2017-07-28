@@ -13,14 +13,9 @@ TerrainMeshGrid::TerrainMeshGrid(std::unique_ptr<GridMutable<MaybeTerrainMesh>> 
  : ConcurrentGridMutable<MaybeTerrainMesh>(std::move(array), lockGridResDivisor)
 {}
 
-void TerrainMeshGrid::readerTransactionTry(const AABB &region,
-                                           const std::function<void(const TerrainMesh &terrainMesh)> &onPresent,
-                                           const std::function<void(const AABB &cell)> &onMissing) const
+void TerrainMeshGrid::readerTransactionTry(const AABB &region, const std::function<void(const TerrainMesh &terrainMesh)> &onPresent) const
 {
     assert(_array);
-    
-    // For items which are missing we store only the cell.
-    std::vector<AABB> missingItems;
     
     // For items which are present, we store the cell, a reference to the
     // terrain mesh, and a reference to the lock.
@@ -79,7 +74,7 @@ void TerrainMeshGrid::readerTransactionTry(const AABB &region,
         
         inline const TerrainMesh &getTerrainMesh() const
         {
-            assert(_maybeTerrainMeshRef);
+            assert(_ref);
             return *_ref;
         }
         
@@ -109,24 +104,19 @@ void TerrainMeshGrid::readerTransactionTry(const AABB &region,
         // of scope and is destroyed.
         ItemVector presentItems;
         
-        // For all cells in the specified region, get the present and missing
-        // items and stash them in `present' and `missing', respetively. Items
-        // for which we can get the lock, and for which there is a terrain mesh
-        // actually present, are recognized as being present. All other items
-        // are recognized as being missing. To avoid deadlock, we assume that
-        // mutableForEachCell() will hand us the associated locks in the
-        // canonical order.
+        // For all cells in the specified region, get the present items and
+        // stash them in `present'. Items for which we can get the lock, and for
+        // which there is a terrain mesh actually present, are recognized as
+        // being present. To avoid deadlock, we assume that mutableForEachCell()
+        // will hand us the associated locks in the canonical order.
         _arrayLocks.mutableForEachCell(region, [&](const AABB &cell,
                                                    Morton3 index,
                                                    std::mutex &lock){
-            bool thisItemIsMissing = true;
-            
             Item item(lock);
             
             if (item.try_lock()) {
                 MaybeTerrainMesh &maybe = _array->mutableReference(cell.center);
                 if (maybe) {
-                    thisItemIsMissing = false;
                     item.setTerrainMesh(*maybe);
                     
                     // By moving the item, we ensure lock ownership follows the
@@ -136,20 +126,11 @@ void TerrainMeshGrid::readerTransactionTry(const AABB &region,
                     presentItems.items.emplace_back(std::move(item));
                 }
             }
-            
-            if (thisItemIsMissing) {
-                missingItems.emplace_back(cell);
-            }
         });
         
         // For all items which are present, execute the onPresent callable.
         for (const auto &item : presentItems.items) {
             onPresent(item.getTerrainMesh());
         }
-    }
-    
-    // For all missing items, execute the onMissing callable.
-    for (const AABB &cell : missingItems) {
-        onMissing(cell);
     }
 }

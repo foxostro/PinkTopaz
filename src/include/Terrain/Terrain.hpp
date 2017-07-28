@@ -96,6 +96,15 @@ public:
 private:
     using MaybeTerrainMesh = typename std::experimental::optional<TerrainMesh>;
     
+    inline AABB getActiveRegion() const
+    {
+        const glm::vec3 cameraPos = _cameraPosition;
+        const float horizonDistance = _horizonDistance.get();
+        const AABB horizonBox = {cameraPos, glm::vec3(horizonDistance, horizonDistance, horizonDistance)};
+        const AABB activeRegion = _meshes->boundingBox().intersect(horizonBox);
+        return activeRegion;
+    }
+    
     void rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
                                   const size_t index,
                                   const AABB &meshBox);

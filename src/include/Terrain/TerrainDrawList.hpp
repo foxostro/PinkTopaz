@@ -26,8 +26,9 @@ public:
     
     // Draw the meshes for the draw list. This will attempt to swap the front
     // and back draw lists before drawing, but will not block on a lock to do
-    // so. Returns true if any meshes in the active region are missing.
-    bool draw(const std::shared_ptr<CommandEncoder> &encoder,
+    // so. Returns the list of missing meshes in the active region.
+    std::vector<AABB>
+    draw(const std::shared_ptr<CommandEncoder> &encoder,
               const Frustum &frustum,
               const AABB &activeRegion);
     
@@ -35,8 +36,6 @@ public:
     // Updates here will eventually show up in the front draw list once we're
     // able to swap the two lists in the draw method.
     void updateDrawList(const TerrainMesh &mesh);
-    
-    bool anyMissing(const AABB &activeRegion);
     
 private:
     std::shared_mutex _lock;
