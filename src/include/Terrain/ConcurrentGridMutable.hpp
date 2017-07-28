@@ -10,7 +10,6 @@
 #define ConcurrentGridMutable_hpp
 
 #include "GridAddressable.hpp"
-#include "GridView.hpp"
 #include "Array3D.hpp"
 
 #include <mutex>
@@ -94,8 +93,7 @@ public:
     virtual void readerTransaction(const AABB &region, const Reader &fn) const
     {
         LockSet locks(locksForRegion(region));
-        GridView<ElementType> view(*_array, region);
-        fn(view);
+        fn(*_array);
     }
     
     // Perform an atomic transaction as a "reader" with read-only access to the
@@ -105,7 +103,6 @@ public:
     virtual void readerTransaction(const Frustum &region, const Reader &fn) const
     {
         LockSet locks(locksForRegion(region));
-        // AFOX_TODO: GridView which can accept a frustum for the subregion.
         fn(*_array);
     }
     
@@ -135,8 +132,7 @@ public:
         ChangeLog changeLog;
         {
             LockSet locks(locksForRegion(region));
-            GridViewMutable<ElementType> view(*_array, region);
-            changeLog = fn(view);
+            changeLog = fn(*_array);
         }
         onWriterTransaction(changeLog);
     }
@@ -152,7 +148,6 @@ public:
         ChangeLog changeLog;
         {
             LockSet locks(locksForRegion(region));
-            // AFOX_TODO: GridViewMutable which can accept a frustum for the subregion.
             changeLog = fn(*_array);
         }
         onWriterTransaction(changeLog);

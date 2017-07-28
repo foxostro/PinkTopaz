@@ -116,17 +116,15 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
 {
     Frustum frustum(_modelViewProjection);
     
+    const glm::vec3 cameraPos = _cameraPosition;
+    const float horizonDistance = _horizonDistance.get();
+    const AABB horizonBox = {cameraPos, glm::vec3(horizonDistance, horizonDistance, horizonDistance)};
+    const AABB activeRegion = _meshes->boundingBox().intersect(horizonBox);
+    
     // Update the draw list. If any meshes are missing then kick off tasks
     // to fetch them asynchronously.
     _dispatcher->async([=]{
         PROFILER(TerrainFetchMeshes);
-        
-        size_t numMissing = 0;
-        
-        const glm::vec3 cameraPos = _cameraPosition;
-        const float horizonDistance = _horizonDistance.get();
-        const AABB horizonBox = {cameraPos, glm::vec3(horizonDistance, horizonDistance, horizonDistance)};
-        const AABB activeRegion = _meshes->boundingBox().intersect(horizonBox);
         
         // For each mesh that is present, update the draw list to include that
         // mesh.
@@ -135,24 +133,13 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
         };
         
         // For each mesh that is missing, or for which we cannot take the lock
-        // without blocking, check the distance to the camera. If the missing
-        // mesh is within the horizon distance then kick off a task to fetch it
-        // asynchronously. We'll pick it up after that task has completed.
+        // without blocking, kick off a task to fetch it asynchronously.
         auto onMissing = [&](const AABB &cell){
-            const float dist = glm::distance(cameraPos, cell.center);
-            if (dist < horizonDistance) {
-                _meshesToRebuild.push(cell);
-                _dispatcherRebuildMesh->async([=]{ rebuildNextMesh(); });
-            }
+            _meshesToRebuild.push(cell);
+            _dispatcherRebuildMesh->async([=]{ rebuildNextMesh(); });
         };
         
         _meshes->readerTransactionTry(activeRegion, onPresent, onMissing);
-        
-        // If no meshes were missing then increase the horizon distance so
-        // we can fetch meshes further away next time.
-        if (numMissing == 0) {
-            _horizonDistance.increment();
-        }
     });
     
     encoder->setShader(_defaultMesh->shader);
@@ -160,7 +147,13 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     encoder->setFragmentTexture(_defaultMesh->texture, 0);
     encoder->setVertexBuffer(_defaultMesh->uniforms, 1);
     
-    _drawList->draw(encoder, frustum);
+    // Draw meshes in the camera frustum.
+    // If no meshes were missing then increase the horizon distance so
+    // we can fetch meshes further away next time.
+    if (!_drawList->draw(encoder, frustum, activeRegion)) {
+        float distance = _horizonDistance.increment();
+        SDL_Log("Increasing horizon distance to %.2f.", distance);
+    }
 }
 
 float Terrain::getFogDensity() const
