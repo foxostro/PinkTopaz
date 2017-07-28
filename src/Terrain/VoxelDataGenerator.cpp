@@ -12,7 +12,7 @@
 
 using namespace glm;
 
-static constexpr int size = 256;
+static constexpr int size = 1024;
 static constexpr int border = 16;
 static constexpr int extent = size + border;
 static constexpr int res = (size + border) * 2;
