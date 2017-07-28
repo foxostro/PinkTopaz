@@ -158,6 +158,7 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
 
 float Terrain::getFogDensity() const
 {
+#if 0
     // Fog density decreases as the terrain horizon distance increases.
     // The density falls along an exponential decay curve. These particular
     // tuning values were picked because they look pretty good.
@@ -169,6 +170,9 @@ float Terrain::getFogDensity() const
     const float t = std::min(horizonDistance / maxHorizon, 1.0f);
     const float fogDensity = initialValue * std::exp(decayRate * t) + floorValue;
     return fogDensity;
+#else
+    return 0.003f;
+#endif
 }
 
 void Terrain::rebuildMeshInResponseToChanges(const ChangeLog &changeLog)
