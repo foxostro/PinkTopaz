@@ -22,56 +22,92 @@ void TerrainMeshGrid::readerTransactionTry(const AABB &region,
     // For items which are missing we store only the cell.
     std::vector<AABB> missingItems;
     
+    // For items which are present, we store the cell, a reference to the
+    // terrain mesh, and a reference to the lock.
+    class Item
     {
-        // For items which are present, we store the cell, a reference to the
-        // terrain mesh, and a reference to the lock.
-        class Item
+    private:
+        // Set to true when we've taken the lock. Initially false.
+        bool _ownsLock;
+        
+        // Reference to the lock itself.
+        std::reference_wrapper<std::mutex> _lock;
+        
+        // This is a reference to the terrain mesh for the item.
+        // This is an optional so that we can leave it empty until after
+        // we've tried to take the lock. If we've taken the lock then we
+        // expect this to be valid.
+        std::experimental::optional<std::reference_wrapper<const TerrainMesh>> _ref;
+        
+    public:
+        Item(std::mutex &m)
+         : _ownsLock(false), _lock(m)
+        {}
+        
+        // If we move the item into a LockVector then we need to mark the
+        // lock as not being owned by the item anymore. This way, the lock
+        // gets released one time when the LockVector is destroyed.
+        Item(Item &&item)
+         : _ownsLock(item._ownsLock),
+           _lock(item._lock),
+           _ref(item._ref)
         {
-        private:
-            // Set to true when we've taken the lock. Initially false.
-            bool ownsLock;
-            
-            // Reference to the lock itself.
-            std::reference_wrapper<std::mutex> lock;
-            
-            // This is a reference to the terrain mesh for the item.
-            // This is an optional so that we can leave it empty until after
-            // we've tried to take the lock. If we've taken the lock then we
-            // expect this to be valid.
-            std::experimental::optional<std::reference_wrapper<const TerrainMesh>> maybeTerrainMeshRef;
-            
-        public:
-            Item(std::mutex &m)
-             : ownsLock(false), lock(m)
-            {}
-            
-            ~Item()
-            {
-                if (ownsLock) {
-                    std::mutex &m = lock;
-                    m.unlock();
-                }
+            item._ownsLock = false;
+            item._ref = std::experimental::nullopt;
+        }
+        
+        ~Item()
+        {
+            unlock();
+        }
+        
+        inline void unlock()
+        {
+            if (_ownsLock) {
+                std::mutex &m = _lock;
+                m.unlock();
+                _ownsLock = false;
             }
-            
-            bool try_lock()
-            {
-                std::mutex &m = lock;
-                ownsLock = m.try_lock();
-                return ownsLock;
+        }
+        
+        inline bool try_lock()
+        {
+            std::mutex &m = _lock;
+            _ownsLock = m.try_lock();
+            return _ownsLock;
+        }
+        
+        inline const TerrainMesh &getTerrainMesh() const
+        {
+            assert(_maybeTerrainMeshRef);
+            return *_ref;
+        }
+        
+        inline void setTerrainMesh(const TerrainMesh &terrainMesh)
+        {
+            _ref = std::experimental::optional<std::reference_wrapper<const TerrainMesh>>(terrainMesh);
+        }
+    };
+    
+    class ItemVector
+    {
+    public:
+        std::vector<Item> items;
+        
+        ~ItemVector()
+        {
+            // To avoid deadlock we must release locks in the reverse order
+            // in which we took them.
+            for (auto iter = items.rbegin(); iter != items.rend(); ++iter) {
+                iter->unlock();
             }
-            
-            const TerrainMesh &getTerrainMesh() const
-            {
-                assert(maybeTerrainMeshRef);
-                return *maybeTerrainMeshRef;
-            }
-            
-            void setTerrainMesh(const TerrainMesh &terrainMesh)
-            {
-                maybeTerrainMeshRef = std::experimental::optional<std::reference_wrapper<const TerrainMesh>>(terrainMesh);
-            }
-        };
-        std::vector<Item> presentItems;
+        }
+    };
+    
+    {
+        // Locks are released in the correct order when `presentItems' goes out
+        // of scope and is destroyed.
+        ItemVector presentItems;
         
         // For all cells in the specified region, get the present and missing
         // items and stash them in `present' and `missing', respetively. Items
@@ -90,9 +126,14 @@ void TerrainMeshGrid::readerTransactionTry(const AABB &region,
             if (item.try_lock()) {
                 MaybeTerrainMesh &maybe = _array->mutableReference(cell.center);
                 if (maybe) {
-                    item.setTerrainMesh(*maybe);
-                    presentItems.emplace_back(item);
                     thisItemIsMissing = false;
+                    item.setTerrainMesh(*maybe);
+                    
+                    // By moving the item, we ensure lock ownership follows the
+                    // item into the ItemVector. In the cases where we never
+                    // don't do this move, the locks are released as soon as
+                    // `item' goes out of scope and is destroyed.
+                    presentItems.items.emplace_back(std::move(item));
                 }
             }
             
@@ -102,12 +143,9 @@ void TerrainMeshGrid::readerTransactionTry(const AABB &region,
         });
         
         // For all items which are present, execute the onPresent callable.
-        for (const auto &item : presentItems) {
+        for (const auto &item : presentItems.items) {
             onPresent(item.getTerrainMesh());
         }
-        
-        // Locks are released when `presentItems' goes out of scope and is
-        // destroyed.
     }
     
     // For all missing items, execute the onMissing callable.
