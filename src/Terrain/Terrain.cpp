@@ -121,36 +121,37 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     const AABB horizonBox = {cameraPos, glm::vec3(horizonDistance, horizonDistance, horizonDistance)};
     const AABB activeRegion = _meshes->boundingBox().intersect(horizonBox);
     
-    // Update the draw list. If any meshes are missing then kick off tasks
-    // to fetch them asynchronously.
-    _dispatcher->async([=]{
-        PROFILER(TerrainFetchMeshes);
-        
-        // For each mesh that is present, update the draw list to include that
-        // mesh.
-        auto onPresent = [&](const TerrainMesh &terrainMesh){
-            _drawList->updateDrawList(terrainMesh);
-        };
-        
-        // For each mesh that is missing, or for which we cannot take the lock
-        // without blocking, kick off a task to fetch it asynchronously.
-        auto onMissing = [&](const AABB &cell){
-            _meshesToRebuild.push(cell);
-            _dispatcherRebuildMesh->async([=]{ rebuildNextMesh(); });
-        };
-        
-        _meshes->readerTransactionTry(activeRegion, onPresent, onMissing);
-    });
-    
     encoder->setShader(_defaultMesh->shader);
     encoder->setFragmentSampler(_defaultMesh->textureSampler, 0);
     encoder->setFragmentTexture(_defaultMesh->texture, 0);
     encoder->setVertexBuffer(_defaultMesh->uniforms, 1);
     
     // Draw meshes in the camera frustum.
-    // If no meshes were missing then increase the horizon distance so
-    // we can fetch meshes further away next time.
-    if (!_drawList->draw(encoder, frustum, activeRegion)) {
+    bool anyMeshesMissing = _drawList->draw(encoder, frustum, activeRegion);
+    
+    if (anyMeshesMissing) {
+        // If any meshes are missing then kick off async tasks to fetch them.
+        _dispatcher->async([=]{
+            PROFILER(TerrainFetchMeshes);
+            
+            // For each mesh that is present, update the draw list to include that
+            // mesh.
+            auto onPresent = [&](const TerrainMesh &terrainMesh){
+                _drawList->updateDrawList(terrainMesh);
+            };
+            
+            // For each mesh that is missing, or for which we cannot take the lock
+            // without blocking, kick off a task to fetch it asynchronously.
+            auto onMissing = [&](const AABB &cell){
+                _meshesToRebuild.push(cell);
+                _dispatcherRebuildMesh->async([=]{ rebuildNextMesh(); });
+            };
+            
+            _meshes->readerTransactionTry(activeRegion, onPresent, onMissing);
+        });
+    } else {
+        // If no meshes were missing then increase the horizon distance so
+        // we can fetch meshes further away next time.
         _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
     }
 }
