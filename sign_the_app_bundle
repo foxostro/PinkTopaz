@@ -1,6 +1,5 @@
 #!/bin/sh
 # Code sign the application bundle on Apple systems.
 BUNDLE=`./abspath $1`
-MAC_DEVELOPER_IDENTITY="Mac Developer: foxostro@gmail.com (YFWF97V9TN)"
 codesign --force --sign "$MAC_DEVELOPER_IDENTITY" -v --deep "$BUNDLE"
 exit $?
