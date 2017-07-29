@@ -13,7 +13,7 @@ TerrainMeshGrid::TerrainMeshGrid(std::unique_ptr<GridMutable<MaybeTerrainMesh>> 
  : ConcurrentGridMutable<MaybeTerrainMesh>(std::move(array), lockGridResDivisor)
 {}
 
-void TerrainMeshGrid::readerTransactionTry(const AABB &region, const std::function<void(const std::vector<TerrainMeshRef> &meshes)> &fn) const
+void TerrainMeshGrid::readerTransactionTry(const AABB &region, const std::function<void(const TerrainMesh &terrainMesh)> &onPresent) const
 {
     assert(_array);
     
@@ -127,12 +127,8 @@ void TerrainMeshGrid::readerTransactionTry(const AABB &region, const std::functi
         }
     });
     
-    std::vector<TerrainMeshRef> meshes;
-    meshes.reserve(presentItems.items.size());
-    
+    // For all items which are present, execute the onPresent callable.
     for (const auto &item : presentItems.items) {
-        meshes.emplace_back(item.getTerrainMesh());
+        onPresent(item.getTerrainMesh());
     }
-    
-    fn(meshes);
 }

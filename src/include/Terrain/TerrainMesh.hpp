@@ -78,6 +78,4 @@ private:
     std::mutex _lockMeshInFlight;
 };
 
-using TerrainMeshRef = std::reference_wrapper<const TerrainMesh>;
-
 #endif /* TerrainMesh_hpp */
