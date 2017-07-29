@@ -127,7 +127,8 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     if (missingMeshes.empty()) {
         // If no meshes were missing then increase the horizon distance so
         // we can fetch meshes further away next time.
-        _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
+        float d = _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
+        SDL_Log("Increasing horizon distance to %.2f", d);
     } else {
         // Update the draw list to include meshes that are present.
         // Do not block. Skip any for which we would need to block to access.
@@ -147,21 +148,17 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
 
 float Terrain::getFogDensity() const
 {
-#if 0
     // Fog density decreases as the terrain horizon distance increases.
     // The density falls along an exponential decay curve. These particular
     // tuning values were picked because they look pretty good.
-    constexpr float initialValue = 0.3f;
-    constexpr float floorValue = 0.003f;
+    constexpr float initialValue = 0.03f;
+    constexpr float floorValue = 0.00003f;
     constexpr float decayRate = -8.f;
     const float maxHorizon = glm::length(_voxels->boundingBox().extent);
     const float horizonDistance = _horizonDistance.get();
     const float t = std::min(horizonDistance / maxHorizon, 1.0f);
     const float fogDensity = initialValue * std::exp(decayRate * t) + floorValue;
     return fogDensity;
-#else
-    return 0.003f;
-#endif
 }
 
 void Terrain::rebuildMeshInResponseToChanges(const ChangeLog &changeLog)
