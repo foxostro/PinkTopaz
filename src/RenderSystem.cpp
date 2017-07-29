@@ -121,7 +121,7 @@ void RenderSystem::receive(const WindowSizeChangedEvent &event)
     // When the window size changes, recalculate the projection matrix.
     // On the next update, we will pass this matrix to the shaders used to render each object.
     constexpr float znear = 1.0f;
-    constexpr float zfar = 1000.0f;
+    constexpr float zfar = 256.0f;
     _viewport = glm::ivec4(0, 0, event.width * event.windowScaleFactor, event.height * event.windowScaleFactor);
     _proj = glm::perspective(glm::pi<float>() * 0.25f, (float)event.width / event.height, znear, zfar);
     _graphicsDevice->windowSizeChanged();

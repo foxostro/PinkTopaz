@@ -19,21 +19,25 @@ TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
 {
     std::vector<AABB> missingMeshes;
     
-    // AFOX_TODO: Put frustum calling back in place.
-    
     // Draw each cell that is in the camera view-frustum.
-    // If the draw list is missing any mesh in the active region then report
-    // that to the caller.
-    _meshes.forEachCell(activeRegion, [&](const AABB &cell,
-                                          Morton3 index,
-                                          const MaybeMesh &maybeMesh){
+    _meshes.forEachCell(frustum, [&](const AABB &cell,
+                                     Morton3 index,
+                                     const MaybeMesh &maybeMesh){
         if (maybeMesh) {
             const RenderableStaticMesh &drawThis = *maybeMesh;
             if (drawThis.vertexCount > 0) {
                 encoder->setVertexBuffer(drawThis.buffer, 0);
                 encoder->drawPrimitives(Triangles, 0, drawThis.vertexCount, 1);
             }
-        } else {
+        }
+    });
+    
+    // If the draw list is missing any mesh in the active region then report
+    // that to the caller.
+    _meshes.forEachCell(activeRegion, [&](const AABB &cell,
+                                          Morton3 index,
+                                          const MaybeMesh &maybeMesh){
+        if (!maybeMesh) {
             missingMeshes.push_back(cell);
         }
     });
