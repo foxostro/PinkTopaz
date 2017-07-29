@@ -15,8 +15,8 @@ TerrainDrawList::TerrainDrawList(const AABB &box, const glm::ivec3 &res)
 
 std::vector<AABB>
 TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
-                           const Frustum &frustum,
-                           const AABB &activeRegion)
+                      const Frustum &frustum,
+                      const AABB &activeRegion)
 {
     {
         std::unique_lock<std::shared_mutex> lock(_lock, std::defer_lock);
@@ -27,8 +27,6 @@ TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
     
     std::vector<AABB> missingMeshes;
     
-    // AFOX_TODO: camera view-frustum culling
-    
     // Draw each cell that is in the camera view-frustum.
     // If the draw list is missing any mesh in the active region then report
     // that to the caller.
@@ -37,7 +35,7 @@ TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
                                                 const MaybeMesh &maybeMesh){
         if (maybeMesh) {
             const RenderableStaticMesh &drawThis = *maybeMesh;
-            if (drawThis.vertexCount > 0) {
+            if ((drawThis.vertexCount > 0) && frustum.boxIsInside(cell)) {
                 encoder->setVertexBuffer(drawThis.buffer, 0);
                 encoder->drawPrimitives(Triangles, 0, drawThis.vertexCount, 1);
             }

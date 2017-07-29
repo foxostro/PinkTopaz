@@ -29,8 +29,8 @@ public:
     // so. Returns the list of missing meshes in the active region.
     std::vector<AABB>
     draw(const std::shared_ptr<CommandEncoder> &encoder,
-              const Frustum &frustum,
-              const AABB &activeRegion);
+         const Frustum &frustum,
+         const AABB &activeRegion);
     
     // Update the back draw list to include the specified GPU resources.
     // Updates here will eventually show up in the front draw list once we're
