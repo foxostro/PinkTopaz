@@ -57,7 +57,7 @@ public:
     }
     
 private:
-    static constexpr float STEP = 16.0f;
+    static constexpr float STEP = 32.0f;
     static constexpr float STEP_PER_MS = 2 * STEP / 1000.0f;
     mutable std::shared_mutex _lockHorizonDistance;
     float _targetHorizonDistance;
