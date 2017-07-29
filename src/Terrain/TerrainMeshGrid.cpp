@@ -13,7 +13,7 @@ TerrainMeshGrid::TerrainMeshGrid(std::unique_ptr<GridMutable<MaybeTerrainMesh>> 
  : ConcurrentGridMutable<MaybeTerrainMesh>(std::move(array), lockGridResDivisor)
 {}
 
-void TerrainMeshGrid::readerTransactionTry(const AABB &region, const std::function<void(const TerrainMesh &terrainMesh)> &onPresent) const
+void TerrainMeshGrid::readerTransactionTry(const AABB &region, const std::function<void(const std::vector<TerrainMeshRef> &meshes)> &fn) const
 {
     assert(_array);
     
@@ -99,38 +99,40 @@ void TerrainMeshGrid::readerTransactionTry(const AABB &region, const std::functi
         }
     };
     
-    {
-        // Locks are released in the correct order when `presentItems' goes out
-        // of scope and is destroyed.
-        ItemVector presentItems;
+    // Locks are released in the correct order when `presentItems' goes out
+    // of scope and is destroyed.
+    ItemVector presentItems;
+    
+    // For all cells in the specified region, get the present items and
+    // stash them in `present'. Items for which we can get the lock, and for
+    // which there is a terrain mesh actually present, are recognized as
+    // being present. To avoid deadlock, we assume that mutableForEachCell()
+    // will hand us the associated locks in the canonical order.
+    _arrayLocks.mutableForEachCell(region, [&](const AABB &cell,
+                                               Morton3 index,
+                                               std::mutex &lock){
+        Item item(lock);
         
-        // For all cells in the specified region, get the present items and
-        // stash them in `present'. Items for which we can get the lock, and for
-        // which there is a terrain mesh actually present, are recognized as
-        // being present. To avoid deadlock, we assume that mutableForEachCell()
-        // will hand us the associated locks in the canonical order.
-        _arrayLocks.mutableForEachCell(region, [&](const AABB &cell,
-                                                   Morton3 index,
-                                                   std::mutex &lock){
-            Item item(lock);
-            
-            if (item.try_lock()) {
-                MaybeTerrainMesh &maybe = _array->mutableReference(cell.center);
-                if (maybe) {
-                    item.setTerrainMesh(*maybe);
-                    
-                    // By moving the item, we ensure lock ownership follows the
-                    // item into the ItemVector. In the cases where we never
-                    // don't do this move, the locks are released as soon as
-                    // `item' goes out of scope and is destroyed.
-                    presentItems.items.emplace_back(std::move(item));
-                }
+        if (item.try_lock()) {
+            MaybeTerrainMesh &maybe = _array->mutableReference(cell.center);
+            if (maybe) {
+                item.setTerrainMesh(*maybe);
+                
+                // By moving the item, we ensure lock ownership follows the
+                // item into the ItemVector. In the cases where we never
+                // don't do this move, the locks are released as soon as
+                // `item' goes out of scope and is destroyed.
+                presentItems.items.emplace_back(std::move(item));
             }
-        });
-        
-        // For all items which are present, execute the onPresent callable.
-        for (const auto &item : presentItems.items) {
-            onPresent(item.getTerrainMesh());
         }
+    });
+    
+    std::vector<TerrainMeshRef> meshes;
+    meshes.reserve(presentItems.items.size());
+    
+    for (const auto &item : presentItems.items) {
+        meshes.emplace_back(item.getTerrainMesh());
     }
+    
+    fn(meshes);
 }

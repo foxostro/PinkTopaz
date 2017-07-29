@@ -129,23 +129,19 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
         // we can fetch meshes further away next time.
         _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
     } else {
-        // If any meshes are missing then kick off async tasks to fetch them.
-        _dispatcher->async([this, missingMeshes{std::move(missingMeshes)}]{
-            PROFILER(TerrainFetchMeshes);
-            
-            // Update the draw list to include each mesh that is present.
-            _meshes->readerTransactionTry(getActiveRegion(), [&](const TerrainMesh &terrainMesh){
-                _drawList->updateDrawList(terrainMesh);
-            });
-            
-            // For each mesh that is missing, or for which we cannot take
-            // the lock without blocking, kick off a task to fetch it
-            // asynchronously.
-            size_t numInserted = _meshesToRebuild.push(missingMeshes);
-            for (size_t i = 0; i < numInserted; ++i) {
-                _dispatcherRebuildMesh->async([=]{ rebuildNextMesh(); });
-            }
+        // Update the draw list to include meshes that are present.
+        // Do not block. Skip any for which we would need to block to access.
+        _meshes->readerTransactionTry(getActiveRegion(), [&](const std::vector<TerrainMeshRef> &meshes){
+            _drawList->updateDrawList(meshes);
         });
+        
+        // For each mesh that is missing, or for which we cannot take
+        // the lock without blocking, kick off a task to fetch it
+        // asynchronously.
+        size_t numInserted = _meshesToRebuild.push(missingMeshes);
+        for (size_t i = 0; i < numInserted; ++i) {
+            _dispatcherRebuildMesh->async([=]{ rebuildNextMesh(); });
+        }
     }
 }
 
@@ -212,6 +208,5 @@ void Terrain::rebuildNextMesh()
             maybe.emplace(cell, _defaultMesh, _graphicsDevice, _mesher, _voxels);
         }
         maybe->rebuild();
-        _drawList->updateDrawList(*maybe);
     });
 }
