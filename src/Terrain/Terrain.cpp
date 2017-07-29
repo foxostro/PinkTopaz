@@ -156,9 +156,9 @@ float Terrain::getFogDensity() const
     // Fog density decreases as the terrain horizon distance increases.
     // The density falls along an exponential decay curve. These particular
     // tuning values were picked because they look pretty good.
-    constexpr float initialValue = 0.03f;
-    constexpr float floorValue = 0.00003f;
-    constexpr float decayRate = -8.f;
+    constexpr float initialValue = 0.05f;
+    constexpr float floorValue = 0.003f;
+    constexpr float decayRate = -32.f;
     const float maxHorizon = glm::length(_voxels->boundingBox().extent);
     const float horizonDistance = _horizonDistance.get();
     const float t = std::min(horizonDistance / maxHorizon, 1.0f);
