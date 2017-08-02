@@ -37,7 +37,7 @@ set(SOURCE_FILES_TERRAIN
     "src/Terrain/VoxelDataGenerator.cpp" "src/include/Terrain/VoxelDataGenerator.hpp"
     "src/Terrain/Terrain.cpp" "src/include/Terrain/Terrain.hpp"
     "src/Terrain/TerrainMesh.cpp" "src/include/Terrain/TerrainMesh.hpp"
-    "src/Terrain/TerrainMeshQueue.cpp" "src/include/Terrain/TerrainMeshQueue.hpp"
+    "src/Terrain/TerrainChunkQueue.cpp" "src/include/Terrain/TerrainChunkQueue.hpp"
     "src/Terrain/TerrainDrawList.cpp" "src/include/Terrain/TerrainDrawList.hpp"
     "src/Terrain/TerrainMeshGrid.cpp" "src/include/Terrain/TerrainMeshGrid.hpp"
     "src/include/Terrain/TerrainHorizonDistance.hpp"

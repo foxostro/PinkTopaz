@@ -16,7 +16,7 @@
 #include "Terrain/VoxelDataStore.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include "Terrain/TerrainDrawList.hpp"
-#include "Terrain/TerrainMeshQueue.hpp"
+#include "Terrain/TerrainChunkQueue.hpp"
 #include "Terrain/TerrainMeshGrid.hpp"
 #include "Terrain/TerrainHorizonDistance.hpp"
 #include "Terrain/TerrainProgressTracker.hpp"
@@ -72,7 +72,7 @@ private:
     std::unique_ptr<TerrainDrawList> _drawList;
     std::unique_ptr<TerrainMeshGrid> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
-    TerrainMeshQueue _meshesToRebuild;
+    TerrainChunkQueue _meshesToRebuild;
     glm::mat4x4 _modelViewProjection;
     std::atomic<glm::vec3> _cameraPosition;
     TerrainHorizonDistance _horizonDistance;

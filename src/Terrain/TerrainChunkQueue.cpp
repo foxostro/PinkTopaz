@@ -1,20 +1,20 @@
 //
-//  TerrainMeshQueue.cpp
+//  TerrainChunkQueue.cpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 6/12/17.
 //
 //
 
-#include "Terrain/TerrainMeshQueue.hpp"
+#include "Terrain/TerrainChunkQueue.hpp"
 
-bool TerrainMeshQueue::empty() const
+bool TerrainChunkQueue::empty() const
 {
     std::lock_guard<std::mutex> lock(_lock);
     return _cells.empty();
 }
 
-TerrainMeshQueue::MaybeAABB TerrainMeshQueue::pop()
+TerrainChunkQueue::MaybeAABB TerrainChunkQueue::pop()
 {
     std::lock_guard<std::mutex> lock(_lock);
     MaybeAABB result;
@@ -26,13 +26,13 @@ TerrainMeshQueue::MaybeAABB TerrainMeshQueue::pop()
     return result;
 }
 
-void TerrainMeshQueue::push(const AABB &cell)
+void TerrainChunkQueue::push(const AABB &cell)
 {
     std::lock_guard<std::mutex> lock(_lock);
     _cells.push_back(cell);
 }
 
-void TerrainMeshQueue::push(const std::vector<AABB> &cells)
+void TerrainChunkQueue::push(const std::vector<AABB> &cells)
 {
     std::lock_guard<std::mutex> lock(_lock);
     _cells.insert(_cells.end(), cells.begin(), cells.end());

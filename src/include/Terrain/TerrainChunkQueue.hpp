@@ -1,13 +1,13 @@
 //
-//  TerrainMeshQueue.hpp
+//  TerrainChunkQueue.hpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 6/12/17.
 //
 //
 
-#ifndef TerrainMeshQueue_hpp
-#define TerrainMeshQueue_hpp
+#ifndef TerrainChunkQueue_hpp
+#define TerrainChunkQueue_hpp
 
 #include "AABB.hpp"
 #include <mutex>
@@ -15,12 +15,12 @@
 #include <experimental/optional>
 
 // Maintains an ordered list of meshes that need to be generated.
-class TerrainMeshQueue
+class TerrainChunkQueue
 {
 public:
     using MaybeAABB = typename std::experimental::optional<AABB>;
     
-    TerrainMeshQueue() = default;
+    TerrainChunkQueue() = default;
     
     // Returns true if the queue is empty.
     bool empty() const;
@@ -39,4 +39,4 @@ private:
     std::deque<AABB> _cells;
 };
 
-#endif /* TerrainMeshQueue_hpp */
+#endif /* TerrainChunkQueue_hpp */
