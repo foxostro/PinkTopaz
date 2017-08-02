@@ -10,6 +10,7 @@
 #include "Terrain/MesherNaiveSurfaceNets.hpp"
 #include "SDL_image.h"
 #include "Profiler.hpp"
+#include <sstream>
 
 Terrain::~Terrain()
 {
@@ -142,12 +143,21 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
             
             // For each mesh that is missing, or for which we cannot take
             // the lock without blocking, kick off a task to fetch it
-            // asynchronously.
-            size_t numInserted = _meshesToRebuild.push(missingMeshes);
-            for (size_t i = 0; i < numInserted; ++i) {
-                _dispatcherRebuildMesh->async([=]{ rebuildNextMesh(); });
-            }
+            // asynchronously. We avoid queueing meshes which are inflight now.
+            fetchMeshes(missingMeshes);
         });
+    }
+}
+
+void Terrain::fetchMeshes(const std::vector<AABB> &meshCells)
+{
+    const auto meshesNewlyInflight = _progressTracker.beginCellsNotInflight(meshCells);
+    _meshesToRebuild.push(meshesNewlyInflight);
+    auto fn = [=]{
+        rebuildNextMesh();
+    };
+    for (size_t i = 0, n = meshesNewlyInflight.size(); i < n; ++i) {
+        _dispatcherRebuildMesh->async(fn);
     }
 }
 
@@ -173,15 +183,15 @@ void Terrain::rebuildMeshInResponseToChanges(const ChangeLog &changeLog)
     // Kick off a task to rebuild each affected mesh.
     for (const auto &change : changeLog) {
         const AABB &region = change.affectedRegion;
+        std::vector<AABB> meshCells;
+        // AFOX_TODO: If we make ConcurrentMutableGrid be a GridIndexer then we
+        // don't have to grab the lock here. Just call forEachCell().
         _meshes->readerTransaction(region, [&](const AABB &cell,
                                                Morton3 index,
                                                const MaybeTerrainMesh &value){
-            if (_meshesToRebuild.push(cell)) {
-                _dispatcherRebuildMesh->async([=]{
-                    rebuildNextMesh();
-                });
-            }
+            meshCells.push_back(cell);
         });
+        fetchMeshes(meshCells);
     }
 }
 
@@ -195,13 +205,24 @@ void Terrain::rebuildNextMesh()
     AABB cell;
     
     // Grab the next mesh to rebuild that is inside the horizon.
-    do {
+    while (true) {
         auto maybeCell = _meshesToRebuild.pop();
         if (!maybeCell) {
             return; // Bail if there are no meshes to rebuild.
         }
         cell = *maybeCell;
-    } while (!doBoxesIntersect(horizonBox, cell));
+        
+        if (doBoxesIntersect(horizonBox, cell)) {
+            // We found a good one. Break out of the loop now.
+            break;
+        } else {
+            // This one isn't in the active region so cancel it and move on.
+            SDL_Log("Cancelling mesh at %s because it fell out of the " \
+                    "active region", cell.to_string().c_str());
+            _progressTracker.cancel(cell);
+            continue;
+        }
+    }
     
     _meshes->writerTransaction(cell, [&](const AABB &cell,
                                          Morton3 index,
@@ -210,5 +231,20 @@ void Terrain::rebuildNextMesh()
             maybe.emplace(cell, _defaultMesh, _graphicsDevice, _mesher, _voxels);
         }
         maybe->rebuild();
+    
+        // Mark the cell as being complete.
+#if 1
+        _progressTracker.finish(cell);
+#else
+        {
+            const auto duration = _progressTracker.finish(cell);
+            
+            // Log the amount of time it took.
+            const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+            const std::string str = std::to_string(ms.count());
+            SDL_Log("Completed mesh at %s in %s ms.",
+                    cell.to_string().c_str(), str.c_str());
+        }
+#endif
     });
 }

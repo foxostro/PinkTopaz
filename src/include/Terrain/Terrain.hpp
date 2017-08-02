@@ -19,6 +19,7 @@
 #include "Terrain/TerrainMeshQueue.hpp"
 #include "Terrain/TerrainMeshGrid.hpp"
 #include "Terrain/TerrainHorizonDistance.hpp"
+#include "Terrain/TerrainProgressTracker.hpp"
 #include "RenderableStaticMesh.hpp"
 
 // Object represents the voxel terrain of the world.
@@ -62,13 +63,6 @@ private:
         return activeRegion;
     }
     
-    void rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
-                                  const size_t index,
-                                  const AABB &meshBox);
-    
-    void rebuildMeshForChunkOuter(const size_t index,
-                                  const AABB &meshBox);
-    
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<TaskDispatcher> _dispatcher;
     std::shared_ptr<TaskDispatcher> _dispatcherRebuildMesh;
@@ -82,6 +76,16 @@ private:
     glm::mat4x4 _modelViewProjection;
     std::atomic<glm::vec3> _cameraPosition;
     TerrainHorizonDistance _horizonDistance;
+    TerrainProgressTracker _progressTracker;
+    
+    void fetchMeshes(const std::vector<AABB> &meshCells);
+    
+    void rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
+                                  const size_t index,
+                                  const AABB &meshBox);
+    
+    void rebuildMeshForChunkOuter(const size_t index,
+                                  const AABB &meshBox);
     
     // Kicks off asynchronous tasks to rebuild any meshes that are affected by
     // the specified changes.

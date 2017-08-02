@@ -8,6 +8,7 @@
 
 #include "Terrain/MesherNaiveSurfaceNets.hpp"
 #include "Renderer/TerrainVertex.hpp"
+#include <glm/gtx/normal.hpp>
 
 using namespace glm;
 
@@ -300,11 +301,8 @@ MesherNaiveSurfaceNets::verticesForFace(const GridAddressable<Voxel> &voxels,
     }};
     
     // Calculate normals for the two triangles.
-    const vec3 n1 = normalize(cross(vertexPositions[1] - vertexPositions[0],
-                                    vertexPositions[2] - vertexPositions[0]));
-    
-    const vec3 n2 = normalize(cross(vertexPositions[4] - vertexPositions[3],
-                                    vertexPositions[5] - vertexPositions[3]));
+    const vec3 n1 = glm::triangleNormal(vertexPositions[0], vertexPositions[1], vertexPositions[2]);
+    const vec3 n2 = glm::triangleNormal(vertexPositions[3], vertexPositions[4], vertexPositions[5]);
     
     // Create some colors to represent those two normal vectors.
     const vec4 c1 = vec4(n1 * 0.5f + vec3(0.5f), 1.0f);

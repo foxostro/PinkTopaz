@@ -41,6 +41,7 @@ set(SOURCE_FILES_TERRAIN
     "src/Terrain/TerrainDrawList.cpp" "src/include/Terrain/TerrainDrawList.hpp"
     "src/Terrain/TerrainMeshGrid.cpp" "src/include/Terrain/TerrainMeshGrid.hpp"
     "src/include/Terrain/TerrainHorizonDistance.hpp"
+    "src/Terrain/TerrainProgressTracker.cpp" "src/include/Terrain/TerrainProgressTracker.hpp"
     )
 
 set(SOURCE_FILES_OPENGL

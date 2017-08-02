@@ -11,7 +11,7 @@
 
 #include "AABB.hpp"
 #include <mutex>
-#include <set>
+#include <deque>
 #include <experimental/optional>
 
 // Maintains an ordered list of meshes that need to be generated.
@@ -29,15 +29,14 @@ public:
     MaybeAABB pop();
     
     // Add another cell to the list. Returns true if the insert succeeded.
-    // Returns false in the case where the cell was already in the queue.
-    bool push(const AABB &cell);
+    void push(const AABB &cell);
     
-    // Add cells to the list. Returns the number of cells successfully inserted.
-    size_t push(const std::vector<AABB> &cells);
+    // Add cells to the list.
+    void push(const std::vector<AABB> &cells);
     
 private:
     mutable std::mutex _lock;
-    std::set<AABB> _cells;
+    std::deque<AABB> _cells;
 };
 
 #endif /* TerrainMeshQueue_hpp */

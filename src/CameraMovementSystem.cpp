@@ -29,8 +29,8 @@ void CameraMovementSystem::configure(entityx::EventManager &em)
 }
     
 void CameraMovementSystem::update(entityx::EntityManager &es,
-                                    entityx::EventManager &events,
-                                    entityx::TimeDelta deltaMilliseconds)
+                                  entityx::EventManager &events,
+                                  entityx::TimeDelta deltaMilliseconds)
 {
     const entityx::TimeDelta dt = deltaMilliseconds / 1000;
         

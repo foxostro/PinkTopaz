@@ -12,6 +12,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/component_wise.hpp>
 #include <vector>
+#include <sstream>
 
 // An axis-aligned bounding box.
 template<typename TYPE>
@@ -79,7 +80,6 @@ struct _AABB
         const TYPE thatMin = thatBox.mins();
         const TYPE thisMax = maxs();
         const TYPE thatMax = thatBox.maxs();
-        // AFOX_TODO: Is there a good way to do a component-wise max of two glm vectors without needing to know the vectors' dimension?
         const TYPE min = TYPE(std::max(thisMin.x, thatMin.x),
                               std::max(thisMin.y, thatMin.y),
                               std::max(thisMin.z, thatMin.z));
@@ -89,6 +89,15 @@ struct _AABB
         const TYPE center = (max + min) * 0.5f;
         const TYPE extent = (max - min) * 0.5f;
         return {center, extent};
+    }
+    
+    std::string to_string() const
+    {
+        std::ostringstream ss;
+        ss << "{("    << center.x << ", " << center.y << ", " << center.z
+           << ") x (" << extent.x << ", " << extent.y << ", " << extent.z
+           << ")}";
+        return ss.str();
     }
 };
 
