@@ -197,6 +197,12 @@ public:
         return _gridResolution;
     }
     
+    // Gets the array for unprotected, raw access. Use carefully.
+    inline const std::unique_ptr<GridMutable<ElementType>>& array()
+    {
+        return _array;
+    }
+    
 protected:
     const glm::vec3 _cellDimensions;
     const AABB _boundingBox;

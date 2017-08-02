@@ -9,8 +9,8 @@
 #include "Terrain/TerrainDrawList.hpp"
 
 TerrainDrawList::TerrainDrawList(const AABB &box, const glm::ivec3 &res)
- : _front(std::make_unique<ConcurrentGridMutable<MaybeMesh>>(std::make_unique<Array3D<MaybeMesh>>(box, res), 1)),
-   _back(std::make_unique<ConcurrentGridMutable<MaybeMesh>>(std::make_unique<Array3D<MaybeMesh>>(box, res), 1))
+ : _front(box, res),
+   _back(std::make_unique<Array3D<MaybeMesh>>(box, res), 1)
 {}
 
 std::vector<AABB>
@@ -18,21 +18,16 @@ TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
                       const Frustum &frustum,
                       const AABB &activeRegion)
 {
-    {
-        std::unique_lock<std::shared_mutex> lock(_lock, std::defer_lock);
-        if (lock.try_lock()) {
-            std::swap(_front, _back);
-        }
-    }
+    updateFrontList(activeRegion);
     
     std::vector<AABB> missingMeshes;
     
     // Draw each cell that is in the camera view-frustum.
     // If the draw list is missing any mesh in the active region then report
     // that to the caller.
-    _front->readerTransaction(activeRegion, [&](const AABB &cell,
-                                                Morton3 index,
-                                                const MaybeMesh &maybeMesh){
+    _front.forEachCell(activeRegion, [&](const AABB &cell,
+                                         Morton3 index,
+                                         const MaybeMesh &maybeMesh){
         if (maybeMesh) {
             const RenderableStaticMesh &drawThis = *maybeMesh;
             if ((drawThis.vertexCount > 0) && frustum.boxIsInside(cell)) {
@@ -51,9 +46,27 @@ void TerrainDrawList::updateDrawList(const TerrainMesh &mesh)
 {
     std::shared_lock<std::shared_mutex> lock(_lock);
     const AABB &cell = mesh.boundingBox();
-    _back->writerTransaction(cell, [&](const AABB &cell,
-                                       Morton3 index,
-                                       MaybeMesh &value){
+    _back.writerTransaction(cell, [&](const AABB &cell,
+                                      Morton3 index,
+                                      MaybeMesh &value){
         value = std::experimental::make_optional(mesh.getMesh());
+    });
+}
+
+void TerrainDrawList::updateFrontList(const AABB &activeRegion)
+{
+    std::unique_lock<std::shared_mutex> lock(_lock, std::defer_lock);
+    if (!lock.try_lock()) {
+        return;
+    }
+    
+    // We can do this operation unlocked because `_lock' ensures there is no
+    // concurrent access at this time. Also, this is MUCH faster.
+    auto &back = _back.array();
+    _front.mutableForEachCell(activeRegion, [&](const AABB &cell,
+                                                Morton3 index,
+                                                MaybeMesh &dst){
+        MaybeMesh &src = back->mutableReference(index);
+        dst = src;
     });
 }
