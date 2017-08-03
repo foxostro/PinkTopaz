@@ -140,7 +140,7 @@ void Application::run()
         }
     } else {
         inner(createDefaultGraphicsDevice(*_window),
-              std::make_shared<TaskDispatcher>(),
+              std::make_shared<TaskDispatcher>(1),
               std::make_shared<TaskDispatcher>());
     }
 

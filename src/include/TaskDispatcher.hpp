@@ -22,6 +22,7 @@ public:
     using Task = std::function<void()>;
     
     TaskDispatcher();
+    TaskDispatcher(unsigned numThreads);
     ~TaskDispatcher();
     
     // Finish all scheduled tasks and exit all threads.

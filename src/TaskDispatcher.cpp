@@ -9,9 +9,11 @@
 #include "TaskDispatcher.hpp"
 #include <algorithm>
 
-TaskDispatcher::TaskDispatcher() : _threadShouldExit(false)
+TaskDispatcher::TaskDispatcher() : TaskDispatcher(std::max(1u, 2*std::thread::hardware_concurrency())) {}
+
+TaskDispatcher::TaskDispatcher(unsigned numThreads) : _threadShouldExit(false)
 {
-    for (unsigned i = 0, numTheads = std::max(1u, 2*std::thread::hardware_concurrency()); i < numTheads; ++i) {
+    for (unsigned i = 0; i < numThreads; ++i) {
         _threads.emplace_back([this]{
             worker();
         });
