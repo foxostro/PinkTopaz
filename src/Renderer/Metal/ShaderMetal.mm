@@ -73,7 +73,7 @@ ShaderMetal::ShaderMetal(const VertexFormat &vertexFormat,
     desc.vertexDescriptor = getVertexDescriptor(vertexFormat);
     
     MTLRenderPipelineColorAttachmentDescriptor *colorAttachment = desc.colorAttachments[0];
-    colorAttachment.pixelFormat = MTLPixelFormatBGRA8Unorm;
+    colorAttachment.pixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
     if (blending) {
         colorAttachment.blendingEnabled = YES;
         colorAttachment.rgbBlendOperation = MTLBlendOperationAdd;

@@ -41,7 +41,7 @@ GraphicsDeviceMetal::GraphicsDeviceMetal(SDL_Window &window)
         _metalLayer.drawableSize = NSMakeSize(layerSize.width * contentsScale,
                                               layerSize.height * contentsScale);
         _metalLayer.device = device;
-        _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+        _metalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
         _metalLayer.frame = sdlLayer.frame;
         _metalLayer.framebufferOnly = true;
         

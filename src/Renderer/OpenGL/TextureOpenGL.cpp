@@ -39,8 +39,8 @@ GLint textureInternalFormat(TextureFormat format)
     switch (format)
     {
         case R8: return GL_RED;
-        case RGBA8: return GL_RGBA;
-        case BGRA8: return GL_RGBA;
+        case RGBA8: return GL_SRGB_ALPHA;
+        case BGRA8: return GL_SRGB_ALPHA;
         default:
             throw Exception("Unsupported texture type.");
     }

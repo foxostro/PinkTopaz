@@ -13,9 +13,9 @@ static MTLPixelFormat getPixelFormat(TextureFormat format)
 {
     switch (format)
     {
-        case R8:    return MTLPixelFormatR8Unorm;
-        case RGBA8: return MTLPixelFormatRGBA8Unorm;
-        case BGRA8: return MTLPixelFormatBGRA8Unorm;
+        case R8:    return MTLPixelFormatR8Unorm; // The sRGB version is not available for macOS at this time.
+        case RGBA8: return MTLPixelFormatBGRA8Unorm_sRGB;
+        case BGRA8: return MTLPixelFormatBGRA8Unorm_sRGB;
             
         default:
             throw Exception("Unsupported pixel format.");

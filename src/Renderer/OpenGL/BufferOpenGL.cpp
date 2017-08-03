@@ -48,7 +48,6 @@ BufferOpenGL::BufferOpenGL(unsigned id,
    _commandQueue(commandQueue)
 {
     _commandQueue->enqueue(_id, [=]{
-        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "BufferOpenGL::BufferOpenGL 1");
         internalCreate(bufferData.size(), (void *)&bufferData[0]);
     });
 }
@@ -86,7 +85,6 @@ BufferOpenGL::BufferOpenGL(unsigned id,
    _commandQueue(commandQueue)
 {
     _commandQueue->enqueue(_id, [=]{
-        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "BufferOpenGL::BufferOpenGL 2");
         internalCreate(bufferSize, nullptr);
     });
 }
@@ -181,8 +179,6 @@ BufferOpenGL::~BufferOpenGL()
     _commandQueue->cancel(id);
     
     _commandQueue->enqueue(0, [vao, vbo]{
-        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "BufferOpenGL::~BufferOpenGL");
-        
         if (vbo) {
             glDeleteBuffers(1, &vbo);
         }

@@ -35,6 +35,7 @@ GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(SDL_Window &window)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, desiredMinor);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1);
     _glContext = SDL_GL_CreateContext(&_window);
     
     // Check the OpenGL version and log an error if it's not supported.
@@ -57,6 +58,8 @@ GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(SDL_Window &window)
     }
     
     SDL_GL_SetSwapInterval(1);
+    
+    glEnable(GL_FRAMEBUFFER_SRGB);
     
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
