@@ -23,7 +23,7 @@
 // and writers for non-overlapping regions of space.
 // ElementType -- The type of the underlying elements of the grid.
 template<typename ElementType>
-class ConcurrentGridMutable
+class ConcurrentGridMutable : public GridIndexer
 {
 public:
     using Reader = std::function<void(const GridAddressable<ElementType> &data)>;
@@ -72,9 +72,7 @@ public:
     //                       dividing the array's grid resolution by this.
     ConcurrentGridMutable(std::unique_ptr<GridMutable<ElementType>> &&array,
                           unsigned lockGridResDivisor)
-     : _cellDimensions(array->cellDimensions()),
-       _boundingBox(array->boundingBox()),
-       _gridResolution(array->gridResolution()),
+     : GridIndexer(array->boundingBox(), array->gridResolution()),
        _arrayLocks(array->boundingBox(),
                    array->gridResolution() / (int)lockGridResDivisor),
        _array(std::move(array))
@@ -177,26 +175,6 @@ public:
     // meshes associated with underlying voxel data.
     boost::signals2::signal<void (const ChangeLog &changeLog)> onWriterTransaction;
     
-    // Gets the dimensions of a single cell in the grid.
-    // Note that cells in the grid are always the same size.
-    inline glm::vec3 cellDimensions() const
-    {
-        return _cellDimensions;
-    }
-    
-    // Gets the region for which the grid is defined.
-    // Accesses to points outside this box is not permitted.
-    inline AABB boundingBox() const
-    {
-        return _boundingBox;
-    }
-    
-    // Gets the number of cells along each axis within the valid region.
-    inline glm::ivec3 gridResolution() const
-    {
-        return _gridResolution;
-    }
-    
     // Gets the array for unprotected, raw access. Use carefully.
     inline const std::unique_ptr<GridMutable<ElementType>>& array()
     {
@@ -204,10 +182,6 @@ public:
     }
     
 protected:
-    const glm::vec3 _cellDimensions;
-    const AABB _boundingBox;
-    const glm::ivec3 _gridResolution;
-    
     // Locks for the array contents.
     // We use a shared_ptr here because there is no copy-assignment operator for
     // std::mutex.

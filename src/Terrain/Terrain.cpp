@@ -184,11 +184,7 @@ void Terrain::rebuildMeshInResponseToChanges(const ChangeLog &changeLog)
     for (const auto &change : changeLog) {
         const AABB &region = change.affectedRegion;
         std::vector<AABB> meshCells;
-        // AFOX_TODO: If we make ConcurrentMutableGrid be a GridIndexer then we
-        // don't have to grab the lock here. Just call forEachCell().
-        _meshes->readerTransaction(region, [&](const AABB &cell,
-                                               Morton3 index,
-                                               const MaybeTerrainMesh &value){
+        _meshes->forEachCell(region, [&](const AABB &cell){
             meshCells.push_back(cell);
         });
         fetchMeshes(meshCells);
