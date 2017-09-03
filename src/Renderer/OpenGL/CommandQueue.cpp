@@ -9,6 +9,7 @@
 #include "Renderer/OpenGL/CommandQueue.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
+#include <algorithm> // for remove_if
 
 CommandQueue::CommandQueue()
  : _mainThreadId(std::this_thread::get_id())
