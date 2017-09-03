@@ -12,13 +12,13 @@
 #include "AABB.hpp"
 #include <mutex>
 #include <deque>
-#include <experimental/optional>
+#include "optional.hpp"
 
 // Maintains an ordered list of meshes that need to be generated.
 class TerrainChunkQueue
 {
 public:
-    using MaybeAABB = typename std::experimental::optional<AABB>;
+    using MaybeAABB = typename optional<AABB>;
     
     TerrainChunkQueue() = default;
     

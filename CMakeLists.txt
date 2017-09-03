@@ -6,7 +6,7 @@ include(conanbuildinfo.cmake)
 conan_basic_setup()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS "/EHsc /D_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH")
+    set(CMAKE_CXX_FLAGS "/EHsc /D_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH /std:c++latest")
 
     set(CMAKE_CXX_FLAGS_RELEASE "/MD")
     set(CMAKE_CXX_FLAGS_DEBUG "/MD /Zi")
@@ -123,6 +123,7 @@ set(SOURCE_FILES_MISC
     "src/include/Morton.hpp"
     "src/Noise.cpp" "src/include/Noise.hpp"
     "src/snoise3.c" "src/include/snoise3.h"
+    "src/include/optional.hpp"
     )
 
 if(APPLE)

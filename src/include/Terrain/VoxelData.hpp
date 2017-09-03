@@ -12,7 +12,7 @@
 #include "Array3D.hpp"
 #include "Voxel.hpp"
 #include "VoxelDataGenerator.hpp"
-#include <experimental/optional>
+#include "optional.hpp"
 #include <mutex>
 
 // A block of voxels in space.
@@ -22,7 +22,7 @@ public:
     using GridMutable<Voxel>::get;
     
     using Chunk = Array3D<Voxel>;
-    using MaybeChunk = typename std::experimental::optional<Chunk>;
+    using MaybeChunk = typename optional<Chunk>;
     
     // Constructor. Accepts `generator' which can generate voxel terrain as
     // needed to fill the chunks underlying VoxelData.
