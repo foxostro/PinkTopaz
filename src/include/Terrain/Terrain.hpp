@@ -52,7 +52,7 @@ public:
     float getFogDensity() const;
     
 private:
-    using MaybeTerrainMesh = typename std::experimental::optional<TerrainMesh>;
+    using MaybeTerrainMesh = typename optional<TerrainMesh>;
     
     inline AABB getActiveRegion() const
     {

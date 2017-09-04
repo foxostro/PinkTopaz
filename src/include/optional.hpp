@@ -13,10 +13,12 @@
 #include <optional>
 using std::optional;
 using std::make_optional;
+using std::nullopt;
 #else
 #include <experimental/optional>
 using std::experimental::optional;
 using std::experimental::make_optional;
+using std::experimental::nullopt;
 #endif
 
 #endif /* Optional_hpp */

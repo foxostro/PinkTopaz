@@ -13,13 +13,13 @@
 #include "Renderer/GraphicsDevice.hpp"
 #include "Terrain/VoxelDataStore.hpp"
 #include "Terrain/Mesher.hpp"
-#include <experimental/optional>
+#include "optional.hpp"
 
 // Terrain is broken up into several meshes. This represents one of the meshes.
 class TerrainMesh
 {
 public:
-    using MaybeMesh = typename std::experimental::optional<RenderableStaticMesh>;
+    using MaybeMesh = typename optional<RenderableStaticMesh>;
     
     ~TerrainMesh() = default;
     

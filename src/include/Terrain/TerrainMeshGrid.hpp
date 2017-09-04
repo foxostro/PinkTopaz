@@ -11,9 +11,9 @@
 
 #include "Terrain/ConcurrentGridMutable.hpp"
 #include "Terrain/TerrainMesh.hpp"
-#include <experimental/optional>
+#include "optional.hpp"
 
-using MaybeTerrainMesh = typename std::experimental::optional<TerrainMesh>;
+using MaybeTerrainMesh = typename optional<TerrainMesh>;
 
 class TerrainMeshGrid : public ConcurrentGridMutable<MaybeTerrainMesh>
 {
