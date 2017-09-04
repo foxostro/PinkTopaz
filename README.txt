@@ -25,6 +25,7 @@ This variable is used by the script "sign_the_app_bundle" to sign the app bundle
 
 5. Use conan to install dependencies:
 
+	% conan remote add bintray https://api.bintray.com/conan/conan-community/conan
     % conan install . --build missing
 
 6. Configure the CMake project:
