@@ -8,7 +8,7 @@
 
 #include "UnitTestDetector.h"
 
-void areWeBeingUnitTested()
+bool areWeBeingUnitTested()
 {
     return false;
 }
