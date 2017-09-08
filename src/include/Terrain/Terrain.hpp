@@ -52,7 +52,7 @@ public:
     float getFogDensity() const;
     
 private:
-    using MaybeTerrainMesh = typename optional<TerrainMesh>;
+    using MaybeTerrainMesh = optional<TerrainMesh>;
     
     inline AABB getActiveRegion() const
     {

@@ -19,7 +19,7 @@
 class TerrainMesh
 {
 public:
-    using MaybeMesh = typename optional<RenderableStaticMesh>;
+    using MaybeMesh = optional<RenderableStaticMesh>;
     
     ~TerrainMesh() = default;
     

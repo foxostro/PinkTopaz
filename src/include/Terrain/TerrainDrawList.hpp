@@ -49,7 +49,7 @@ private:
     // Draw a distinction between cells which have an empty mesh (i.e. air) and
     // cells for which we have not yet received a mesh at all.
     // Note that `_front' must only ever be accessed from the render thread.
-    using MaybeMesh = typename optional<RenderableStaticMesh>;
+    using MaybeMesh = optional<RenderableStaticMesh>;
     Array3D<MaybeMesh> _front;
     ConcurrentGridMutable<MaybeMesh> _back;
 };

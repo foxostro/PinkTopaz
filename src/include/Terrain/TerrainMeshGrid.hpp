@@ -13,7 +13,7 @@
 #include "Terrain/TerrainMesh.hpp"
 #include "optional.hpp"
 
-using MaybeTerrainMesh = typename optional<TerrainMesh>;
+using MaybeTerrainMesh = optional<TerrainMesh>;
 
 class TerrainMeshGrid : public ConcurrentGridMutable<MaybeTerrainMesh>
 {

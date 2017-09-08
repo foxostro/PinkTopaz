@@ -18,7 +18,7 @@
 class TerrainChunkQueue
 {
 public:
-    using MaybeAABB = typename optional<AABB>;
+    using MaybeAABB = optional<AABB>;
     
     TerrainChunkQueue() = default;
     

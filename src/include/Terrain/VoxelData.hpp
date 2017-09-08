@@ -22,7 +22,7 @@ public:
     using GridMutable<Voxel>::get;
     
     using Chunk = Array3D<Voxel>;
-    using MaybeChunk = typename optional<Chunk>;
+    using MaybeChunk = optional<Chunk>;
     
     // Constructor. Accepts `generator' which can generate voxel terrain as
     // needed to fill the chunks underlying VoxelData.
