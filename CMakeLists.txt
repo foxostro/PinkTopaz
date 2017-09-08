@@ -6,7 +6,7 @@ include(conanbuildinfo.cmake)
 conan_basic_setup()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS "/EHsc /D_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH /std:c++latest")
+    set(CMAKE_CXX_FLAGS "/arch:AVX2 /EHsc /D_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH /std:c++latest")
 
     set(CMAKE_CXX_FLAGS_RELEASE "/MD")
     set(CMAKE_CXX_FLAGS_DEBUG "/MD /Zi")
