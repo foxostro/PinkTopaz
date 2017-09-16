@@ -132,22 +132,26 @@ set(SOURCE_FILES_MISC
     )
 
 if(APPLE)
-    set(SOURCE_FILES_PLATFORM_SUPPORT
-        "src/include/UnitTestDetector.h" "src/osx/UnitTestDetector.m"
-        "src/include/RetinaSupport.h" "src/osx/RetinaSupport.m"
-        "src/osx/GraphicsDeviceFactory.mm"
-        "src/osx/Profiler.cpp"
-        "src/osx/Stopwatch.cpp"
-        "src/osx/VideoRefreshRate.cpp"
-        )
+    set(PLATFORM_DIR "osx")
 else(APPLE)
-    set(SOURCE_FILES_PLATFORM_SUPPORT
-        "src/include/UnitTestDetector.h" "src/linux/UnitTestDetector.c"
-        "src/include/RetinaSupport.h" "src/linux/RetinaSupport.c"
-        "src/linux/GraphicsDeviceFactory.cpp"
-        "src/linux/VideoRefreshRate.cpp"
-        )
+	if(WIN32)
+        set(PLATFORM_DIR "linux")
+	else(WIN32)
+        set(PLATFORM_DIR "windows")
+	endif(WIN32)
 endif(APPLE)
+
+set(SOURCE_FILES_PLATFORM_SUPPORT
+        "src/include/UnitTestDetector.h"
+        "src/include/RetinaSupport.h"
+        "src/${PLATFORM_DIR}/UnitTestDetector.m"
+        "src/${PLATFORM_DIR}/RetinaSupport.m"
+        "src/${PLATFORM_DIR}/GraphicsDeviceFactory.mm"
+        "src/${PLATFORM_DIR}/VideoRefreshRate.cpp"
+        "src/${PLATFORM_DIR}/Profiler.cpp"
+        "src/${PLATFORM_DIR}/Stopwatch.cpp"
+        "src/${PLATFORM_DIR}/CPUSupportDetector.cpp"
+        )
 
 set(SOURCE_FILES
     ${SOURCE_FILES_TERRAIN}
