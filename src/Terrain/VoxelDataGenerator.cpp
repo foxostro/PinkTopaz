@@ -31,8 +31,8 @@ static inline float groundGradient(float terrainHeight, const vec3 &p)
 }
 
 // Generates a voxel for the specified point and returns it in `outVoxel'.
-static void generateTerrainVoxel(const Noise &noiseSource0,
-                                 const Noise &noiseSource1,
+static void generateTerrainVoxel(const SimplexNoise &noiseSource0,
+                                 const SimplexNoise &noiseSource1,
                                  float terrainHeight,
                                  const vec3 &p,
                                  Voxel &outVoxel)
@@ -99,7 +99,7 @@ VoxelDataGenerator::VoxelDataGenerator(unsigned seed)
 
 Array3D<Voxel> VoxelDataGenerator::copy(const AABB &region) const
 {
-    static constexpr float terrainHeight = 40.f;
+    static constexpr float terrainHeight = 20.f;
     
     const AABB adjusted = snapRegionToCellBoundaries(region);
     const auto res = countCellsInRegion(adjusted);

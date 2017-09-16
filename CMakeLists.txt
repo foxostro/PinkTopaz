@@ -126,8 +126,7 @@ set(SOURCE_FILES_MISC
     "src/include/Stopwatch.hpp"
     "src/include/VideoRefreshRate.hpp"
     "src/include/Morton.hpp"
-    "src/Noise.cpp" "src/include/Noise.hpp"
-    "src/snoise3.c" "src/include/snoise3.h"
+    "src/SimplexNoise.cpp" "src/include/SimplexNoise.hpp"
     "src/include/optional.hpp"
     )
 

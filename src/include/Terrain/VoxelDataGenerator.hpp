@@ -12,7 +12,7 @@
 #include "GridAddressable.hpp"
 #include "Array3D.hpp"
 #include "Voxel.hpp"
-#include "Noise.hpp"
+#include "SimplexNoise.hpp"
 #include <memory>
 
 class VoxelDataGenerator : public GridIndexer
@@ -26,8 +26,8 @@ public:
     Array3D<Voxel> copy(const AABB &region) const;
     
 private:
-    Noise _noiseSource0;
-    Noise _noiseSource1;
+    SimplexNoise _noiseSource0;
+    SimplexNoise _noiseSource1;
 };
 
 #endif /* VoxelDataGenerator_hpp */
