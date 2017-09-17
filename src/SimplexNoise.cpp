@@ -18,6 +18,8 @@
 
 #include "SimplexNoise.hpp"
 #include <glm/gtx/component_wise.hpp>
+#include <random>
+#include <algorithm> // for std::shuffle
 
 using namespace glm;
 
@@ -28,30 +30,13 @@ const glm::vec3 SimplexNoise::grad3[] =
     glm::vec3(0,1,1), glm::vec3(0,-1,1), glm::vec3(0,1,-1), glm::vec3(0,-1,-1)
 };
 
-static void shuffle(unsigned *pseed, unsigned char *array, size_t n)
-{
-    assert(pseed);
-    assert(array);
-    
-    if(n <= 1) {
-        return;
-    }
-    
-    for(size_t i = 0; i < n - 1; i++)
-    {
-        size_t j = i + rand_r(pseed) / (RAND_MAX / (n - i) + 1);
-        unsigned char t = array[j];
-        array[j] = array[i];
-        array[i] = t;
-    }
-}
-
 SimplexNoise::SimplexNoise(unsigned seed)
 {
     unsigned char permfill[256] = {162, 43, 153, 52, 83, 210, 193, 75, 227, 195, 233, 76, 83, 48, 252, 181, 101, 31, 13, 32, 38, 23, 72, 101, 100, 145, 105, 218, 135, 89, 39, 100, 162, 196, 51, 18, 185, 138, 76, 83, 228, 229, 128, 101, 76, 111, 68, 227, 114, 123, 72, 98, 219, 161, 8, 86, 212, 50, 219, 166, 139, 195, 195, 128, 74, 250, 154, 110, 150, 175, 36, 25, 96, 123, 101, 12, 236, 158, 227, 199, 77, 156, 6, 159, 203, 92, 27, 60, 155, 218, 239, 156, 184, 90, 213, 115, 38, 18, 39, 102, 191, 87, 177, 47, 64, 28, 224, 252, 176, 9, 111, 208, 112, 50, 78, 123, 243, 248, 99, 112, 52, 142, 253, 93, 30, 111, 56, 104, 217, 3, 204, 188, 144, 143, 155, 228, 55, 249, 45, 9, 152, 26, 250, 2, 135, 30, 4, 169, 30, 208, 56, 255, 15, 123, 237, 170, 17, 71, 182, 203, 246, 162, 184, 164, 103, 77, 49, 174, 186, 159, 201, 216, 41, 92, 246, 158, 112, 79, 99, 101, 231, 46, 88, 81, 94, 23, 24, 103, 43, 224, 151, 173, 217, 142, 64, 78, 203, 110, 151, 49, 22, 107, 3, 44, 110, 151, 253, 142, 125, 247, 3, 239, 42, 23, 238, 102, 114, 104, 58, 227, 164, 31, 214, 84, 98, 159, 67, 181, 19, 144, 133, 213, 19, 122, 245, 42, 217, 205, 0, 87, 104, 122, 35, 238, 96, 93, 116, 177, 56, 201, 147, 156, 229, 219, 16, 128};
     
     // Shuffle the permutation table to give us different noise for every seed.
-    shuffle(&seed, permfill, 256);
+	std::default_random_engine e1(seed);
+	std::shuffle(permfill, permfill + 256, e1);
     
     for (int i = 0; i < 512; ++i) {
         perm[i] = permfill[i & 255];

@@ -7,7 +7,7 @@
 //
 
 #include "CPUSupportDetector.hpp"
-#include <x86intrin.h>
+#include <intrin.h>
 
 bool isAVX2Supported()
 {

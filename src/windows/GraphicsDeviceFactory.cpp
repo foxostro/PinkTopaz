@@ -8,14 +8,10 @@
 
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/OpenGL/GraphicsDeviceOpenGL.hpp"
-
-namespace Renderer {
     
-    std::shared_ptr<GraphicsDevice> createDefaultGraphicsDevice(SDL_Window &w)
-    {
-        auto concrete = std::make_shared<GraphicsDeviceOpenGL>(w);
-        auto abstract = std::dynamic_pointer_cast<GraphicsDevice>(concrete);
-        return abstract;
-    }
-    
-}; // namespace Renderer
+std::shared_ptr<GraphicsDevice> createDefaultGraphicsDevice(SDL_Window &w)
+{
+    auto concrete = std::make_shared<GraphicsDeviceOpenGL>(w);
+    auto abstract = std::dynamic_pointer_cast<GraphicsDevice>(concrete);
+    return abstract;
+}

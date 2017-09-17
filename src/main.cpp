@@ -1,5 +1,5 @@
 //
-//  main.m
+//  main.cpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 6/24/16.

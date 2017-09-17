@@ -123,7 +123,6 @@ set(SOURCE_FILES_MISC
     "src/TaskDispatcher.cpp" "src/include/TaskDispatcher.hpp"
     "src/include/Profiler.hpp"
     "src/include/UniqueName.hpp"
-    "src/include/Stopwatch.hpp"
     "src/include/VideoRefreshRate.hpp"
     "src/include/Morton.hpp"
     "src/SimplexNoise.cpp" "src/include/SimplexNoise.hpp"
@@ -131,26 +130,41 @@ set(SOURCE_FILES_MISC
     )
 
 if(APPLE)
-    set(PLATFORM_DIR "osx")
-else(APPLE)
-	if(WIN32)
-        set(PLATFORM_DIR "linux")
-	else(WIN32)
-        set(PLATFORM_DIR "windows")
-	endif(WIN32)
-endif(APPLE)
-
-set(SOURCE_FILES_PLATFORM_SUPPORT
+    set(SOURCE_FILES_PLATFORM_SUPPORT
         "src/include/UnitTestDetector.h"
         "src/include/RetinaSupport.h"
-        "src/${PLATFORM_DIR}/UnitTestDetector.m"
-        "src/${PLATFORM_DIR}/RetinaSupport.m"
-        "src/${PLATFORM_DIR}/GraphicsDeviceFactory.mm"
-        "src/${PLATFORM_DIR}/VideoRefreshRate.cpp"
-        "src/${PLATFORM_DIR}/Profiler.cpp"
-        "src/${PLATFORM_DIR}/Stopwatch.cpp"
-        "src/${PLATFORM_DIR}/CPUSupportDetector.cpp"
+        "src/osx/UnitTestDetector.m"
+        "src/osx/RetinaSupport.m"
+        "src/osx/GraphicsDeviceFactory.mm"
+        "src/osx/VideoRefreshRate.cpp"
+        "src/osx/Profiler.cpp"
+        "src/osx/CPUSupportDetector.cpp"
         )
+else(APPLE)
+	if(WIN32)
+        set(SOURCE_FILES_PLATFORM_SUPPORT
+            "src/include/UnitTestDetector.h"
+            "src/include/RetinaSupport.h"
+            "src/windows/UnitTestDetector.c"
+            "src/windows/RetinaSupport.c"
+            "src/windows/GraphicsDeviceFactory.cpp"
+            "src/windows/VideoRefreshRate.cpp"
+            "src/windows/Profiler.cpp"
+            "src/windows/CPUSupportDetector.cpp"
+            )
+	else(WIN32)
+        set(SOURCE_FILES_PLATFORM_SUPPORT
+            "src/include/UnitTestDetector.h"
+            "src/include/RetinaSupport.h"
+            "src/linux/UnitTestDetector.c"
+            "src/linux/RetinaSupport.c"
+            "src/linux/GraphicsDeviceFactory.cpp"
+            "src/linux/VideoRefreshRate.cpp"
+            "src/linux/Profiler.cpp"
+            "src/linux/CPUSupportDetector.cpp"
+            )
+	endif(WIN32)
+endif(APPLE)
 
 set(SOURCE_FILES
     ${SOURCE_FILES_TERRAIN}

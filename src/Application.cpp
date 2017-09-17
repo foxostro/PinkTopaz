@@ -14,12 +14,12 @@
 #include "Exception.hpp"
 #include "Profiler.hpp"
 #include "VideoRefreshRate.hpp"
-#include "Stopwatch.hpp"
 #include "UnitTestDetector.h"
 #include "CPUSupportDetector.hpp"
 
 #include "SDL.h"
 #include <map>
+#include <chrono>
 
 #include "Application.hpp"
 
@@ -27,11 +27,9 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                         const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
                         const std::shared_ptr<TaskDispatcher> &dispatcherLowPriority)
 {
-    Stopwatch stopwatch;
-    
     // Get the display refresh rate. This is usually 60 Hz.
     const double refreshRate = getVideoRefreshRate();
-    const uint64_t videoRefreshPeriodNanos = (uint64_t)(Stopwatch::NANOS_PER_SEC / refreshRate);
+	const auto videoRefreshPeriod = std::chrono::duration<double>(1 / refreshRate);
     
     World gameWorld(graphicsDevice, dispatcherHighPriority, dispatcherLowPriority);
     
@@ -44,15 +42,15 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
         gameWorld.events.emit(event);
     }
     
-    uint64_t currentTime = stopwatch.getCurrentTimeInNanos();
+	auto currentTime = std::chrono::high_resolution_clock::now();
     
     while (true) {
         PROFILER(Frame);
         
-        const uint64_t newTime = stopwatch.getCurrentTimeInNanos();
-        const uint64_t frameTime = newTime - currentTime;
+        const auto newTime = std::chrono::high_resolution_clock::now();;
+        const auto frameDuration = newTime - currentTime;
         currentTime = newTime;
-        const uint64_t nextTime = currentTime + videoRefreshPeriodNanos;
+        const auto nextTime = currentTime + videoRefreshPeriod;
         SDL_Event e;
         
         while (SDL_PollEvent(&e)) {
@@ -84,8 +82,8 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             }
         }
         
-        gameWorld.update(frameTime / Stopwatch::NANOS_PER_MILLISEC);
-        stopwatch.waitUntil(nextTime);
+        gameWorld.update(frameDuration.count());
+		std::this_thread::sleep_until(nextTime);
     }
 }
     
