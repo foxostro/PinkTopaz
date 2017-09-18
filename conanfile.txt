@@ -47,6 +47,5 @@ Boost:without_timer=True
 Boost:without_type_erasure=True
 Boost:without_wave=True
 
-
 [generators]
 cmake
