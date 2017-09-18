@@ -47,7 +47,7 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     while (true) {
         PROFILER(Frame);
         
-        const auto newTime = std::chrono::high_resolution_clock::now();;
+        const auto newTime = std::chrono::high_resolution_clock::now();
         const auto frameDuration = newTime - currentTime;
         currentTime = newTime;
         const auto nextTime = currentTime + videoRefreshPeriod;
@@ -82,7 +82,8 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             }
         }
         
-        gameWorld.update(frameDuration.count());
+        const entityx::TimeDelta frameDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(frameDuration).count();
+        gameWorld.update(frameDurationMs);
 		std::this_thread::sleep_until(nextTime);
     }
 }
