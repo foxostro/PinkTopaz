@@ -24,7 +24,7 @@ else()
     
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-    set(CMAKE_CXX_FLAGS "-mavx2 -Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
 endif()
 
 set(SOURCE_FILES_TERRAIN
