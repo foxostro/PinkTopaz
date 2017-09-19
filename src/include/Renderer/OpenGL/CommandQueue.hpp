@@ -12,6 +12,7 @@
 #include <vector>
 #include <mutex>
 #include <thread>
+#include <string>
     
 class CommandQueue
 {
