@@ -12,13 +12,13 @@
 #include "AABB.hpp"
 #include <mutex>
 #include <deque>
-#include "optional.hpp"
+#include <boost/optional.hpp>
 
 // Maintains an ordered list of meshes that need to be generated.
 class TerrainChunkQueue
 {
 public:
-    using MaybeAABB = optional<AABB>;
+    using MaybeAABB = boost::optional<AABB>;
     
     TerrainChunkQueue() = default;
     

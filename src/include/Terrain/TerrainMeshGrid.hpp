@@ -11,9 +11,9 @@
 
 #include "Terrain/ConcurrentGridMutable.hpp"
 #include "Terrain/TerrainMesh.hpp"
-#include "optional.hpp"
+#include <boost/optional.hpp>
 
-using MaybeTerrainMesh = optional<TerrainMesh>;
+using MaybeTerrainMesh = boost::optional<TerrainMesh>;
 
 class TerrainMeshGrid : public ConcurrentGridMutable<MaybeTerrainMesh>
 {

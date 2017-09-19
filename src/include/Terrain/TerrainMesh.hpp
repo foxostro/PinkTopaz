@@ -13,13 +13,13 @@
 #include "Renderer/GraphicsDevice.hpp"
 #include "Terrain/VoxelDataStore.hpp"
 #include "Terrain/Mesher.hpp"
-#include "optional.hpp"
+#include <boost/optional.hpp>
 
 // Terrain is broken up into several meshes. This represents one of the meshes.
 class TerrainMesh
 {
 public:
-    using MaybeMesh = optional<RenderableStaticMesh>;
+    using MaybeMesh = boost::optional<RenderableStaticMesh>;
     
     ~TerrainMesh() = default;
     

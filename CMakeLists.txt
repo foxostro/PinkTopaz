@@ -126,7 +126,6 @@ set(SOURCE_FILES_MISC
     "src/include/VideoRefreshRate.hpp"
     "src/include/Morton.hpp"
     "src/SimplexNoise.cpp" "src/include/SimplexNoise.hpp"
-    "src/include/optional.hpp"
     )
 
 if(APPLE)

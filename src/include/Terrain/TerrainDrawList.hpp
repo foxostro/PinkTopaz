@@ -13,7 +13,7 @@
 #include "Terrain/Array3D.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include <shared_mutex>
-#include "optional.hpp"
+#include <boost/optional.hpp>
 
 // This is a draw list that is buffered so that updates on a background thread
 // can proceed without interfering with the render thread.
@@ -49,7 +49,7 @@ private:
     // Draw a distinction between cells which have an empty mesh (i.e. air) and
     // cells for which we have not yet received a mesh at all.
     // Note that `_front' must only ever be accessed from the render thread.
-    using MaybeMesh = optional<RenderableStaticMesh>;
+    using MaybeMesh = boost::optional<RenderableStaticMesh>;
     Array3D<MaybeMesh> _front;
     ConcurrentGridMutable<MaybeMesh> _back;
 };

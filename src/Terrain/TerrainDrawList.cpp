@@ -49,7 +49,7 @@ void TerrainDrawList::updateDrawList(const TerrainMesh &mesh)
     _back.writerTransaction(cell, [&](const AABB &cell,
                                       Morton3 index,
                                       MaybeMesh &value){
-        value = make_optional(mesh.getMesh());
+        value = boost::make_optional(mesh.getMesh());
     });
 }
 

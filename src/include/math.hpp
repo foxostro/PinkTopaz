@@ -12,8 +12,9 @@
 #include <algorithm>
 #include <glm/glm.hpp>
 
-#if __has_include(<x86intrin.h>)
-#include <x86intrin.h>
+#if defined(__BMI2__) && (defined(__clang__) || defined(__GNUC__))
+
+#include <intrin.h>
 
 static inline uint32_t ilog2(uint32_t x)
 {

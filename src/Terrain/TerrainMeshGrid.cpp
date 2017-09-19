@@ -32,7 +32,7 @@ void TerrainMeshGrid::readerTransactionTry(const AABB &region, const std::functi
         // This is an optional so that we can leave it empty until after
         // we've tried to take the lock. If we've taken the lock then we
         // expect this to be valid.
-        optional<std::reference_wrapper<const TerrainMesh>> _ref;
+        boost::optional<std::reference_wrapper<const TerrainMesh>> _ref;
         
     public:
         Item(std::mutex &m)
@@ -48,7 +48,7 @@ void TerrainMeshGrid::readerTransactionTry(const AABB &region, const std::functi
            _ref(item._ref)
         {
             item._ownsLock = false;
-            item._ref = nullopt;
+            item._ref = boost::none;
         }
         
         ~Item()
@@ -80,7 +80,7 @@ void TerrainMeshGrid::readerTransactionTry(const AABB &region, const std::functi
         
         inline void setTerrainMesh(const TerrainMesh &terrainMesh)
         {
-            _ref = optional<std::reference_wrapper<const TerrainMesh>>(terrainMesh);
+            _ref = boost::optional<std::reference_wrapper<const TerrainMesh>>(terrainMesh);
         }
     };
     
