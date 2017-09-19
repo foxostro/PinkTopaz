@@ -107,8 +107,7 @@ TextureOpenGL::TextureOpenGL(unsigned id,
 void TextureOpenGL::commonInit(const TextureDescriptor &desc,
                                const std::vector<uint8_t> &data)
 {
-    _commandQueue->enqueue(_id, [=]{
-        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "TextureOpenGL::commonInit");
+    _commandQueue->enqueue(_id, __FUNCTION__, [=]{
         const GLenum target = _target = textureTargetEnum(desc.type);
         constexpr GLint level = 0;
         const GLint internalFormat = textureInternalFormat(desc.format);
@@ -154,8 +153,7 @@ TextureOpenGL::~TextureOpenGL()
 {
     const GLuint handle = _handle;
     _commandQueue->cancel(_id);
-    _commandQueue->enqueue(0, [handle]{
-        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "TextureOpenGL::~TextureOpenGL");
+    _commandQueue->enqueue(0, __FUNCTION__, [handle]{
         if (handle) {
             glDeleteTextures(1, &handle);
             CHECK_GL_ERROR();

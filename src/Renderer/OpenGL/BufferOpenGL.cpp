@@ -47,7 +47,7 @@ BufferOpenGL::BufferOpenGL(unsigned id,
    _bufferType(bufferType),
    _commandQueue(commandQueue)
 {
-    _commandQueue->enqueue(_id, [=]{
+    _commandQueue->enqueue(_id, __FUNCTION__, [=]{
         internalCreate(bufferData.size(), (void *)&bufferData[0]);
     });
 }
@@ -67,7 +67,7 @@ BufferOpenGL::BufferOpenGL(unsigned id,
 {
     std::vector<uint8_t> wrappedData(bufferSize);
     memcpy(&wrappedData[0], bufferData, bufferSize);
-    _commandQueue->enqueue(_id, [data{std::move(wrappedData)}, this]{
+    _commandQueue->enqueue(_id, __FUNCTION__, [data{std::move(wrappedData)}, this]{
         internalCreate(data.size(), (void *)&data[0]);
     });
 }
@@ -84,7 +84,7 @@ BufferOpenGL::BufferOpenGL(unsigned id,
    _bufferType(bufferType),
    _commandQueue(commandQueue)
 {
-    _commandQueue->enqueue(_id, [=]{
+    _commandQueue->enqueue(_id, __FUNCTION__, [=]{
         internalCreate(bufferSize, nullptr);
     });
 }
@@ -147,7 +147,7 @@ void BufferOpenGL::internalReplace(size_t bufferSize, const void *bufferData)
 
 void BufferOpenGL::replace(const std::vector<uint8_t> &wrappedData)
 {
-    _commandQueue->enqueue(_id, [wrappedData, this]{
+    _commandQueue->enqueue(_id, __FUNCTION__, [wrappedData, this]{
         size_t n = wrappedData.size();
         const void *p = (const void *)&wrappedData[0];
         internalReplace(n, p);
@@ -156,7 +156,7 @@ void BufferOpenGL::replace(const std::vector<uint8_t> &wrappedData)
 
 void BufferOpenGL::replace(std::vector<uint8_t> &&wrappedData)
 {
-    _commandQueue->enqueue(_id, [data{std::move(wrappedData)}, this]{
+    _commandQueue->enqueue(_id, __FUNCTION__, [data{std::move(wrappedData)}, this]{
         size_t n = data.size();
         const void *p = (const void *)&data[0];
         internalReplace(n, p);
@@ -178,7 +178,7 @@ BufferOpenGL::~BufferOpenGL()
     
     _commandQueue->cancel(id);
     
-    _commandQueue->enqueue(0, [vao, vbo]{
+    _commandQueue->enqueue(0, __FUNCTION__, [vao, vbo]{
         if (vbo) {
             glDeleteBuffers(1, &vbo);
         }

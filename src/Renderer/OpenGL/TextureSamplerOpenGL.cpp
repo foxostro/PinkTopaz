@@ -48,8 +48,7 @@ TextureSamplerOpenGL::TextureSamplerOpenGL(unsigned id,
     const GLint minFilter = textureSamplerFilterEnum(desc.minFilter);
     const GLint maxFilter = textureSamplerFilterEnum(desc.maxFilter);
     
-    _commandQueue->enqueue(_id, [=]{
-        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "TextureSamplerOpenGL::TextureSamplerOpenGL");
+    _commandQueue->enqueue(_id, __FUNCTION__, [=]{
         GLuint sampler;
         glGenSamplers(1, &sampler);
         glSamplerParameteri(sampler, GL_TEXTURE_WRAP_S, addressS);
@@ -66,8 +65,7 @@ TextureSamplerOpenGL::~TextureSamplerOpenGL()
 {
     const GLuint handle = _handle;
     _commandQueue->cancel(_id);
-    _commandQueue->enqueue(0, [handle]{
-        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "TextureSamplerOpenGL::~TextureSamplerOpenGL");
+    _commandQueue->enqueue(0, __FUNCTION__, [handle]{
         if (handle) {
             glDeleteSamplers(1, &handle);
             CHECK_GL_ERROR();
