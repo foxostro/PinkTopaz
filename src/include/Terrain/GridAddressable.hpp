@@ -17,6 +17,11 @@
 #include <functional>
 
 
+#ifndef NDEBUG
+#define EnableVerboseBoundsChecking
+#endif
+
+
 template<typename PointType>
 static inline bool
 isPointInsideBox(const PointType &point,
@@ -79,12 +84,6 @@ public:
 class GridIndexer
 {
 public:
-#ifdef NDEBUG
-    static constexpr bool EnableVerboseBoundsChecking = false;
-#else
-    static constexpr bool EnableVerboseBoundsChecking = true;
-#endif
-    
     ~GridIndexer() = default;
     
     GridIndexer(const AABB &boundingBox,
@@ -119,11 +118,11 @@ public:
     // Gets a morton code to identify the cell for the specified point in space.
     inline Morton3 indexAtPoint(const glm::vec3 &point) const
     {
-        if constexpr (EnableVerboseBoundsChecking) {
+#ifdef EnableVerboseBoundsChecking
             if (!inbounds(point)) {
                 throw OutOfBoundsException();
             }
-        }
+#endif
         
         const glm::ivec3 a = cellCoordsAtPoint(point);
         const Morton3 index = indexAtCellCoords(a);
@@ -288,11 +287,11 @@ public:
     void forEachCell(const AABB &region,
                      const std::function<void (const AABB &cell)> &fn) const
     {
-        if constexpr (EnableVerboseBoundsChecking) {
+#ifdef EnableVerboseBoundsChecking
             if (!inbounds(region)) {
                 throw OutOfBoundsException();
             }
-        }
+#endif
         
         const auto dim = cellDimensions();
         const auto extent = dim * 0.5f;
@@ -317,11 +316,11 @@ public:
                      const std::function<void (const AABB &cell,
                                                Morton3 index)> &fn) const
     {
-        if constexpr (EnableVerboseBoundsChecking) {
+#ifdef EnableVerboseBoundsChecking
             if (!inbounds(region)) {
                 throw OutOfBoundsException();
             }
-        }
+#endif
         
         const auto dim = cellDimensions();
         const auto extent = dim * 0.5f;
@@ -346,11 +345,11 @@ public:
     void forEachCell(const AABB &region,
                      const std::function<void (const glm::ivec3 &a)> &fn) const
     {
-        if constexpr (EnableVerboseBoundsChecking) {
+#ifdef EnableVerboseBoundsChecking
             if (!inbounds(region)) {
                 throw OutOfBoundsException();
             }
-        }
+#endif
         
         const auto min = region.mins();
         const auto max = region.maxs();
@@ -406,11 +405,11 @@ public:
     void forPointsInGrid(const AABB &region,
                          std::function<void (const glm::vec3 &point)> fn) const
     {
-        if constexpr (EnableVerboseBoundsChecking) {
+#ifdef EnableVerboseBoundsChecking
             if (!inbounds(region)) {
                 throw OutOfBoundsException();
             }
-        }
+#endif
         
         const auto dim = cellDimensions();
         const auto min = region.mins();

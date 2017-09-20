@@ -21,7 +21,7 @@ TerrainChunkQueue::MaybeAABB TerrainChunkQueue::pop()
     if (!_cells.empty()) {
         const AABB cell = _cells.front();
         _cells.pop_front();
-        result = std::experimental::make_optional(cell);
+        result = boost::make_optional(cell);
     }
     return result;
 }

@@ -12,27 +12,19 @@
 #include <algorithm>
 #include <glm/glm.hpp>
 
-#if __has_include(<x86intrin.h>)
+#if defined(_MSC_VER)
+#include <intrin.h>
+#else
 #include <x86intrin.h>
+#endif
 
+#if defined(__LZCNT__)
 static inline uint32_t ilog2(uint32_t x)
 {
     // See <https://stackoverflow.com/a/11376759/2403342> for details.
-    return (uint32_t)(8*sizeof(unsigned long long) - __builtin_clzll((x)) - 1);
+    return (uint32_t)(8*sizeof(unsigned long long) - __lzcnt64(x) - 1);
 }
-
-static inline uint32_t roundUpToPowerOfTwo(uint32_t x)
-{
-    return 1 << (32 - __builtin_clz(x - 1));
-}
-
-static inline bool isPowerOfTwo(uint32_t x)
-{
-    return __builtin_popcount(x) == 1;
-}
-
 #else
-
 static inline uint32_t ilog2(uint32_t x)
 {
     // See <http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogObvious>
@@ -42,7 +34,14 @@ static inline uint32_t ilog2(uint32_t x)
     }
     return r;
 }
+#endif // defined(__LZCNT__)
 
+#if defined(__LZCNT__)
+static inline uint32_t roundUpToPowerOfTwo(uint32_t x)
+{
+    return 1 << (32 - __lzcnt32(x - 1));
+}
+#else
 static inline uint32_t roundUpToPowerOfTwo(uint32_t v)
 {
     // See <http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2>
@@ -55,14 +54,20 @@ static inline uint32_t roundUpToPowerOfTwo(uint32_t v)
     v++;
     return v;
 }
+#endif // defined(__LZCNT__)
 
+#if defined(__POPCNT__)
+static inline bool isPowerOfTwo(uint32_t x)
+{
+    return _mm_popcnt_u32(x) == 1;
+}
+#else
 static inline bool isPowerOfTwo(uint32_t x)
 {
     // See <http://graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2>
     return (x && !(x & (x - 1))) == 0;
 }
-
-#endif
+#endif // defined(__POPCNT__)
 
 template<typename T>
 static inline const T& clamp(const T &value, const T &min, const T &max)

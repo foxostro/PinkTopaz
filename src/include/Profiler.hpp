@@ -11,6 +11,7 @@
 
 #include <string>
 #include <functional>
+#include <memory>
 #include "UniqueName.hpp"
 
 // Change this macro to 1 to enable profiling with the PROFILER macro. Set to 0

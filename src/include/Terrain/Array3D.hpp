@@ -22,7 +22,6 @@
 template<typename TYPE> class Array3D : public GridMutable<TYPE>
 {
 public:
-    using GridMutable<TYPE>::EnableVerboseBoundsChecking;
     using GridMutable<TYPE>::indexAtPoint;
     using GridMutable<TYPE>::indexAtCellCoords;
     using GridMutable<TYPE>::inbounds;
@@ -80,11 +79,11 @@ public:
     // Each point in space corresponds to exactly one cell. Get the object.
     const TYPE& get(const glm::vec3 &p) const override
     {
-        if constexpr (EnableVerboseBoundsChecking) {
+#ifdef EnableVerboseBoundsChecking
             if (!inbounds(p)) {
                 throw OutOfBoundsException();
             }
-        }
+#endif
         return get(indexAtPoint(p));
     }
     
@@ -103,11 +102,11 @@ public:
     // Each point in space corresponds to exactly one cell. Get the (mutable) object.
     TYPE& mutableReference(const glm::vec3 &p) override
     {
-        if constexpr (EnableVerboseBoundsChecking) {
+#ifdef EnableVerboseBoundsChecking
             if (!inbounds(p)) {
                 throw OutOfBoundsException();
             }
-        }
+#endif
         return mutableReference(indexAtPoint(p));
     }
     

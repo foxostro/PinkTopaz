@@ -9,6 +9,8 @@
 #include "Renderer/OpenGL/CommandQueue.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
+#include "SDL.h"
+#include <algorithm> // for remove_if
 
 CommandQueue::CommandQueue()
  : _mainThreadId(std::this_thread::get_id())
@@ -32,27 +34,28 @@ void CommandQueue::execute()
         queue = std::move(_queue);
     }
     
-    while (!queue.empty()) {
-        auto pair = std::move(queue.back());
-        const auto &command = pair.second;
-        command();
-        queue.pop_back();
+    for (Task &task : queue) {
+        //SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "Executing command \"%s\" with id=%u.", task.label.c_str(), task.id);
+        task.fn();
     }
 }
 
 void CommandQueue::cancel(unsigned id)
 {
-    auto pred = [id](const Pair &pair){
-        return pair.first == id;
+    auto pred = [id](const Task &task){
+        return task.id == id;
     };
     std::lock_guard<std::mutex> lock(_queueLock);
+    //SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "Cancelling command with id=%u.", id);
     _queue.erase(std::remove_if(_queue.begin(), _queue.end(), pred), _queue.end());
 }
 
-void CommandQueue::enqueue(unsigned id, std::function<void()> &&task)
+void CommandQueue::enqueue(unsigned id, const std::string &label, std::function<void()> &&fn)
 {
     std::lock_guard<std::mutex> lock(_queueLock);
-    _queue.insert(_queue.begin(), std::make_pair(id, std::move(task)));
+    Task task = { id, label, std::move(fn) };
+    //SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "Enqueueing command \"%s\" with id=%u.", task.label.c_str(), task.id);
+    _queue.emplace_back(std::move(task));
 }
 
 void CommandQueue::enqueue(CommandQueue &other)
@@ -60,6 +63,8 @@ void CommandQueue::enqueue(CommandQueue &other)
     std::unique_lock<std::mutex> lock1(_queueLock, std::defer_lock);
     std::unique_lock<std::mutex> lock2(other._queueLock, std::defer_lock);
     std::lock(lock1, lock2);
-    _queue.insert(_queue.end(), other._queue.begin(), other._queue.end());
+    _queue.insert(_queue.end(),
+                  std::make_move_iterator(other._queue.begin()),
+                  std::make_move_iterator(other._queue.end()));
     other._queue.clear();
 }

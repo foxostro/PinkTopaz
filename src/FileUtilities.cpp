@@ -14,12 +14,13 @@
 
 std::string stringFromFileContents(const boost::filesystem::path &path)
 {
-    const char *filePath = path.string().c_str();
+	const std::string filePathStr = path.string();
+    const char *filePath = filePathStr.c_str();
     
     std::ifstream in(filePath, std::ios::in | std::ios::binary);
     
     if (!in) {
-        throw Exception("Failed to open file: %s, filePath=%s\n", strerror(errno), filePath);
+        throw Exception("Failed to open file: %s, filePath=\"%s\"\n", strerror(errno), filePath);
     }
     
     std::string contents;
@@ -34,7 +35,8 @@ std::string stringFromFileContents(const boost::filesystem::path &path)
 
 std::vector<uint8_t> binaryFileContents(const boost::filesystem::path &path)
 {
-    const char *filePath = path.string().c_str();
+	const std::string filePathStr = path.string();
+	const char *filePath = filePathStr.c_str();
     
     std::ifstream in(filePath, std::ios::in | std::ios::binary);
     
@@ -54,7 +56,8 @@ std::vector<uint8_t> binaryFileContents(const boost::filesystem::path &path)
 
 void saveBinaryFile(const boost::filesystem::path &path, const std::vector<uint8_t> &bytes)
 {
-    const char *filePath = path.string().c_str();
+	const std::string filePathStr = path.string();
+	const char *filePath = filePathStr.c_str();
     
     std::ofstream out(filePath, std::ios::out | std::ios::binary);
     

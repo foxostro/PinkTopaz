@@ -11,6 +11,7 @@
 
 #include <queue>
 #include <memory>
+#include <atomic>
 
 #include "SDL.h"
 #include "Renderer/GraphicsDevice.hpp"

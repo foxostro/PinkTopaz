@@ -5,21 +5,26 @@ set(APP_NAME "PinkTopaz")
 include(conanbuildinfo.cmake)
 conan_basic_setup()
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS "/EHsc /D_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH")
+if(APPLE)
+    option(USE_METAL "Use the Metal graphics API on macOS." TRUE)
+endif()
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS "/arch:AVX2 /EHsc /D_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH /std:c++latest")
 
     set(CMAKE_CXX_FLAGS_RELEASE "/MD")
     set(CMAKE_CXX_FLAGS_DEBUG "/MD /Zi")
 else()
     if(APPLE)
-    set(APPLE_FLAGS "-DMETAL_ENABLED")
-    else(APPLE)
-    set(APPLE_FLAGS "")
+        set(APPLE_FLAGS "")
+        if(USE_METAL)
+            set(APPLE_FLAGS "-DMETAL_ENABLED ${APPLE_FLAGS}")
+        endif(USE_METAL)
     endif(APPLE)
     
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-    set(CMAKE_CXX_FLAGS "-march=haswell -Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
 endif()
 
 set(SOURCE_FILES_TERRAIN
@@ -118,29 +123,46 @@ set(SOURCE_FILES_MISC
     "src/TaskDispatcher.cpp" "src/include/TaskDispatcher.hpp"
     "src/include/Profiler.hpp"
     "src/include/UniqueName.hpp"
-    "src/include/Stopwatch.hpp"
     "src/include/VideoRefreshRate.hpp"
     "src/include/Morton.hpp"
-    "src/Noise.cpp" "src/include/Noise.hpp"
-    "src/snoise3.c" "src/include/snoise3.h"
+    "src/SimplexNoise.cpp" "src/include/SimplexNoise.hpp"
     )
 
 if(APPLE)
     set(SOURCE_FILES_PLATFORM_SUPPORT
-        "src/include/UnitTestDetector.h" "src/osx/UnitTestDetector.m"
-        "src/include/RetinaSupport.h" "src/osx/RetinaSupport.m"
+        "src/include/UnitTestDetector.h"
+        "src/include/RetinaSupport.h"
+        "src/osx/UnitTestDetector.m"
+        "src/osx/RetinaSupport.m"
         "src/osx/GraphicsDeviceFactory.mm"
-        "src/osx/Profiler.cpp"
-        "src/osx/Stopwatch.cpp"
         "src/osx/VideoRefreshRate.cpp"
+        "src/osx/Profiler.cpp"
+        "src/osx/CPUSupportDetector.cpp"
         )
 else(APPLE)
-    set(SOURCE_FILES_PLATFORM_SUPPORT
-        "src/include/UnitTestDetector.h" "src/linux/UnitTestDetector.c"
-        "src/include/RetinaSupport.h" "src/linux/RetinaSupport.c"
-        "src/linux/GraphicsDeviceFactory.cpp"
-        "src/linux/VideoRefreshRate.cpp"
-        )
+	if(WIN32)
+        set(SOURCE_FILES_PLATFORM_SUPPORT
+            "src/include/UnitTestDetector.h"
+            "src/include/RetinaSupport.h"
+            "src/windows/UnitTestDetector.c"
+            "src/windows/RetinaSupport.c"
+            "src/windows/GraphicsDeviceFactory.cpp"
+            "src/windows/VideoRefreshRate.cpp"
+            "src/windows/Profiler.cpp"
+            "src/windows/CPUSupportDetector.cpp"
+            )
+	else(WIN32)
+        set(SOURCE_FILES_PLATFORM_SUPPORT
+            "src/include/UnitTestDetector.h"
+            "src/include/RetinaSupport.h"
+            "src/linux/UnitTestDetector.c"
+            "src/linux/RetinaSupport.c"
+            "src/linux/GraphicsDeviceFactory.cpp"
+            "src/linux/VideoRefreshRate.cpp"
+            "src/linux/Profiler.cpp"
+            "src/linux/CPUSupportDetector.cpp"
+            )
+	endif(WIN32)
 endif(APPLE)
 
 set(SOURCE_FILES

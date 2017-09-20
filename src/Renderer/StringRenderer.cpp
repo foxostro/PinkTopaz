@@ -233,7 +233,7 @@ SDL_Surface* StringRenderer::genTextureAtlas(const boost::filesystem::path &font
     }
     
     FT_Face face;
-    if (FT_New_Face(ft, fontName.c_str(), 0, &face)) {
+    if (FT_New_Face(ft, fontName.string().c_str(), 0, &face)) {
         throw Exception("Failed to load the font: %s", fontName.c_str());
     }
     
@@ -262,7 +262,7 @@ StringRenderer::makeTextureAtlas(const boost::filesystem::path &fontName,
     atlasFileName.append("font" + std::to_string(fontSize) + ".png");
     
     SDL_Surface *atlasSurface = genTextureAtlas(fontName, fontSize);
-    IMG_SavePNG(atlasSurface, atlasFileName.c_str());
+    IMG_SavePNG(atlasSurface, atlasFileName.string().c_str());
     SDL_Log("Saving font texture atlas to file: %s", atlasFileName.c_str());
     
     // We only want to store the RED components in the GPU texture.

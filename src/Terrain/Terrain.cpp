@@ -26,7 +26,8 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
    _dispatcherRebuildMesh(dispatcherRebuildMesh),
    _mesher(new MesherNaiveSurfaceNets),
    _voxelDataGenerator(new VoxelDataGenerator(/* random seed = */ 0)),
-   _voxels(new VoxelDataStore(_voxelDataGenerator, TERRAIN_CHUNK_SIZE))
+   _voxels(new VoxelDataStore(_voxelDataGenerator, TERRAIN_CHUNK_SIZE)),
+   _cameraPosition(glm::vec3())
 {
     // Load terrain texture array from a single image.
     // TODO: create a TextureArrayLoader class to encapsulate tex loading.

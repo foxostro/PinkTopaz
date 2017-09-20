@@ -93,11 +93,11 @@ GraphicsDeviceOpenGL::makeShader(const VertexFormat &vertexFormat,
                                  const std::string &fragmentProgramName,
                                  bool blending)
 {
-    std::string vertexProgramSourceFileName = vertexProgramName + ".glsl";
-    std::string vertexShaderSource = stringFromFileContents(vertexProgramSourceFileName.c_str());
+    const boost::filesystem::path vertexProgramSourceFileName(vertexProgramName + ".glsl");
+    std::string vertexShaderSource = stringFromFileContents(vertexProgramSourceFileName);
     
-    std::string fragmentProgramSourceFileName = fragmentProgramName + ".glsl";
-    std::string fragmentShaderSource = stringFromFileContents(fragmentProgramSourceFileName.c_str());
+    const boost::filesystem::path fragmentProgramSourceFileName(fragmentProgramName + ".glsl");
+    std::string fragmentShaderSource = stringFromFileContents(fragmentProgramSourceFileName);
     
     auto shader = std::make_shared<ShaderOpenGL>(nextId(),
                                                  _commandQueue,

@@ -13,6 +13,8 @@
 extern "C" {
 #endif
 
+#include <stdbool.h> // We need to include this when building with Visual Studio.
+
 bool areWeBeingUnitTested();
 
 #ifdef __cplusplus

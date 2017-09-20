@@ -61,9 +61,7 @@ ShaderOpenGL::ShaderOpenGL(unsigned id,
    _blending(blending),
    _commandQueue(commandQueue)
 {
-    _commandQueue->enqueue(_id, [=]{
-        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "ShaderOpenGL::ShaderOpenGL");
-        
+    _commandQueue->enqueue(_id, __FUNCTION__, [=]{
         const GLchar *vert = (const GLchar *)vertexShaderSource.c_str();
         const GLchar *frag = (const GLchar *)fragmentShaderSource.c_str();
         
@@ -97,8 +95,7 @@ ShaderOpenGL::~ShaderOpenGL()
 {
     const GLuint program = _program;
     _commandQueue->cancel(_id);
-    _commandQueue->enqueue(0, [program]{
-        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "ShaderOpenGL::~ShaderOpenGL");
+    _commandQueue->enqueue(0, __FUNCTION__, [program]{
         if (program) {
             glDeleteProgram(program);
             CHECK_GL_ERROR();
