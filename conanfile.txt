@@ -6,6 +6,7 @@ glm/0.9.7.6@dlarudgus20/stable
 EntityX/1.2.0@foxostro/testing
 glew/2.0.0@coding3d/stable
 Boost/1.64.0@conan/stable
+Catch/1.9.3@uilianries/stable
 
 [options]
 SDL2:shared=False
