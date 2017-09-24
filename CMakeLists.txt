@@ -137,7 +137,6 @@ if(APPLE)
         "src/osx/GraphicsDeviceFactory.mm"
         "src/osx/VideoRefreshRate.cpp"
         "src/osx/Profiler.cpp"
-        "src/osx/CPUSupportDetector.cpp"
         )
 else(APPLE)
 	if(WIN32)
@@ -149,7 +148,6 @@ else(APPLE)
             "src/windows/GraphicsDeviceFactory.cpp"
             "src/windows/VideoRefreshRate.cpp"
             "src/windows/Profiler.cpp"
-            "src/windows/CPUSupportDetector.cpp"
             )
 	else(WIN32)
         set(SOURCE_FILES_PLATFORM_SUPPORT
@@ -160,7 +158,6 @@ else(APPLE)
             "src/linux/GraphicsDeviceFactory.cpp"
             "src/linux/VideoRefreshRate.cpp"
             "src/linux/Profiler.cpp"
-            "src/linux/CPUSupportDetector.cpp"
             )
 	endif(WIN32)
 endif(APPLE)

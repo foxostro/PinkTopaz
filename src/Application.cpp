@@ -15,7 +15,6 @@
 #include "Profiler.hpp"
 #include "VideoRefreshRate.hpp"
 #include "UnitTestDetector.h"
-#include "CPUSupportDetector.hpp"
 
 #include "SDL.h"
 #include <map>
@@ -90,8 +89,8 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
 void Application::run()
 {
-    if (!isAVX2Supported()) {
-        throw Exception("This application requires the BMI2 instruction set found on Intel Haswell chips, or newer.");
+    if (!SDL_HasAVX()) {
+        throw Exception("This application requires the AVX2 instruction set found on Intel Haswell chips, or newer.");
     }
     
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
