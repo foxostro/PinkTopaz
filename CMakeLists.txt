@@ -261,7 +261,8 @@ endif(WIN32)
 
 # Set up unit test support with the Catch unit test framework.
 enable_testing()
-add_executable(${APP_NAME}Tests
+set(TEST_PROG_NAME "${APP_NAME}Tests")
+add_executable(${TEST_PROG_NAME}
                "src/test/PinkTopazTestsMain.cpp"
                "src/test/FrustumTests.cpp"
                "src/test/MortonTests.cpp"
@@ -280,7 +281,9 @@ add_executable(${APP_NAME}Tests
                "src/Terrain/MesherNaiveSurfaceNets.cpp"
                "src/Terrain/VoxelDataLoader.cpp"
                )
-target_link_libraries(${APP_NAME}Tests
+target_link_libraries(${TEST_PROG_NAME}
                       ${CONAN_LIBS}
                       )
-add_test(NAME ${APP_NAME}Tests COMMAND ${APP_NAME}Tests)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake.modules/")
+include(ParseAndAddCatchTests)
+ParseAndAddCatchTests(${TEST_PROG_NAME})
