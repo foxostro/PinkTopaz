@@ -14,7 +14,6 @@
 #include "Exception.hpp"
 #include "Profiler.hpp"
 #include "VideoRefreshRate.hpp"
-#include "UnitTestDetector.h"
 
 #include "SDL.h"
 #include <map>
@@ -114,26 +113,9 @@ void Application::run()
         
     SDL_SetRelativeMouseMode(SDL_TRUE);
     
-    // If we're running unit tests then don't bother actually starting the game.
-    // When running unit tests, it is sufficient to get into the event loop.
-    if(areWeBeingUnitTested()) {
-        bool quit = false;
-        while (!quit) {
-            SDL_Event e;
-            SDL_PollEvent(&e);
-            switch(e.type)
-            {
-                case SDL_QUIT:
-                    SDL_Log("Received SDL_QUIT.");
-                    quit = true;
-                    break;
-            }
-        }
-    } else {
-        inner(createDefaultGraphicsDevice(*_window),
-              std::make_shared<TaskDispatcher>(1),
-              std::make_shared<TaskDispatcher>());
-    }
+    inner(createDefaultGraphicsDevice(*_window),
+          std::make_shared<TaskDispatcher>(1),
+          std::make_shared<TaskDispatcher>());
 
     SDL_DestroyWindow(_window);
     _window = nullptr;

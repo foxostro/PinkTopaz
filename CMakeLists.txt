@@ -130,9 +130,7 @@ set(SOURCE_FILES_MISC
 
 if(APPLE)
     set(SOURCE_FILES_PLATFORM_SUPPORT
-        "src/include/UnitTestDetector.h"
         "src/include/RetinaSupport.h"
-        "src/osx/UnitTestDetector.m"
         "src/osx/RetinaSupport.m"
         "src/osx/GraphicsDeviceFactory.mm"
         "src/osx/VideoRefreshRate.cpp"
@@ -141,9 +139,7 @@ if(APPLE)
 else(APPLE)
 	if(WIN32)
         set(SOURCE_FILES_PLATFORM_SUPPORT
-            "src/include/UnitTestDetector.h"
             "src/include/RetinaSupport.h"
-            "src/windows/UnitTestDetector.c"
             "src/windows/RetinaSupport.c"
             "src/windows/GraphicsDeviceFactory.cpp"
             "src/windows/VideoRefreshRate.cpp"
@@ -151,9 +147,7 @@ else(APPLE)
             )
 	else(WIN32)
         set(SOURCE_FILES_PLATFORM_SUPPORT
-            "src/include/UnitTestDetector.h"
             "src/include/RetinaSupport.h"
-            "src/linux/UnitTestDetector.c"
             "src/linux/RetinaSupport.c"
             "src/linux/GraphicsDeviceFactory.cpp"
             "src/linux/VideoRefreshRate.cpp"
