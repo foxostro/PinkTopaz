@@ -110,8 +110,6 @@ set(SOURCE_FILES_OTHER_ECS
     )
 
 set(SOURCE_FILES_MISC
-    "src/main.cpp"
-    "src/Application.cpp" "src/include/Application.hpp"
     "src/FileUtilities.cpp" "src/include/FileUtilities.hpp"
     "src/Exception.cpp" "src/include/Exception.hpp"
     "src/include/RetinaSupport.h"
@@ -126,6 +124,11 @@ set(SOURCE_FILES_MISC
     "src/include/VideoRefreshRate.hpp"
     "src/include/Morton.hpp"
     "src/SimplexNoise.cpp" "src/include/SimplexNoise.hpp"
+    )
+
+set(SOURCE_FILES_APPLICATION
+    "src/main.cpp"
+    "src/Application.cpp" "src/include/Application.hpp"
     )
 
 if(APPLE)
@@ -167,6 +170,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_METAL}
     ${SOURCE_FILES_PLATFORM_SUPPORT}
     ${SOURCE_FILES_MISC}
+    ${SOURCE_FILES_APPLICATION}
     )
 
 source_group("Terrain" FILES ${SOURCE_FILES_TERRAIN})
@@ -192,10 +196,10 @@ find_package(OpenGL REQUIRED)
 # Apple's "Metal" graphics library.
 if(APPLE)
     find_library(METAL_LIBRARY Metal)
-    FIND_PATH(METAL_INCLUDE_DIR Metal/Metal.h)
+    find_path(METAL_INCLUDE_DIR Metal/Metal.h)
 
     find_library(QUARTZ_CORE_LIBRARY QuartzCore)
-    FIND_PATH(QUARTZ_CORE_INCLUDE_DIR QuartzCore/QuartzCore.h)
+    find_path(QUARTZ_CORE_INCLUDE_DIR QuartzCore/QuartzCore.h)
 
     set(MACOS_LIBRARIES
         ${METAL_LIBRARY}
@@ -228,7 +232,7 @@ target_link_libraries(${APP_NAME}
 if(APPLE)
 	# On Mac OS, we use a custom template for Info.plist so that we can specify the
 	# NSHighResolutionCapable key and enable HiDPI support.
-	set_target_properties(PinkTopaz PROPERTIES MACOSX_BUNDLE_INFO_PLIST src/MacOSXBundleInfo.plist.in)
+	set_target_properties(${APP_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST src/MacOSXBundleInfo.plist.in)
 	set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.foxostro.pinktopaz")
 
     add_custom_command(TARGET ${APP_NAME} POST_BUILD
@@ -255,18 +259,28 @@ if(WIN32)
 endif(WIN32)
 
 
-# Set up unit test support. We currently only support XCTest in Xcode, on macOS.
-# However, I do most of my development on macOS so I'm fine with this.
-if(APPLE)
-    enable_testing()
-    find_package(XCTest REQUIRED)
-    xctest_add_bundle(PinkTopazTests PinkTopaz
-                      src/test/Terrain/Array3DTests.mm
-                      src/test/Terrain/MesherMarchingCubesTests.mm
-                      src/test/Terrain/MesherNaiveSurfaceNetsTests.mm
-                      src/test/Renderer/StaticMeshSerializerTests.mm
-                      src/test/FrustumTests.mm
-                      src/test/MortonTests.mm
+# Set up unit test support with the Catch unit test framework.
+enable_testing()
+add_executable(${APP_NAME}Tests
+               "src/test/PinkTopazTestsMain.cpp"
+               "src/test/FrustumTests.cpp"
+               "src/test/MortonTests.cpp"
+               "src/test/Terrain/Array3DTests.cpp"
+               "src/test/Renderer/StaticMeshSerializerTests.cpp"
+               "src/test/Terrain/MesherMarchingCubesTests.cpp"
+               "src/test/Terrain/MesherNaiveSurfaceNetsTests.cpp"
+               
+               "src/FileUtilities.cpp"
+               "src/Exception.cpp"
+               "src/TaskDispatcher.cpp"
+               "src/SimplexNoise.cpp"
+               "src/Renderer/StaticMesh.cpp"
+               "src/Renderer/StaticMeshSerializer.cpp"
+               "src/Terrain/MesherMarchingCubes.cpp"
+               "src/Terrain/MesherNaiveSurfaceNets.cpp"
+               "src/Terrain/VoxelDataLoader.cpp"
+               )
+target_link_libraries(${APP_NAME}Tests
+                      ${CONAN_LIBS}
                       )
-    xctest_add_test(XCTest.PinkTopaz PinkTopazTests)
-endif(APPLE)
+add_test(NAME ${APP_NAME}Tests COMMAND ${APP_NAME}Tests)
