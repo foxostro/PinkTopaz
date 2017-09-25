@@ -112,18 +112,18 @@ set(SOURCE_FILES_OTHER_ECS
 set(SOURCE_FILES_MISC
     "src/FileUtilities.cpp" "src/include/FileUtilities.hpp"
     "src/Exception.cpp" "src/include/Exception.hpp"
-    "src/include/RetinaSupport.h"
     "src/FrameTimer.cpp" "src/include/FrameTimer.hpp"
+    "src/TaskDispatcher.cpp" "src/include/TaskDispatcher.hpp"
+    "src/include/UniqueName.hpp"
+    "src/SimplexNoise.cpp" "src/include/SimplexNoise.hpp"
+    )
+
+set(SOURCE_FILES_MATH
     "src/include/AABB.hpp"
     "src/include/Plane.hpp"
     "src/include/Frustum.hpp"
     "src/include/math.hpp"
-    "src/TaskDispatcher.cpp" "src/include/TaskDispatcher.hpp"
-    "src/include/Profiler.hpp"
-    "src/include/UniqueName.hpp"
-    "src/include/VideoRefreshRate.hpp"
     "src/include/Morton.hpp"
-    "src/SimplexNoise.cpp" "src/include/SimplexNoise.hpp"
     )
 
 set(SOURCE_FILES_APPLICATION
@@ -131,9 +131,15 @@ set(SOURCE_FILES_APPLICATION
     "src/Application.cpp" "src/include/Application.hpp"
     )
 
+set(SOURCE_FILES_PLATFORM_SUPPORT
+    "src/include/RetinaSupport.h"
+    "src/include/VideoRefreshRate.hpp"
+    "src/include/Profiler.hpp"
+    "src/include/RetinaSupport.h"
+    )
+
 if(APPLE)
-    set(SOURCE_FILES_PLATFORM_SUPPORT
-        "src/include/RetinaSupport.h"
+    list(APPEND SOURCE_FILES_PLATFORM_SUPPORT
         "src/osx/RetinaSupport.m"
         "src/osx/GraphicsDeviceFactory.mm"
         "src/osx/VideoRefreshRate.cpp"
@@ -141,16 +147,14 @@ if(APPLE)
         )
 else(APPLE)
 	if(WIN32)
-        set(SOURCE_FILES_PLATFORM_SUPPORT
-            "src/include/RetinaSupport.h"
+        list(APPEND SOURCE_FILES_PLATFORM_SUPPORT
             "src/windows/RetinaSupport.c"
             "src/windows/GraphicsDeviceFactory.cpp"
             "src/windows/VideoRefreshRate.cpp"
             "src/windows/Profiler.cpp"
             )
 	else(WIN32)
-        set(SOURCE_FILES_PLATFORM_SUPPORT
-            "src/include/RetinaSupport.h"
+        list(APPEND SOURCE_FILES_PLATFORM_SUPPORT
             "src/linux/RetinaSupport.c"
             "src/linux/GraphicsDeviceFactory.cpp"
             "src/linux/VideoRefreshRate.cpp"
@@ -170,6 +174,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_METAL}
     ${SOURCE_FILES_PLATFORM_SUPPORT}
     ${SOURCE_FILES_MISC}
+    ${SOURCE_FILES_MATH}
     ${SOURCE_FILES_APPLICATION}
     )
 
@@ -183,6 +188,8 @@ source_group("Renderer\\OpenGL" FILES ${SOURCE_FILES_OPENGL})
 source_group("Renderer\\Metal" FILES ${SOURCE_FILES_METAL})
 source_group("Platform Support" FILES ${SOURCE_FILES_PLATFORM_SUPPORT})
 source_group("Misc" FILES ${SOURCE_FILES_MISC})
+source_group("Math" FILES ${SOURCE_FILES_MATH})
+source_group("Application" FILES ${SOURCE_FILES_APPLICATION})
 
 # Build the app. If we're on Apple then this is a .app bundle.
 if(APPLE)
@@ -249,14 +256,14 @@ if(APPLE)
     add_custom_command(TARGET ${APP_NAME} POST_BUILD
                        COMMAND ./sign_the_app_bundle $<TARGET_FILE_DIR:${APP_NAME}>/../..
                        )
+else(APPLE)
+    if(WIN32)
+        # On Windows, copy the resources to the same directory as the executable.
+        add_custom_command(TARGET ${APP_NAME} POST_BUILD
+                           COMMAND ${CMAKE_COMMAND} -E copy_directory "./res" $<TARGET_FILE_DIR:${APP_NAME}>/
+                           )
+    endif(WIN32)
 endif(APPLE)
-
-if(WIN32)
-    # On Windows, copy the resources to the same directory as the executable.
-    add_custom_command(TARGET ${APP_NAME} POST_BUILD
-                       COMMAND ${CMAKE_COMMAND} -E copy_directory "./res" $<TARGET_FILE_DIR:${APP_NAME}>/
-                       )
-endif(WIN32)
 
 
 # Set up unit test support with the Catch unit test framework.
