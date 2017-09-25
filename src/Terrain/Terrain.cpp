@@ -25,7 +25,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
    _dispatcher(dispatcher),
    _dispatcherRebuildMesh(dispatcherRebuildMesh),
    _mesher(new MesherNaiveSurfaceNets),
-   _voxelDataGenerator(new VoxelDataGenerator(/* random seed = */ 0)),
+   _voxelDataGenerator(new VoxelDataGenerator(/* random seed = */ 52)),
    _voxels(new VoxelDataStore(_voxelDataGenerator, TERRAIN_CHUNK_SIZE)),
    _cameraPosition(glm::vec3())
 {
