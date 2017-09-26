@@ -22,6 +22,7 @@ void CameraMovementSystem::configure(entityx::EventManager &em)
 {
     em.subscribe<entityx::ComponentAddedEvent<ActiveCamera>>(*this);
     em.subscribe<entityx::ComponentRemovedEvent<ActiveCamera>>(*this);
+    em.subscribe<KeypressEvent>(*this);
     
     // Get the initial delta position to reset.
     int mouseDeltaX = 0, mouseDeltaY = 0;
@@ -37,9 +38,6 @@ void CameraMovementSystem::update(entityx::EntityManager &es,
     if (!_activeCamera.valid()) {
         return;
     }
-    
-    // Poll the keyboard state.
-    const Uint8 *keyState = SDL_GetKeyboardState(NULL);
     
     // Poll the mouse position once per frame. We measure the delta of the mouse
     // position and use that to control the camera.
@@ -59,34 +57,34 @@ void CameraMovementSystem::update(entityx::EntityManager &es,
     const float angle = _cameraRotateSpeed*dt;
     const float speed = _cameraSpeed*dt;
         
-    if (keyState[SDL_SCANCODE_W]) {
+    if (_keys[SDLK_w]) {
         velocity += worldForward * speed;
-    } else if(keyState[SDL_SCANCODE_S]) {
+    } else if(_keys[SDLK_s]) {
         velocity += worldForward * -speed;
     }
         
-    if (keyState[SDL_SCANCODE_A]) {
+    if (_keys[SDLK_a]) {
         velocity += worldRight * -speed;
-    } else if(keyState[SDL_SCANCODE_D]) {
+    } else if(_keys[SDLK_d]) {
         velocity += worldRight * speed;
     }
         
-    if (keyState[SDL_SCANCODE_Z]) {
+    if (_keys[SDLK_z]) {
         velocity += localUp * -speed;
-    } else if(keyState[SDL_SCANCODE_X]) {
+    } else if(_keys[SDLK_x]) {
         velocity += localUp * speed;
     }
 
-    if (keyState[SDL_SCANCODE_I]) {
+    if (_keys[SDLK_i]) {
         _rotation = glm::angleAxis(-angle, worldRight) * _rotation;
-    } else if(keyState[SDL_SCANCODE_K]) {
+    } else if(_keys[SDLK_k]) {
         _rotation = glm::angleAxis(angle, worldRight) * _rotation;
     }
         
-    if (keyState[SDL_SCANCODE_J]) {
+    if (_keys[SDLK_j]) {
         glm::quat deltaRot = glm::angleAxis(angle, localUp);
         _rotation = deltaRot * _rotation;
-    } else if(keyState[SDL_SCANCODE_L]) {
+    } else if(_keys[SDLK_l]) {
         glm::quat deltaRot = glm::angleAxis(-angle, localUp);
         _rotation = deltaRot * _rotation;
     }
@@ -129,4 +127,9 @@ void CameraMovementSystem::receive(const entityx::ComponentRemovedEvent<ActiveCa
     if (_activeCamera == event.entity) {
         _activeCamera.invalidate();
     }
+}
+    
+void CameraMovementSystem::receive(const KeypressEvent &event)
+{
+    _keys[event.key] = event.down;
 }

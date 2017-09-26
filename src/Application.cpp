@@ -11,6 +11,7 @@
 #include "RetinaSupport.h"
 #include "World.hpp"
 #include "WindowSizeChangedEvent.hpp"
+#include "KeypressEvent.hpp"
 #include "Exception.hpp"
 #include "Profiler.hpp"
 #include "VideoRefreshRate.hpp"
@@ -73,9 +74,17 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                             event.windowScaleFactor = windowScaleFactor(_window);
                             gameWorld.events.emit(event);
                         } break;
-                        
-                        // AFOX_TODO: Bring back KeyboardEvent and MouseEvent now that it seems clear the real problem was only processing one input event per frame. Previously, we were only calling SDL_PollEvent() once per frame.
                     }
+                    break;
+                    
+                case SDL_KEYDOWN:
+                    gameWorld.events.emit(KeypressEvent(e.key.keysym.sym,
+                                                        true));
+                    break;
+                    
+                case SDL_KEYUP:
+                    gameWorld.events.emit(KeypressEvent(e.key.keysym.sym,
+                                                        false));
                     break;
             }
         }

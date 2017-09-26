@@ -10,6 +10,7 @@
 #define CameraMovementSystem_hpp
 
 #include "ActiveCamera.hpp"
+#include "KeypressEvent.hpp"
 
 #include <entityx/entityx.h>
 #include <glm/mat4x4.hpp>
@@ -25,6 +26,7 @@ public:
     void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
     void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
     void receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event);
+    void receive(const KeypressEvent &event);
         
 private:
     const float _cameraSpeed, _cameraRotateSpeed;
@@ -32,6 +34,7 @@ private:
     
     glm::vec3 _eye, _center, _up;
     glm::quat _rotation;
+    std::map<SDL_Keycode, bool> _keys;
     entityx::Entity _activeCamera;
 };
 
