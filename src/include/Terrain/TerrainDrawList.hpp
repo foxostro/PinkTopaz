@@ -10,7 +10,7 @@
 #define TerrainDrawList_hpp
 
 #include "RenderableStaticMesh.hpp"
-#include "Terrain/Array3D.hpp"
+#include "Grid/Array3D.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include <shared_mutex>
 #include <boost/optional.hpp>

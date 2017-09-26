@@ -9,8 +9,9 @@
 #ifndef ConcurrentGridMutable_hpp
 #define ConcurrentGridMutable_hpp
 
-#include "GridAddressable.hpp"
-#include "Array3D.hpp"
+#include "Grid/GridAddressable.hpp"
+#include "Grid/Array3D.hpp"
+#include "Grid/ChangeLog.hpp"
 
 #include <mutex>
 #include <vector>

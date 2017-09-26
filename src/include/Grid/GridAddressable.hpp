@@ -13,7 +13,6 @@
 #include "Exception.hpp"
 #include "Frustum.hpp"
 #include "Morton.hpp"
-#include "ChangeLog.hpp"
 #include <functional>
 
 

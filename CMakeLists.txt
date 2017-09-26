@@ -23,16 +23,19 @@ else()
     endif(APPLE)
     
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
     set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
 endif()
 
+set(SOURCE_FILES_GRID
+    "src/include/Grid/GridAddressable.hpp"
+    "src/include/Grid/ConcurrentGridMutable.hpp"
+    "src/include/Grid/Array3D.hpp"
+    "src/Grid/ChangeLog.cpp" "src/include/Grid/ChangeLog.hpp"
+    )
+
 set(SOURCE_FILES_TERRAIN
-    "src/include/Terrain/GridAddressable.hpp"
-    "src/include/Terrain/ConcurrentGridMutable.hpp"
-    "src/include/Terrain/Array3D.hpp"
     "src/include/Terrain/Voxel.hpp"
-    "src/Terrain/ChangeLog.cpp" "src/include/Terrain/ChangeLog.hpp"
     "src/Terrain/MesherMarchingCubes.cpp" "src/include/Terrain/MesherMarchingCubes.hpp"
     "src/Terrain/MesherNaiveSurfaceNets.cpp" "src/include/Terrain/MesherNaiveSurfaceNets.hpp"
     "src/include/Terrain/Mesher.hpp"
@@ -115,7 +118,11 @@ set(SOURCE_FILES_MISC
     "src/FrameTimer.cpp" "src/include/FrameTimer.hpp"
     "src/TaskDispatcher.cpp" "src/include/TaskDispatcher.hpp"
     "src/include/UniqueName.hpp"
-    "src/SimplexNoise.cpp" "src/include/SimplexNoise.hpp"
+    )
+
+set(SOURCE_FILES_NOISE
+    "src/include/Noise/Noise.hpp"
+    "src/include/Noise/SimplexNoise.hpp" "src/Noise/SimplexNoise.cpp"
     )
 
 set(SOURCE_FILES_MATH
@@ -164,6 +171,7 @@ else(APPLE)
 endif(APPLE)
 
 set(SOURCE_FILES
+    ${SOURCE_FILES_GRID}
     ${SOURCE_FILES_TERRAIN}
     ${SOURCE_FILES_OTHER_ECS}
     ${SOURCE_FILES_RENDERER}
@@ -174,10 +182,12 @@ set(SOURCE_FILES
     ${SOURCE_FILES_METAL}
     ${SOURCE_FILES_PLATFORM_SUPPORT}
     ${SOURCE_FILES_MISC}
+    ${SOURCE_FILES_NOISE}
     ${SOURCE_FILES_MATH}
     ${SOURCE_FILES_APPLICATION}
     )
 
+source_group("Grid" FILES ${SOURCE_FILES_GRID})
 source_group("Terrain" FILES ${SOURCE_FILES_TERRAIN})
 source_group("ECS\\Systems" FILES ${SOURCE_FILES_SYSTEMS})
 source_group("ECS\\Components" FILES ${SOURCE_FILES_COMPONENTS})
@@ -188,6 +198,7 @@ source_group("Renderer\\OpenGL" FILES ${SOURCE_FILES_OPENGL})
 source_group("Renderer\\Metal" FILES ${SOURCE_FILES_METAL})
 source_group("Platform Support" FILES ${SOURCE_FILES_PLATFORM_SUPPORT})
 source_group("Misc" FILES ${SOURCE_FILES_MISC})
+source_group("Noise" FILES ${SOURCE_FILES_NOISE})
 source_group("Math" FILES ${SOURCE_FILES_MATH})
 source_group("Application" FILES ${SOURCE_FILES_APPLICATION})
 
@@ -266,6 +277,16 @@ else(APPLE)
 endif(APPLE)
 
 
+# Build a benchmark program to measure the time to generate simplex noise.
+add_executable("SimplexNoiseBenchmarks"
+               "src/benchmarks/Noise/SimplexNoiseBenchmarks.cpp"               
+               "src/Noise/SimplexNoise.cpp"
+               )
+target_link_libraries("SimplexNoiseBenchmarks"
+                      ${CONAN_LIBS}
+                      )
+
+
 # Set up unit test support with the Catch unit test framework.
 enable_testing()
 set(TEST_PROG_NAME "${APP_NAME}Tests")
@@ -273,15 +294,16 @@ add_executable(${TEST_PROG_NAME}
                "src/test/PinkTopazTestsMain.cpp"
                "src/test/FrustumTests.cpp"
                "src/test/MortonTests.cpp"
-               "src/test/Terrain/Array3DTests.cpp"
+               "src/test/Grid/Array3DTests.cpp"
                "src/test/Renderer/StaticMeshSerializerTests.cpp"
                "src/test/Terrain/MesherMarchingCubesTests.cpp"
                "src/test/Terrain/MesherNaiveSurfaceNetsTests.cpp"
+               "src/test/Noise/SimplexNoiseTests.cpp"
                
                "src/FileUtilities.cpp"
                "src/Exception.cpp"
                "src/TaskDispatcher.cpp"
-               "src/SimplexNoise.cpp"
+               "src/Noise/SimplexNoise.cpp"
                "src/Renderer/StaticMesh.cpp"
                "src/Renderer/StaticMeshSerializer.cpp"
                "src/Terrain/MesherMarchingCubes.cpp"

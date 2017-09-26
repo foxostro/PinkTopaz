@@ -9,7 +9,7 @@
 #ifndef TerrainMeshGrid_hpp
 #define TerrainMeshGrid_hpp
 
-#include "Terrain/ConcurrentGridMutable.hpp"
+#include "Grid/ConcurrentGridMutable.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include <boost/optional.hpp>
 

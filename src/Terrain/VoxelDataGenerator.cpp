@@ -8,6 +8,7 @@
 
 #include "Terrain/VoxelDataGenerator.hpp"
 #include "Terrain/VoxelDataLoader.hpp"
+#include "Noise/SimplexNoise.hpp"
 #include "FileUtilities.hpp"
 
 using namespace glm;
@@ -31,8 +32,8 @@ static inline float groundGradient(float terrainHeight, const vec3 &p)
 }
 
 // Generates a voxel for the specified point and returns it in `outVoxel'.
-static void generateTerrainVoxel(const SimplexNoise &noiseSource0,
-                                 const SimplexNoise &noiseSource1,
+static void generateTerrainVoxel(const Noise &noiseSource0,
+                                 const Noise &noiseSource1,
                                  float terrainHeight,
                                  const vec3 &p,
                                  Voxel &outVoxel)
@@ -93,8 +94,8 @@ static void generateTerrainVoxel(const SimplexNoise &noiseSource0,
 VoxelDataGenerator::VoxelDataGenerator(unsigned seed)
  : GridIndexer(AABB{glm::vec3(0.f, 0.f, 0.f), glm::vec3((float)extent, (float)extent, (float)extent)},
                glm::ivec3(res, res, res)),
-   _noiseSource0(seed),
-   _noiseSource1(seed + 1)
+               _noiseSource0(std::make_unique<SimplexNoise>(seed)),
+               _noiseSource1(std::make_unique<SimplexNoise>(seed + 1))
 {}
 
 Array3D<Voxel> VoxelDataGenerator::copy(const AABB &region) const
@@ -108,8 +109,8 @@ Array3D<Voxel> VoxelDataGenerator::copy(const AABB &region) const
     dst.mutableForEachCell(adjusted, [&](const AABB &cell,
                                          Morton3 index,
                                          Voxel &value){
-        generateTerrainVoxel(_noiseSource0,
-                             _noiseSource1,
+        generateTerrainVoxel(*_noiseSource0,
+                             *_noiseSource1,
                              terrainHeight,
                              cell.center,
                              value);

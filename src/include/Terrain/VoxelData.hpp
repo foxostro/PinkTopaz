@@ -9,7 +9,7 @@
 #ifndef VoxelData_hpp
 #define VoxelData_hpp
 
-#include "Array3D.hpp"
+#include "Grid/Array3D.hpp"
 #include "Voxel.hpp"
 #include "VoxelDataGenerator.hpp"
 #include <boost/optional.hpp>

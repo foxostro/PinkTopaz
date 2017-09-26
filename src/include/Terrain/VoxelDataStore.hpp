@@ -10,7 +10,7 @@
 #define VoxelDataStore_hpp
 
 #include "VoxelDataGenerator.hpp"
-#include "ConcurrentGridMutable.hpp"
+#include "Grid/ConcurrentGridMutable.hpp"
 
 // A block of voxels in space with locking and expectation of concurrent access.
 class VoxelDataStore : public ConcurrentGridMutable<Voxel>

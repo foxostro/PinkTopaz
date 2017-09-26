@@ -9,7 +9,7 @@
 #ifndef VoxelDataLoader_hpp
 #define VoxelDataLoader_hpp
 
-#include "Terrain/Array3D.hpp"
+#include "Grid/Array3D.hpp"
 #include "Terrain/VoxelData.hpp"
 #include <boost/filesystem.hpp>
 

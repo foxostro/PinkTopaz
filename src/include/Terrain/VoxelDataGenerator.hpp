@@ -9,10 +9,10 @@
 #ifndef VoxelDataGenerator_hpp
 #define VoxelDataGenerator_hpp
 
-#include "GridAddressable.hpp"
-#include "Array3D.hpp"
+#include "Grid/GridAddressable.hpp"
+#include "Grid/Array3D.hpp"
 #include "Voxel.hpp"
-#include "SimplexNoise.hpp"
+#include "Noise/Noise.hpp"
 #include <memory>
 
 class VoxelDataGenerator : public GridIndexer
@@ -26,8 +26,8 @@ public:
     Array3D<Voxel> copy(const AABB &region) const;
     
 private:
-    SimplexNoise _noiseSource0;
-    SimplexNoise _noiseSource1;
+    std::unique_ptr<Noise> _noiseSource0;
+    std::unique_ptr<Noise> _noiseSource1;
 };
 
 #endif /* VoxelDataGenerator_hpp */
