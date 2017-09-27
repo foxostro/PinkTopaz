@@ -19,19 +19,19 @@
 #include "GridAddressable.hpp"
 
 // A regular grid in space where each cell is associated with some object of the templated type.
-template<typename TYPE> class Array3D : public GridMutable<TYPE>
+template<typename CellType> class Array3D : public GridMutable<CellType>
 {
 public:
-    using GridMutable<TYPE>::indexAtPoint;
-    using GridMutable<TYPE>::indexAtCellCoords;
-    using GridMutable<TYPE>::inbounds;
-    using GridMutable<TYPE>::forEachCell;
-    using GridMutable<TYPE>::cellCoordsAtPoint;
-    using GridMutable<TYPE>::mutableForEachCell;
-    using GridMutable<TYPE>::boundingBox;
-    using GridMutable<TYPE>::gridResolution;
+    using GridMutable<CellType>::indexAtPoint;
+    using GridMutable<CellType>::indexAtCellCoords;
+    using GridMutable<CellType>::inbounds;
+    using GridMutable<CellType>::forEachCell;
+    using GridMutable<CellType>::cellCoordsAtPoint;
+    using GridMutable<CellType>::mutableForEachCell;
+    using GridMutable<CellType>::boundingBox;
+    using GridMutable<CellType>::gridResolution;
     
-    using container_type = std::vector<TYPE>;
+    using container_type = std::vector<CellType>;
     using iterator = typename container_type::iterator;
     using const_iterator = typename container_type::const_iterator;
     
@@ -46,21 +46,21 @@ public:
     // cells along the X-axis, `resolution.y' cells along the Y-axis, and
     // `resolution.z' cells along the Z-axis.
     Array3D(const AABB &box, const glm::ivec3 &res)
-     : GridMutable<TYPE>(box, res),
+     : GridMutable<CellType>(box, res),
        _maxValidIndex(numberOfInternalElements(res)),
        _cells(_maxValidIndex)
     {}
     
     // Copy constructor.
-    Array3D(const Array3D<TYPE> &array)
-     : GridMutable<TYPE>(array.boundingBox(), array.gridResolution()),
+    Array3D(const Array3D<CellType> &array)
+     : GridMutable<CellType>(array.boundingBox(), array.gridResolution()),
        _maxValidIndex(numberOfInternalElements(array.gridResolution())),
        _cells(array._cells)
     {}
     
     // Move constructor.
-    Array3D(Array3D<TYPE> &&array)
-     : GridMutable<TYPE>(array.boundingBox(), array.gridResolution()),
+    Array3D(Array3D<CellType> &&array)
+     : GridMutable<CellType>(array.boundingBox(), array.gridResolution()),
        _maxValidIndex(numberOfInternalElements(array.gridResolution())),
        _cells(std::move(array._cells))
     {}
@@ -68,14 +68,14 @@ public:
     // Copy assignment operator.
     // We need this because we have a user-declared move constructor.
     // The bounding box and grid resolution of the two arrays must be the same.
-    Array3D<TYPE>& operator=(const Array3D<TYPE> &array)
+    Array3D<CellType>& operator=(const Array3D<CellType> &array)
     {
         _cells = array._cells;
         return *this;
     }
     
     // Each point in space corresponds to exactly one cell. Get the object.
-    const TYPE& get(const glm::vec3 &p) const override
+    const CellType& get(const glm::vec3 &p) const override
     {
 #ifdef EnableVerboseBoundsChecking
             if (!inbounds(p)) {
@@ -86,19 +86,19 @@ public:
     }
     
     // Get the cell associated with the given cell coordinates.
-    const TYPE& get(const glm::ivec3 &cellCoords) const override
+    const CellType& get(const glm::ivec3 &cellCoords) const override
     {
         return get(indexAtCellCoords(cellCoords));
     }
     
     // Gets the object for the specified index, produced by `indexAtPoint'.
-    const TYPE& get(Morton3 index) const override
+    const CellType& get(Morton3 index) const override
     {
         return _cells[(size_t)index];
     }
     
     // Each point in space corresponds to exactly one cell. Get the (mutable) object.
-    TYPE& mutableReference(const glm::vec3 &p) override
+    CellType& mutableReference(const glm::vec3 &p) override
     {
 #ifdef EnableVerboseBoundsChecking
             if (!inbounds(p)) {
@@ -109,13 +109,13 @@ public:
     }
     
     // Get the (mutable) object associated with the given cell coordinates.
-    TYPE& mutableReference(const glm::ivec3 &cellCoords) override
+    CellType& mutableReference(const glm::ivec3 &cellCoords) override
     {
         return mutableReference(indexAtCellCoords(cellCoords));
     }
     
     // Gets the (mutable) object for the specified index, produced by `indexAtPoint'.
-    TYPE& mutableReference(Morton3 index) override
+    CellType& mutableReference(Morton3 index) override
     {
         return _cells[(size_t)index];
     }
