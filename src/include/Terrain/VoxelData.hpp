@@ -9,7 +9,7 @@
 #ifndef VoxelData_hpp
 #define VoxelData_hpp
 
-#include "Grid/Array3D.hpp"
+#include "Grid/SparseArray3D.hpp"
 #include "Voxel.hpp"
 #include "VoxelDataGenerator.hpp"
 #include <boost/optional.hpp>
@@ -67,7 +67,7 @@ private:
     
     // The voxel grid is broken into chunks where each chunk is a fixed-size
     // grid of voxels.
-    mutable Array3D<MaybeChunk> _chunks;
+    mutable SparseArray3D<MaybeChunk> _chunks;
     
     // Fetches the chunk at the specified point in space `p'. This may create
     // the chunk. If so, it is filled using the generator.

@@ -10,6 +10,7 @@
 #include "Terrain/MesherNaiveSurfaceNets.hpp"
 #include "SDL_image.h"
 #include "Profiler.hpp"
+#include "Grid/SparseArray3D.hpp"
 #include <sstream>
 
 Terrain::~Terrain()
@@ -82,7 +83,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     const AABB box = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
     const glm::ivec3 res = _voxelDataGenerator->countCellsInRegion(box) / (int)TERRAIN_CHUNK_SIZE;
     _drawList = std::make_unique<TerrainDrawList>(box, res);
-    auto meshesArray = std::make_unique<Array3D<MaybeTerrainMesh>>(box, res);
+    auto meshesArray = std::make_unique<SparseArray3D<MaybeTerrainMesh>>(box, res);
     _meshes = std::make_unique<TerrainMeshGrid>(std::move(meshesArray), 1);
     
     // When voxels change, we need to extract a polygonal mesh representation
