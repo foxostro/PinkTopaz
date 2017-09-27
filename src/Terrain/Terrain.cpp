@@ -84,6 +84,14 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     const glm::ivec3 res = _voxelDataGenerator->countCellsInRegion(box) / (int)TERRAIN_CHUNK_SIZE;
     _drawList = std::make_unique<TerrainDrawList>(box, res);
     auto meshesArray = std::make_unique<SparseArray3D<MaybeTerrainMesh>>(box, res);
+    
+    // The meshes array will limit storage to the number of elements that will
+    // fit into the active region, and no more.
+//    const glm::ivec3 activeRegionDim = meshesArray->countCellsInRegion(getActiveRegion());
+//    const size_t activeRegionCount = activeRegionDim.x * activeRegionDim.y * activeRegionDim.z;
+//    meshesArray->setCountLimit(activeRegionCount);
+    meshesArray->setCountLimit(512);
+    
     _meshes = std::make_unique<TerrainMeshGrid>(std::move(meshesArray), 1);
     
     // When voxels change, we need to extract a polygonal mesh representation

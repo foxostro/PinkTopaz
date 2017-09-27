@@ -10,9 +10,9 @@
 #define Array3D_hpp
 
 #include "BaseArray3D.hpp"
-#include <vector>
+#include "DenseVector.hpp"
 
 template <typename CellType>
-using Array3D = BaseArray3D<CellType, std::vector<CellType>>;
+using Array3D = BaseArray3D<CellType, DenseVector<CellType>>;
 
 #endif /* Array3D_hpp */

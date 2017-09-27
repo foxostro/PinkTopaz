@@ -10,7 +10,7 @@
 #define ConcurrentGridMutable_hpp
 
 #include "Grid/GridAddressable.hpp"
-#include "Grid/SparseArray3D.hpp"
+#include "Grid/Array3D.hpp"
 #include "Grid/ChangeLog.hpp"
 
 #include <mutex>
@@ -182,11 +182,39 @@ public:
         return _array;
     }
     
+    // Remove elements until the number of items is under the limit.
+    // Note that this is an expensive operation which takes locks for the
+    // entire grid.
+    void setCountLimit(size_t countLimit)
+    {
+        LockSet locks(locksForRegion(boundingBox()));
+        _array->setCountLimit(countLimit);
+    }
+    
+    // Remove elements until the number of items is under the limit.
+    // Note that this is an expensive operation which takes locks for the
+    // entire grid.
+    size_t getCountLimit() const
+    {
+        LockSet locks(locksForRegion(boundingBox()));
+        return _array->getCountLimit();
+    }
+    
+    // Remove elements until the number of items is under the limit.
+    // Note that this is an expensive operation which takes locks for the
+    // entire grid.
+    // Limits are only enforced on a call to enforceLimits().
+    void enforceLimits()
+    {
+        LockSet locks(locksForRegion(boundingBox()));
+        return _array->enforceLimits();
+    }
+    
 protected:
     // Locks for the array contents.
     // We use a shared_ptr here because there is no copy-assignment operator for
     // std::mutex.
-    mutable SparseArray3D<std::mutex> _arrayLocks;
+    mutable Array3D<std::mutex> _arrayLocks;
     
     // An array for which we intend to provide concurrent access.
     std::unique_ptr<GridMutable<ElementType>> _array;

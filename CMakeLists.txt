@@ -34,7 +34,9 @@ set(SOURCE_FILES_GRID
     "src/include/Grid/Array3D.hpp"
     "src/include/Grid/SparseArray3D.hpp"
     "src/include/Grid/SparseVector.hpp"
+    "src/include/Grid/DenseVector.hpp"
     "src/Grid/ChangeLog.cpp" "src/include/Grid/ChangeLog.hpp"
+    "src/include/Grid/GridLRU.hpp"
     )
 
 set(SOURCE_FILES_TERRAIN

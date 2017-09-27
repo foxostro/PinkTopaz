@@ -138,7 +138,27 @@ public:
         return (size_t)index <= _maxValidIndex;
     }
     
-protected:
+    inline void setCountLimit(size_t countLimit)
+    {
+        _cells.setCountLimit(countLimit);
+    }
+    
+    inline size_t getCountLimit() const
+    {
+        return _cells.getCountLimit();
+    }
+    
+    // Remove elements until the number of items is under the limit.
+    // Limits are only enforced on a call to enforceLimits().
+    // It is not safe to call this method while other threads are using
+    // references obtained through operator[]. It is the user's responsibility
+    // to ensure this does not occur.
+    inline void enforceLimits()
+    {
+        _cells.enforceLimits();
+    }
+    
+private:
     const size_t _maxValidIndex;
     ContainerType _cells;
     
