@@ -9,17 +9,16 @@
 #ifndef Array3D_hpp
 #define Array3D_hpp
 
+#include <glm/vec3.hpp>
+
 #include "AABB.hpp"
 #include "Morton.hpp"
-
-#include <vector>
-#include <set>
-#include <glm/vec3.hpp>
 #include "Exception.hpp"
 #include "GridAddressable.hpp"
 
 // A regular grid in space where each cell is associated with some object of the templated type.
-template<typename CellType> class Array3D : public GridMutable<CellType>
+template<typename CellType, typename container_type>
+class BaseArray3D : public GridMutable<CellType>
 {
 public:
     using GridMutable<CellType>::indexAtPoint;
@@ -31,35 +30,31 @@ public:
     using GridMutable<CellType>::boundingBox;
     using GridMutable<CellType>::gridResolution;
     
-    using container_type = std::vector<CellType>;
-    using iterator = typename container_type::iterator;
-    using const_iterator = typename container_type::const_iterator;
-    
-    ~Array3D() = default;
+    ~BaseArray3D() = default;
     
     // No default constructor.
-    Array3D() = delete;
+    BaseArray3D() = delete;
     
     // Constructor. Accepts a bounding box decribing the region of space
     // this grid of objects represents. The space is divided into cells at a
     // resolution described by `resolution.' That is, there are `resolution.x'
     // cells along the X-axis, `resolution.y' cells along the Y-axis, and
     // `resolution.z' cells along the Z-axis.
-    Array3D(const AABB &box, const glm::ivec3 &res)
+    BaseArray3D(const AABB &box, const glm::ivec3 &res)
      : GridMutable<CellType>(box, res),
        _maxValidIndex(numberOfInternalElements(res)),
        _cells(_maxValidIndex)
     {}
     
     // Copy constructor.
-    Array3D(const Array3D<CellType> &array)
+    BaseArray3D(const BaseArray3D<CellType, container_type> &array)
      : GridMutable<CellType>(array.boundingBox(), array.gridResolution()),
        _maxValidIndex(numberOfInternalElements(array.gridResolution())),
        _cells(array._cells)
     {}
     
     // Move constructor.
-    Array3D(Array3D<CellType> &&array)
+    BaseArray3D(BaseArray3D<CellType, container_type> &&array)
      : GridMutable<CellType>(array.boundingBox(), array.gridResolution()),
        _maxValidIndex(numberOfInternalElements(array.gridResolution())),
        _cells(std::move(array._cells))
@@ -68,7 +63,7 @@ public:
     // Copy assignment operator.
     // We need this because we have a user-declared move constructor.
     // The bounding box and grid resolution of the two arrays must be the same.
-    Array3D<CellType>& operator=(const Array3D<CellType> &array)
+    BaseArray3D<CellType, container_type>& operator=(const BaseArray3D<CellType, container_type> &array)
     {
         _cells = array._cells;
         return *this;
@@ -94,6 +89,11 @@ public:
     // Gets the object for the specified index, produced by `indexAtPoint'.
     const CellType& get(Morton3 index) const override
     {
+#ifdef EnableVerboseBoundsChecking
+        if (!isValidIndex(index)) {
+            throw OutOfBoundsException();
+        }
+#endif
         return _cells[(size_t)index];
     }
     
@@ -111,12 +111,24 @@ public:
     // Get the (mutable) object associated with the given cell coordinates.
     CellType& mutableReference(const glm::ivec3 &cellCoords) override
     {
-        return mutableReference(indexAtCellCoords(cellCoords));
+        const Morton3 index = indexAtCellCoords(cellCoords);
+        
+#ifdef EnableVerboseBoundsChecking
+        if (!isValidIndex(index)) {
+            throw OutOfBoundsException();
+        }
+#endif
+        return mutableReference(index);
     }
     
     // Gets the (mutable) object for the specified index, produced by `indexAtPoint'.
     CellType& mutableReference(Morton3 index) override
     {
+#ifdef EnableVerboseBoundsChecking
+        if (!isValidIndex(index)) {
+            throw OutOfBoundsException();
+        }
+#endif
         return _cells[(size_t)index];
     }
     
@@ -136,5 +148,9 @@ private:
         return Morton3::encode(res - glm::ivec3(1, 1, 1)) + 1;
     }
 };
+
+#include <vector>
+template <typename CellType>
+using Array3D = BaseArray3D<CellType, std::vector<CellType>>;
 
 #endif /* Array3D_hpp */
