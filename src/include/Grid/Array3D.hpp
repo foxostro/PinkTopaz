@@ -17,7 +17,7 @@
 #include "GridAddressable.hpp"
 
 // A regular grid in space where each cell is associated with some object of the templated type.
-template<typename CellType, typename container_type>
+template<typename CellType, typename ContainerType>
 class BaseArray3D : public GridMutable<CellType>
 {
 public:
@@ -47,14 +47,14 @@ public:
     {}
     
     // Copy constructor.
-    BaseArray3D(const BaseArray3D<CellType, container_type> &array)
+    BaseArray3D(const BaseArray3D<CellType, ContainerType> &array)
      : GridMutable<CellType>(array.boundingBox(), array.gridResolution()),
        _maxValidIndex(numberOfInternalElements(array.gridResolution())),
        _cells(array._cells)
     {}
     
     // Move constructor.
-    BaseArray3D(BaseArray3D<CellType, container_type> &&array)
+    BaseArray3D(BaseArray3D<CellType, ContainerType> &&array)
      : GridMutable<CellType>(array.boundingBox(), array.gridResolution()),
        _maxValidIndex(numberOfInternalElements(array.gridResolution())),
        _cells(std::move(array._cells))
@@ -63,7 +63,7 @@ public:
     // Copy assignment operator.
     // We need this because we have a user-declared move constructor.
     // The bounding box and grid resolution of the two arrays must be the same.
-    BaseArray3D<CellType, container_type>& operator=(const BaseArray3D<CellType, container_type> &array)
+    BaseArray3D<CellType, ContainerType>& operator=(const BaseArray3D<CellType, ContainerType> &array)
     {
         _cells = array._cells;
         return *this;
@@ -140,7 +140,7 @@ public:
     
 private:
     const size_t _maxValidIndex;
-    container_type _cells;
+    ContainerType _cells;
     
     // Get the number of elements to use in the internal array.
     static inline size_t numberOfInternalElements(const glm::ivec3 &res)
