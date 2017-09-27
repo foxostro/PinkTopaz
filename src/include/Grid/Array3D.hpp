@@ -28,6 +28,8 @@ public:
     using GridMutable<TYPE>::forEachCell;
     using GridMutable<TYPE>::cellCoordsAtPoint;
     using GridMutable<TYPE>::mutableForEachCell;
+    using GridMutable<TYPE>::boundingBox;
+    using GridMutable<TYPE>::gridResolution;
     
     using container_type = std::vector<TYPE>;
     using iterator = typename container_type::iterator;
@@ -45,24 +47,22 @@ public:
     // `resolution.z' cells along the Z-axis.
     Array3D(const AABB &box, const glm::ivec3 &res)
      : GridMutable<TYPE>(box, res),
-       _cells(numberOfInternalElements(res)),
-       _box(box),
-       _res(res)
+       _maxValidIndex(numberOfInternalElements(res)),
+       _cells(_maxValidIndex)
     {}
     
     // Copy constructor.
     Array3D(const Array3D<TYPE> &array)
-     : _cells(array._cells),
-       _box(array._box),
-       _res(array._res)
+     : GridMutable<TYPE>(array.boundingBox(), array.gridResolution()),
+       _maxValidIndex(numberOfInternalElements(array.gridResolution())),
+       _cells(array._cells)
     {}
     
     // Move constructor.
     Array3D(Array3D<TYPE> &&array)
-     : GridMutable<TYPE>(array._box, array._res),
-        _cells(std::move(array._cells)),
-        _box(array._box),
-        _res(array._res)
+     : GridMutable<TYPE>(array.boundingBox(), array.gridResolution()),
+       _maxValidIndex(numberOfInternalElements(array.gridResolution())),
+       _cells(std::move(array._cells))
     {}
     
     // Copy assignment operator.
@@ -70,8 +70,6 @@ public:
     // The bounding box and grid resolution of the two arrays must be the same.
     Array3D<TYPE>& operator=(const Array3D<TYPE> &array)
     {
-        assert(_box == array._box);
-        assert(_res == array._res);
         _cells = array._cells;
         return *this;
     }
@@ -125,33 +123,12 @@ public:
     // Determine whether a given index is valid.
     inline bool isValidIndex(Morton3 index) const
     {
-        return (size_t)index < _cells.size();
-    }
-    
-    inline iterator begin()
-    {
-        return _cells.begin();
-    }
-    
-    inline const_iterator begin() const
-    {
-        return _cells.begin();
-    }
-    
-    inline iterator end()
-    {
-        return _cells.end();
-    }
-    
-    inline const_iterator end() const
-    {
-        return _cells.end();
+        return (size_t)index <= _maxValidIndex;
     }
     
 private:
+    const size_t _maxValidIndex;
     container_type _cells;
-    const AABB _box;
-    const glm::ivec3 _res;
     
     // Get the number of elements to use in the internal array.
     static inline size_t numberOfInternalElements(const glm::ivec3 &res)
