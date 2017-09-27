@@ -10,7 +10,7 @@
 #define ConcurrentGridMutable_hpp
 
 #include "Grid/GridAddressable.hpp"
-#include "Grid/Array3D.hpp"
+#include "Grid/SparseArray3D.hpp"
 #include "Grid/ChangeLog.hpp"
 
 #include <mutex>
@@ -186,7 +186,7 @@ protected:
     // Locks for the array contents.
     // We use a shared_ptr here because there is no copy-assignment operator for
     // std::mutex.
-    mutable Array3D<std::mutex> _arrayLocks;
+    mutable SparseArray3D<std::mutex> _arrayLocks;
     
     // An array for which we intend to provide concurrent access.
     std::unique_ptr<GridMutable<ElementType>> _array;
