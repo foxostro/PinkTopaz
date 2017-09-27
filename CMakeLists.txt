@@ -30,7 +30,10 @@ endif()
 set(SOURCE_FILES_GRID
     "src/include/Grid/GridAddressable.hpp"
     "src/include/Grid/ConcurrentGridMutable.hpp"
+    "src/include/Grid/BaseArray3D.hpp"
     "src/include/Grid/Array3D.hpp"
+    "src/include/Grid/SparseArray3D.hpp"
+    "src/include/Grid/SparseVector.hpp"
     "src/Grid/ChangeLog.cpp" "src/include/Grid/ChangeLog.hpp"
     )
 
