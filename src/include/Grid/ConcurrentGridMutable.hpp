@@ -11,7 +11,6 @@
 
 #include "Grid/GridIndexer.hpp"
 #include "Grid/Array3D.hpp"
-#include "Grid/ChangeLog.hpp"
 
 #include <mutex>
 #include <vector>
@@ -28,7 +27,7 @@ class ConcurrentGridMutable : public GridIndexer
 {
 public:
     using Reader = std::function<void(const Array3D<ElementType> &data)>;
-    using Writer = std::function<ChangeLog(Array3D<ElementType> &data)>;
+    using Writer = std::function<void(Array3D<ElementType> &data)>;
     
     // A vector which contains references to mutexes. This is used to pass
     // around references to locks in the locks array itself.
@@ -61,6 +60,12 @@ public:
         const LockVector locks;
     };
     
+    // Default Destructor
+    ~ConcurrentGridMutable() = default;
+    
+    // No default constructor.
+    ConcurrentGridMutable() = delete;
+    
     // Constructor. The space is divided into a grid of cells where each cell
     // is associated with a data element. The space is also divided into a grid
     // of cells where each cell has a lock to protect the data grid from
@@ -79,27 +84,25 @@ public:
        _array(std::move(array))
     {}
     
-    // No default constructor.
-    ConcurrentGridMutable() = delete;
-    
-    // Destructor is just the default.
-    virtual ~ConcurrentGridMutable() = default;
-    
     // Perform an atomic transaction as a "reader" with read-only access to the
     // underlying data in the specified region.
     // region -- The region we will be reading from.
     // fn -- Closure which will be doing the reading.
-    virtual void readerTransaction(const AABB &region, const Reader &fn) const
+    template<typename RegionType>
+    void readerTransaction(const RegionType &region, const Reader &fn) const
     {
         LockSet locks(locksForRegion(region));
         fn(*_array);
     }
     
-    // Perform an atomic transaction as a "reader" with read-only access to the
-    // underlying data in the specified region.
-    // region -- The region we will be reading from.
-    // fn -- Closure which will be doing the reading.
-    virtual void readerTransaction(const Frustum &region, const Reader &fn) const
+    // Perform an atomic transaction as a "writer" with read-write access to
+    // the underlying voxel data in the specified region. It is the
+    // responsibility of the caller to provide a closure which will update the
+    // change log accordingly.
+    // region -- The region we will be writing to.
+    // fn -- Closure which will be doing the writing.
+    template<typename RegionType>
+    void writerTransaction(const RegionType &region, const Writer &fn)
     {
         LockSet locks(locksForRegion(region));
         fn(*_array);
@@ -121,38 +124,6 @@ public:
     }
     
     // Perform an atomic transaction as a "writer" with read-write access to
-    // the underlying voxel data in the specified region. It is the
-    // responsibility of the caller to provide a closure which will update the
-    // change log accordingly.
-    // region -- The region we will be writing to.
-    // fn -- Closure which will be doing the writing.
-    virtual void writerTransaction(const AABB &region, const Writer &fn)
-    {
-        ChangeLog changeLog;
-        {
-            LockSet locks(locksForRegion(region));
-            changeLog = fn(*_array);
-        }
-        onWriterTransaction(changeLog);
-    }
-    
-    // Perform an atomic transaction as a "writer" with read-write access to
-    // the underlying voxel data in the specified region. It is the
-    // responsibility of the caller to provide a closure which will update the
-    // change log accordingly.
-    // region -- The region we will be writing to.
-    // fn -- Closure which will be doing the writing.
-    virtual void writerTransaction(const Frustum &region, const Writer &fn)
-    {
-        ChangeLog changeLog;
-        {
-            LockSet locks(locksForRegion(region));
-            changeLog = fn(*_array);
-        }
-        onWriterTransaction(changeLog);
-    }
-    
-    // Perform an atomic transaction as a "writer" with read-write access to
     // the underlying voxel data in the specified region. Syntactic sugar for
     // the common use-case where the client immediately calls mutableForEachCell
     // inside the transaction.
@@ -164,17 +135,8 @@ public:
     {
         writerTransaction(region, [&](Array3D<ElementType> &data){
             data.mutableForEachCell(region, fn);
-            
-            // Return an empty changelog. So, this call is not appropriate for
-            // cases where a real changelog is necessary.
-            return ChangeLog();
         });
     }
-    
-    // This signal fires when a "writer" transaction finishes. This provides the
-    // opportunity to respond to changes to data. For example, by rebuilding
-    // meshes associated with underlying voxel data.
-    boost::signals2::signal<void (const ChangeLog &changeLog)> onWriterTransaction;
     
     // Gets the array for unprotected, raw access. Use carefully.
     inline const std::unique_ptr<Array3D<ElementType>>& array()

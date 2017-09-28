@@ -16,7 +16,7 @@
 
 #include "Grid/GridIndexer.hpp"
 #include "Grid/Array3D.hpp"
-#include "Grid/ChangeLog.hpp"
+#include "ChangeLog.hpp"
 #include "VoxelData.hpp"
 
 // Wraps a VoxelData object. Transactions on VoxelDataStore protect this voxel

@@ -32,7 +32,6 @@ set(SOURCE_FILES_GRID
     "src/include/Grid/Array3D.hpp"
     "src/include/Grid/GridLRU.hpp"
     "src/include/Grid/ConcurrentGridMutable.hpp"
-    "src/include/Grid/ChangeLog.hpp" "src/Grid/ChangeLog.cpp"
     )
 
 set(SOURCE_FILES_TERRAIN
@@ -51,6 +50,7 @@ set(SOURCE_FILES_TERRAIN
     "src/Terrain/TerrainMeshGrid.cpp" "src/include/Terrain/TerrainMeshGrid.hpp"
     "src/include/Terrain/TerrainHorizonDistance.hpp"
     "src/Terrain/TerrainProgressTracker.cpp" "src/include/Terrain/TerrainProgressTracker.hpp"
+    "src/include/Terrain/ChangeLog.hpp" "src/Terrain/ChangeLog.cpp"
     )
 
 set(SOURCE_FILES_OPENGL

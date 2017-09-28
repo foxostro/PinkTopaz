@@ -6,7 +6,7 @@
 //
 //
 
-#include "Grid/ChangeLog.hpp"
+#include "Terrain/ChangeLog.hpp"
 
 ChangeLog ChangeLog::make(const std::string &type, const AABB &affectedRegion)
 {
