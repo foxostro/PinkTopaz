@@ -27,7 +27,7 @@ class Terrain
 {
 public:
     static constexpr unsigned TERRAIN_CHUNK_SIZE = 32;
-    static constexpr float ACTIVE_REGION_SIZE = 128.0f;
+    static constexpr float ACTIVE_REGION_SIZE = 256.0f;
     
     ~Terrain();
     
@@ -52,7 +52,7 @@ public:
     float getFogDensity() const;
     
 private:
-    using MaybeTerrainMesh = boost::optional<TerrainMesh>;
+    //using MaybeTerrainMesh = boost::optional<TerrainMesh>;
     
     inline AABB getActiveRegion() const
     {

@@ -85,8 +85,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     const AABB box = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
     const glm::ivec3 res = _voxelDataGenerator->countCellsInRegion(box) / (int)TERRAIN_CHUNK_SIZE;
     _drawList = std::make_unique<TerrainDrawList>(box, res);
-    auto meshesArray = std::make_unique<Array3D<MaybeTerrainMesh>>(box, res);
-    _meshes = std::make_unique<TerrainMeshGrid>(std::move(meshesArray), 1);
+    _meshes = std::make_unique<TerrainMeshGrid>(box, res);
     
     // When voxels change, we need to extract a polygonal mesh representation
     // of the isosurface. This mesh is what we actually draw.
@@ -141,12 +140,10 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
             PROFILER(TerrainFetchMeshes);
             
             // Update the draw list to include each mesh that is present.
-            _meshes->readerTransaction(getActiveRegion(), [&](const AABB &cell,
-                                                              Morton3 index,
-                                                              const MaybeTerrainMesh &maybe){
-                if (maybe) {
-                    const TerrainMesh &terrainMesh = *maybe;
-                    _drawList->updateDrawList(terrainMesh);
+            _meshes->forEachCell(getActiveRegion(), [&](const AABB &cell, Morton3 index){
+                std::shared_ptr<TerrainMesh> terrainMesh = _meshes->get(index);
+                if (terrainMesh) {
+                    _drawList->updateDrawList(*terrainMesh);
                 }
             });
             
@@ -229,27 +226,24 @@ void Terrain::rebuildNextMesh()
         }
     }
     
-    _meshes->writerTransaction(cell, [&](const AABB &cell,
-                                         Morton3 index,
-                                         MaybeTerrainMesh &maybe){
-        if (!maybe) {
-            maybe.emplace(cell, _defaultMesh, _graphicsDevice, _mesher, _voxels);
-        }
-        maybe->rebuild();
-    
-        // Mark the cell as being complete.
+    // Rebuild the mesh and then stick it in the grid.
+    auto terrainMesh = std::make_shared<TerrainMesh>(cell, _defaultMesh, _graphicsDevice, _mesher, _voxels);
+    terrainMesh->rebuild();
+    _meshes->set(cell.center, terrainMesh);
+
+    // Mark the cell as being complete.
 #if 1
-        _progressTracker.finish(cell);
+    _progressTracker.finish(cell);
 #else
-        {
-            const auto duration = _progressTracker.finish(cell);
-            
-            // Log the amount of time it took.
-            const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-            const std::string str = std::to_string(ms.count());
-            SDL_Log("Completed mesh at %s in %s ms.",
-                    cell.to_string().c_str(), str.c_str());
-        }
+    {
+        const auto duration = _progressTracker.finish(cell);
+        
+        // Log the amount of time it took.
+        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+        const std::string str = std::to_string(ms.count());
+        SDL_Log("Completed mesh at %s in %s ms.",
+                cell.to_string().c_str(), str.c_str());
+    }
 #endif
-    });
 }
+
