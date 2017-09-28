@@ -216,4 +216,19 @@ public:
     }
 };
 
+namespace std
+{
+    template<> struct hash<Morton3>
+    {
+        typedef Morton3 argument_type;
+        typedef std::size_t result_type;
+        result_type operator()(const argument_type &morton) const
+        {
+            // The hash of a Morton3 is the hash of the value we get when we
+            // cast one to a size_t. That is, the hash of the encoded bits.
+            return std::hash<size_t>{}((size_t)morton);
+        }
+    };
+}
+
 #endif /* Morton_hpp */

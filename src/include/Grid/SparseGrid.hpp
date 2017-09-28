@@ -10,20 +10,12 @@
 #define SparseGrid_hpp
 
 #include "Grid/GridIndexer.hpp"
-#include "Grid/Array3D.hpp"
-#include "Grid/RegionMutualExclusionArbitrator.hpp"
-
-#include <atomic>
-#include <mutex>
+#include <unordered_map>
 
 // SparseGrid divides space into a regular grid of cells where each cell is
-// associated with an element. These elements are accessed atomically by value
-// in order to avoid data races. As such, the ElementType must be some type
-// compatible with the atomic_load() and atomic_store() functions of the
-// standard library, e.g., shared_ptr<T> or atomic<T>.
+// associated with an element. Access to elements is synchronized to avoid
+// data races and make this class thread-safe.
 //
-// TODO: Allow multiple simultaneous readers and writers.
-// TODO: The grid is sparse and elements only consume storage after they are accessed.
 // TODO: The grid may limit it's size and choose to evict items which have not been
 //       used recently.
 template<typename ElementType>
@@ -34,29 +26,54 @@ public:
     SparseGrid() = delete;
     
     SparseGrid(const AABB &boundingBox, const glm::ivec3 &gridResolution)
-     : GridIndexer(boundingBox, gridResolution),
-       _array(boundingBox, gridResolution)
+     : GridIndexer(boundingBox, gridResolution)
     {}
     
-    template<typename CoordType>
-    ElementType get(const CoordType &p) const
+    inline ElementType get(const Morton3 &morton)
     {
+#ifdef EnableVerboseBoundsChecking
+        if (!isValidIndex(morton)) {
+            throw OutOfBoundsException();
+        }
+#endif
         std::lock_guard<std::mutex> lock(_mutex);
-        const ElementType *src = &_array.reference(p);
-        return std::atomic_load(src);
+        return _hashMap[(size_t)morton];
     }
     
-    template<typename CoordType>
-    void set(const CoordType &p, const ElementType &el)
+    inline void set(const Morton3 &morton, const ElementType &el)
     {
+#ifdef EnableVerboseBoundsChecking
+        if (!isValidIndex(morton)) {
+            throw OutOfBoundsException();
+        }
+#endif
         std::lock_guard<std::mutex> lock(_mutex);
-        ElementType *dst = &_array.mutableReference(p);
-        std::atomic_store(dst, el);
+        _hashMap[(size_t)morton] = el;
+    }
+    
+    inline ElementType get(const glm::vec3 &p)
+    {
+#ifdef EnableVerboseBoundsChecking
+        if (!inbounds(p)) {
+            throw OutOfBoundsException();
+        }
+#endif
+        return get(indexAtPoint(p));
+    }
+    
+    inline void set(const glm::vec3 &p, const ElementType &el)
+    {
+#ifdef EnableVerboseBoundsChecking
+        if (!inbounds(p)) {
+            throw OutOfBoundsException();
+        }
+#endif
+        return set(indexAtPoint(p), el);
     }
     
 private:
-    mutable std::mutex _mutex;
-    Array3D<ElementType> _array;
+    std::mutex _mutex;
+    std::unordered_map<size_t, ElementType> _hashMap;
 };
 
 #endif /* SparseGrid_hpp */
