@@ -11,76 +11,85 @@
 
 #include "Grid/Array3D.hpp"
 #include <mutex>
+#include <condition_variable>
+#include <list>
 
 // Assists in locking a region of space when accessing a grid concurrently.
 class RegionMutualExclusionArbitrator
 {
 public:
-    // A vector which contains references to mutexes. This is used to pass
-    // around references to locks in the locks array itself.
-    using MutexVector = std::vector<std::reference_wrapper<std::mutex>>;
+    using Token = std::list<AABB>::iterator;
     
-    // An ordered collection of locks which need to be acquired simultaneously.
+    // Represents a region of space for which we need mutually exclusive access.
     // Satisfies BasicLockable and can be used with std::lock_guard.
     class RegionMutex
     {
     public:
-        RegionMutex(MutexVector &&theLocks) : _mutexes(std::move(theLocks)) {}
+        RegionMutex(RegionMutualExclusionArbitrator &arbitrator,
+                    const AABB &region)
+         : _arbitrator(arbitrator), _region(region)
+        {}
         
         void lock()
         {
-            for (std::mutex &mutex : _mutexes) {
-                mutex.lock();
-            }
+            _token = _arbitrator.lock(_region);
         }
         
         void unlock()
         {
-            for (std::mutex &mutex : _mutexes) {
-                mutex.unlock();
-            }
+            _arbitrator.unlock(_token);
         }
         
     private:
-        const MutexVector _mutexes;
+        RegionMutualExclusionArbitrator &_arbitrator;
+        Token _token;
+        const AABB _region;
     };
     
     ~RegionMutualExclusionArbitrator() = default;
-    RegionMutualExclusionArbitrator() = delete;
+    RegionMutualExclusionArbitrator() = default;
     
-    // Constructor. The space is divided into a grid of cells where each cell
-    // is associated with a data element. The space is also divided into a grid
-    // of cells where each cell has a lock to protect the data grid from
-    // concurrent access. Though, the two grids may have a different resolution
-    // such that each lock protects a region of space instead of a single data
-    // element.
-    // boundingBox -- The region of space being managed.
-    // gridResolution -- The resolution of the lock grid.
-    RegionMutualExclusionArbitrator(const AABB &boundingBox,
-                                    const glm::ivec3 &gridResolution)
-     : _arrayMutexes(boundingBox, gridResolution)
-    {}
-    
-    // Gets a region lock to protect the specified region of space.
-    template<typename RegionType>
-    RegionMutex getMutex(const RegionType &region) const
+    // Returns a mutex-like object which protects the specified region of space.
+    RegionMutex getMutex(const AABB &region)
     {
-        MutexVector mutexes;
-        
-        _arrayMutexes.mutableForEachCell(region, [&](const AABB &cell,
-                                                     Morton3 index,
-                                                     std::mutex &mutex){
-            mutexes.push_back(std::reference_wrapper<std::mutex>(mutex));
-        });
-        
-        return RegionMutex(std::move(mutexes));
+        return RegionMutex(*this, region);
     }
     
 private:
-    // Locks for the array contents.
-    // We use a shared_ptr here because there is no copy-assignment operator for
-    // std::mutex.
-    mutable Array3D<std::mutex> _arrayMutexes;
+    std::mutex _mutex;
+    std::condition_variable _cvar;
+    std::list<AABB> _transactions;
+    
+    // Lock a region of space. Returns a token which can be used to unlock it.
+    Token lock(const AABB &region)
+    {
+        std::unique_lock<std::mutex> lock(_mutex);
+        _cvar.wait(lock, [=]{
+            return !regionIsInUse(region);
+        });
+        _transactions.push_front(region);
+        return _transactions.begin();
+    }
+    
+    // Unlock a preiously locked region.
+    void unlock(const Token &token)
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _transactions.erase(token);
+        _cvar.notify_all();
+    }
+    
+    // Test whether the specified region overlaps a region of any existing
+    // transaction.
+    bool regionIsInUse(const AABB &desiredRegion) const
+    {
+        for (const AABB &region : _transactions) {
+            if (doBoxesIntersect(desiredRegion, region)) {
+                return true;
+            }
+        }
+        return false;
+    }
 };
 
 #endif /* RegionMutualExclusionArbitrator_hpp */

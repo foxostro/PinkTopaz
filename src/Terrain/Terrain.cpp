@@ -141,8 +141,13 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
             PROFILER(TerrainFetchMeshes);
             
             // Update the draw list to include each mesh that is present.
-            _meshes->readerTransactionTry(getActiveRegion(), [&](const TerrainMesh &terrainMesh){
-                _drawList->updateDrawList(terrainMesh);
+            _meshes->readerTransaction(getActiveRegion(), [&](const AABB &cell,
+                                                              Morton3 index,
+                                                              const MaybeTerrainMesh &maybe){
+                if (maybe) {
+                    const TerrainMesh &terrainMesh = *maybe;
+                    _drawList->updateDrawList(terrainMesh);
+                }
             });
             
             // For each mesh that is missing, or for which we cannot take

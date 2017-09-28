@@ -10,7 +10,6 @@
 
 VoxelDataStore::VoxelDataStore(std::unique_ptr<VoxelData> &&voxelData, unsigned chunkSize)
  : GridIndexer(voxelData->boundingBox(), voxelData->gridResolution()),
-   _lockArbitrator(voxelData->boundingBox(), voxelData->gridResolution() / (int)chunkSize),
    _array(std::move(voxelData))
 {}
 

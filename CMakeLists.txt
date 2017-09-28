@@ -48,7 +48,7 @@ set(SOURCE_FILES_TERRAIN
     "src/Terrain/TerrainMesh.cpp" "src/include/Terrain/TerrainMesh.hpp"
     "src/Terrain/TerrainChunkQueue.cpp" "src/include/Terrain/TerrainChunkQueue.hpp"
     "src/Terrain/TerrainDrawList.cpp" "src/include/Terrain/TerrainDrawList.hpp"
-    "src/Terrain/TerrainMeshGrid.cpp" "src/include/Terrain/TerrainMeshGrid.hpp"
+    "src/include/Terrain/TerrainMeshGrid.hpp"
     "src/include/Terrain/TerrainHorizonDistance.hpp"
     "src/Terrain/TerrainProgressTracker.cpp" "src/include/Terrain/TerrainProgressTracker.hpp"
     "src/include/Terrain/ChangeLog.hpp" "src/Terrain/ChangeLog.cpp"
