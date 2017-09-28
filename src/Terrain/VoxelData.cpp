@@ -15,40 +15,6 @@ VoxelData::VoxelData(const std::shared_ptr<VoxelDataGenerator> &gen,
    _chunks(gen->boundingBox(), gen->gridResolution() / (int)chunkSize)
 {}
 
-const Voxel& VoxelData::reference(const glm::vec3 &p) const
-{
-    assert(false);
-    const MaybeChunk &maybeChunk = chunkAtPoint(p);
-    assert(maybeChunk);
-    const Voxel &voxel = maybeChunk->reference(p);
-    return voxel;
-}
-
-const Voxel& VoxelData::reference(const glm::ivec3 &cellCoords) const
-{
-    assert(false);
-    // Could potentially be more elegant. Let's avoid any confusion about which
-    // grid coords we're using by converting back to world space immediately.
-    return reference(cellCenterAtCellCoords(cellCoords));
-}
-
-Voxel& VoxelData::mutableReference(const glm::vec3 &p)
-{
-    assert(false);
-    MaybeChunk &maybeChunk = chunkAtPoint(p);
-    assert(maybeChunk);
-    Voxel &voxel = maybeChunk->mutableReference(p);
-    return voxel;
-}
-
-Voxel& VoxelData::mutableReference(const glm::ivec3 &cellCoords)
-{
-    assert(false);
-    // Could potentially be more elegant. Let's avoid any confusion about which
-    // grid coords we're using by converting back to world space immediately.
-    return mutableReference(cellCenterAtCellCoords(cellCoords));
-}
-
 Array3D<Voxel> VoxelData::copy(const AABB &region) const
 {
     // Adjust the region so that it includes the full extent of all voxels that
