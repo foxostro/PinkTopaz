@@ -18,39 +18,34 @@ class RegionMutualExclusionArbitrator
 public:
     // A vector which contains references to mutexes. This is used to pass
     // around references to locks in the locks array itself.
-    using LockVector = std::vector<std::reference_wrapper<std::mutex>>;
+    using MutexVector = std::vector<std::reference_wrapper<std::mutex>>;
     
     // An ordered collection of locks which need to be acquired simultaneously.
-    // Acquires locks in the constructor and releases in the destructor.
-    // This is used for exception-safe locking and unlocking of a region of the
-    // grid.
-    class LockSet
+    // Satisfies BasicLockable and can be used with std::lock_guard.
+    class RegionMutex
     {
     public:
-        LockSet(LockVector &&theLocks) : locks(theLocks)
+        RegionMutex(MutexVector &&theLocks) : _mutexes(std::move(theLocks)) {}
+        
+        void lock()
         {
-            for (auto iter = locks.begin(); iter != locks.end(); ++iter) {
-                std::mutex &lock = *iter;
-                lock.lock();
+            for (std::mutex &mutex : _mutexes) {
+                mutex.lock();
             }
         }
         
-        ~LockSet()
+        void unlock()
         {
-            for (auto iter = locks.rbegin(); iter != locks.rend(); ++iter) {
-                std::mutex &lock = *iter;
-                lock.unlock();
+            for (std::mutex &mutex : _mutexes) {
+                mutex.unlock();
             }
         }
         
     private:
-        const LockVector locks;
+        const MutexVector _mutexes;
     };
     
-    // Default Destructor
     ~RegionMutualExclusionArbitrator() = default;
-    
-    // No default constructor.
     RegionMutualExclusionArbitrator() = delete;
     
     // Constructor. The space is divided into a grid of cells where each cell
@@ -63,29 +58,29 @@ public:
     // gridResolution -- The resolution of the lock grid.
     RegionMutualExclusionArbitrator(const AABB &boundingBox,
                                     const glm::ivec3 &gridResolution)
-     : _arrayLocks(boundingBox, gridResolution)
+     : _arrayMutexes(boundingBox, gridResolution)
     {}
     
-    // Returns an ordered list of the locks protecting the specified region.
+    // Gets a region lock to protect the specified region of space.
     template<typename RegionType>
-    LockVector locksForRegion(const RegionType &region) const
+    RegionMutex getMutex(const RegionType &region) const
     {
-        LockVector locks;
+        MutexVector mutexes;
         
-        _arrayLocks.mutableForEachCell(region, [&](const AABB &cell,
-                                                   Morton3 index,
-                                                   std::mutex &lock){
-            locks.push_back(std::reference_wrapper<std::mutex>(lock));
+        _arrayMutexes.mutableForEachCell(region, [&](const AABB &cell,
+                                                     Morton3 index,
+                                                     std::mutex &mutex){
+            mutexes.push_back(std::reference_wrapper<std::mutex>(mutex));
         });
         
-        return locks;
+        return RegionMutex(std::move(mutexes));
     }
     
 private:
     // Locks for the array contents.
     // We use a shared_ptr here because there is no copy-assignment operator for
     // std::mutex.
-    mutable Array3D<std::mutex> _arrayLocks;
+    mutable Array3D<std::mutex> _arrayMutexes;
 };
 
 #endif /* RegionMutualExclusionArbitrator_hpp */

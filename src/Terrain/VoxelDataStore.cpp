@@ -25,7 +25,9 @@ void VoxelDataStore::readerTransaction(const AABB &region, const Reader &fn) con
     // chunk. Once all tasks in the group has completed then we grab the entire
     // lockset and proceed with the copy as before.
     
-    RegionMutualExclusionArbitrator::LockSet locks(_lockArbitrator.locksForRegion(region));
+    auto mutex = _lockArbitrator.getMutex(region);
+    std::lock_guard<decltype(mutex)> lock(mutex);
+    
     auto rawPointer = (VoxelData *)_array.get();
     assert(rawPointer != nullptr);
     const Array3D<Voxel> data = rawPointer->copy(region);
@@ -36,9 +38,9 @@ void VoxelDataStore::writerTransaction(const AABB &region, const Writer &fn)
 {
     ChangeLog changeLog;
     {
-        RegionMutualExclusionArbitrator::LockSet locks(_lockArbitrator.locksForRegion(region));
-        VoxelData &voxels = *_array;
-        changeLog = fn(voxels);
+        auto mutex = _lockArbitrator.getMutex(region);
+        std::lock_guard<decltype(mutex)> lock(mutex);
+        changeLog = fn(*_array);
     }
     onWriterTransaction(changeLog);
 }
