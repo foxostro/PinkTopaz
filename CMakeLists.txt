@@ -31,6 +31,7 @@ set(SOURCE_FILES_GRID
     "src/include/Grid/GridIndexer.hpp"
     "src/include/Grid/Array3D.hpp"
     "src/include/Grid/GridLRU.hpp"
+    "src/include/Grid/RegionMutualExclusionArbitrator.hpp"
     "src/include/Grid/ConcurrentGridMutable.hpp"
     )
 

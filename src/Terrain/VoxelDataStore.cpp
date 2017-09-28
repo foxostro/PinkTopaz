@@ -10,7 +10,7 @@
 
 VoxelDataStore::VoxelDataStore(std::unique_ptr<VoxelData> &&voxelData, unsigned chunkSize)
  : GridIndexer(voxelData->boundingBox(), voxelData->gridResolution()),
-   _arrayLocks(voxelData->boundingBox(), voxelData->gridResolution() / (int)chunkSize),
+   _lockArbitrator(voxelData->boundingBox(), voxelData->gridResolution() / (int)chunkSize),
    _array(std::move(voxelData))
 {}
 
@@ -25,7 +25,7 @@ void VoxelDataStore::readerTransaction(const AABB &region, const Reader &fn) con
     // chunk. Once all tasks in the group has completed then we grab the entire
     // lockset and proceed with the copy as before.
     
-    LockSet locks(locksForRegion(region));
+    RegionMutualExclusionArbitrator::LockSet locks(_lockArbitrator.locksForRegion(region));
     auto rawPointer = (VoxelData *)_array.get();
     assert(rawPointer != nullptr);
     const Array3D<Voxel> data = rawPointer->copy(region);
@@ -36,7 +36,7 @@ void VoxelDataStore::writerTransaction(const AABB &region, const Writer &fn)
 {
     ChangeLog changeLog;
     {
-        LockSet locks(locksForRegion(region));
+        RegionMutualExclusionArbitrator::LockSet locks(_lockArbitrator.locksForRegion(region));
         VoxelData &voxels = *_array;
         changeLog = fn(voxels);
     }
