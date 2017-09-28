@@ -112,25 +112,6 @@ public:
         onWriterTransaction(changeLog);
     }
     
-    // Perform an atomic transaction as a "writer" with read-write access to
-    // the underlying voxel data in the specified region. Syntactic sugar for
-    // the common use-case where the client immediately calls mutableForEachCell
-    // inside the transaction.
-    template<typename RegionType>
-    void writerTransaction(const RegionType &region,
-                           const std::function<void (const AABB &cell,
-                                                     Morton3 index,
-                                                     Voxel &value)> &fn)
-    {
-        writerTransaction(region, [&](Array3D<Voxel> &data){
-            data.mutableForEachCell(region, fn);
-            
-            // Return an empty changelog. So, this call is not appropriate for
-            // cases where a real changelog is necessary.
-            return ChangeLog();
-        });
-    }
-    
     // This signal fires when a "writer" transaction finishes. This provides the
     // opportunity to respond to changes to data. For example, by rebuilding
     // meshes associated with underlying voxel data.
