@@ -10,14 +10,15 @@
 #define SparseGrid_hpp
 
 #include "Grid/GridIndexer.hpp"
+#include "Grid/GridLRU.hpp"
 #include <unordered_map>
 
 // SparseGrid divides space into a regular grid of cells where each cell is
 // associated with an element. Access to elements is synchronized to avoid
 // data races and make this class thread-safe.
 //
-// TODO: The grid may limit it's size and choose to evict items which have not been
-//       used recently.
+// The grid may limit it's size and choose to evict items which have not been
+// used recently.
 template<typename ElementType>
 class SparseGrid : public GridIndexer
 {
@@ -26,29 +27,18 @@ public:
     SparseGrid() = delete;
     
     SparseGrid(const AABB &boundingBox, const glm::ivec3 &gridResolution)
-     : GridIndexer(boundingBox, gridResolution)
+     : GridIndexer(boundingBox, gridResolution),
+       _countLimit(std::numeric_limits<std::size_t>::max())
     {}
     
     inline ElementType get(const Morton3 &morton)
     {
-#ifdef EnableVerboseBoundsChecking
-        if (!isValidIndex(morton)) {
-            throw OutOfBoundsException();
-        }
-#endif
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _hashMap[(size_t)morton];
+        return get((size_t)morton);
     }
     
     inline void set(const Morton3 &morton, const ElementType &el)
     {
-#ifdef EnableVerboseBoundsChecking
-        if (!isValidIndex(morton)) {
-            throw OutOfBoundsException();
-        }
-#endif
-        std::lock_guard<std::mutex> lock(_mutex);
-        _hashMap[(size_t)morton] = el;
+        return set((size_t)morton, el);
     }
     
     inline ElementType get(const glm::vec3 &p)
@@ -71,9 +61,54 @@ public:
         return set(indexAtPoint(p), el);
     }
     
+    size_t getCountLimit() const
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _countLimit;
+    }
+    
+    void setCountLimit(size_t countLimit)
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        if (_countLimit != countLimit) {
+            _countLimit = countLimit;
+            enforceLimits();
+        }
+    }
+    
 private:
-    std::mutex _mutex;
+    mutable std::mutex _mutex;
+    
     std::unordered_map<size_t, ElementType> _hashMap;
+    GridLRU<size_t> _lru;
+    size_t _countLimit;
+    
+    ElementType get(size_t key)
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _lru.reference(key);
+        return _hashMap[key];
+    }
+    
+    void set(size_t key, const ElementType &el)
+    {
+        std::lock_guard<std::mutex> lock1(_mutex);
+        _lru.reference(key);
+        _hashMap[key] = el;
+        enforceLimits();
+    }
+    
+    // Must hold the lock on entry to this method.
+    void enforceLimits()
+    {
+        while (_hashMap.size() >= _countLimit) {
+            auto maybe = _lru.pop();
+            if (maybe) {
+                const size_t keyToRemove = *maybe;
+                _hashMap.erase(keyToRemove);
+            }
+        }
+    }
 };
 
 #endif /* SparseGrid_hpp */
