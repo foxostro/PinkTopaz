@@ -139,7 +139,7 @@ void MesherMarchingCubes::polygonizeGridCell(StaticMesh &geometry,
     }
 }
 
-StaticMesh MesherMarchingCubes::extract(const GridAddressable<Voxel> &voxels,
+StaticMesh MesherMarchingCubes::extract(const Array3D<Voxel> &voxels,
                                         const AABB &aabb,
                                         float isosurface)
 {
@@ -172,14 +172,14 @@ StaticMesh MesherMarchingCubes::extract(const GridAddressable<Voxel> &voxels,
         };
         
         const std::array<CubeVertex, NUM_CUBE_VERTS> cube = {{
-            CubeVertex(voxels.get(vertexPositions[0]), vertexPositions[0], vec3(0.0f, 0.0f, 1.0f)),
-            CubeVertex(voxels.get(vertexPositions[1]), vertexPositions[1], vec3(1.0f, 0.0f, 1.0f)),
-            CubeVertex(voxels.get(vertexPositions[2]), vertexPositions[2], vec3(1.0f, 0.0f, 0.0f)),
-            CubeVertex(voxels.get(vertexPositions[3]), vertexPositions[3], vec3(0.0f, 0.0f, 0.0f)),
-            CubeVertex(voxels.get(vertexPositions[4]), vertexPositions[4], vec3(0.0f, 1.0f, 1.0f)),
-            CubeVertex(voxels.get(vertexPositions[5]), vertexPositions[5], vec3(1.0f, 1.0f, 1.0f)),
-            CubeVertex(voxels.get(vertexPositions[6]), vertexPositions[6], vec3(1.0f, 1.0f, 0.0f)),
-            CubeVertex(voxels.get(vertexPositions[7]), vertexPositions[7], vec3(0.0f, 1.0f, 0.0f)),
+            CubeVertex(voxels.reference(vertexPositions[0]), vertexPositions[0], vec3(0.0f, 0.0f, 1.0f)),
+            CubeVertex(voxels.reference(vertexPositions[1]), vertexPositions[1], vec3(1.0f, 0.0f, 1.0f)),
+            CubeVertex(voxels.reference(vertexPositions[2]), vertexPositions[2], vec3(1.0f, 0.0f, 0.0f)),
+            CubeVertex(voxels.reference(vertexPositions[3]), vertexPositions[3], vec3(0.0f, 0.0f, 0.0f)),
+            CubeVertex(voxels.reference(vertexPositions[4]), vertexPositions[4], vec3(0.0f, 1.0f, 1.0f)),
+            CubeVertex(voxels.reference(vertexPositions[5]), vertexPositions[5], vec3(1.0f, 1.0f, 1.0f)),
+            CubeVertex(voxels.reference(vertexPositions[6]), vertexPositions[6], vec3(1.0f, 1.0f, 0.0f)),
+            CubeVertex(voxels.reference(vertexPositions[7]), vertexPositions[7], vec3(0.0f, 1.0f, 0.0f)),
         }};
         
         polygonizeGridCell(geometry, cube, isosurface);

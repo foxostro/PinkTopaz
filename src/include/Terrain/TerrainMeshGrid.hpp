@@ -28,7 +28,7 @@ public:
     // box -- The region of space for which this grid is valid.
     // lockGridResDivisor -- The resolution of the lock grid is determined by
     //                       dividing the array's grid resolution by this.
-    TerrainMeshGrid(std::unique_ptr<GridMutable<MaybeTerrainMesh>> &&array,
+    TerrainMeshGrid(std::unique_ptr<Array3D<MaybeTerrainMesh>> &&array,
                     unsigned lockGridResDivisor);
     
     // Perform an atomic transaction as a "reader" with read-only access to the

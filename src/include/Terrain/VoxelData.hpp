@@ -9,18 +9,16 @@
 #ifndef VoxelData_hpp
 #define VoxelData_hpp
 
-#include "Grid/SparseArray3D.hpp"
+#include "Grid/Array3D.hpp"
 #include "Voxel.hpp"
 #include "VoxelDataGenerator.hpp"
 #include <boost/optional.hpp>
 #include <mutex>
 
 // A block of voxels in space.
-class VoxelData : public GridMutable<Voxel>
+class VoxelData : public GridIndexer
 {
 public:
-    using GridMutable<Voxel>::get;
-    
     using Chunk = Array3D<Voxel>;
     using MaybeChunk = boost::optional<Chunk>;
     
@@ -39,24 +37,24 @@ public:
     // Note that each point in space corresponds to exactly one cell.
     // Throws an exception if the point is not within this grid.
     // Throws an exception if the chunk is not already present.
-    const Voxel& get(const glm::vec3 &p) const override;
+    const Voxel& reference(const glm::vec3 &p) const;
     
     // Get the cell associated with the given cell coordinates.
     // Each cell in the grid can be addressed by cell coordinates which uniquely
     // identify that cell.
     // See also gridResolution() and cellCoordsAtPoint().
-    const Voxel& get(const glm::ivec3 &cellCoords) const override;
+    const Voxel& reference(const glm::ivec3 &cellCoords) const;
     
     // Each point in space corresponds to exactly one cell. Get the (mutable)
     // object. Note that this will retrieve the chunk contents from the
     // generator if the the chunk is not already present.
-    Voxel& mutableReference(const glm::vec3 &p) override;
+    Voxel& mutableReference(const glm::vec3 &p);
     
     // Get the (mutable) object associated with the given cell coordinates.
     // Each cell in the grid can be addressed by cell coordinates which uniquely
     // identify that cell.
     // See also gridResolution() and cellCoordsAtPoint().
-    Voxel& mutableReference(const glm::ivec3 &cellCoords) override;
+    Voxel& mutableReference(const glm::ivec3 &cellCoords);
     
     // Returns an array which holds a copy of the contents of the subregion.
     Array3D<Voxel> copy(const AABB &region) const;
@@ -67,7 +65,7 @@ private:
     
     // The voxel grid is broken into chunks where each chunk is a fixed-size
     // grid of voxels.
-    mutable SparseArray3D<MaybeChunk> _chunks;
+    mutable Array3D<MaybeChunk> _chunks;
     
     // Fetches the chunk at the specified point in space `p'. This may create
     // the chunk. If so, it is filled using the generator.

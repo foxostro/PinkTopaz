@@ -9,7 +9,7 @@
 #ifndef ConcurrentGridMutable_hpp
 #define ConcurrentGridMutable_hpp
 
-#include "Grid/GridAddressable.hpp"
+#include "Grid/GridIndexer.hpp"
 #include "Grid/Array3D.hpp"
 #include "Grid/ChangeLog.hpp"
 
@@ -27,8 +27,8 @@ template<typename ElementType>
 class ConcurrentGridMutable : public GridIndexer
 {
 public:
-    using Reader = std::function<void(const GridAddressable<ElementType> &data)>;
-    using Writer = std::function<ChangeLog(GridMutable<ElementType> &data)>;
+    using Reader = std::function<void(const Array3D<ElementType> &data)>;
+    using Writer = std::function<ChangeLog(Array3D<ElementType> &data)>;
     
     // A vector which contains references to mutexes. This is used to pass
     // around references to locks in the locks array itself.
@@ -71,7 +71,7 @@ public:
     // box -- The region of space for which this grid is valid.
     // lockGridResDivisor -- The resolution of the lock grid is determined by
     //                       dividing the array's grid resolution by this.
-    ConcurrentGridMutable(std::unique_ptr<GridMutable<ElementType>> &&array,
+    ConcurrentGridMutable(std::unique_ptr<Array3D<ElementType>> &&array,
                           unsigned lockGridResDivisor)
      : GridIndexer(array->boundingBox(), array->gridResolution()),
        _arrayLocks(array->boundingBox(),
@@ -115,7 +115,7 @@ public:
                                                             Morton3 index,
                                                             const ElementType &value)> &fn) const
     {
-        readerTransaction(region, [&](const GridAddressable<ElementType> &data){
+        readerTransaction(region, [&](const Array3D<ElementType> &data){
             data.forEachCell(region, fn);
         });
     }
@@ -162,7 +162,7 @@ public:
                                                             Morton3 index,
                                                             ElementType &value)> &fn)
     {
-        writerTransaction(region, [&](GridMutable<ElementType> &data){
+        writerTransaction(region, [&](Array3D<ElementType> &data){
             data.mutableForEachCell(region, fn);
             
             // Return an empty changelog. So, this call is not appropriate for
@@ -177,37 +177,9 @@ public:
     boost::signals2::signal<void (const ChangeLog &changeLog)> onWriterTransaction;
     
     // Gets the array for unprotected, raw access. Use carefully.
-    inline const std::unique_ptr<GridMutable<ElementType>>& array()
+    inline const std::unique_ptr<Array3D<ElementType>>& array()
     {
         return _array;
-    }
-    
-    // Remove elements until the number of items is under the limit.
-    // Note that this is an expensive operation which takes locks for the
-    // entire grid.
-    void setCountLimit(size_t countLimit)
-    {
-        LockSet locks(locksForRegion(boundingBox()));
-        _array->setCountLimit(countLimit);
-    }
-    
-    // Remove elements until the number of items is under the limit.
-    // Note that this is an expensive operation which takes locks for the
-    // entire grid.
-    size_t getCountLimit() const
-    {
-        LockSet locks(locksForRegion(boundingBox()));
-        return _array->getCountLimit();
-    }
-    
-    // Remove elements until the number of items is under the limit.
-    // Note that this is an expensive operation which takes locks for the
-    // entire grid.
-    // Limits are only enforced on a call to enforceLimits().
-    void enforceLimits()
-    {
-        LockSet locks(locksForRegion(boundingBox()));
-        return _array->enforceLimits();
     }
     
 protected:
@@ -217,7 +189,7 @@ protected:
     mutable Array3D<std::mutex> _arrayLocks;
     
     // An array for which we intend to provide concurrent access.
-    std::unique_ptr<GridMutable<ElementType>> _array;
+    std::unique_ptr<Array3D<ElementType>> _array;
     
     // Returns an ordered list of the locks protecting the specified region.
     template<typename RegionType>

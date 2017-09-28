@@ -28,7 +28,7 @@ void VoxelDataLoader::retrieveDimensions(const std::vector<uint8_t> &bytes, AABB
     res = glm::ivec3(header.w, header.h, header.d);
 }
 
-void VoxelDataLoader::load(const std::vector<uint8_t> &bytes, GridMutable<Voxel> &output)
+void VoxelDataLoader::load(const std::vector<uint8_t> &bytes, Array3D<Voxel> &output)
 {
     const Header &header = *((Header *)bytes.data());
     

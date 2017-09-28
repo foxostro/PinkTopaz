@@ -10,7 +10,7 @@
 #include "Terrain/MesherNaiveSurfaceNets.hpp"
 #include "SDL_image.h"
 #include "Profiler.hpp"
-#include "Grid/SparseArray3D.hpp"
+#include "Grid/Array3D.hpp"
 #include <sstream>
 
 Terrain::~Terrain()
@@ -25,11 +25,13 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
  : _graphicsDevice(graphicsDevice),
    _dispatcher(dispatcher),
    _dispatcherRebuildMesh(dispatcherRebuildMesh),
-   _mesher(new MesherNaiveSurfaceNets),
-   _voxelDataGenerator(new VoxelDataGenerator(/* random seed = */ 52)),
-   _voxels(new VoxelDataStore(_voxelDataGenerator, TERRAIN_CHUNK_SIZE)),
+   _mesher(std::make_shared<MesherNaiveSurfaceNets>()),
+   _voxelDataGenerator(std::make_shared<VoxelDataGenerator>(/* random seed = */ 52)),
    _cameraPosition(glm::vec3())
 {
+    auto voxelData = std::make_unique<VoxelData>(_voxelDataGenerator, TERRAIN_CHUNK_SIZE);
+    _voxels = std::make_shared<VoxelDataStore>(std::move(voxelData), TERRAIN_CHUNK_SIZE);
+    
     // Load terrain texture array from a single image.
     // TODO: create a TextureArrayLoader class to encapsulate tex loading.
     SDL_Surface *surface = IMG_Load("terrain.png");
@@ -83,15 +85,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     const AABB box = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
     const glm::ivec3 res = _voxelDataGenerator->countCellsInRegion(box) / (int)TERRAIN_CHUNK_SIZE;
     _drawList = std::make_unique<TerrainDrawList>(box, res);
-    auto meshesArray = std::make_unique<SparseArray3D<MaybeTerrainMesh>>(box, res);
-    
-    // The meshes array will limit storage to the number of elements that will
-    // fit into the active region, and no more.
-//    const glm::ivec3 activeRegionDim = meshesArray->countCellsInRegion(getActiveRegion());
-//    const size_t activeRegionCount = activeRegionDim.x * activeRegionDim.y * activeRegionDim.z;
-//    meshesArray->setCountLimit(activeRegionCount);
-    meshesArray->setCountLimit(512);
-    
+    auto meshesArray = std::make_unique<Array3D<MaybeTerrainMesh>>(box, res);
     _meshes = std::make_unique<TerrainMeshGrid>(std::move(meshesArray), 1);
     
     // When voxels change, we need to extract a polygonal mesh representation

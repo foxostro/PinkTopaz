@@ -8,7 +8,7 @@
 
 #include "Terrain/TerrainMeshGrid.hpp"
 
-TerrainMeshGrid::TerrainMeshGrid(std::unique_ptr<GridMutable<MaybeTerrainMesh>> &&array,
+TerrainMeshGrid::TerrainMeshGrid(std::unique_ptr<Array3D<MaybeTerrainMesh>> &&array,
                                  unsigned lockGridResDivisor)
  : ConcurrentGridMutable<MaybeTerrainMesh>(std::move(array), lockGridResDivisor)
 {}

@@ -7,7 +7,7 @@
 //
 
 #include "catch.hpp"
-#include "Terrain/Array3D.hpp"
+#include "Grid/Array3D.hpp"
 #include "Exception.hpp"
 #include "SDL.h"
 

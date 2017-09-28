@@ -10,7 +10,7 @@
 
 TerrainDrawList::TerrainDrawList(const AABB &box, const glm::ivec3 &res)
  : _front(box, res),
-   _back(std::make_unique<ArrayType<MaybeMesh>>(box, res), 1)
+   _back(std::make_unique<Array3D<MaybeMesh>>(box, res), 1)
 {}
 
 std::vector<AABB>

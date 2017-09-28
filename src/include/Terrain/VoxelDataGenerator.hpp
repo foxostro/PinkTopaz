@@ -9,7 +9,7 @@
 #ifndef VoxelDataGenerator_hpp
 #define VoxelDataGenerator_hpp
 
-#include "Grid/GridAddressable.hpp"
+#include "Grid/GridIndexer.hpp"
 #include "Grid/Array3D.hpp"
 #include "Voxel.hpp"
 #include "Noise/Noise.hpp"

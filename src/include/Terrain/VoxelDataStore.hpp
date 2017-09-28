@@ -9,46 +9,91 @@
 #ifndef VoxelDataStore_hpp
 #define VoxelDataStore_hpp
 
-#include "VoxelDataGenerator.hpp"
-#include "Grid/ConcurrentGridMutable.hpp"
+#include <boost/signals2.hpp>
+#include <functional>
+#include <vector>
+#include <mutex>
 
-// A block of voxels in space with locking and expectation of concurrent access.
-class VoxelDataStore : public ConcurrentGridMutable<Voxel>
+#include "Grid/GridIndexer.hpp"
+#include "Grid/Array3D.hpp"
+#include "Grid/ChangeLog.hpp"
+#include "VoxelData.hpp"
+
+// Wraps a VoxelData object. Transactions on VoxelDataStore protect this voxel
+// data to allow concurrent readers and writers.
+class VoxelDataStore : public GridIndexer
 {
 public:
-    using ArrayReader = std::function<void(const Array3D<Voxel> &data)>;
+    using Reader = std::function<void(const Array3D<Voxel> &data)>;
+    using Writer = std::function<ChangeLog(VoxelData &data)>;
     
-    VoxelDataStore(const std::shared_ptr<VoxelDataGenerator> &generator,
-                   unsigned chunkSize);
+    // A vector which contains references to mutexes. This is used to pass
+    // around references to locks in the locks array itself.
+    using LockVector = std::vector<std::reference_wrapper<std::mutex>>;
     
-    // Perform an atomic transaction as a "reader" with read-only access to the
-    // underlying data in the specified region.
-    // For VoxelDataStore, this is a slow path. Recommend you prefer the method
-    // which accepts an ArrayReader to cause data to be copied to a temporary
-    // array before the closure is executed.
-    // region -- The region we will be reading from.
-    // fn -- Closure which will be doing the reading.
-    void readerTransaction(const AABB &region, const Reader &fn) const override
+    // An ordered collection of locks which need to be acquired simultaneously.
+    // Acquires locks in the constructor and releases in the destructor.
+    // This is used for exception-safe locking and unlocking of a region of the
+    // grid.
+    class LockSet
     {
-        ConcurrentGridMutable<Voxel>::readerTransaction(region, fn);
-    }
+    public:
+        LockSet(LockVector &&theLocks) : locks(theLocks)
+        {
+            for (auto iter = locks.begin(); iter != locks.end(); ++iter) {
+                std::mutex &lock = *iter;
+                lock.lock();
+            }
+        }
+        
+        ~LockSet()
+        {
+            for (auto iter = locks.rbegin(); iter != locks.rend(); ++iter) {
+                std::mutex &lock = *iter;
+                lock.unlock();
+            }
+        }
+        
+    private:
+        const LockVector locks;
+    };
+    
+    // Destructor is just the default.
+    virtual ~VoxelDataStore() = default;
+    
+    // No default constructor.
+    VoxelDataStore() = delete;
+    
+    // Constructor. Accepts a VoxelData object which contains the actual voxels
+    // Transactions on VoxelDataStore protect this voxel data during concurrent
+    // access.
+    VoxelDataStore(std::unique_ptr<VoxelData> &&voxelData, unsigned chunkSize)
+     : GridIndexer(voxelData->boundingBox(), voxelData->gridResolution()),
+       _arrayLocks(voxelData->boundingBox(), voxelData->gridResolution() / (int)chunkSize),
+       _array(std::move(voxelData))
+    {}
     
     // Perform an atomic transaction as a "reader" with read-only access to the
     // underlying data in the specified region.
     // region -- The region we will be reading from.
     // fn -- Closure which will be doing the reading.
-    void readerTransaction(const Frustum &region, const Reader &fn) const override
+    void readerTransaction(const AABB &region, const Reader &fn) const
     {
-        ConcurrentGridMutable<Voxel>::readerTransaction(region, fn);
+        // TODO: The call to copy() will serially fetch the underling voxels if they
+        // were not present. This will lead to other reader transactions being
+        // blocked waiting for those voxels even if they might be able to make
+        // progress if one or two of those voxel chunks became ready.
+        // Instead, we should fire off a group of asynchronous tasks right here
+        // where each task will take the lock on a single voxel chunk and fetch that
+        // chunk. Once all tasks in the group has completed then we grab the entire
+        // lockset and proceed with the copy as before.
+        
+        LockSet locks(locksForRegion(region));
+        auto rawPointer = (VoxelData *)_array.get();
+        assert(rawPointer != nullptr);
+        const Array3D<Voxel> data = rawPointer->copy(region);
+        fn(data);
     }
-    
-    // Perform an atomic transaction as a "reader" with read-only access to the
-    // underlying data in the specified region.
-    // Copies the data to a temporary array for more efficient access to the
-    // underlying voxels.
-    // region -- The region we will be reading from.
-    // fn -- Closure which will be doing the reading.
-    void readerTransaction(const AABB &region, const ArrayReader &fn) const;
     
     // Perform an atomic transaction as a "writer" with read-write access to
     // the underlying voxel data in the specified region. It is the
@@ -56,7 +101,64 @@ public:
     // change log accordingly.
     // region -- The region we will be writing to.
     // fn -- Closure which will be doing the writing.
-    void writerTransaction(const AABB &region, const Writer &fn) override;
+    void writerTransaction(const AABB &region, const Writer &fn)
+    {
+        ChangeLog changeLog;
+        {
+            LockSet locks(locksForRegion(region));
+            VoxelData &voxels = *_array;
+            changeLog = fn(voxels);
+        }
+        onWriterTransaction(changeLog);
+    }
+    
+    // Perform an atomic transaction as a "writer" with read-write access to
+    // the underlying voxel data in the specified region. Syntactic sugar for
+    // the common use-case where the client immediately calls mutableForEachCell
+    // inside the transaction.
+    template<typename RegionType>
+    void writerTransaction(const RegionType &region,
+                           const std::function<void (const AABB &cell,
+                                                     Morton3 index,
+                                                     Voxel &value)> &fn)
+    {
+        writerTransaction(region, [&](Array3D<Voxel> &data){
+            data.mutableForEachCell(region, fn);
+            
+            // Return an empty changelog. So, this call is not appropriate for
+            // cases where a real changelog is necessary.
+            return ChangeLog();
+        });
+    }
+    
+    // This signal fires when a "writer" transaction finishes. This provides the
+    // opportunity to respond to changes to data. For example, by rebuilding
+    // meshes associated with underlying voxel data.
+    boost::signals2::signal<void (const ChangeLog &changeLog)> onWriterTransaction;
+    
+protected:
+    // Locks for the array contents.
+    // We use a shared_ptr here because there is no copy-assignment operator for
+    // std::mutex.
+    mutable Array3D<std::mutex> _arrayLocks;
+    
+    // An array for which we intend to provide concurrent access.
+    std::unique_ptr<VoxelData> _array;
+    
+    // Returns an ordered list of the locks protecting the specified region.
+    template<typename RegionType>
+    LockVector locksForRegion(const RegionType &region) const
+    {
+        LockVector locks;
+        
+        _arrayLocks.mutableForEachCell(region, [&](const AABB &cell,
+                                                   Morton3 index,
+                                                   std::mutex &lock){
+            locks.push_back(std::reference_wrapper<std::mutex>(lock));
+        });
+        
+        return locks;
+    }
 };
 
 #endif /* VoxelDataStore_hpp */

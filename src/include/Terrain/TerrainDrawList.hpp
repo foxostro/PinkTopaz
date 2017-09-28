@@ -10,7 +10,8 @@
 #define TerrainDrawList_hpp
 
 #include "RenderableStaticMesh.hpp"
-#include "Grid/SparseArray3D.hpp"
+#include "Grid/Array3D.hpp"
+#include "Grid/ConcurrentGridMutable.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include <shared_mutex>
 #include <boost/optional.hpp>
@@ -50,11 +51,7 @@ private:
     // cells for which we have not yet received a mesh at all.
     // Note that `_front' must only ever be accessed from the render thread.
     using MaybeMesh = boost::optional<RenderableStaticMesh>;
-
-    template<typename ElementType>
-    using ArrayType = SparseArray3D<ElementType>;
-    
-    ArrayType<MaybeMesh> _front;
+    Array3D<MaybeMesh> _front;
     ConcurrentGridMutable<MaybeMesh> _back;
 };
 

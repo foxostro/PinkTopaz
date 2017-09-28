@@ -1,13 +1,13 @@
 //
-//  GridAddressable.hpp
+//  GridIndexer.hpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 5/20/17.
 //
 //
 
-#ifndef GridAddressable_hpp
-#define GridAddressable_hpp
+#ifndef GridIndexer_hpp
+#define GridIndexer_hpp
 
 #include "AABB.hpp"
 #include "Exception.hpp"
@@ -429,104 +429,4 @@ private:
     const glm::vec3 _cellDimensions;
 };
 
-
-// A "Grid" is an object that divides space into a regular grid with equal sized
-// cells where each cell is associated with an object. The GridAddressable is
-// an abstract class which implements GridIndexer and specifies an interface to
-// retrieve objects of the grid through const references, providing read-only
-// access.
-template<typename TYPE> class GridAddressable : public GridIndexer
-{
-public:
-    virtual ~GridAddressable() = default;
-    
-    // Constructor.
-    // boundingBox -- The valid world space extent of the grid.
-    // gridResolution -- The number of cells along each major axis.
-    GridAddressable(const AABB &boundingBox, const glm::ivec3 &gridResolution)
-     : GridIndexer(boundingBox, gridResolution)
-    {}
-    
-    // Get the object corresponding to the specified point in space.
-    // Note that each point in space corresponds to exactly one cell.
-    // Throws an exception if the point is not within this grid.
-    virtual const TYPE& get(const glm::vec3 &p) const = 0;
-    
-    // Get the cell associated with the given cell coordinates.
-    // Each cell in the grid can be addressed by cell coordinates which uniquely
-    // identify that cell.
-    // See also gridResolution() and cellCoordsAtPoint().
-    virtual const TYPE& get(const glm::ivec3 &cellCoords) const = 0;
-    
-    // Get the cell associated with the given morton code.
-    // Morton codes can be used to uniquely identify a cell in the grid. At the
-    // very least, this code can be used to encode cell coordinates. Sub-classes
-    // of GridAddressable may override this method to allow the code to be used
-    // to directly index some underlying grid array.
-    virtual const TYPE& get(Morton3 index) const
-    {
-        return get(index.decode());
-    }
-    
-    // Iterate over cells in the specified region of the grid.
-    // The specified function `fn' is executed for each cell in the region. It
-    // accepts as parameters the bounding box of the cell, the 1D index of the
-    // cell, and a reference to the object associated with the cell.
-    template<typename RegionType, typename FuncType>
-    inline void forEachCell(const RegionType &region, const FuncType &fn) const
-    {
-        GridIndexer::forEachCell(region, [&](const AABB &cell, Morton3 index){
-            fn(cell, index, get(index));
-        });
-    }
-};
-
-
-// A "Grid" is an object that divides space into a regular grid with equal sized
-// cells where each cell is associated with an object. The GridMutable is
-// an abstract class which extends GridAddressable to also specifies an API to
-// mutate objects of the grid.
-template<typename TYPE> class GridMutable : public GridAddressable<TYPE>
-{
-public:
-    using GridAddressable<TYPE>::forEachCell;
-    
-    GridMutable(const AABB &boundingBox, const glm::ivec3 &gridResolution)
-     : GridAddressable<TYPE>(boundingBox, gridResolution)
-    {}
-    
-    // Get the (mutable) object corresponding to the specified point in space.
-    // Throws an exception if the point is not within this grid.
-    virtual TYPE& mutableReference(const glm::vec3 &p) = 0;
-    
-    // Get the (mutable) object associated with the given cell coordinates.
-    // Each cell in the grid can be addressed by cell coordinates which uniquely
-    // identify that cell.
-    // See also gridResolution() and cellCoordsAtPoint().
-    virtual TYPE& mutableReference(const glm::ivec3 &cellCoords) = 0;
-    
-    // Get the (mutable) object corresponding to the specified morton code.
-    // Morton codes can be used to uniquely identify a cell in the grid. At the
-    // very least, this code can be used to encode cell coordinates. Sub-classes
-    // of GridMutable may override this method to allow the code to be used to
-    // directly index some underlying grid array.
-    virtual TYPE& mutableReference(Morton3 index)
-    {
-        glm::ivec3 a = index.decode();
-        return mutableReference(a);
-    }
-    
-    // Serially iterate over cells in the specified sub-region of the box.
-    // Throws an exception if the region is not within this grid.
-    // `fn' parameters are the bounding box of the cell, the cell index, and a
-    // mutable reference to the value.
-    template<typename RegionType, typename FuncType>
-    inline void mutableForEachCell(const RegionType &region, const FuncType &fn)
-    {
-        GridIndexer::forEachCell(region, [&](const AABB &cell, Morton3 index){
-            fn(cell, index, mutableReference(index));
-        });
-    }
-};
-
-#endif /* GridAddressable_hpp */
+#endif /* GridIndexer_hpp */

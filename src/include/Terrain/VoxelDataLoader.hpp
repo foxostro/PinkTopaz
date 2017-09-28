@@ -53,7 +53,7 @@ public:
     ~VoxelDataLoader() = default;
 
     // Loads the specified voxel data file and writes the data to `output'.
-    void load(const std::vector<uint8_t> &bytes, GridMutable<Voxel> &output);
+    void load(const std::vector<uint8_t> &bytes, Array3D<Voxel> &output);
     
     // Loads the specified voxel data file and retrieves essential dimensions
     // of the contained voxel data, returning them in `box' and `res'.

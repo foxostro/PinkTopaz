@@ -22,7 +22,7 @@ public:
     virtual ~MesherNaiveSurfaceNets() = default;
     
     // Returns a triangle mesh for the specified isosurface.
-    virtual StaticMesh extract(const GridAddressable<Voxel> &voxels,
+    virtual StaticMesh extract(const Array3D<Voxel> &voxels,
                                const AABB &region,
                                float isosurface) override;
     
@@ -47,13 +47,13 @@ private:
     
     // Smooth the vertex by pushing it down toward the isosurface.
     glm::vec3
-    smoothVertex(const GridAddressable<Voxel> &voxels,
+    smoothVertex(const Array3D<Voxel> &voxels,
                  float isosurface,
                  const glm::vec3 &input);
     
     // Smooth each quad vertex by pushing them down toward the isosurface.
     std::array<glm::vec3, 4>
-    smoothQuad(const GridAddressable<Voxel> &voxels,
+    smoothQuad(const Array3D<Voxel> &voxels,
                float isosurface,
                const std::array<glm::vec3, 4> &input);
     
@@ -70,7 +70,7 @@ private:
     // Returns six vertices for the two triangles which constitute the specified
     // face of the specified cell, which has the shape of a rectangular prism.
     std::array<TerrainVertex, 6>
-    verticesForFace(const GridAddressable<Voxel> &voxels,
+    verticesForFace(const Array3D<Voxel> &voxels,
                     float isosurface,
                     const AABB &cell,
                     size_t face);
@@ -78,7 +78,7 @@ private:
     // Emits one face for the specified face of the specified cell. This face is
     // typically represented by six vertices contituting two triangles.
     void emitFace(StaticMesh &geometry,
-                  const GridAddressable<Voxel> &voxels,
+                  const Array3D<Voxel> &voxels,
                   float isosurface,
                   const AABB &cell,
                   size_t face);
