@@ -15,7 +15,7 @@ VoxelData::VoxelData(const std::shared_ptr<VoxelDataGenerator> &gen,
    _chunks(gen->boundingBox(), gen->gridResolution() / (int)chunkSize)
 {}
 
-Array3D<Voxel> VoxelData::copy(const AABB &region) const
+Array3D<Voxel> VoxelData::load(const AABB &region)
 {
     // Adjust the region so that it includes the full extent of all voxels that
     // fall within it. For example, the region may only pass through a portion
@@ -40,8 +40,11 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
     _chunks.mutableForEachCell(region, [&](const AABB &chunkBoundingBox,
                                            Morton3 chunkIndex,
                                            MaybeChunk &maybeChunk){
-        // Build the chunk if it is missing.
-        emplaceChunkIfNecessary(chunkBoundingBox.center, maybeChunk);
+        // If the chunk does not exist then create it now. The initial contents of
+        // the chunk are filled using the generator.
+        if (!maybeChunk) {
+            maybeChunk.emplace(_generator->copy(_chunks.cellAtPoint(chunkBoundingBox.center)));
+        }
         
         // It is entirely possible that the sub-region is not the full size of
         // the chunk. Iterate over chunk voxels that fall within the region.
@@ -61,23 +64,7 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
     return dst;
 }
 
-VoxelData::MaybeChunk& VoxelData::chunkAtPoint(const glm::vec3 &p) const
+void VoxelData::store(const Array3D<Voxel> &voxels)
 {
-    // The chunk itself will already have been locked by the TransactedVoxelData
-    // at this point. We only need to protect access to `_chunks' itself.
-    MaybeChunk &maybeChunk = _chunks.mutableReference(p);
-    emplaceChunkIfNecessary(p, maybeChunk);
-    return maybeChunk;
-}
-
-void VoxelData::emplaceChunkIfNecessary(const glm::vec3 &p,
-                                        MaybeChunk &maybeChunk) const
-{
-    // If the chunk does not exist then create it now. The initial contents of
-    // the chunk are filled using the generator.
-    if (!maybeChunk) {
-        maybeChunk.emplace(_generator->copy(_chunks.cellAtPoint(p)));
-    }
-    
-    assert(maybeChunk);
+    assert(!"stub");
 }

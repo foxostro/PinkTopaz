@@ -22,7 +22,7 @@ class TransactedVoxelData : public GridIndexer
 {
 public:
     using Reader = std::function<void(const Array3D<Voxel> &data)>;
-    using Writer = std::function<ChangeLog(VoxelData &data)>;
+    using Writer = std::function<ChangeLog(Array3D<Voxel> &data)>;
     
     // Default destructor.
     ~TransactedVoxelData() = default;

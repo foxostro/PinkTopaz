@@ -9,10 +9,10 @@
 #ifndef VoxelData_hpp
 #define VoxelData_hpp
 
-#include "Grid/Array3D.hpp"
+#include "Grid/SparseGrid.hpp"
 #include "Voxel.hpp"
 #include "VoxelDataGenerator.hpp"
-#include <boost/optional.hpp>
+#include <memory>
 
 // A block of voxels in space.
 class VoxelData : public GridIndexer
@@ -20,6 +20,7 @@ class VoxelData : public GridIndexer
 public:
     using Chunk = Array3D<Voxel>;
     using MaybeChunk = boost::optional<Chunk>;
+    using GeneratorPtr = std::shared_ptr<VoxelDataGenerator>;
     
     // Default Destructor.
     ~VoxelData() = default;
@@ -27,30 +28,22 @@ public:
     // No default constructor.
     VoxelData() = delete;
     
-    // Constructor. Accepts `generator' which can generate voxel terrain as
-    // needed to fill the chunks underlying VoxelData.
-    VoxelData(const std::shared_ptr<VoxelDataGenerator> &generator,
-              unsigned chunkSize);
+    // Constructor.
+    // generator -- The generator provides initial voxel data.
+    // chunkSize -- The size of chunk VoxelData should use internally.
+    VoxelData(const GeneratorPtr &generator, unsigned chunkSize);
     
-    // Returns an array which holds a copy of the contents of the subregion.
-    Array3D<Voxel> copy(const AABB &region) const;
+    // Loads a copy of the contents of the specified sub-region of the grid to
+    // an Array3D and returns that. May fault in missing voxels to satisfy the
+    // request.
+    Array3D<Voxel> load(const AABB &region);
+    
+    // Stores the contents of the specified array of voxels to the grid.
+    void store(const Array3D<Voxel> &voxels);
     
 private:
-    // Provides voxel data for regions of space where none is available yet.
-    const std::shared_ptr<VoxelDataGenerator> &_generator;
-    
-    // The voxel grid is broken into chunks where each chunk is a fixed-size
-    // grid of voxels.
-    mutable Array3D<MaybeChunk> _chunks;
-    
-    // Fetches the chunk at the specified point in space `p'. This may create
-    // the chunk. If so, it is filled using the generator.
-    MaybeChunk& chunkAtPoint(const glm::vec3 &p) const;
-    
-    // If the chunk is not valid then emplace a new one filled using the voxel
-    // data generator. This assumes the lock has already been taken.
-    void emplaceChunkIfNecessary(const glm::vec3 &p,
-                                 MaybeChunk &maybeChunk) const;
+    const GeneratorPtr &_generator;
+    Array3D<MaybeChunk> _chunks;
 };
 
 #endif /* VoxelData_hpp */

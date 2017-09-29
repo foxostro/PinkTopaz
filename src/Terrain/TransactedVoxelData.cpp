@@ -26,10 +26,7 @@ void TransactedVoxelData::readerTransaction(const AABB &region, const Reader &fn
     
     auto mutex = _lockArbitrator.getMutex(region);
     std::lock_guard<decltype(mutex)> lock(mutex);
-    
-    auto rawPointer = (VoxelData *)_array.get();
-    assert(rawPointer != nullptr);
-    const Array3D<Voxel> data = rawPointer->copy(region);
+    const Array3D<Voxel> data = _array->load(region);
     fn(data);
 }
 
@@ -39,7 +36,9 @@ void TransactedVoxelData::writerTransaction(const AABB &region, const Writer &fn
     {
         auto mutex = _lockArbitrator.getMutex(region);
         std::lock_guard<decltype(mutex)> lock(mutex);
-        changeLog = fn(*_array);
+        Array3D<Voxel> data = _array->load(region);
+        changeLog = fn(data);
+        _array->store(data);
     }
     onWriterTransaction(changeLog);
 }
