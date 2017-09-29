@@ -63,8 +63,8 @@ Array3D<Voxel> VoxelData::copy(const AABB &region) const
 
 VoxelData::MaybeChunk& VoxelData::chunkAtPoint(const glm::vec3 &p) const
 {
-    // The chunk itself will already have been locked by the VoxelDataStore at
-    // this point. We only need to protect access to `_chunks' itself.
+    // The chunk itself will already have been locked by the TransactedVoxelData
+    // at this point. We only need to protect access to `_chunks' itself.
     MaybeChunk &maybeChunk = _chunks.mutableReference(p);
     emplaceChunkIfNecessary(p, maybeChunk);
     return maybeChunk;

@@ -14,7 +14,7 @@
 #include <glm/vec3.hpp>
 #include <AABB.hpp>
 
-// Ordered list of changes made to a VoxelDataStore during a transaction.
+// Ordered list of changes made to a TransactedVoxelData during a transaction.
 class ChangeLog
 {
 public:

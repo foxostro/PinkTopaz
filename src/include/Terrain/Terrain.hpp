@@ -13,7 +13,7 @@
 #include "TaskDispatcher.hpp"
 #include "Terrain/Mesher.hpp"
 #include "Terrain/VoxelDataGenerator.hpp"
-#include "Terrain/VoxelDataStore.hpp"
+#include "Terrain/TransactedVoxelData.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include "Terrain/TerrainDrawList.hpp"
 #include "Terrain/TerrainChunkQueue.hpp"
@@ -66,7 +66,7 @@ private:
     std::shared_ptr<TaskDispatcher> _dispatcherRebuildMesh;
     std::shared_ptr<Mesher> _mesher;
     std::shared_ptr<VoxelDataGenerator> _voxelDataGenerator;
-    std::shared_ptr<VoxelDataStore> _voxels;
+    std::shared_ptr<TransactedVoxelData> _voxels;
     std::unique_ptr<TerrainDrawList> _drawList;
     std::unique_ptr<TerrainMeshGrid> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;

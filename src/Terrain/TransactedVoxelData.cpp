@@ -1,19 +1,19 @@
 //
-//  VoxelDataStore.cpp
+//  TransactedVoxelData.cpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 5/16/17.
 //
 //
 
-#include "Terrain/VoxelDataStore.hpp"
+#include "Terrain/TransactedVoxelData.hpp"
 
-VoxelDataStore::VoxelDataStore(std::unique_ptr<VoxelData> &&voxelData)
+TransactedVoxelData::TransactedVoxelData(std::unique_ptr<VoxelData> &&voxelData)
  : GridIndexer(voxelData->boundingBox(), voxelData->gridResolution()),
    _array(std::move(voxelData))
 {}
 
-void VoxelDataStore::readerTransaction(const AABB &region, const Reader &fn) const
+void TransactedVoxelData::readerTransaction(const AABB &region, const Reader &fn) const
 {
     // TODO: The call to copy() will serially fetch the underling voxels if they
     // were not present. This will lead to other reader transactions being
@@ -33,7 +33,7 @@ void VoxelDataStore::readerTransaction(const AABB &region, const Reader &fn) con
     fn(data);
 }
 
-void VoxelDataStore::writerTransaction(const AABB &region, const Writer &fn)
+void TransactedVoxelData::writerTransaction(const AABB &region, const Writer &fn)
 {
     ChangeLog changeLog;
     {

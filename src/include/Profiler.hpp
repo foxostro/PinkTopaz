@@ -34,8 +34,6 @@ public:
         TerrainRebuildMeshInResponseToChanges,
         TerrainRebuildNextMesh,
         TerrainFetchMeshes,
-        VoxelDataStoreReader,
-        VoxelDataStoreWriter,
     };
     
     class Scope

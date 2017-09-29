@@ -11,7 +11,7 @@
 
 #include "RenderableStaticMesh.hpp"
 #include "Renderer/GraphicsDevice.hpp"
-#include "Terrain/VoxelDataStore.hpp"
+#include "Terrain/TransactedVoxelData.hpp"
 #include "Terrain/Mesher.hpp"
 #include <boost/optional.hpp>
 
@@ -33,7 +33,7 @@ public:
                 const std::shared_ptr<RenderableStaticMesh> &defaultMesh,
                 const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                 const std::shared_ptr<Mesher> &mesher,
-                const std::shared_ptr<VoxelDataStore> &voxels);
+                const std::shared_ptr<TransactedVoxelData> &voxels);
     
     // Default constructor is deleted
     TerrainMesh() = delete;
@@ -68,7 +68,7 @@ private:
     
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<Mesher> _mesher;
-    std::shared_ptr<VoxelDataStore> _voxels;
+    std::shared_ptr<TransactedVoxelData> _voxels;
     
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     RenderableStaticMesh _mesh;

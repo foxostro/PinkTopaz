@@ -1,13 +1,13 @@
 //
-//  VoxelDataStore.hpp
+//  TransactedVoxelData.hpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 5/16/17.
 //
 //
 
-#ifndef VoxelDataStore_hpp
-#define VoxelDataStore_hpp
+#ifndef TransactedVoxelData_hpp
+#define TransactedVoxelData_hpp
 
 #include <boost/signals2.hpp>
 #include <functional>
@@ -18,20 +18,20 @@
 #include "VoxelData.hpp"
 
 // Provides an interface for concurrent manipulation of a VoxelData object.
-class VoxelDataStore : public GridIndexer
+class TransactedVoxelData : public GridIndexer
 {
 public:
     using Reader = std::function<void(const Array3D<Voxel> &data)>;
     using Writer = std::function<ChangeLog(VoxelData &data)>;
     
     // Default destructor.
-    ~VoxelDataStore() = default;
+    ~TransactedVoxelData() = default;
     
     // No default constructor.
-    VoxelDataStore() = delete;
+    TransactedVoxelData() = delete;
     
     // Constructor. Accepts a VoxelData object which contains the actual voxels.
-    VoxelDataStore(std::unique_ptr<VoxelData> &&voxelData);
+    TransactedVoxelData(std::unique_ptr<VoxelData> &&voxelData);
     
     // Perform an atomic transaction as a "reader" with read-only access to the
     // underlying data in the specified region.
@@ -57,4 +57,4 @@ protected:
     std::unique_ptr<VoxelData> _array;
 };
 
-#endif /* VoxelDataStore_hpp */
+#endif /* TransactedVoxelData_hpp */
