@@ -31,14 +31,36 @@ public:
        _countLimit(std::numeric_limits<std::size_t>::max())
     {}
     
+    // Copy assignment operator.
+    SparseGrid<ElementType>& operator=(const SparseGrid<ElementType> &other)
+    {
+        if (&other != this) {
+            std::unique_lock<std::mutex> lock1(_mutex, std::defer_lock);
+            std::unique_lock<std::mutex> lock2(other._mutex, std::defer_lock);
+            std::lock(lock1, lock2);
+            _hashMap = other._hashMap;
+        }
+        return *this;
+    }
+    
+    inline boost::optional<ElementType> getIfExists(const Morton3 &morton)
+    {
+        return getIfExists((size_t)morton);
+    }
+    
+    inline boost::optional<ElementType> getIfExists(const glm::vec3 &p)
+    {
+#ifdef EnableVerboseBoundsChecking
+        if (!inbounds(p)) {
+            throw OutOfBoundsException();
+        }
+#endif
+        return getIfExists(indexAtPoint(p));
+    }
+    
     inline ElementType get(const Morton3 &morton)
     {
         return get((size_t)morton);
-    }
-    
-    inline void set(const Morton3 &morton, const ElementType &el)
-    {
-        return set((size_t)morton, el);
     }
     
     inline ElementType get(const glm::vec3 &p)
@@ -49,6 +71,11 @@ public:
         }
 #endif
         return get(indexAtPoint(p));
+    }
+    
+    inline void set(const Morton3 &morton, const ElementType &el)
+    {
+        return set((size_t)morton, el);
     }
     
     inline void set(const glm::vec3 &p, const ElementType &el)
@@ -83,6 +110,18 @@ private:
     GridLRU<size_t> _lru;
     size_t _countLimit;
     
+    boost::optional<ElementType> getIfExists(size_t key)
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        auto iter = _hashMap.find(key);
+        if (iter == _hashMap.end()) {
+            return boost::none;
+        } else {
+            _lru.reference(key);
+            return boost::make_optional(iter->second);
+        }
+    }
+    
     ElementType get(size_t key)
     {
         std::lock_guard<std::mutex> lock(_mutex);
@@ -92,7 +131,7 @@ private:
     
     void set(size_t key, const ElementType &el)
     {
-        std::lock_guard<std::mutex> lock1(_mutex);
+        std::lock_guard<std::mutex> lock(_mutex);
         _lru.reference(key);
         _hashMap[key] = el;
         enforceLimits();

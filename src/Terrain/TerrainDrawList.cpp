@@ -10,31 +10,47 @@
 
 TerrainDrawList::TerrainDrawList(const AABB &box, const glm::ivec3 &res)
  : _front(box, res),
-   _back(std::make_unique<Array3D<MaybeMesh>>(box, res), 1)
-{}
+   _back(box, res)
+{
+    const size_t countLimit = std::pow(512 / 16, 3);
+    _back.setCountLimit(countLimit); // TODO: need a better value here
+}
 
 std::vector<AABB>
 TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
                       const Frustum &frustum,
                       const AABB &activeRegion)
 {
-    updateFrontList(activeRegion);
+    // If we can, copy the back draw list into the front list.
+    {
+        std::unique_lock<std::shared_mutex> lock(_lock, std::defer_lock);
+        if (lock.try_lock()) {
+            _front = _back;
+        }
+    }
     
     std::vector<AABB> missingMeshes;
     
     // Draw each cell that is in the camera view-frustum.
     // If the draw list is missing any mesh in the active region then report
     // that to the caller.
-    _front.forEachCell(activeRegion, [&](const AABB &cell,
-                                         Morton3 index,
-                                         const MaybeMesh &maybeMesh){
+    _front.forEachCell(activeRegion, [&](const AABB &cell, Morton3 index){
+        boost::optional<MeshPtr> maybeMesh = _front.getIfExists(index);
+        bool missing = true;
+        
         if (maybeMesh) {
-            const RenderableStaticMesh &drawThis = *maybeMesh;
-            if ((drawThis.vertexCount > 0) && frustum.boxIsInside(cell)) {
-                encoder->setVertexBuffer(drawThis.buffer, 0);
-                encoder->drawPrimitives(Triangles, 0, drawThis.vertexCount, 1);
+            const MeshPtr &meshPtr = *maybeMesh;
+            if (meshPtr) {
+                missing = false;
+                const RenderableStaticMesh &drawThis = *meshPtr;
+                if ((drawThis.vertexCount > 0) && frustum.boxIsInside(cell)) {
+                    encoder->setVertexBuffer(drawThis.buffer, 0);
+                    encoder->drawPrimitives(Triangles, 0, drawThis.vertexCount, 1);
+                }
             }
-        } else {
+        }
+        
+        if (missing) {
             missingMeshes.push_back(cell);
         }
     });
@@ -45,28 +61,7 @@ TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
 void TerrainDrawList::updateDrawList(const TerrainMesh &mesh)
 {
     std::shared_lock<std::shared_mutex> lock(_lock);
-    const AABB &cell = mesh.boundingBox();
-    _back.writerTransaction(cell, [&](const AABB &cell,
-                                      Morton3 index,
-                                      MaybeMesh &value){
-        value = boost::make_optional(mesh.getMesh());
-    });
-}
-
-void TerrainDrawList::updateFrontList(const AABB &activeRegion)
-{
-    std::unique_lock<std::shared_mutex> lock(_lock, std::defer_lock);
-    if (!lock.try_lock()) {
-        return;
-    }
-    
-    // We can do this operation unlocked because `_lock' ensures there is no
-    // concurrent access at this time. Also, this is MUCH faster.
-    auto &back = _back.array();
-    _front.mutableForEachCell(activeRegion, [&](const AABB &cell,
-                                                Morton3 index,
-                                                MaybeMesh &dst){
-        MaybeMesh &src = back->mutableReference(index);
-        dst = src;
-    });
+    const glm::vec3 pos = mesh.boundingBox().center;
+    MeshPtr renderable = std::make_shared<RenderableStaticMesh>(mesh.getMesh());
+    _back.set(pos, renderable);
 }

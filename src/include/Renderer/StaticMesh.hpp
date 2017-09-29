@@ -56,6 +56,11 @@ public:
     
     bool operator==(const StaticMesh &other) const;
     
+    inline bool operator!=(const StaticMesh &other) const
+    {
+        return !((*this) == other);
+    }
+    
 private:
     void initVertexFormat();
     

@@ -10,11 +10,9 @@
 #define TerrainDrawList_hpp
 
 #include "RenderableStaticMesh.hpp"
-#include "Grid/Array3D.hpp"
-#include "Grid/ConcurrentGridMutable.hpp"
+#include "Grid/SparseGrid.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include <shared_mutex>
-#include <boost/optional.hpp>
 
 // This is a draw list that is buffered so that updates on a background thread
 // can proceed without interfering with the render thread.
@@ -38,21 +36,14 @@ public:
     void updateDrawList(const TerrainMesh &mesh);
     
 private:
-    // Updates the front draw list to include new information from the back one.
-    // Only call this on the render thread.
-    void updateFrontList(const AABB &activeRegion);
-    
     // Take this lock in exclusive mode to access `_back' with no other readers
     // or writers. Take this lock in shared mode to access `_back' with multiple
     // concurrent readers and writers.
     std::shared_mutex _lock;
     
-    // Draw a distinction between cells which have an empty mesh (i.e. air) and
-    // cells for which we have not yet received a mesh at all.
     // Note that `_front' must only ever be accessed from the render thread.
-    using MaybeMesh = boost::optional<RenderableStaticMesh>;
-    Array3D<MaybeMesh> _front;
-    ConcurrentGridMutable<MaybeMesh> _back;
+    using MeshPtr = std::shared_ptr<RenderableStaticMesh>;
+    SparseGrid<MeshPtr> _front, _back;
 };
 
 #endif /* TerrainDrawList_hpp */

@@ -23,7 +23,7 @@ else()
     endif(APPLE)
     
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
     set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
 endif()
 
@@ -33,7 +33,6 @@ set(SOURCE_FILES_GRID
     "src/include/Grid/GridLRU.hpp"
     "src/include/Grid/SparseGrid.hpp"
     "src/include/Grid/RegionMutualExclusionArbitrator.hpp"
-    "src/include/Grid/ConcurrentGridMutable.hpp"
     )
 
 set(SOURCE_FILES_TERRAIN
