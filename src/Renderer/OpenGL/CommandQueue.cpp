@@ -60,6 +60,7 @@ void CommandQueue::enqueue(unsigned id, const std::string &label, std::function<
 
 void CommandQueue::enqueue(CommandQueue &other)
 {
+    // TODO: When C++17 support is better, use scoped_lock here.
     std::unique_lock<std::mutex> lock1(_queueLock, std::defer_lock);
     std::unique_lock<std::mutex> lock2(other._queueLock, std::defer_lock);
     std::lock(lock1, lock2);
