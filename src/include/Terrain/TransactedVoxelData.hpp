@@ -12,7 +12,6 @@
 #include <boost/signals2.hpp>
 #include <functional>
 
-#include "Grid/Array3D.hpp"
 #include "Grid/RegionMutualExclusionArbitrator.hpp"
 #include "ChangeLog.hpp"
 #include "VoxelData.hpp"

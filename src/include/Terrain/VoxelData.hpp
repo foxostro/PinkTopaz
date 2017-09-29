@@ -45,6 +45,9 @@ private:
     
     const GeneratorPtr &_generator;
     SparseGrid<ChunkPtr> _chunks;
+    
+    // Gets the chunk, creating it if necessary.
+    ChunkPtr get(const AABB &bbox, Morton3 index);
 };
 
 #endif /* VoxelData_hpp */

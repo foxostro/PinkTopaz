@@ -27,26 +27,13 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
     const glm::vec3 extent = (maxs - mins) * 0.5f;
     const AABB adjustedRegion = {center, extent};
     
-    // Count the number of voxels in the adjusted region. This will be the grid
-    // resolution of the destination array.
-    const glm::ivec3 res = _generator->countCellsInRegion(adjustedRegion);
-    
     // Construct the destination array.
+    const glm::ivec3 res = _generator->countCellsInRegion(adjustedRegion);
     Array3D<Voxel> dst(adjustedRegion, res);
     assert(dst.inbounds(region));
     
-    // Iterate over all chunks in the region.
     _chunks.forEachCell(region, [&](const AABB &boundingBox, Morton3 index){
-        ChunkPtr chunk = _chunks.get(index);
-        
-        // If the chunk does not exist then create it now. The initial contents of
-        // the chunk are filled using the generator.
-        if (!chunk) {
-            const auto cell = _chunks.cellAtPoint(boundingBox.center);
-            auto voxels = _generator->copy(cell);
-            chunk = std::make_shared<Chunk>(std::move(voxels));
-            _chunks.set(index, chunk);
-        }
+        ChunkPtr chunk = get(boundingBox, index);
         
         // It is entirely possible that the sub-region is not the full size of
         // the chunk. Iterate over chunk voxels that fall within the region.
@@ -55,10 +42,6 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
         chunk->forEachCell(subRegion, [&](const AABB &cell,
                                           Morton3 voxelIndex,
                                           const Voxel &voxel){
-            
-            // AFOX_TODO: I can reduce calls to indexAtPoint() by being clever
-            // with grid coordinates. These calls account for 10% of all time
-            // spent in rebuildNextMesh(), and 32% of the time spent in copy().
             dst.mutableReference(cell.center) = voxel;
         });
     });
@@ -68,5 +51,31 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
 
 void VoxelData::store(const Array3D<Voxel> &voxels)
 {
-    assert(!"stub");
+    const AABB region = voxels.boundingBox();
+    
+    _chunks.forEachCell(region, [&](const AABB &boundingBox, Morton3 index){
+        ChunkPtr chunk = get(boundingBox, index);
+        
+        // It is entirely possible that the sub-region is not the full size of
+        // the chunk. Iterate over chunk voxels that fall within the region.
+        // Copy each of those voxels into the destination array.
+        const AABB subRegion = boundingBox.intersect(region);
+        chunk->mutableForEachCell(subRegion, [&](const AABB &cell,
+                                                 Morton3 voxelIndex,
+                                                 Voxel &voxel){
+            voxel = voxels.reference(cell.center);
+        });
+    });
+}
+
+VoxelData::ChunkPtr VoxelData::get(const AABB &bbox, Morton3 index)
+{
+    ChunkPtr chunk = _chunks.get(index);
+    if (!chunk) {
+        const auto cell = _chunks.cellAtPoint(bbox.center); // Is this line necessary?
+        auto voxels = _generator->copy(cell);
+        chunk = std::make_shared<Chunk>(std::move(voxels));
+        _chunks.set(index, chunk);
+    }
+    return chunk;
 }
