@@ -11,33 +11,27 @@
 
 #include <boost/signals2.hpp>
 #include <functional>
-#include <vector>
-#include <mutex>
 
-#include "Grid/GridIndexer.hpp"
 #include "Grid/Array3D.hpp"
 #include "Grid/RegionMutualExclusionArbitrator.hpp"
 #include "ChangeLog.hpp"
 #include "VoxelData.hpp"
 
-// Wraps a VoxelData object. Transactions on VoxelDataStore protect this voxel
-// data to allow concurrent readers and writers.
+// Provides an interface for concurrent manipulation of a VoxelData object.
 class VoxelDataStore : public GridIndexer
 {
 public:
     using Reader = std::function<void(const Array3D<Voxel> &data)>;
     using Writer = std::function<ChangeLog(VoxelData &data)>;
     
-    // Destructor is just the default.
-    virtual ~VoxelDataStore() = default;
+    // Default destructor.
+    ~VoxelDataStore() = default;
     
     // No default constructor.
     VoxelDataStore() = delete;
     
-    // Constructor. Accepts a VoxelData object which contains the actual voxels
-    // Transactions on VoxelDataStore protect this voxel data during concurrent
-    // access.
-    VoxelDataStore(std::unique_ptr<VoxelData> &&voxelData, unsigned chunkSize);
+    // Constructor. Accepts a VoxelData object which contains the actual voxels.
+    VoxelDataStore(std::unique_ptr<VoxelData> &&voxelData);
     
     // Perform an atomic transaction as a "reader" with read-only access to the
     // underlying data in the specified region.

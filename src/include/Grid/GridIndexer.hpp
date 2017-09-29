@@ -83,7 +83,7 @@ public:
 class GridIndexer
 {
 public:
-    ~GridIndexer() = default;
+    virtual ~GridIndexer() = default;
     
     GridIndexer(const AABB &boundingBox,
                 const glm::ivec3 &gridResolution)

@@ -8,7 +8,7 @@
 
 #include "Terrain/VoxelDataStore.hpp"
 
-VoxelDataStore::VoxelDataStore(std::unique_ptr<VoxelData> &&voxelData, unsigned chunkSize)
+VoxelDataStore::VoxelDataStore(std::unique_ptr<VoxelData> &&voxelData)
  : GridIndexer(voxelData->boundingBox(), voxelData->gridResolution()),
    _array(std::move(voxelData))
 {}
