@@ -85,9 +85,6 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     _drawList = std::make_unique<TerrainDrawList>(box, res);
     _meshes = std::make_unique<TerrainMeshGrid>(box, res);
     
-    const size_t countLimit = std::pow(512 / TERRAIN_CHUNK_SIZE, 3);
-    _meshes->setCountLimit(countLimit); // TODO: need a better value here
-    
     // When voxels change, we need to extract a polygonal mesh representation
     // of the isosurface. This mesh is what we actually draw.
     // For now, we extract the entire isosurface in one step.

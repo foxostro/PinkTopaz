@@ -11,10 +11,7 @@
 TerrainDrawList::TerrainDrawList(const AABB &box, const glm::ivec3 &res)
  : _front(box, res),
    _back(box, res)
-{
-    const size_t countLimit = std::pow(512 / 16, 3);
-    _back.setCountLimit(countLimit); // TODO: need a better value here
-}
+{}
 
 std::vector<AABB>
 TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
