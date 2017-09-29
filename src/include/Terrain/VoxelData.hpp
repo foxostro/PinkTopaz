@@ -18,8 +18,6 @@
 class VoxelData : public GridIndexer
 {
 public:
-    using Chunk = Array3D<Voxel>;
-    using MaybeChunk = boost::optional<Chunk>;
     using GeneratorPtr = std::shared_ptr<VoxelDataGenerator>;
     
     // Default Destructor.
@@ -42,8 +40,11 @@ public:
     void store(const Array3D<Voxel> &voxels);
     
 private:
+    using Chunk = Array3D<Voxel>;
+    using ChunkPtr = std::shared_ptr<Chunk>;
+    
     const GeneratorPtr &_generator;
-    Array3D<MaybeChunk> _chunks;
+    SparseGrid<ChunkPtr> _chunks;
 };
 
 #endif /* VoxelData_hpp */

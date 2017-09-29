@@ -8,8 +8,7 @@
 
 #include "Terrain/VoxelData.hpp"
 
-VoxelData::VoxelData(const std::shared_ptr<VoxelDataGenerator> &gen,
-                     unsigned chunkSize)
+VoxelData::VoxelData(const GeneratorPtr &gen, unsigned chunkSize)
  : GridIndexer(gen->boundingBox(), gen->gridResolution()),
    _generator(gen),
    _chunks(gen->boundingBox(), gen->gridResolution() / (int)chunkSize)
@@ -37,22 +36,25 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
     assert(dst.inbounds(region));
     
     // Iterate over all chunks in the region.
-    _chunks.mutableForEachCell(region, [&](const AABB &chunkBoundingBox,
-                                           Morton3 chunkIndex,
-                                           MaybeChunk &maybeChunk){
+    _chunks.forEachCell(region, [&](const AABB &boundingBox, Morton3 index){
+        ChunkPtr chunk = _chunks.get(index);
+        
         // If the chunk does not exist then create it now. The initial contents of
         // the chunk are filled using the generator.
-        if (!maybeChunk) {
-            maybeChunk.emplace(_generator->copy(_chunks.cellAtPoint(chunkBoundingBox.center)));
+        if (!chunk) {
+            const auto cell = _chunks.cellAtPoint(boundingBox.center);
+            auto voxels = _generator->copy(cell);
+            chunk = std::make_shared<Chunk>(std::move(voxels));
+            _chunks.set(index, chunk);
         }
         
         // It is entirely possible that the sub-region is not the full size of
         // the chunk. Iterate over chunk voxels that fall within the region.
         // Copy each of those voxels into the destination array.
-        const AABB subRegion = chunkBoundingBox.intersect(region);
-        maybeChunk->forEachCell(subRegion, [&](const AABB &cell,
-                                               Morton3 voxelIndex,
-                                               const Voxel &voxel){
+        const AABB subRegion = boundingBox.intersect(region);
+        chunk->forEachCell(subRegion, [&](const AABB &cell,
+                                          Morton3 voxelIndex,
+                                          const Voxel &voxel){
             
             // AFOX_TODO: I can reduce calls to indexAtPoint() by being clever
             // with grid coordinates. These calls account for 10% of all time
