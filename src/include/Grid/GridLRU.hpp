@@ -58,6 +58,20 @@ public:
         _lookup.clear();
     }
     
+    // Copy assignment operator.
+    GridLRU<KeyType>& operator=(const GridLRU<KeyType> &other)
+    {
+        if (&other != this) {
+            _list = other._list;
+            
+            // Can't copy the iterators, so rebuild the lookup table.
+            for (auto iter = _list.begin(); iter != _list.end(); ++iter) {
+                _lookup[*iter] = iter;
+            }
+        }
+        return *this;
+    }
+    
 private:
     std::list<KeyType> _list;
     
