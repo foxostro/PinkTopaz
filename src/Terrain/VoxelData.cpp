@@ -68,14 +68,10 @@ void VoxelData::store(const Array3D<Voxel> &voxels)
     });
 }
 
-VoxelData::ChunkPtr VoxelData::get(const AABB &bbox, Morton3 index)
+VoxelData::ChunkPtr VoxelData::get(const AABB &cell, Morton3 index)
 {
-    ChunkPtr chunk = _chunks.get(index);
-    if (!chunk) {
-        const auto cell = _chunks.cellAtPoint(bbox.center); // Is this line necessary?
+    return _chunks.get(index, [=]{
         auto voxels = _generator->copy(cell);
-        chunk = std::make_shared<Chunk>(std::move(voxels));
-        _chunks.set(index, chunk);
-    }
-    return chunk;
+        return std::make_shared<Chunk>(std::move(voxels));
+    });
 }
