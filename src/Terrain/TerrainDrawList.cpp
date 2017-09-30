@@ -62,3 +62,10 @@ void TerrainDrawList::updateDrawList(const TerrainMesh &mesh)
     MeshPtr renderable = std::make_shared<RenderableStaticMesh>(mesh.getMesh());
     _back.set(pos, renderable);
 }
+
+void TerrainDrawList::setCountLimit(unsigned countLimit)
+{
+    std::unique_lock<std::shared_mutex> lock(_lock);
+    _front.setCountLimit(countLimit);
+    _back.setCountLimit(countLimit);
+}

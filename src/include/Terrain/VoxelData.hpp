@@ -31,6 +31,10 @@ public:
     // chunkSize -- The size of chunk VoxelData should use internally.
     VoxelData(const GeneratorPtr &generator, unsigned chunkSize);
     
+    // VoxelData may evict chunks to keep the total chunk count under this
+    // limit. Pass in at least the expected number of chunks in the working set.
+    void setChunkCountLimit(unsigned chunkCountLimit);
+    
     // Loads a copy of the contents of the specified sub-region of the grid to
     // an Array3D and returns that. May fault in missing voxels to satisfy the
     // request.

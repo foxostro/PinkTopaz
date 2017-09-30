@@ -14,6 +14,11 @@ VoxelData::VoxelData(const GeneratorPtr &gen, unsigned chunkSize)
    _chunks(gen->boundingBox(), gen->gridResolution() / (int)chunkSize)
 {}
 
+void VoxelData::setChunkCountLimit(unsigned chunkCountLimit)
+{
+    _chunks.setCountLimit(chunkCountLimit);
+}
+
 Array3D<Voxel> VoxelData::load(const AABB &region)
 {
     // Adjust the region so that it includes the full extent of all voxels that

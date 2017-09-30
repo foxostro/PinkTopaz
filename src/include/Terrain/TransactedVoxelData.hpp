@@ -51,6 +51,13 @@ public:
     // meshes associated with underlying voxel data.
     boost::signals2::signal<void (const ChangeLog &changeLog)> onWriterTransaction;
     
+    // We may evict chunks to keep the total chunk count under this limit.
+    // Pass in at least the expected number of chunks in the working set.
+    void setChunkCountLimit(unsigned chunkCountLimit)
+    {
+        _array->setChunkCountLimit(chunkCountLimit);
+    }
+    
 protected:
     mutable RegionMutualExclusionArbitrator _lockArbitrator;
     std::unique_ptr<VoxelData> _array;

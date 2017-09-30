@@ -35,6 +35,10 @@ public:
     // able to swap the two lists in the draw method.
     void updateDrawList(const TerrainMesh &mesh);
     
+    // We may evict meshes to keep the total mesh count under this limit.
+    // Pass in at least the expected number of meshes in the working set.
+    void setCountLimit(unsigned countLimit);
+    
 private:
     // Take this lock in exclusive mode to access `_back' with no other readers
     // or writers. Take this lock in shared mode to access `_back' with multiple
