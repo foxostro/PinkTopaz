@@ -159,7 +159,7 @@ StaticMesh MesherMarchingCubes::extract(const Array3D<Voxel> &voxels,
         vec3(-L, +L, -L)
     };
     
-    voxels.forPointsInGrid(insetAABB, [&](const glm::vec3 &pos){
+    for (const vec3 pos : voxels.points(insetAABB)) {
         const vec3 vertexPositions[NUM_CUBE_VERTS] = {
             pos + posOffset[0],
             pos + posOffset[1],
@@ -183,7 +183,7 @@ StaticMesh MesherMarchingCubes::extract(const Array3D<Voxel> &voxels,
         }};
         
         polygonizeGridCell(geometry, cube, isosurface);
-    });
+    }
     
     return geometry;
 }

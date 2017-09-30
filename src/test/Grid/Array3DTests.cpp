@@ -311,25 +311,24 @@ TEST_CASE("Test For Points In Grid", "[Array3D]") {
     
     std::vector<vec3> actualPoints;
     
-    myArray.forPointsInGrid(box, [&](const vec3 &point){
+    for (const vec3 point : myArray.points(box)) {
         actualPoints.push_back(point);
-    });
+    }
     
     // Make sure we got all the points we intended to.
     REQUIRE(desiredPoints == actualPoints);
     
     // Throws an exception when the region is not in-bounds.
     const AABB negCell = {vec3(-0.5f, -0.5f, -0.5f), vec3(0.5f, 0.5f, 0.5f)};
-    REQUIRE_THROWS_AS(myArray.forPointsInGrid(negCell, [&](const vec3 &point){
-        SDL_Log("(%.2f, %.2f, %.2f)", point.x, point.y, point.z);
-    }), OutOfBoundsException);
+    
+    REQUIRE_THROWS_AS(myArray.points(negCell), OutOfBoundsException);
     
     // If the region is a zero-sized box then we should iterate over one point.
     const AABB zeroBox = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
     actualPoints.clear();
-    myArray.forPointsInGrid(zeroBox, [&](const vec3 &point){
+    for (const vec3 point : myArray.points(zeroBox)) {
         actualPoints.push_back(point);
-    });
+    }
     REQUIRE(1 == actualPoints.size());
 }
 

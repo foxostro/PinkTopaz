@@ -83,18 +83,19 @@ public:
 class GridIndexer
 {
 public:
-    class Iterator
+    template<typename PointType>
+    class ExclusiveIterator
     {
     public:
-        Iterator() = delete;
+        ExclusiveIterator() = delete;
         
-        Iterator(glm::ivec3 min, glm::ivec3 max, glm::ivec3 pos)
+        ExclusiveIterator(PointType min, PointType max, PointType pos)
          : _min(min), _max(max), _pos(pos)
         {}
         
-        Iterator(const Iterator &a) = default;
+        ExclusiveIterator(const ExclusiveIterator<PointType> &a) = default;
         
-        Iterator& operator++()
+        ExclusiveIterator<PointType>& operator++()
         {
             ++_pos.y;
             if (_pos.y >= _max.y) {
@@ -115,37 +116,111 @@ public:
             return *this;
         }
         
-        Iterator operator++(int)
+        ExclusiveIterator<PointType> operator++(int)
         {
-            Iterator temp(*this);
+            ExclusiveIterator<PointType> temp(*this);
             operator++();
             return temp;
         }
         
-        glm::ivec3 operator*()
+        PointType operator*()
         {
             return _pos;
         }
         
-        glm::ivec3* operator->()
+        PointType* operator->()
         {
             return &_pos;
         }
         
-        bool operator==(const Iterator &a) const
+        bool operator==(const ExclusiveIterator<PointType> &a) const
         {
             return _min == a._min &&
                    _max == a._max &&
                    _pos == a._pos;
         }
         
-        bool operator!=(const Iterator &a) const
+        bool operator!=(const ExclusiveIterator<PointType> &a) const
         {
             return !(*this == a);
         }
         
     private:
-        glm::ivec3 _min, _max, _pos;
+        PointType _min, _max, _pos;
+    };
+    
+    template<typename PointType>
+    class InclusiveIterator
+    {
+    public:
+        InclusiveIterator() = delete;
+        
+        InclusiveIterator(PointType min, PointType max,
+                          PointType pos, PointType step,
+                          bool done)
+         : _min(min), _max(max), _pos(pos), _step(step), _done(done)
+        {}
+        
+        InclusiveIterator(const InclusiveIterator<PointType> &a) = default;
+        
+        InclusiveIterator<PointType>& operator++()
+        {
+            if (!_done) {
+                _pos.y += _step.y;
+                if (_pos.y > _max.y) {
+                    _pos.y = _min.y;
+                    
+                    _pos.x += _step.x;
+                    if (_pos.x > _max.x) {
+                        _pos.x = _min.x;
+                        
+                        _pos.z += _step.z;
+                        if (_pos.z > _max.z) {
+                            _pos.z = _min.z;
+                            
+                            // sentinel value for the end of the sequence
+                            _done = true;
+                        }
+                    }
+                }
+            }
+            
+            return *this;
+        }
+        
+        InclusiveIterator<PointType> operator++(int)
+        {
+            InclusiveIterator<PointType> temp(*this);
+            operator++();
+            return temp;
+        }
+        
+        PointType operator*()
+        {
+            return _pos;
+        }
+        
+        PointType* operator->()
+        {
+            return &_pos;
+        }
+        
+        bool operator==(const InclusiveIterator<PointType> &a) const
+        {
+            return _min == a._min &&
+                   _max == a._max &&
+                   _pos == a._pos &&
+                   _done == a._done;
+        }
+        
+        bool operator!=(const InclusiveIterator<PointType> &a) const
+        {
+            return !(*this == a);
+        }
+        
+    private:
+        PointType _min, _max, _pos, _step;
+        bool _done;
     };
     
     template<typename IteratorType>
@@ -388,17 +463,13 @@ public:
         }
 #endif
         
-        const auto min = region.mins();
-        const auto max = region.maxs();
-        const auto minCellCoords = cellCoordsAtPoint(min);
-        const auto maxCellCoords = cellCoordsAtPointRoundUp(max);
+        const auto minCellCoords = cellCoordsAtPoint(region.mins());
+        const auto maxCellCoords = cellCoordsAtPointRoundUp(region.maxs());
         
-        return Range<Iterator>(Iterator(minCellCoords,
-                                        maxCellCoords,
-                                        minCellCoords),
-                               Iterator(minCellCoords,
-                                        maxCellCoords,
-                                        maxCellCoords));
+        ExclusiveIterator<glm::ivec3> begin(minCellCoords, maxCellCoords, minCellCoords);
+        ExclusiveIterator<glm::ivec3> end(minCellCoords, maxCellCoords, maxCellCoords);
+        
+        return Range<ExclusiveIterator<glm::ivec3>>(begin, end);
     }
     
     // Iterate over cells which fall within the specified frustum.
@@ -437,28 +508,25 @@ public:
         }
     }
     
-    // Iterate over evenly spaced points in the specified region of the grid.
+    // Return a Range object which can iterate over evenly spaced points in the
+    // specified region of the grid.
     // Throws an exception if the region is not within this grid.
-    void forPointsInGrid(const AABB &region,
-                         std::function<void (const glm::vec3 &point)> fn) const
+    auto points(const AABB &region) const
     {
 #ifdef EnableVerboseBoundsChecking
-            if (!inbounds(region)) {
-                throw OutOfBoundsException();
-            }
+        if (!inbounds(region)) {
+            throw OutOfBoundsException();
+        }
 #endif
         
         const auto dim = cellDimensions();
         const auto min = region.mins();
         const auto max = region.maxs();
         
-        for (glm::vec3 cursor = min; cursor.z <= max.z; cursor.z += dim.z) {
-            for (cursor.x = min.x; cursor.x <= max.x; cursor.x += dim.x) {
-                for (cursor.y = min.y; cursor.y <= max.y; cursor.y += dim.y) {
-                    fn(cursor);
-                }
-            }
-        }
+        InclusiveIterator<glm::vec3> begin(min, max, min, dim, false);
+        InclusiveIterator<glm::vec3> end(min, max, min, dim, true);
+        
+        return Range<InclusiveIterator<glm::vec3>>(begin, end);
     }
     
 private:
