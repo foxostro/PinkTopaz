@@ -75,7 +75,8 @@ public:
         return getIfExists(indexAtPoint(p));
     }
     
-    ElementType get(const Morton3 &morton)
+    template<typename FactoryType>
+    ElementType get(const Morton3 &morton, FactoryType &&factory)
     {
         std::pair<std::mutex, Slot> *ppair = nullptr;
         
@@ -94,12 +95,15 @@ public:
             
             std::lock_guard<std::mutex> lock(slotMutex);
             if (!slot) {
-                // If the value is not present then default construct it here.
-                ElementType el;
-                slot = boost::make_optional(el);
+                slot = boost::make_optional(factory());
             }
             return *slot;
         }
+    }
+    
+    ElementType get(const Morton3 &morton)
+    {
+        return get(morton, []{ return ElementType(); });
     }
     
     void set(const Morton3 &morton, const ElementType &el)
