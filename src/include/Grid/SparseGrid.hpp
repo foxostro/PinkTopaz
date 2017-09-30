@@ -70,7 +70,17 @@ public:
     {
         std::lock_guard<std::mutex> lock(_mutex);
         _lru.reference(morton);
-        return _hashMap[morton];
+        ElementType value = _hashMap[morton];
+        enforceLimits();
+        return value;
+    }
+    
+    void set(const Morton3 &morton, const ElementType &el)
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _lru.reference(morton);
+        _hashMap[morton] = el;
+        enforceLimits();
     }
     
     ElementType get(const glm::vec3 &p)
@@ -81,14 +91,6 @@ public:
         }
 #endif
         return get(indexAtPoint(p));
-    }
-    
-    void set(const Morton3 &morton, const ElementType &el)
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _lru.reference(morton);
-        _hashMap[morton] = el;
-        enforceLimits();
     }
     
     void set(const glm::vec3 &p, const ElementType &el)
