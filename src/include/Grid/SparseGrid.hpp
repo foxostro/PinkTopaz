@@ -78,27 +78,24 @@ public:
     template<typename FactoryType>
     ElementType get(const Morton3 &morton, FactoryType &&factory)
     {
-        std::pair<std::mutex, Slot> *ppair = nullptr;
+        _mutex.lock();
         
-        // Get a reference to the slot under lock.
-        {
-            std::lock_guard<std::mutex> lock(_mutex);
-            _lru.reference(morton);
-            ppair = &_slots[morton];
-            enforceLimits();
-        }
+        _lru.reference(morton);
+        auto &pair = _slots[morton];
+        enforceLimits();
         
-        // Get the value in the slot using the slot-specific lock.
-        {
-            std::mutex &slotMutex = ppair->first;
-            Slot &slot = ppair->second;
-            
-            std::lock_guard<std::mutex> lock(slotMutex);
-            if (!slot) {
-                slot = boost::make_optional(factory());
-            }
-            return *slot;
+        std::mutex &slotMutex = pair.first;
+        slotMutex.lock();
+        Slot &slot = pair.second;
+        
+        _mutex.unlock();
+        
+        if (!slot) {
+            slot = boost::make_optional(factory());
         }
+        ElementType el = *slot;
+        slotMutex.unlock();
+        return el;
     }
     
     ElementType get(const Morton3 &morton)
@@ -108,24 +105,20 @@ public:
     
     void set(const Morton3 &morton, const ElementType &el)
     {
-        std::pair<std::mutex, Slot> *ppair = nullptr;
+        _mutex.lock();
         
-        // Get a reference to the slot under lock.
-        {
-            std::lock_guard<std::mutex> lock(_mutex);
-            _lru.reference(morton);
-            ppair = &_slots[morton];
-            enforceLimits();
-        }
+        _lru.reference(morton);
+        auto &pair = _slots[morton];
+        enforceLimits();
         
-        // Set the value in the slot using the slot-specific lock.
-        {
-            std::mutex &slotMutex = ppair->first;
-            Slot &slot = ppair->second;
-            
-            std::lock_guard<std::mutex> lock(slotMutex);
-            slot = boost::make_optional(el);
-        }
+        std::mutex &slotMutex = pair.first;
+        slotMutex.lock();
+        Slot &slot = pair.second;
+        
+        _mutex.unlock();
+        
+        slot = boost::make_optional(el);
+        slotMutex.unlock();
     }
     
     ElementType get(const glm::vec3 &p)
@@ -156,6 +149,7 @@ public:
     
     void setCountLimit(size_t countLimit)
     {
+        assert(countLimit >= 1);
         std::lock_guard<std::mutex> lock(_mutex);
         if (_countLimit != countLimit) {
             _countLimit = countLimit;
