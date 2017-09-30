@@ -44,12 +44,19 @@ public:
         return *this;
     }
     
-    inline boost::optional<ElementType> getIfExists(const Morton3 &morton)
+    boost::optional<ElementType> getIfExists(const Morton3 &morton)
     {
-        return getIfExists((size_t)morton);
+        std::lock_guard<std::mutex> lock(_mutex);
+        auto iter = _hashMap.find(morton);
+        if (iter == _hashMap.end()) {
+            return boost::none;
+        } else {
+            _lru.reference(morton);
+            return boost::make_optional(iter->second);
+        }
     }
     
-    inline boost::optional<ElementType> getIfExists(const glm::vec3 &p)
+    boost::optional<ElementType> getIfExists(const glm::vec3 &p)
     {
 #ifdef EnableVerboseBoundsChecking
         if (!inbounds(p)) {
@@ -59,12 +66,14 @@ public:
         return getIfExists(indexAtPoint(p));
     }
     
-    inline ElementType get(const Morton3 &morton)
+    ElementType get(const Morton3 &morton)
     {
-        return get((size_t)morton);
+        std::lock_guard<std::mutex> lock(_mutex);
+        _lru.reference(morton);
+        return _hashMap[morton];
     }
     
-    inline ElementType get(const glm::vec3 &p)
+    ElementType get(const glm::vec3 &p)
     {
 #ifdef EnableVerboseBoundsChecking
         if (!inbounds(p)) {
@@ -74,12 +83,15 @@ public:
         return get(indexAtPoint(p));
     }
     
-    inline void set(const Morton3 &morton, const ElementType &el)
+    void set(const Morton3 &morton, const ElementType &el)
     {
-        return set((size_t)morton, el);
+        std::lock_guard<std::mutex> lock(_mutex);
+        _lru.reference(morton);
+        _hashMap[morton] = el;
+        enforceLimits();
     }
     
-    inline void set(const glm::vec3 &p, const ElementType &el)
+    void set(const glm::vec3 &p, const ElementType &el)
     {
 #ifdef EnableVerboseBoundsChecking
         if (!inbounds(p)) {
@@ -107,36 +119,9 @@ public:
 private:
     mutable std::mutex _mutex;
     
-    std::unordered_map<size_t, ElementType> _hashMap;
-    GridLRU<size_t> _lru;
+    std::unordered_map<Morton3, ElementType> _hashMap;
+    GridLRU<Morton3> _lru;
     size_t _countLimit;
-    
-    boost::optional<ElementType> getIfExists(size_t key)
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        auto iter = _hashMap.find(key);
-        if (iter == _hashMap.end()) {
-            return boost::none;
-        } else {
-            _lru.reference(key);
-            return boost::make_optional(iter->second);
-        }
-    }
-    
-    ElementType get(size_t key)
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _lru.reference(key);
-        return _hashMap[key];
-    }
-    
-    void set(size_t key, const ElementType &el)
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _lru.reference(key);
-        _hashMap[key] = el;
-        enforceLimits();
-    }
     
     // Must hold the lock on entry to this method.
     void enforceLimits()
@@ -144,7 +129,7 @@ private:
         while (_hashMap.size() >= _countLimit) {
             auto maybe = _lru.pop();
             if (maybe) {
-                const size_t keyToRemove = *maybe;
+                const Morton3 keyToRemove = *maybe;
                 _hashMap.erase(keyToRemove);
             }
         }

@@ -135,6 +135,36 @@ public:
         return _mortonCode;
     }
     
+    bool operator==(const Morton3 &right) const
+    {
+        return _mortonCode == right._mortonCode;
+    }
+    
+    inline bool operator!=(const Morton3 &right) const
+    {
+        return _mortonCode != right._mortonCode;
+    }
+    
+    inline bool operator<(const Morton3 &right) const
+    {
+        return _mortonCode < right._mortonCode;
+    }
+    
+    inline bool operator<=(const Morton3 &right) const
+    {
+        return _mortonCode <= right._mortonCode;
+    }
+    
+    inline bool operator>(const Morton3 &right) const
+    {
+        return _mortonCode > right._mortonCode;
+    }
+    
+    inline bool operator>=(const Morton3 &right) const
+    {
+        return _mortonCode > right._mortonCode;
+    }
+    
     // Decode the Morton Code to get back the integer coordinates for it.
     inline void decode(glm::ivec3 &r) const
     {
@@ -215,5 +245,15 @@ public:
         return *this;
     }
 };
+
+namespace std {
+    template <> struct hash<Morton3>
+    {
+        size_t operator()(const Morton3 &morton) const
+        {
+            return hash<size_t>()((size_t)morton);
+        }
+    };
+}
 
 #endif /* Morton_hpp */
