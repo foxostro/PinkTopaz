@@ -31,28 +31,37 @@ public:
        _countLimit(std::numeric_limits<std::size_t>::max())
     {}
     
-    // Copy assignment operator.
+    // Copy assignment operator. This is done unlocked so be careful.
     SparseGrid<ElementType>& operator=(const SparseGrid<ElementType> &other)
     {
         if (&other != this) {
-            // TODO: When C++17 support is better, use scoped_lock here.
-            std::unique_lock<std::mutex> lock1(_mutex, std::defer_lock);
-            std::unique_lock<std::mutex> lock2(other._mutex, std::defer_lock);
-            std::lock(lock1, lock2);
-            _hashMap = other._hashMap;
+            _slots.clear();
+            
+            for (auto &outerPair : other._slots) {
+                Morton3 key = outerPair.first;
+                _slots[key].second = outerPair.second.second;
+            }
+            
+            _lru = other._lru;
+            _countLimit = other._countLimit;
         }
         return *this;
     }
     
     boost::optional<ElementType> getIfExists(const Morton3 &morton)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
-        auto iter = _hashMap.find(morton);
-        if (iter == _hashMap.end()) {
+        std::lock_guard<std::mutex> lock1(_mutex);
+        auto iter = _slots.find(morton);
+        if (iter == _slots.end()) {
             return boost::none;
         } else {
             _lru.reference(morton);
-            return boost::make_optional(iter->second);
+            
+            // Lock the slot before attempting to retrieve the value.
+            std::pair<std::mutex, Slot> &pair = iter->second;
+            std::lock_guard<std::mutex> lock2(pair.first);
+            Slot &slot = pair.second;
+            return slot;
         }
     }
     
@@ -68,19 +77,51 @@ public:
     
     ElementType get(const Morton3 &morton)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _lru.reference(morton);
-        ElementType value = _hashMap[morton];
-        enforceLimits();
-        return value;
+        std::pair<std::mutex, Slot> *ppair = nullptr;
+        
+        // Get a reference to the slot under lock.
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            _lru.reference(morton);
+            ppair = &_slots[morton];
+            enforceLimits();
+        }
+        
+        // Get the value in the slot using the slot-specific lock.
+        {
+            std::mutex &slotMutex = ppair->first;
+            Slot &slot = ppair->second;
+            
+            std::lock_guard<std::mutex> lock(slotMutex);
+            if (!slot) {
+                // If the value is not present then default construct it here.
+                ElementType el;
+                slot = boost::make_optional(el);
+            }
+            return *slot;
+        }
     }
     
     void set(const Morton3 &morton, const ElementType &el)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _lru.reference(morton);
-        _hashMap[morton] = el;
-        enforceLimits();
+        std::pair<std::mutex, Slot> *ppair = nullptr;
+        
+        // Get a reference to the slot under lock.
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            _lru.reference(morton);
+            ppair = &_slots[morton];
+            enforceLimits();
+        }
+        
+        // Set the value in the slot using the slot-specific lock.
+        {
+            std::mutex &slotMutex = ppair->first;
+            Slot &slot = ppair->second;
+            
+            std::lock_guard<std::mutex> lock(slotMutex);
+            slot = boost::make_optional(el);
+        }
     }
     
     ElementType get(const glm::vec3 &p)
@@ -119,20 +160,30 @@ public:
     }
     
 private:
-    mutable std::mutex _mutex;
+    using Slot = boost::optional<ElementType>;
     
-    std::unordered_map<Morton3, ElementType> _hashMap;
+    mutable std::mutex _mutex;
+    std::unordered_map<Morton3, std::pair<std::mutex, Slot>> _slots;
     GridLRU<Morton3> _lru;
     size_t _countLimit;
     
-    // Must hold the lock on entry to this method.
+    // Must hold `_mutex' on entry to this method.
     void enforceLimits()
     {
-        while (_hashMap.size() >= _countLimit) {
-            auto maybe = _lru.pop();
-            if (maybe) {
-                const Morton3 keyToRemove = *maybe;
-                _hashMap.erase(keyToRemove);
+        while (_slots.size() >= _countLimit) {
+            auto maybeKey = _lru.pop();
+            if (maybeKey) {
+                const Morton3 key = *maybeKey;
+                auto slotIter = _slots.find(key);
+
+                if (slotIter != _slots.end()) {
+                    std::pair<std::mutex, Slot> &pair = slotIter->second;
+                    std::mutex &slotMutex = pair.first;
+                    
+                    // Take the lock on the slot before removing it.
+                    std::lock_guard<std::mutex> lock(slotMutex);
+                    _slots.erase(slotIter);
+                }
             }
         }
     }
