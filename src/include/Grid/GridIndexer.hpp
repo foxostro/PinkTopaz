@@ -83,6 +83,92 @@ public:
 class GridIndexer
 {
 public:
+    class Iterator
+    {
+    public:
+        Iterator() = delete;
+        
+        Iterator(glm::ivec3 min, glm::ivec3 max, glm::ivec3 pos)
+         : _min(min), _max(max), _pos(pos)
+        {}
+        
+        Iterator(const Iterator &a) = default;
+        
+        Iterator& operator++()
+        {
+            ++_pos.y;
+            if (_pos.y >= _max.y) {
+                _pos.y = _min.y;
+                
+                ++_pos.x;
+                if (_pos.x >= _max.x) {
+                    _pos.x = _min.x;
+                    
+                    ++_pos.z;
+                    if (_pos.z >= _max.z) {
+                        // sentinel value for the end of the sequence
+                        _pos = _max;
+                    }
+                }
+            }
+            
+            return *this;
+        }
+        
+        Iterator operator++(int)
+        {
+            Iterator temp(*this);
+            operator++();
+            return temp;
+        }
+        
+        glm::ivec3 operator*()
+        {
+            return _pos;
+        }
+        
+        glm::ivec3* operator->()
+        {
+            return &_pos;
+        }
+        
+        bool operator==(const Iterator &a) const
+        {
+            return _min == a._min &&
+                   _max == a._max &&
+                   _pos == a._pos;
+        }
+        
+        bool operator!=(const Iterator &a) const
+        {
+            return !(*this == a);
+        }
+        
+    private:
+        glm::ivec3 _min, _max, _pos;
+    };
+    
+    template<typename IteratorType>
+    class Range
+    {
+    public:
+        Range() = delete;
+        Range(IteratorType a, IteratorType b) : _begin(a), _end(b) {}
+        
+        IteratorType begin() const
+        {
+            return _begin;
+        }
+        
+        IteratorType end() const
+        {
+            return _end;
+        }
+        
+    private:
+        IteratorType _begin, _end;
+    };
+    
     virtual ~GridIndexer() = default;
     
     GridIndexer(const AABB &boundingBox,
@@ -208,6 +294,18 @@ public:
         return cell;
     }
     
+    // Gets the bounding box of the cell in which the specified point resides.
+    //
+    // This method does not check that `a' actually resides in the
+    // valid space of the grid.
+    inline AABB cellAtCellCoords(const glm::ivec3 &a) const
+    {
+        const glm::vec3 cellCenter = cellCenterAtCellCoords(a);
+        const glm::vec3 cellExtent = cellDimensions() * 0.5f;
+        const AABB cell = {cellCenter, cellExtent};
+        return cell;
+    }
+    
     // Gets the number of cells along each axis within the specified region.
     //
     // This method does not check that `region' actually resides in the
@@ -281,73 +379,13 @@ public:
         }
     }
     
-    // Iterate over cells in the specified region of the grid.
-    // Throws an exception if the region is not within this grid.
-    void forEachCell(const AABB &region,
-                     const std::function<void (const AABB &cell)> &fn) const
+    // Return a Range object which can iterate over a sub-region of the grid.
+    auto slice(const AABB &region) const
     {
 #ifdef EnableVerboseBoundsChecking
-            if (!inbounds(region)) {
-                throw OutOfBoundsException();
-            }
-#endif
-        
-        const auto dim = cellDimensions();
-        const auto extent = dim * 0.5f;
-        const auto min = region.mins();
-        const auto max = region.maxs();
-        const auto minCellCoords = cellCoordsAtPoint(min);
-        const auto maxCellCoords = cellCoordsAtPointRoundUp(max);
-        
-        for (glm::ivec3 cellCoords = minCellCoords; cellCoords.z < maxCellCoords.z; ++cellCoords.z) {
-            for (cellCoords.x = minCellCoords.x; cellCoords.x < maxCellCoords.x; ++cellCoords.x) {
-                for (cellCoords.y = minCellCoords.y; cellCoords.y < maxCellCoords.y; ++cellCoords.y) {
-                    const glm::vec3 center = cellCenterAtCellCoords(cellCoords);
-                    fn({center, extent});
-                }
-            }
+        if (!inbounds(region)) {
+            throw OutOfBoundsException();
         }
-    }
-    
-    // Iterate over cells in the specified region of the grid.
-    // Throws an exception if the region is not within this grid.
-    void forEachCell(const AABB &region,
-                     const std::function<void (const AABB &cell,
-                                               Morton3 index)> &fn) const
-    {
-#ifdef EnableVerboseBoundsChecking
-            if (!inbounds(region)) {
-                throw OutOfBoundsException();
-            }
-#endif
-        
-        const auto dim = cellDimensions();
-        const auto extent = dim * 0.5f;
-        const auto min = region.mins();
-        const auto max = region.maxs();
-        const auto minCellCoords = cellCoordsAtPoint(min);
-        const auto maxCellCoords = cellCoordsAtPointRoundUp(max);
-        
-        for (glm::ivec3 cellCoords = minCellCoords; cellCoords.z < maxCellCoords.z; ++cellCoords.z) {
-            for (cellCoords.x = minCellCoords.x; cellCoords.x < maxCellCoords.x; ++cellCoords.x) {
-                for (cellCoords.y = minCellCoords.y; cellCoords.y < maxCellCoords.y; ++cellCoords.y) {
-                    const glm::vec3 center = cellCenterAtCellCoords(cellCoords);
-                    const auto index = indexAtCellCoords(cellCoords);
-                    fn({center, extent}, index);
-                }
-            }
-        }
-    }
-    
-    // Iterate over cells in the specified region of the grid.
-    // Throws an exception if the region is not within this grid.
-    void forEachCell(const AABB &region,
-                     const std::function<void (const glm::ivec3 &a)> &fn) const
-    {
-#ifdef EnableVerboseBoundsChecking
-            if (!inbounds(region)) {
-                throw OutOfBoundsException();
-            }
 #endif
         
         const auto min = region.mins();
@@ -355,16 +393,16 @@ public:
         const auto minCellCoords = cellCoordsAtPoint(min);
         const auto maxCellCoords = cellCoordsAtPointRoundUp(max);
         
-        for (glm::ivec3 cellCoords = minCellCoords; cellCoords.z < maxCellCoords.z; ++cellCoords.z) {
-            for (cellCoords.x = minCellCoords.x; cellCoords.x < maxCellCoords.x; ++cellCoords.x) {
-                for (cellCoords.y = minCellCoords.y; cellCoords.y < maxCellCoords.y; ++cellCoords.y) {
-                    fn(cellCoords);
-                }
-            }
-        }
+        return Range<Iterator>(Iterator(minCellCoords,
+                                        maxCellCoords,
+                                        minCellCoords),
+                               Iterator(minCellCoords,
+                                        maxCellCoords,
+                                        maxCellCoords));
     }
     
     // Iterate over cells which fall within the specified frustum.
+    // TODO: Replace with iterator for a Frustum and accompanying slice() method
     inline void forEachCell(const Frustum &frustum,
                             const std::function<void (const AABB &cell,
                                                       Morton3 index)> &fn) const

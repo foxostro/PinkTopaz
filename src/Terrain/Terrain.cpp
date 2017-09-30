@@ -146,12 +146,13 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
             PROFILER(TerrainFetchMeshes);
             
             // Update the draw list to include each mesh that is present.
-            _meshes->forEachCell(getActiveRegion(), [&](const AABB &cell, Morton3 index){
+            for (const auto &cellCoords : _meshes->slice(getActiveRegion())) {
+                const Morton3 index = _meshes->indexAtCellCoords(cellCoords);
                 std::shared_ptr<TerrainMesh> terrainMesh = _meshes->get(index);
                 if (terrainMesh) {
                     _drawList->updateDrawList(*terrainMesh);
                 }
-            });
+            }
             
             // For each mesh that is missing, or for which we cannot take
             // the lock without blocking, kick off a task to fetch it
@@ -196,9 +197,10 @@ void Terrain::rebuildMeshInResponseToChanges(const ChangeLog &changeLog)
     for (const auto &change : changeLog) {
         const AABB &region = change.affectedRegion;
         std::vector<AABB> meshCells;
-        _meshes->forEachCell(region, [&](const AABB &cell){
+        for (const auto &cellCoords : _meshes->slice(region)) {
+            const AABB cell = _meshes->cellAtCellCoords(cellCoords);
             meshCells.push_back(cell);
-        });
+        }
         fetchMeshes(meshCells);
     }
 }

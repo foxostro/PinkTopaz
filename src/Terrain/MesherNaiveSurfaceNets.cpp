@@ -337,7 +337,11 @@ StaticMesh MesherNaiveSurfaceNets::extract(const Array3D<Voxel> &voxels,
 {
     StaticMesh geometry;
     
-    voxels.forEachCell(aabb, [&](const AABB &cell, Morton3 thisIndex, const Voxel &thisVoxel){
+    for (const auto &cellCoords : voxels.slice(aabb)) {
+        const AABB cell = voxels.cellAtCellCoords(cellCoords);
+        const Morton3 thisIndex = voxels.indexAtCellCoords(cellCoords);
+        const Voxel &thisVoxel = voxels.reference(thisIndex);
+        
         if (thisVoxel.value < level) {
             for (size_t i = 0; i < NUM_FACES; ++i) {
                 Morton3 thatIndex(thisIndex);
@@ -356,7 +360,7 @@ StaticMesh MesherNaiveSurfaceNets::extract(const Array3D<Voxel> &voxels,
                 }
             }
         }
-    });
+    }
     
     return geometry;
 }

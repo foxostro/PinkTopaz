@@ -53,12 +53,13 @@ void VoxelDataLoader::load(const std::vector<uint8_t> &bytes, Array3D<Voxel> &ou
     
     size_t i = 0;
     
-    output.mutableForEachCell(box, [&](const AABB &cell, Morton3 index, Voxel &voxel){
+    for (const auto &cellCoords : output.slice(box)) {
         assert(i < (header.w * header.h * header.d));
         const FileVoxel &src = header.voxels[i++];
         const float value = (src.type == 0) ? 0.0f : 1.0f;
+        Voxel &voxel = output.mutableReference(cellCoords);
         voxel = Voxel(value);
-    });
+    }
 }
 
 Array3D<Voxel> VoxelDataLoader::createArray(const std::vector<uint8_t> &bytes, int border)
@@ -72,9 +73,9 @@ Array3D<Voxel> VoxelDataLoader::createArray(const std::vector<uint8_t> &bytes, i
     
     Array3D<Voxel> voxels(boxWithBorder, resWithBorder);
     
-    voxels.mutableForEachCell(boxWithBorder, [&](const AABB &cell, Morton3 index, Voxel &value){
-        value = Voxel();
-    });
+    for (const auto &cellCoords : voxels.slice(boxWithBorder)) {
+        voxels.mutableReference(cellCoords) = Voxel();
+    }
     
     load(bytes, voxels);
     

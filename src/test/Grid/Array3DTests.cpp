@@ -222,7 +222,7 @@ TEST_CASE("Test In Bounds", "[Array3D]") {
     REQUIRE_FALSE(myArray.inbounds(pastMin));
 }
 
-TEST_CASE("Test For-Each Cell", "[Array3D]") {
+TEST_CASE("Test Iteration Over Cells", "[Array3D]") {
     AABB box = {vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f)};
     ivec3 res(2, 2, 2);
     Array3D<int> myArray(box, res);
@@ -243,27 +243,32 @@ TEST_CASE("Test For-Each Cell", "[Array3D]") {
     
     std::vector<AABB> actualCells;
     
-    myArray.forEachCell(box, [&](const AABB &cell, Morton3 index, const int &value){
+    for (const auto &cellCoords : myArray.slice(box)) {
+        const auto cell = myArray.cellAtCellCoords(cellCoords);
         actualCells.push_back(cell);
-    });
+    }
     
     // Make sure we got all the cells we intended to.
     REQUIRE(desiredCells == actualCells);
     
     // Throws an exception when the region is not in-bounds.
     const AABB negCell = {vec3(-0.5f, -0.5f, -0.5f), vec3(0.5f, 0.5f, 0.5f)};
-    REQUIRE_THROWS_AS(myArray.forEachCell(negCell, [&](const AABB &cell, Morton3 index, const int &value){
-        SDL_Log("{(%.2f, %.2f, %.2f), (%.2f, %.2f, %.2f)}",
-                cell.center.x, cell.center.y, cell.center.z,
-                cell.extent.x, cell.extent.y, cell.extent.z);
-    }), OutOfBoundsException);
+    REQUIRE_THROWS_AS(myArray.slice(negCell), OutOfBoundsException);
     
     // If the region is a zero-sized box then we should iterate over no cells.
     const AABB zeroBox = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
     actualCells.clear();
-    myArray.forEachCell(zeroBox, [&](const AABB &cell, Morton3 index, const int &value){
+    for (const auto &cellCoords : myArray.slice(zeroBox)) {
         REQUIRE(!"We expected to iterate over zero cells in this case.");
-    });
+    }
+    
+    // Make sure we can mutate cells and get back the changed values.
+    for (const auto &cellCoords : myArray.slice(box)) {
+        myArray.mutableReference(cellCoords) = 42;
+    }
+    for (const auto &cellCoords : myArray.slice(box)) {
+        REQUIRE(42 == myArray.reference(cellCoords));
+    }
 }
 
 TEST_CASE("Test For Points In Grid", "[Array3D]") {
@@ -328,60 +333,6 @@ TEST_CASE("Test For Points In Grid", "[Array3D]") {
     REQUIRE(1 == actualPoints.size());
 }
 
-TEST_CASE("Test Mutable For-Each Cell", "[Array3D]") {
-    AABB box = {vec3(1.0f, 1.0f, 1.0f), vec3(1.0f, 1.0f, 1.0f)};
-    ivec3 res(2, 2, 2);
-    Array3D<int> myArray(box, res);
-    REQUIRE(myArray.gridResolution() == res);
-    REQUIRE(myArray.boundingBox() == box);
-    REQUIRE(myArray.cellDimensions() == vec3(1.0, 1.0f, 1.0f));
-    
-    const std::vector<AABB> desiredCells = {
-        {vec3(0.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f)},
-        {vec3(0.5f, 1.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f)},
-        {vec3(1.5f, 0.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f)},
-        {vec3(1.5f, 1.5f, 0.5f), vec3(0.5f, 0.5f, 0.5f)},
-        {vec3(0.5f, 0.5f, 1.5f), vec3(0.5f, 0.5f, 0.5f)},
-        {vec3(0.5f, 1.5f, 1.5f), vec3(0.5f, 0.5f, 0.5f)},
-        {vec3(1.5f, 0.5f, 1.5f), vec3(0.5f, 0.5f, 0.5f)},
-        {vec3(1.5f, 1.5f, 1.5f), vec3(0.5f, 0.5f, 0.5f)},
-    };
-    
-    std::vector<AABB> actualCells;
-    
-    myArray.mutableForEachCell(box, [&](const AABB &cell, Morton3 index, int &value){
-        actualCells.push_back(cell);
-        value = 42;
-    });
-    
-    // Make sure we touched all the cells we intended to.
-    REQUIRE(desiredCells == actualCells);
-    
-    // Check to see that the grid cells got the new value we set above.
-    myArray.forEachCell(box, [&](const AABB &cell, Morton3 index, const int &value){
-        REQUIRE(42 == myArray.get(cell.center));
-        REQUIRE(42 == myArray.get(index));
-        REQUIRE(42 == value);
-    });
-    
-    // Throws an exception when the region is not in-bounds.
-    const AABB negCell = {vec3(-0.5f, -0.5f, -0.5f), vec3(0.5f, 0.5f, 0.5f)};
-    REQUIRE_THROWS_AS(myArray.mutableForEachCell(negCell, [&](const AABB &cell, Morton3 index, int &value){
-        SDL_Log("{(%.2f, %.2f, %.2f), (%.2f, %.2f, %.2f)}",
-                cell.center.x, cell.center.y, cell.center.z,
-                cell.extent.x, cell.extent.y, cell.extent.z);
-        return 42;
-    }), OutOfBoundsException);
-    
-    // If the region is a zero-sized box then we should iterate over no cells.
-    const AABB zeroBox = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
-    actualCells.clear();
-    myArray.mutableForEachCell(zeroBox, [&](const AABB &cell, Morton3 index, int &value){
-        REQUIRE(!"We expected to iterate over zero cells in this case.");
-        value = 42;
-    });
-}
-
 TEST_CASE("Test Indexing", "[Array3D]") {
     AABB box = {vec3(64.5f, 128.5f, 64.5f), vec3(80.f, 144.f, 80.f)};
     ivec3 res(160, 288, 160);
@@ -407,6 +358,6 @@ TEST_CASE("Test Indexing", "[Array3D]") {
     index = myArray.indexAtPoint(point);
     REQUIRE(myArray.isValidIndex(index));
     myArray.mutableReference(index) = 42;
-    REQUIRE(myArray.get(index) == 42);
-    REQUIRE(myArray.get(point) == 42);
+    REQUIRE(myArray.reference(index) == 42);
+    REQUIRE(myArray.reference(point) == 42);
 }

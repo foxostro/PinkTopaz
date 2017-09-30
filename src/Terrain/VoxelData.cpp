@@ -37,19 +37,20 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
     Array3D<Voxel> dst(adjustedRegion, res);
     assert(dst.inbounds(region));
     
-    _chunks.forEachCell(region, [&](const AABB &boundingBox, Morton3 index){
-        ChunkPtr chunk = get(boundingBox, index);
+    for (const auto &chunkCoords : _chunks.slice(region)) {
+        const AABB chunkBoundingBox = _chunks.cellAtCellCoords(chunkCoords);
+        const Morton3 chunkIndex = _chunks.indexAtCellCoords(chunkCoords);
+        ChunkPtr chunk = get(chunkBoundingBox, chunkIndex);
         
         // It is entirely possible that the sub-region is not the full size of
         // the chunk. Iterate over chunk voxels that fall within the region.
         // Copy each of those voxels into the destination array.
-        const AABB subRegion = boundingBox.intersect(region);
-        chunk->forEachCell(subRegion, [&](const AABB &cell,
-                                          Morton3 voxelIndex,
-                                          const Voxel &voxel){
-            dst.mutableReference(cell.center) = voxel;
-        });
-    });
+        const AABB subRegion = chunkBoundingBox.intersect(region);
+        for (const auto &voxelCoords : chunk->slice(subRegion)) {
+            const auto voxelCenter = chunk->cellCenterAtCellCoords(voxelCoords);
+            dst.mutableReference(voxelCenter) = chunk->reference(voxelCoords);
+        }
+    }
     
     return dst;
 }
@@ -58,19 +59,24 @@ void VoxelData::store(const Array3D<Voxel> &voxels)
 {
     const AABB region = voxels.boundingBox();
     
-    _chunks.forEachCell(region, [&](const AABB &boundingBox, Morton3 index){
-        ChunkPtr chunk = get(boundingBox, index);
+    for (const auto &chunkCellCoords : _chunks.slice(region)) {
+        const AABB chunkBoundingBox = cellAtCellCoords(chunkCellCoords);
+        const Morton3 chunkIndex = indexAtCellCoords(chunkCellCoords);
+        ChunkPtr chunk = get(chunkBoundingBox, chunkIndex);
         
         // It is entirely possible that the sub-region is not the full size of
         // the chunk. Iterate over chunk voxels that fall within the region.
         // Copy each of those voxels into the destination array.
-        const AABB subRegion = boundingBox.intersect(region);
-        chunk->mutableForEachCell(subRegion, [&](const AABB &cell,
-                                                 Morton3 voxelIndex,
-                                                 Voxel &voxel){
-            voxel = voxels.reference(cell.center);
-        });
-    });
+        const AABB subRegion = chunkBoundingBox.intersect(region);
+        for (const auto &voxelCellCoords : chunk->slice(subRegion)) {
+            Voxel &dst = chunk->mutableReference(voxelCellCoords);
+            
+            const auto cellCenter = chunk->cellCenterAtCellCoords(voxelCellCoords);
+            const Voxel &src = voxels.reference(cellCenter);
+            
+            dst = src;
+        }
+    }
 }
 
 VoxelData::ChunkPtr VoxelData::get(const AABB &cell, Morton3 index)

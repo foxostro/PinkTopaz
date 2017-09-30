@@ -106,15 +106,15 @@ Array3D<Voxel> VoxelDataGenerator::copy(const AABB &region) const
     const auto res = countCellsInRegion(adjusted);
     Array3D<Voxel> dst(adjusted, res);
     
-    dst.mutableForEachCell(adjusted, [&](const AABB &cell,
-                                         Morton3 index,
-                                         Voxel &value){
+    for (const auto &cellCoords : dst.slice(adjusted)) {
+        const auto cellCenter = dst.cellCenterAtCellCoords(cellCoords);
+        Voxel &value = dst.mutableReference(cellCoords);
         generateTerrainVoxel(*_noiseSource0,
                              *_noiseSource1,
                              terrainHeight,
-                             cell.center,
+                             cellCenter,
                              value);
-    });
+    }
     
     return dst;
 }

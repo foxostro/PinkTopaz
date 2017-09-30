@@ -29,7 +29,6 @@ public:
     using GridIndexer::indexAtCellCoords;
     using GridIndexer::cellCoordsAtPoint;
     using GridIndexer::inbounds;
-    using GridIndexer::forEachCell;
     
     ~Array3D() = default;
     
@@ -137,33 +136,6 @@ public:
     inline bool isValidIndex(Morton3 index) const
     {
         return (size_t)index <= _maxValidIndex;
-    }
-    
-    // Serially iterate over cells in the specified sub-region of the array.
-    // Throws an exception if the region is not within the valid space of the
-    // array.
-    // `fn' parameters are the bounding box of the cell, the cell index, and a
-    // const-reference to the value.
-    template<typename RegionType, typename FuncType>
-    inline void forEachCell(const RegionType &region, const FuncType &fn) const
-    {
-        GridIndexer::forEachCell(region, [&](const AABB &cell, Morton3 index){
-            const CellType &ref = reference(index);
-            fn(cell, index, ref);
-        });
-    }
-    
-    // Serially iterate over cells in the specified sub-region of the array.
-    // Throws an exception if the region is not within the valid space of the
-    // array.
-    // `fn' parameters are the bounding box of the cell, the cell index, and a
-    // mutable reference to the value.
-    template<typename RegionType, typename FuncType>
-    inline void mutableForEachCell(const RegionType &region, const FuncType &fn)
-    {
-        GridIndexer::forEachCell(region, [&](const AABB &cell, Morton3 index){
-            fn(cell, index, mutableReference(index));
-        });
     }
     
 private:
