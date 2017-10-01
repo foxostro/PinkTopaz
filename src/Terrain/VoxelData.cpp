@@ -8,10 +8,13 @@
 
 #include "Terrain/VoxelData.hpp"
 
-VoxelData::VoxelData(const GeneratorPtr &gen, unsigned chunkSize)
+VoxelData::VoxelData(const GeneratorPtr &gen,
+                     unsigned chunkSize,
+                     const std::shared_ptr<TaskDispatcher> &dispatcher)
  : GridIndexer(gen->boundingBox(), gen->gridResolution()),
    _generator(gen),
-   _chunks(gen->boundingBox(), gen->gridResolution() / (int)chunkSize)
+   _chunks(gen->boundingBox(), gen->gridResolution() / (int)chunkSize),
+   _dispatcher(dispatcher)
 {}
 
 void VoxelData::setChunkCountLimit(unsigned chunkCountLimit)
@@ -37,20 +40,32 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
     Array3D<Voxel> dst(adjustedRegion, res);
     assert(dst.inbounds(region));
     
-    for (const auto &chunkCoords : _chunks.slice(region)) {
-        const AABB chunkBoundingBox = _chunks.cellAtCellCoords(chunkCoords);
-        const Morton3 chunkIndex = _chunks.indexAtCellCoords(chunkCoords);
-        ChunkPtr chunk = get(chunkBoundingBox, chunkIndex);
+    // Asynchronously fetch all the chunks in the region and
+    // then copy contents into the destination array.
+    TaskGroup group(_chunks.count(adjustedRegion));
+    for (const auto &cellCoords : _chunks.slice(adjustedRegion)) {
+        const Morton3 index = _chunks.indexAtCellCoords(cellCoords);
+        const AABB chunkBoundingBox = _chunks.cellAtCellCoords(cellCoords);
         
-        // It is entirely possible that the sub-region is not the full size of
-        // the chunk. Iterate over chunk voxels that fall within the region.
-        // Copy each of those voxels into the destination array.
-        const AABB subRegion = chunkBoundingBox.intersect(region);
-        for (const auto &voxelCoords : chunk->slice(subRegion)) {
-            const auto voxelCenter = chunk->cellCenterAtCellCoords(voxelCoords);
-            dst.mutableReference(voxelCenter) = chunk->reference(voxelCoords);
-        }
+        _dispatcher->async([this, chunkBoundingBox, index, region, &group, &dst]{
+            ChunkPtr chunk = get(chunkBoundingBox, index);
+            
+            // It is entirely possible that the sub-region is not the full size of
+            // the chunk. Iterate over chunk voxels that fall within the region.
+            // Copy each of those voxels into the destination array.
+            const AABB subRegion = chunkBoundingBox.intersect(region);
+            for (const auto &voxelCoords : chunk->slice(subRegion)) {
+                const auto voxelCenter = chunk->cellCenterAtCellCoords(voxelCoords);
+                dst.mutableReference(voxelCenter) = chunk->reference(voxelCoords);
+            }
+            
+            group.completeOne();
+        });
     }
+    
+    // Wait for all futures to complete, at which point the destination
+    // array will contain the contents of all chunks.
+    group.wait();
     
     return dst;
 }

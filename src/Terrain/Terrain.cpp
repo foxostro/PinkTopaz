@@ -27,7 +27,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
    _dispatcherRebuildMesh(dispatcherRebuildMesh),
    _mesher(std::make_shared<MesherNaiveSurfaceNets>()),
    _voxelDataGenerator(std::make_shared<VoxelDataGenerator>(/* random seed = */ 52)),
-   _voxels(std::make_shared<TransactedVoxelData>(std::make_unique<VoxelData>(_voxelDataGenerator, TERRAIN_CHUNK_SIZE))),
+   _voxels(std::make_shared<TransactedVoxelData>(std::make_unique<VoxelData>(_voxelDataGenerator, TERRAIN_CHUNK_SIZE, _dispatcher))),
    _cameraPosition(glm::vec3())
 {
     // Load terrain texture array from a single image.

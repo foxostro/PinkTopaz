@@ -393,6 +393,12 @@ public:
         return size;
     }
     
+    inline size_t count(const AABB &region) const
+    {
+        auto res = countCellsInRegion(region);
+        return (res.x+1) * (res.y+1) * (res.z+1);
+    }
+    
     // Adjusts the specified box so that it includes the space for all cells
     // which fall within that region.
     //

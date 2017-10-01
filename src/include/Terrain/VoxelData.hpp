@@ -12,6 +12,7 @@
 #include "Grid/SparseGrid.hpp"
 #include "Voxel.hpp"
 #include "VoxelDataGenerator.hpp"
+#include "TaskDispatcher.hpp"
 #include <memory>
 
 // A block of voxels in space.
@@ -29,7 +30,10 @@ public:
     // Constructor.
     // generator -- The generator provides initial voxel data.
     // chunkSize -- The size of chunk VoxelData should use internally.
-    VoxelData(const GeneratorPtr &generator, unsigned chunkSize);
+    // dispatcher -- Thread pool to use for asynchronous tasks within VoxelData.
+    VoxelData(const GeneratorPtr &generator,
+              unsigned chunkSize,
+              const std::shared_ptr<TaskDispatcher> &dispatcher);
     
     // VoxelData may evict chunks to keep the total chunk count under this
     // limit. Pass in at least the expected number of chunks in the working set.
@@ -49,6 +53,7 @@ private:
     
     const GeneratorPtr &_generator;
     SparseGrid<ChunkPtr> _chunks;
+    std::shared_ptr<TaskDispatcher> _dispatcher;
     
     // Gets the chunk, creating it if necessary.
     ChunkPtr get(const AABB &bbox, Morton3 index);

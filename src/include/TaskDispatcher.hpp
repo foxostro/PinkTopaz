@@ -15,6 +15,7 @@
 #include <queue>
 #include <vector>
 #include <thread>
+#include <cassert>
 
 class TaskDispatcher
 {
@@ -40,6 +41,33 @@ private:
     std::mutex _lockTaskCompleted;
     std::queue<Task> _tasks;
     bool _threadShouldExit;
+};
+
+class TaskGroup
+{
+public:
+    TaskGroup(size_t count) : _count(count) {}
+    
+    void completeOne()
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        assert(_count > 0);
+        --_count;
+        _cvar.notify_one();
+    }
+    
+    void wait()
+    {
+        std::unique_lock<std::mutex> lock(_mutex);
+        _cvar.wait(lock, [&]{
+            return _count == 0;
+        });
+    }
+    
+private:
+    std::mutex _mutex;
+    std::condition_variable _cvar;
+    size_t _count;
 };
 
 #endif /* TaskDispatcher_hpp */
