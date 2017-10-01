@@ -472,42 +472,6 @@ public:
         return Range<ExclusiveIterator<glm::ivec3>>(begin, end);
     }
     
-    // Iterate over cells which fall within the specified frustum.
-    // TODO: Replace with iterator for a Frustum and accompanying slice() method
-    inline void forEachCell(const Frustum &frustum,
-                            const std::function<void (const AABB &cell,
-                                                      Morton3 index)> &fn) const
-    {
-        const glm::ivec3 res = gridResolution();
-        assert((res.x == res.y) && (res.x == res.z));
-        assert(isPowerOfTwo(res.x));
-        
-        forEachCell(0, ilog2(res.x), boundingBox(), frustum, fn);
-    }
-    
-    // Iterate over cells which fall within the specified frustum.
-    void forEachCell(size_t depth,
-                     size_t depthOfLeaves,
-                     const AABB &box,
-                     const Frustum &frustum,
-                     const std::function<void (const AABB &cell,
-                                               Morton3 index)> &fn) const
-    {
-        if (frustum.boxIsInside(box)) {
-            if (depth == depthOfLeaves) {
-                // AFOX_TODO: I suspect the conversion from `box' to `index'
-                // could be accelerated with knowledge of the Z-order layout
-                // since it defines a linear octree traversal.
-                auto index = indexAtPoint(box.center);
-                fn(box, index);
-            } else {
-                for (auto &octant : box.octants()) {
-                    forEachCell(depth+1, depthOfLeaves, octant, frustum, fn);
-                }
-            }
-        }
-    }
-    
     // Return a Range object which can iterate over evenly spaced points in the
     // specified region of the grid.
     // Throws an exception if the region is not within this grid.
