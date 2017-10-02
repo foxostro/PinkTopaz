@@ -54,19 +54,16 @@ public:
         // be captured by-copy or by-reference, we need some other way to keep
         // it alive until the lambda executes: wrap it in a shared_ptr.
         using ResultType = typename boost::result_of<FunctionObjectType()>::type;
-        auto packagedTaskPtr = std::make_shared<boost::packaged_task<ResultType>>(functionObject);
+        auto packagedTaskPtr = std::make_shared<boost::packaged_task<ResultType>>(std::move(functionObject));
         
         auto future = packagedTaskPtr->get_future();
         
         // The call to execute the packaged task is wrapped in a std::function,
         // which is then enqueued. This deals with pulling the packaged_task
         // object out of the shared_ptr.
-        Task wrapperTask([packagedTaskPtr]{
-            assert(packagedTaskPtr);
-            auto &packagedTask = *packagedTaskPtr;
-            packagedTask();
+        enqueue([packagedTaskPtr]{
+            (*packagedTaskPtr)();
         });
-        enqueue(std::move(wrapperTask));
         
         return std::move(future);
     }
@@ -83,33 +80,6 @@ private:
     std::mutex _lockTaskCompleted;
     std::queue<Task> _tasks;
     bool _threadShouldExit;
-};
-
-class TaskGroup
-{
-public:
-    TaskGroup(size_t count) : _count(count) {}
-    
-    void completeOne()
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        assert(_count > 0);
-        --_count;
-        _cvar.notify_one();
-    }
-    
-    void wait()
-    {
-        std::unique_lock<std::mutex> lock(_mutex);
-        _cvar.wait(lock, [&]{
-            return _count == 0;
-        });
-    }
-    
-private:
-    std::mutex _mutex;
-    std::condition_variable _cvar;
-    size_t _count;
 };
 
 #endif /* TaskDispatcher_hpp */
