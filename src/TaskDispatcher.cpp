@@ -35,7 +35,7 @@ void TaskDispatcher::shutdown()
     _threads.clear();
 }
 
-void TaskDispatcher::async(Task &&task)
+void TaskDispatcher::enqueue(Task &&task)
 {
     {
         std::unique_lock<std::mutex> lock(_lockTaskPosted);
