@@ -22,6 +22,16 @@
 #include <boost/thread.hpp>
 #include <boost/thread/future.hpp>
 
+#include "Exception.hpp"
+
+// Exception thrown when a task is cancelled and that task is tied to a future
+// with a pending return value.
+class TaskCancelledException : public Exception
+{
+public:
+    TaskCancelledException() : Exception("task cancelled") {}
+};
+
 class TaskDispatcher
 {
 public:
@@ -30,6 +40,12 @@ public:
     TaskDispatcher();
     TaskDispatcher(unsigned numThreads);
     ~TaskDispatcher();
+    
+    // Returns true if the dispatcher is shutting down or has already shutdown.
+    // Tasks can use this to check whether they should cancel themselves.
+    inline bool isShutdown() const {
+        return _threadShouldExit;
+    }
     
     // Finish all scheduled tasks and exit all threads.
     void shutdown();
@@ -99,7 +115,7 @@ private:
     std::condition_variable _cvarTaskPosted;
     std::mutex _lockTaskCompleted;
     std::queue<Task> _tasks;
-    bool _threadShouldExit;
+    std::atomic<bool> _threadShouldExit;
 };
 
 #endif /* TaskDispatcher_hpp */

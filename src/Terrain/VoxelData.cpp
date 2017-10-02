@@ -47,7 +47,13 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
         ChunkPtr chunk = get(chunkBoundingBox, index);
         return chunk;
     });
-    boost::wait_for_all(futures.begin(), futures.end());
+    
+    for (auto &future : futures) {
+        future.wait_for(boost::chrono::milliseconds(100));
+        if (_dispatcher->isShutdown()) {
+            throw TaskCancelledException();
+        }
+    }
     
     // Copy chunk contents into the destination array.
     for (boost::future<ChunkPtr> &future : futures) {
