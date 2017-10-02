@@ -34,6 +34,26 @@ public:
     // Finish all scheduled tasks and exit all threads.
     void shutdown();
     
+    // For each element of the range, calls the specified function asynchronously,
+    // passing the element a parameter. The corresponding return function values are
+    // returned in a vector of futures.
+    template<typename RangeType, typename FunctionObjectType>
+    auto map(RangeType range, FunctionObjectType &&functionObject)
+    {
+        using IterationType = decltype(*range.begin());
+        using ResultType = typename boost::result_of<FunctionObjectType(IterationType)>::type;
+        
+        std::vector<boost::future<ResultType>> futures;
+        
+        for (const auto &obj : range) {
+            futures.emplace_back(async([functionObject, obj]{
+                return functionObject(obj);
+            }));
+        }
+        
+        return futures;
+    }
+    
     // Schedule a function to be run asynchronously on a thread in the pool.
     // Returns a future to retrieve the function's return value.
     // The function can have any return type, but must accept no parameters.

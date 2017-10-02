@@ -41,16 +41,12 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
     assert(dst.inbounds(region));
     
     // Asynchronously fetch all the chunks in the region.
-    std::vector<boost::future<ChunkPtr>> futures;
-    for (const auto &cellCoords : _chunks.slice(adjustedRegion)) {
-        auto f = _dispatcher->async([this, cellCoords]{
-            const Morton3 index = _chunks.indexAtCellCoords(cellCoords);
-            const AABB chunkBoundingBox = _chunks.cellAtCellCoords(cellCoords);
-            ChunkPtr chunk = get(chunkBoundingBox, index);
-            return chunk;
-        });
-        futures.push_back(std::move(f));
-    }
+    auto futures = _dispatcher->map(_chunks.slice(adjustedRegion), [this](glm::ivec3 cellCoords){
+        const Morton3 index = _chunks.indexAtCellCoords(cellCoords);
+        const AABB chunkBoundingBox = _chunks.cellAtCellCoords(cellCoords);
+        ChunkPtr chunk = get(chunkBoundingBox, index);
+        return chunk;
+    });
     boost::wait_for_all(futures.begin(), futures.end());
     
     // Copy chunk contents into the destination array.
