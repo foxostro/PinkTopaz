@@ -13,6 +13,8 @@
 #include "Grid/Array3D.hpp"
 #include <sstream>
 
+#define TERRAIN_PROGRESS_TRACKER 0
+
 Terrain::~Terrain()
 {
     _dispatcher->shutdown();
@@ -241,9 +243,7 @@ void Terrain::rebuildNextMesh()
     _meshes->set(cell.center, terrainMesh);
 
     // Mark the cell as being complete.
-#if 1
-    _progressTracker.finish(cell);
-#else
+#if TERRAIN_PROGRESS_TRACKER
     {
         const auto duration = _progressTracker.finish(cell);
         
@@ -253,6 +253,8 @@ void Terrain::rebuildNextMesh()
         SDL_Log("Completed mesh at %s in %s ms.",
                 cell.to_string().c_str(), str.c_str());
     }
+#else
+    _progressTracker.finish(cell);
 #endif
 }
 
