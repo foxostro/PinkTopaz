@@ -46,7 +46,7 @@ public:
     }
     
 private:
-    static constexpr float STEP = 16.0f;
+    static constexpr float STEP = 32.f; // Must match TERRAIN_CHUNK_SIZE
     static constexpr float STEP_PER_MS = 2 * STEP / 1000.0f;
     mutable std::shared_mutex _lockHorizonDistance;
     float _targetHorizonDistance;

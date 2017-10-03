@@ -26,7 +26,7 @@
 class Terrain
 {
 public:
-    static constexpr unsigned TERRAIN_CHUNK_SIZE = 16;
+    static constexpr unsigned TERRAIN_CHUNK_SIZE = 32;
     static constexpr float ACTIVE_REGION_SIZE = 256.0f;
     
     ~Terrain();
