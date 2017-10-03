@@ -41,17 +41,10 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
     assert(dst.inbounds(region));
     
     // Asynchronously fetch all the chunks in the region.
-    auto futures = _dispatcher->map(_chunks.slice(adjustedRegion), [this](glm::ivec3 cellCoords){
+    auto futures = _dispatcher->map(_chunks.slice(adjustedRegion), [this, region, &dst](glm::ivec3 cellCoords){
         const Morton3 index = _chunks.indexAtCellCoords(cellCoords);
         const AABB chunkBoundingBox = _chunks.cellAtCellCoords(cellCoords);
         ChunkPtr chunk = get(chunkBoundingBox, index);
-        return chunk;
-    });
-    boost::wait_for_all(futures.begin(), futures.end());
-    
-    // Copy chunk contents into the destination array.
-    for (boost::future<ChunkPtr> &future : futures) {
-        ChunkPtr chunk = future.get();
         
         // It is entirely possible that the sub-region is not the full size of
         // the chunk. Iterate over chunk voxels that fall within the region.
@@ -61,7 +54,9 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
             const auto voxelCenter = chunk->cellCenterAtCellCoords(voxelCoords);
             dst.mutableReference(voxelCenter) = chunk->reference(voxelCoords);
         }
-    }
+    });
+    
+    boost::wait_for_all(futures.begin(), futures.end());
 
     return dst;
 }
