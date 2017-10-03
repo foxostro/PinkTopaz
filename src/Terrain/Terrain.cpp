@@ -135,7 +135,7 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     encoder->setVertexBuffer(_defaultMesh->uniforms, 1);
     
     // Draw meshes in the camera frustum.
-    std::vector<AABB> missingMeshes = _drawList->draw(encoder, frustum, getActiveRegion());
+    auto missingMeshes = _drawList->draw(encoder, frustum, getActiveRegion());
     
     if (missingMeshes.empty()) {
         // If no meshes were missing then increase the horizon distance so
@@ -143,23 +143,7 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
         float d = _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
         SDL_Log("Increasing horizon distance to %.2f", d);
     } else {
-        // Update the draw list to include meshes that are present.
-        // Do not block. Skip any for which we would need to block to access.
         _dispatcher->async([this, missingMeshes{std::move(missingMeshes)}]{
-            PROFILER(TerrainFetchMeshes);
-            
-            // Update the draw list to include each mesh that is present.
-            for (const auto &cellCoords : _meshes->slice(getActiveRegion())) {
-                const Morton3 index = _meshes->indexAtCellCoords(cellCoords);
-                std::shared_ptr<TerrainMesh> terrainMesh = _meshes->get(index);
-                if (terrainMesh) {
-                    _drawList->updateDrawList(*terrainMesh);
-                }
-            }
-            
-            // For each mesh that is missing, or for which we cannot take
-            // the lock without blocking, kick off a task to fetch it
-            // asynchronously. We avoid queueing meshes which are inflight now.
             fetchMeshes(missingMeshes);
         });
     }
@@ -167,6 +151,7 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
 
 void Terrain::fetchMeshes(const std::vector<AABB> &meshCells)
 {
+    PROFILER(TerrainFetchMeshes);
     const auto meshesNewlyInflight = _progressTracker.beginCellsNotInflight(meshCells);
     _meshesToRebuild.push(meshesNewlyInflight);
     auto fn = [=]{
@@ -241,6 +226,7 @@ void Terrain::rebuildNextMesh()
     auto terrainMesh = std::make_shared<TerrainMesh>(cell, _defaultMesh, _graphicsDevice, _mesher, _voxels);
     terrainMesh->rebuild();
     _meshes->set(cell.center, terrainMesh);
+    _drawList->updateDrawList(*terrainMesh);
 
     // Mark the cell as being complete.
 #if TERRAIN_PROGRESS_TRACKER
