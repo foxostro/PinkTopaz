@@ -8,11 +8,6 @@
 
 #include "Terrain/VoxelData.hpp"
 
-#define ENABLE_PARALLEL_FETCH 0
-#if ENABLE_PARALLEL_FETCH
-#error TODO: Figure out cancellation on Quit.
-#endif
-
 VoxelData::VoxelData(const GeneratorPtr &gen,
                      unsigned chunkSize,
                      const std::shared_ptr<TaskDispatcher> &dispatcher)
@@ -45,7 +40,6 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
     Array3D<Voxel> dst(adjustedRegion, res);
     assert(dst.inbounds(region));
     
-#if ENABLE_PARALLEL_FETCH
     // Asynchronously fetch all the chunks in the region.
     auto futures = _dispatcher->map(_chunks.slice(adjustedRegion), [this](glm::ivec3 cellCoords){
         const Morton3 index = _chunks.indexAtCellCoords(cellCoords);
@@ -53,13 +47,7 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
         ChunkPtr chunk = get(chunkBoundingBox, index);
         return chunk;
     });
-    
-    for (auto &future : futures) {
-        future.wait_for(boost::chrono::milliseconds(100));
-        if (_dispatcher->isShutdown()) {
-            throw TaskCancelledException();
-        }
-    }
+    boost::wait_for_all(futures.begin(), futures.end());
     
     // Copy chunk contents into the destination array.
     for (boost::future<ChunkPtr> &future : futures) {
@@ -74,22 +62,6 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
             dst.mutableReference(voxelCenter) = chunk->reference(voxelCoords);
         }
     }
-#else
-    for (const auto &chunkCoords : _chunks.slice(region)) {
-        const AABB chunkBoundingBox = _chunks.cellAtCellCoords(chunkCoords);
-        const Morton3 chunkIndex = _chunks.indexAtCellCoords(chunkCoords);
-        ChunkPtr chunk = get(chunkBoundingBox, chunkIndex);
-        
-        // It is entirely possible that the sub-region is not the full size of
-        // the chunk. Iterate over chunk voxels that fall within the region.
-        // Copy each of those voxels into the destination array.
-        const AABB subRegion = chunkBoundingBox.intersect(region);
-        for (const auto &voxelCoords : chunk->slice(subRegion)) {
-            const auto voxelCenter = chunk->cellCenterAtCellCoords(voxelCoords);
-            dst.mutableReference(voxelCenter) = chunk->reference(voxelCoords);
-        }
-    }
-#endif
 
     return dst;
 }

@@ -22,21 +22,66 @@
 #include <boost/thread.hpp>
 #include <boost/thread/future.hpp>
 
-#include "Exception.hpp"
-
-// Exception thrown when a task is cancelled and that task is tied to a future
-// with a pending return value.
-class TaskCancelledException : public Exception
+class AbstractTask
 {
 public:
-    TaskCancelledException() : Exception("task cancelled") {}
+    virtual ~AbstractTask() = default;
+    virtual void cancel() = 0;
+    virtual void execute() = 0;
+};
+
+template<typename ResultType>
+class Task : public AbstractTask
+{
+    boost::packaged_task<ResultType> _task;
+    
+public:
+    template<typename F>
+    Task(F &&f) : _task(f) {}
+    
+    void cancel() override
+    {
+        // We can't really cancel a task. Instead, execute it now so we can get
+        // the result. This happens when the task queue is shutdown and flushed.
+        _task();
+    }
+    
+    void execute() override
+    {
+        _task();
+    }
+    
+    auto getFuture()
+    {
+        return _task.get_future();
+    }
+};
+
+template<>
+class Task<void> : public AbstractTask
+{
+    boost::packaged_task<void> _task;
+    
+public:
+    template<typename F>
+    Task(F &&f) : _task(f) {}
+    
+    void cancel() override {}
+    
+    void execute() override
+    {
+        _task();
+    }
+    
+    auto getFuture()
+    {
+        return _task.get_future();
+    }
 };
 
 class TaskDispatcher
 {
 public:
-    using Task = std::function<void()>;
-    
     TaskDispatcher();
     TaskDispatcher(unsigned numThreads);
     ~TaskDispatcher();
@@ -57,7 +102,7 @@ public:
     auto map(RangeType range, FunctionObjectType &&functionObject)
     {
         using IterationType = decltype(*range.begin());
-        using ResultType = typename boost::result_of<FunctionObjectType(IterationType)>::type;
+        using ResultType = typename std::result_of<FunctionObjectType(IterationType)>::type;
         
         std::vector<boost::future<ResultType>> futures;
         
@@ -76,36 +121,19 @@ public:
     template<typename FunctionObjectType>
     auto async(FunctionObjectType &&functionObject)
     {
-        // Create a packaged_task. This makes it easier to setup the promise and
-        // future and connect it to the result of the function object.
-        //
-        // We choose boost::packaged_task over std::packaged_task because we
-        // want to use boost::future instead of std::future. The reason to
-        // choose boost::future is that it permits `.then' continuation chains.
-        //
-        // std::function requires a copyable lambda to be passed to it. This
-        // prevents us from marking the lambda as mutable which then prevents us
-        // from capturing the packaged_task in the lambda with a move-capture.
-        // Since the packaged_task cannot be moved into the lambda, and cannot
-        // be captured by-copy or by-reference, we need some other way to keep
-        // it alive until the lambda executes: wrap it in a shared_ptr.
-        using ResultType = typename boost::result_of<FunctionObjectType()>::type;
-        auto packagedTaskPtr = std::make_shared<boost::packaged_task<ResultType>>(std::move(functionObject));
+        using ResultType = typename std::result_of<FunctionObjectType()>::type;
+        Task<ResultType> task(std::move(functionObject));
+        auto taskPtr = std::make_shared<Task<ResultType>>(std::move(task));
+        auto future = taskPtr->getFuture();
         
-        auto future = packagedTaskPtr->get_future();
-        
-        // The call to execute the packaged task is wrapped in a std::function,
-        // which is then enqueued. This deals with pulling the packaged_task
-        // object out of the shared_ptr.
-        enqueue([packagedTaskPtr]{
-            (*packagedTaskPtr)();
-        });
+        {
+            std::unique_lock<std::mutex> lock(_lockTaskPosted);
+            _tasks.push(std::dynamic_pointer_cast<AbstractTask>(taskPtr));
+        }
+        _cvarTaskPosted.notify_one();
         
         return std::move(future);
     }
-    
-    // Schedule a task to be run asynchronously on another thread.
-    void enqueue(Task &&task);
     
 private:
     void worker();
@@ -114,7 +142,7 @@ private:
     std::mutex _lockTaskPosted;
     std::condition_variable _cvarTaskPosted;
     std::mutex _lockTaskCompleted;
-    std::queue<Task> _tasks;
+    std::queue<std::shared_ptr<AbstractTask>> _tasks;
     std::atomic<bool> _threadShouldExit;
 };
 

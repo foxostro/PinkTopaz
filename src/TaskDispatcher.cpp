@@ -28,6 +28,13 @@ TaskDispatcher::~TaskDispatcher()
 void TaskDispatcher::shutdown()
 {
     _threadShouldExit = true;
+    
+    while (!_tasks.empty()) {
+        std::shared_ptr<AbstractTask> task(_tasks.front());
+        _tasks.pop();
+        task->cancel();
+    }
+    
     _cvarTaskPosted.notify_all();
     for (std::thread &thread : _threads) {
         thread.join();
@@ -35,19 +42,10 @@ void TaskDispatcher::shutdown()
     _threads.clear();
 }
 
-void TaskDispatcher::enqueue(Task &&task)
-{
-    {
-        std::unique_lock<std::mutex> lock(_lockTaskPosted);
-        _tasks.push(task);
-    }
-    _cvarTaskPosted.notify_one();
-}
-
 void TaskDispatcher::worker()
 {
     while (true) {
-        Task task;
+        std::shared_ptr<AbstractTask> taskPtr;
         
         {
             std::unique_lock<std::mutex> lock(_lockTaskPosted);
@@ -63,10 +61,11 @@ void TaskDispatcher::worker()
                 continue;
             }
             
-            task = std::move(_tasks.front());
+            taskPtr = _tasks.front();
             _tasks.pop();
         }
         
-        task();
+        assert(taskPtr);
+        taskPtr->execute();
     }
 }
