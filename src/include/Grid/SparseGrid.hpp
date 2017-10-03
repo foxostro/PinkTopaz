@@ -11,6 +11,7 @@
 
 #include "Grid/GridIndexer.hpp"
 #include "Grid/GridLRU.hpp"
+#include "SDL.h"
 #include <unordered_map>
 
 // SparseGrid divides space into a regular grid of cells where each cell is
@@ -37,9 +38,9 @@ public:
         if (&other != this) {
             _slots.clear();
             
-            for (auto &outerPair : other._slots) {
-                Morton3 key = outerPair.first;
-                _slots[key].second = outerPair.second.second;
+            for (auto &pair : other._slots) {
+                Morton3 key = pair.first;
+                _slots[key] = pair.second;
             }
             
             _lru = other._lru;
@@ -48,19 +49,20 @@ public:
         return *this;
     }
     
-    boost::optional<ElementType> getIfExists(const Morton3 &morton)
+    boost::optional<ElementType> getIfExists(Morton3 morton)
     {
-        std::lock_guard<std::mutex> lock1(_mutex);
+        std::lock_guard<std::mutex> tableLock(_mutex);
         auto iter = _slots.find(morton);
         if (iter == _slots.end()) {
             return boost::none;
         } else {
             _lru.reference(morton);
             
+            std::mutex &slotMutex = _slotMutexes[morton];
+            boost::optional<ElementType> &slot = _slots[morton];
+            
             // Lock the slot before attempting to retrieve the value.
-            std::pair<std::mutex, Slot> &pair = iter->second;
-            std::lock_guard<std::mutex> lock2(pair.first);
-            Slot &slot = pair.second;
+            std::lock_guard<std::mutex> slotLock(slotMutex);
             return slot;
         }
     }
@@ -76,49 +78,45 @@ public:
     }
     
     template<typename FactoryType>
-    ElementType get(const Morton3 &morton, FactoryType &&factory)
+    ElementType get(Morton3 morton, FactoryType &&factory)
     {
-        _mutex.lock();
+        std::unique_lock<std::mutex> tableLock(_mutex);
         
-        _lru.reference(morton);
-        auto &pair = _slots[morton];
+        _lru.reference(morton); // reference the key so it doesn't get evicted
         enforceLimits();
         
-        std::mutex &slotMutex = pair.first;
-        slotMutex.lock();
-        Slot &slot = pair.second;
+        std::unique_lock<std::mutex> slotLock(_slotMutexes[morton]);
+        boost::optional<ElementType> &slot = _slots[morton];
         
-        _mutex.unlock();
+        _lru.reference(morton); // reference the key because it's recently used
+        tableLock.unlock();
         
         if (!slot) {
             slot = boost::make_optional(factory());
         }
         ElementType el = *slot;
-        slotMutex.unlock();
         return el;
     }
     
-    ElementType get(const Morton3 &morton)
+    ElementType get(Morton3 morton)
     {
         return get(morton, []{ return ElementType(); });
     }
     
-    void set(const Morton3 &morton, const ElementType &el)
+    void set(Morton3 morton, const ElementType &el)
     {
-        _mutex.lock();
+        std::unique_lock<std::mutex> tableLock(_mutex);
         
-        _lru.reference(morton);
-        auto &pair = _slots[morton];
+        _lru.reference(morton); // reference the key so it doesn't get evicted
         enforceLimits();
         
-        std::mutex &slotMutex = pair.first;
-        slotMutex.lock();
-        Slot &slot = pair.second;
+        std::unique_lock<std::mutex> slotLock(_slotMutexes[morton]);
+        boost::optional<ElementType> &slot = _slots[morton];
         
-        _mutex.unlock();
+        _lru.reference(morton); // reference the key because it's recently used
+        tableLock.unlock();
         
         slot = boost::make_optional(el);
-        slotMutex.unlock();
     }
     
     ElementType get(const glm::vec3 &p)
@@ -158,31 +156,49 @@ public:
     }
     
 private:
-    using Slot = boost::optional<ElementType>;
-    
+    // Protects `_slots' and `_slotMutexes' from concurrent access.
     mutable std::mutex _mutex;
-    std::unordered_map<Morton3, std::pair<std::mutex, Slot>> _slots;
+    
+    // Slots in the sparse grid. Each may contain an element.
+    std::unordered_map<Morton3, boost::optional<ElementType>> _slots;
+    
+    // One lock per cell in the sparse grid.
+    std::unordered_map<Morton3, std::mutex> _slotMutexes;
+    
+    // Track of least-recently used items in case we need to evict some.
     GridLRU<Morton3> _lru;
+    
+    // Limit on the number elements in the sparse grid. We evict items in LRU
+    // order to keep the count under this limit.
     size_t _countLimit;
     
     // Must hold `_mutex' on entry to this method.
     void enforceLimits()
     {
+        assert(_countLimit >= 1);
+        
         while (_slots.size() >= _countLimit) {
             auto maybeKey = _lru.pop();
+            Morton3 key;
+            
             if (maybeKey) {
-                const Morton3 key = *maybeKey;
-                auto slotIter = _slots.find(key);
-
-                if (slotIter != _slots.end()) {
-                    std::pair<std::mutex, Slot> &pair = slotIter->second;
-                    std::mutex &slotMutex = pair.first;
-                    
-                    // Take the lock on the slot before removing it.
-                    std::lock_guard<std::mutex> lock(slotMutex);
-                    _slots.erase(slotIter);
-                }
+                key = *maybeKey;
+            } else {
+                // There are no more items in the LRU list. Since we have to
+                // evict something, let's pick the first item in the table.
+                key = _slots.begin()->first;
             }
+            
+            // Take the lock on the slot before removing it.
+            std::mutex &slotMutex = _slotMutexes[key];
+            std::lock_guard<std::mutex> lock(slotMutex);
+            
+            // We never erase locks in _slotMutexes. This is a kind of
+            // space leak, but it's not too bad and we can live with it.
+            // TODO: Find a good way to purge mutexes for slots which are empty
+            // without having to block on all those locks.
+            _slots.erase(key);
+            //SDL_Log("evicted one item [%zu/%zu]", _slots.size(), _countLimit);
         }
     }
 };
