@@ -25,13 +25,17 @@
 
 void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                         const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
-                        const std::shared_ptr<TaskDispatcher> &dispatcherLowPriority)
+                        const std::shared_ptr<TaskDispatcher> &dispatcherLowPriority,
+                        const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData)
 {
     // Get the display refresh rate. This is usually 60 Hz.
     const double refreshRate = getVideoRefreshRate();
 	const auto videoRefreshPeriod = std::chrono::duration<double>(1 / refreshRate);
     
-    World gameWorld(graphicsDevice, dispatcherHighPriority, dispatcherLowPriority);
+    World gameWorld(graphicsDevice,
+                    dispatcherHighPriority,
+                    dispatcherLowPriority,
+                    dispatcherVoxelData);
     
     // Send an event containing the initial window size and scale factor.
     // This will allow the render system to setup projection matrices and such.
@@ -128,9 +132,12 @@ void Application::run()
         
     SDL_SetRelativeMouseMode(SDL_TRUE);
     
+    const unsigned hardwareConcurrency = std::max(1u, std::thread::hardware_concurrency());
+    
     inner(createDefaultGraphicsDevice(*_window),
           std::make_shared<TaskDispatcher>(1),
-          std::make_shared<TaskDispatcher>());
+          std::make_shared<TaskDispatcher>(hardwareConcurrency),
+          std::make_shared<TaskDispatcher>(hardwareConcurrency));
 
     SDL_DestroyWindow(_window);
     _window = nullptr;

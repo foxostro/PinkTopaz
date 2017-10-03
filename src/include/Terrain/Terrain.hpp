@@ -33,7 +33,8 @@ public:
     
     Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             const std::shared_ptr<TaskDispatcher> &dispatcher,
-            const std::shared_ptr<TaskDispatcher> &dispatcherRebuildMesh);
+            const std::shared_ptr<TaskDispatcher> &dispatcherRebuildMesh,
+            const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData);
     
     // No default constructor.
     Terrain() = delete;

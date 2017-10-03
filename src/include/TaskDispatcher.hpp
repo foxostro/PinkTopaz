@@ -82,7 +82,7 @@ public:
 class TaskDispatcher
 {
 public:
-    TaskDispatcher();
+    TaskDispatcher() = delete;
     TaskDispatcher(unsigned numThreads);
     ~TaskDispatcher();
     

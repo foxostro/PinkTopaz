@@ -9,8 +9,6 @@
 #include "TaskDispatcher.hpp"
 #include <algorithm>
 
-TaskDispatcher::TaskDispatcher() : TaskDispatcher(std::max(1u, 2*std::thread::hardware_concurrency())) {}
-
 TaskDispatcher::TaskDispatcher(unsigned numThreads) : _threadShouldExit(false)
 {
     for (unsigned i = 0; i < numThreads; ++i) {

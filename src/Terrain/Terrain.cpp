@@ -21,13 +21,14 @@ Terrain::~Terrain()
 
 Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                  const std::shared_ptr<TaskDispatcher> &dispatcher,
-                 const std::shared_ptr<TaskDispatcher> &dispatcherRebuildMesh)
+                 const std::shared_ptr<TaskDispatcher> &dispatcherRebuildMesh,
+                 const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData)
  : _graphicsDevice(graphicsDevice),
    _dispatcher(dispatcher),
    _dispatcherRebuildMesh(dispatcherRebuildMesh),
    _mesher(std::make_shared<MesherNaiveSurfaceNets>()),
    _voxelDataGenerator(std::make_shared<VoxelDataGenerator>(/* random seed = */ 52)),
-   _voxels(std::make_shared<TransactedVoxelData>(std::make_unique<VoxelData>(_voxelDataGenerator, TERRAIN_CHUNK_SIZE, _dispatcher))),
+   _voxels(std::make_shared<TransactedVoxelData>(std::make_unique<VoxelData>(_voxelDataGenerator, TERRAIN_CHUNK_SIZE, dispatcherVoxelData))),
    _cameraPosition(glm::vec3())
 {
     // Load terrain texture array from a single image.
