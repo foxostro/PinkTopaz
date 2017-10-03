@@ -149,9 +149,23 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     }
 }
 
-void Terrain::fetchMeshes(const std::vector<AABB> &meshCells)
+void Terrain::fetchMeshes(const std::vector<AABB> &cells)
 {
     PROFILER(TerrainFetchMeshes);
+    
+    // It's important to mark cells in the progress tracker in order of
+    // distance to the camera. If we don't do this then close chunks do not
+    // complete before far away chunks.
+    const glm::vec3 cameraPos = _cameraPosition;
+    std::vector<AABB> meshCells(cells);
+    std::sort(meshCells.begin(),
+              meshCells.end(),
+              [cameraPos](const AABB &a, const AABB &b){
+                  const auto distA = glm::distance(a.center, cameraPos);
+                  const auto distB = glm::distance(b.center, cameraPos);
+                  return distA < distB;
+              });
+    
     const auto meshesNewlyInflight = _progressTracker.beginCellsNotInflight(meshCells);
     _meshesToRebuild.push(meshesNewlyInflight);
     _dispatcherRebuildMesh->map(meshesNewlyInflight.size(), [this]{
