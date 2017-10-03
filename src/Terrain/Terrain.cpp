@@ -88,15 +88,13 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     _drawList = std::make_unique<TerrainDrawList>(box, res);
     _meshes = std::make_unique<TerrainMeshGrid>(box, res);
 
-#if 1
     // Limit the sparse grids to the number of chunks in the active region.
     // Now, the active region can change size over time but it will never be
     // larger than this size.
-    const unsigned workingSetCount = 2*std::pow(2*ACTIVE_REGION_SIZE / TERRAIN_CHUNK_SIZE, 3);
-    _voxels->setChunkCountLimit(workingSetCount);
-    _meshes->setCountLimit(workingSetCount);
-    _drawList->setCountLimit(workingSetCount);
-#endif
+    const unsigned workingSetCount = std::pow(1 + 2*ACTIVE_REGION_SIZE / TERRAIN_CHUNK_SIZE, 3);
+    _voxels->setChunkCountLimit(2*workingSetCount);
+    _meshes->setCountLimit(2*workingSetCount);
+    _drawList->setCountLimit(2*workingSetCount);
     
     // When voxels change, we need to extract a polygonal mesh representation
     // of the isosurface. This mesh is what we actually draw.

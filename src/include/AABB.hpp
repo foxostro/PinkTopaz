@@ -95,7 +95,7 @@ struct _AABB
     {
         std::ostringstream ss;
         ss << "{("    << center.x << ", " << center.y << ", " << center.z
-           << ") x (" << extent.x << ", " << extent.y << ", " << extent.z
+           << ") x (" << extent.x*2 << ", " << extent.y*2 << ", " << extent.z*2
            << ")}";
         return ss.str();
     }

@@ -11,7 +11,6 @@
 
 #include "Grid/GridIndexer.hpp"
 #include "Grid/GridLRU.hpp"
-#include "SDL.h"
 #include <unordered_map>
 
 // SparseGrid divides space into a regular grid of cells where each cell is
@@ -139,12 +138,16 @@ public:
         return set(indexAtPoint(p), el);
     }
     
+    // Returns the maximum number elements in the sparse grid
+    // before we start to evict items.
     size_t getCountLimit() const
     {
         std::lock_guard<std::mutex> lock(_mutex);
         return _countLimit;
     }
     
+    // Limit on the number elements in the sparse grid. We evict items in LRU
+    // order to keep the count at, or under, this limit.
     void setCountLimit(size_t countLimit)
     {
         assert(countLimit >= 1);
@@ -169,15 +172,15 @@ private:
     GridLRU<Morton3> _lru;
     
     // Limit on the number elements in the sparse grid. We evict items in LRU
-    // order to keep the count under this limit.
+    // order to keep the count at, or under, this limit.
     size_t _countLimit;
     
     // Must hold `_mutex' on entry to this method.
     void enforceLimits()
     {
-        assert(_countLimit >= 1);
+        assert(_countLimit > 1);
         
-        while (_slots.size() >= _countLimit) {
+        while (_slots.size() > _countLimit) {
             auto maybeKey = _lru.pop();
             Morton3 key;
             assert(maybeKey);
