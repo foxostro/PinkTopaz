@@ -115,6 +115,20 @@ public:
         return futures;
     }
     
+    // Issues `count' copies of the task and returns a vector of futures.
+    // The function can have any return type, but must accept no parameters.
+    template<typename FunctionObjectType>
+    auto map(size_t count, FunctionObjectType &&functionObject)
+    {
+        using ResultType = typename std::result_of<FunctionObjectType()>::type;
+        std::vector<boost::future<ResultType>> futures(count);
+        for (size_t i = 0; i < count; ++i) {
+            auto future = async(std::move(functionObject));
+            futures.emplace_back(std::move(future));
+        }
+        return futures;
+    }
+    
     // Schedule a function to be run asynchronously on a thread in the pool.
     // Returns a future to retrieve the function's return value.
     // The function can have any return type, but must accept no parameters.
@@ -132,7 +146,7 @@ public:
         }
         _cvarTaskPosted.notify_one();
         
-        return std::move(future);
+        return future;
     }
     
 private:

@@ -154,12 +154,9 @@ void Terrain::fetchMeshes(const std::vector<AABB> &meshCells)
     PROFILER(TerrainFetchMeshes);
     const auto meshesNewlyInflight = _progressTracker.beginCellsNotInflight(meshCells);
     _meshesToRebuild.push(meshesNewlyInflight);
-    auto fn = [=]{
+    _dispatcherRebuildMesh->map(meshesNewlyInflight.size(), [this]{
         rebuildNextMesh();
-    };
-    for (size_t i = 0, n = meshesNewlyInflight.size(); i < n; ++i) {
-        _dispatcherRebuildMesh->async(fn);
-    }
+    });
 }
 
 float Terrain::getFogDensity() const
