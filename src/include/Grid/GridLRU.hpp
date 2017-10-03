@@ -41,11 +41,10 @@ public:
             return boost::none;
         }
         
-        // Remove the tail item from the list.
-        auto backIter = _list.end();
-        backIter--;
-        const KeyType key = *backIter;
-        _list.erase(backIter);
+        // Remove the head item from the list. It's the least-recently used one.
+        auto head = _list.begin();
+        const KeyType key = *head;
+        _list.erase(head);
         _lookup.erase(key);
         
         return boost::make_optional(key);
@@ -73,6 +72,8 @@ public:
     }
     
 private:
+    // The least-recently used items are at the front of the list. Most-recently
+    // used items are at the back of the list.
     std::list<KeyType> _list;
     
     using list_iterator = typename std::list<KeyType>::iterator;

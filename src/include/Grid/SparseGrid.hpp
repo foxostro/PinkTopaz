@@ -180,6 +180,7 @@ private:
         while (_slots.size() >= _countLimit) {
             auto maybeKey = _lru.pop();
             Morton3 key;
+            assert(maybeKey);
             
             if (maybeKey) {
                 key = *maybeKey;
@@ -198,7 +199,6 @@ private:
             // TODO: Find a good way to purge mutexes for slots which are empty
             // without having to block on all those locks.
             _slots.erase(key);
-            //SDL_Log("evicted one item [%zu/%zu]", _slots.size(), _countLimit);
         }
     }
 };
