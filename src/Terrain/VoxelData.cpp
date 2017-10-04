@@ -10,10 +10,12 @@
 
 VoxelData::VoxelData(const GeneratorPtr &gen,
                      unsigned chunkSize,
+                     std::unique_ptr<MapRegionStore> &&mapRegionStore,
                      const std::shared_ptr<TaskDispatcher> &dispatcher)
  : GridIndexer(gen->boundingBox(), gen->gridResolution()),
    _generator(gen),
    _chunks(gen->boundingBox(), gen->gridResolution() / (int)chunkSize),
+   _mapRegionStore(std::move(mapRegionStore)),
    _dispatcher(dispatcher)
 {}
 
@@ -82,13 +84,22 @@ void VoxelData::store(const Array3D<Voxel> &voxels)
             
             dst = src;
         }
+        
+        // Save the modified chunk back to disk.
+        _mapRegionStore->store(chunkIndex, *chunk);
     }
 }
 
 VoxelData::ChunkPtr VoxelData::get(const AABB &cell, Morton3 index)
 {
     return _chunks.get(index, [=]{
-        auto voxels = _generator->copy(cell);
-        return std::make_shared<Chunk>(std::move(voxels));
+        auto maybeVoxels = _mapRegionStore->load(index);
+        if (maybeVoxels) {
+            return std::make_shared<Chunk>(*maybeVoxels);
+        } else {
+            auto voxels = _generator->copy(cell);
+            _mapRegionStore->store(index, voxels); // save initial state to disk
+            return std::make_shared<Chunk>(std::move(voxels));
+        }
     });
 }

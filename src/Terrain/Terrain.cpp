@@ -8,6 +8,7 @@
 
 #include "Terrain/Terrain.hpp"
 #include "Terrain/MesherNaiveSurfaceNets.hpp"
+#include "Terrain/MapRegionStore.hpp"
 #include "SDL_image.h"
 #include "Profiler.hpp"
 #include "Grid/Array3D.hpp"
@@ -30,7 +31,11 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
    _dispatcherRebuildMesh(dispatcherRebuildMesh),
    _mesher(std::make_shared<MesherNaiveSurfaceNets>()),
    _voxelDataGenerator(std::make_shared<VoxelDataGenerator>(/* random seed = */ 52)),
-   _voxels(std::make_shared<TransactedVoxelData>(std::make_unique<VoxelData>(_voxelDataGenerator, TERRAIN_CHUNK_SIZE, dispatcherVoxelData))),
+   _voxels(std::make_shared<TransactedVoxelData>(std::make_unique<VoxelData>(
+       _voxelDataGenerator,
+       TERRAIN_CHUNK_SIZE,
+       std::make_unique<MapRegionStore>(_voxelDataGenerator->boundingBox(), TERRAIN_CHUNK_SIZE),
+       dispatcherVoxelData))),
    _cameraPosition(glm::vec3())
 {
     // Load terrain texture array from a single image.

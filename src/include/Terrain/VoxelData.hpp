@@ -10,8 +10,9 @@
 #define VoxelData_hpp
 
 #include "Grid/SparseGrid.hpp"
-#include "Voxel.hpp"
-#include "VoxelDataGenerator.hpp"
+#include "Terrain/Voxel.hpp"
+#include "Terrain/VoxelDataGenerator.hpp"
+#include "Terrain/MapRegionStore.hpp"
 #include "TaskDispatcher.hpp"
 #include <memory>
 
@@ -33,6 +34,7 @@ public:
     // dispatcher -- Thread pool to use for asynchronous tasks within VoxelData.
     VoxelData(const GeneratorPtr &generator,
               unsigned chunkSize,
+              std::unique_ptr<MapRegionStore> &&mapRegionStore,
               const std::shared_ptr<TaskDispatcher> &dispatcher);
     
     // VoxelData may evict chunks to keep the total chunk count under this
@@ -53,6 +55,7 @@ private:
     
     const GeneratorPtr &_generator;
     SparseGrid<ChunkPtr> _chunks;
+    std::unique_ptr<MapRegionStore> _mapRegionStore;
     std::shared_ptr<TaskDispatcher> _dispatcher;
     
     // Gets the chunk, creating it if necessary.
