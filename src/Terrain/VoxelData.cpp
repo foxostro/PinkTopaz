@@ -86,19 +86,19 @@ void VoxelData::store(const Array3D<Voxel> &voxels)
         }
         
         // Save the modified chunk back to disk.
-        _mapRegionStore->store(chunkIndex, *chunk);
+        _mapRegionStore->store(chunkBoundingBox, chunkIndex, *chunk);
     }
 }
 
 VoxelData::ChunkPtr VoxelData::get(const AABB &cell, Morton3 index)
 {
     return _chunks.get(index, [=]{
-        auto maybeVoxels = _mapRegionStore->load(index);
+        auto maybeVoxels = _mapRegionStore->load(cell, index);
         if (maybeVoxels) {
             return std::make_shared<Chunk>(*maybeVoxels);
         } else {
             auto voxels = _generator->copy(cell);
-            _mapRegionStore->store(index, voxels); // save initial state to disk
+            _mapRegionStore->store(cell, index, voxels); // save to disk
             return std::make_shared<Chunk>(std::move(voxels));
         }
     });

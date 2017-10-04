@@ -33,7 +33,8 @@ std::string stringFromFileContents(const boost::filesystem::path &path)
     return contents;
 }
 
-std::vector<uint8_t> binaryFileContents(const boost::filesystem::path &path)
+boost::optional<std::vector<uint8_t>>
+binaryFileContents(const boost::filesystem::path &path)
 {
 	const std::string filePathStr = path.string();
 	const char *filePath = filePathStr.c_str();
@@ -41,7 +42,7 @@ std::vector<uint8_t> binaryFileContents(const boost::filesystem::path &path)
     std::ifstream in(filePath, std::ios::in | std::ios::binary);
     
     if (!in) {
-        throw Exception("Failed to open file: %s, filePath=%s\n", strerror(errno), filePath);
+        return boost::none;
     }
     
     std::vector<uint8_t> contents;
@@ -51,7 +52,7 @@ std::vector<uint8_t> binaryFileContents(const boost::filesystem::path &path)
     in.read((char *)contents.data(), contents.size());
     in.close();
         
-    return contents;
+    return boost::make_optional(std::move(contents));
 }
 
 void saveBinaryFile(const boost::filesystem::path &path, const std::vector<uint8_t> &bytes)
@@ -62,9 +63,17 @@ void saveBinaryFile(const boost::filesystem::path &path, const std::vector<uint8
     std::ofstream out(filePath, std::ios::out | std::ios::binary);
     
     if (!out) {
-        throw Exception("Failed to open file: %s, filePath=%s\n", strerror(errno), filePath);
+        throw Exception("Failed to save file: %s, filePath=%s\n", strerror(errno), filePath);
     }
     
     out.write((const char *)bytes.data(), bytes.size());
     out.close();
+}
+
+boost::filesystem::path getPrefPath()
+{
+    char *s = SDL_GetPrefPath("foxostro", "PinkTopaz");
+    boost::filesystem::path prefPath(s);
+    SDL_free(s);
+    return prefPath;
 }

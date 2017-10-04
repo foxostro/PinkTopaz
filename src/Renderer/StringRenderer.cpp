@@ -8,19 +8,12 @@
 
 #include "Renderer/StringRenderer.hpp"
 #include "Exception.hpp"
+#include "FileUtilities.hpp"
 
 #include <glm/gtc/matrix_transform.hpp> // for glm::ortho
 
 #include "SDL.h"
 #include "SDL_image.h"
-
-static boost::filesystem::path getPrefPath()
-{
-    char *s = SDL_GetPrefPath("foxostro", "PinkTopaz");
-    boost::filesystem::path prefPath(s);
-    SDL_free(s);
-    return prefPath;
-}
 
 std::vector<uint8_t> StringRenderer::getGrayScaleImageBytes(SDL_Surface *surface)
 {
