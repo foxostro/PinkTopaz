@@ -7,12 +7,13 @@
 //
 
 #include "Terrain/VoxelDataGenerator.hpp"
+#include "Terrain/TerrainConfig.hpp"
 #include "Noise/SimplexNoise.hpp"
 
 using namespace glm;
 
 static constexpr int size = 1024;
-static constexpr int border = 32; // must be the same as TERRAIN_CHUNK_SIZE
+static constexpr int border = TERRAIN_CHUNK_SIZE;
 static constexpr int extent = size + border;
 static constexpr int res = (size + border) * 2;
 

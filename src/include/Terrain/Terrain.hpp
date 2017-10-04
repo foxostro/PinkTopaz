@@ -20,15 +20,13 @@
 #include "Terrain/TerrainMeshGrid.hpp"
 #include "Terrain/TerrainHorizonDistance.hpp"
 #include "Terrain/TerrainProgressTracker.hpp"
+#include "Terrain/TerrainConfig.hpp"
 #include "RenderableStaticMesh.hpp"
 
 // Object represents the voxel terrain of the world.
 class Terrain
 {
 public:
-    static constexpr unsigned TERRAIN_CHUNK_SIZE = 32;
-    static constexpr float ACTIVE_REGION_SIZE = 256.0f;
-    
     ~Terrain();
     
     Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,

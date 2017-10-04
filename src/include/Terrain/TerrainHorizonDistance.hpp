@@ -11,6 +11,7 @@
 
 #include <entityx/entityx.h> // for TimeDelta
 #include <shared_mutex>
+#include "Terrain/TerrainConfig.hpp"
 
 // The terrain horizon scrolls away from the camera as chunks are loaded.
 class TerrainHorizonDistance
@@ -46,7 +47,7 @@ public:
     }
     
 private:
-    static constexpr float STEP = 32.f; // Must match TERRAIN_CHUNK_SIZE
+    static constexpr float STEP = TERRAIN_CHUNK_SIZE;
     static constexpr float STEP_PER_MS = 2 * STEP / 1000.0f;
     mutable std::shared_mutex _lockHorizonDistance;
     float _targetHorizonDistance;

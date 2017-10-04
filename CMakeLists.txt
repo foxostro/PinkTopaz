@@ -37,6 +37,7 @@ set(SOURCE_FILES_GRID
 
 set(SOURCE_FILES_TERRAIN
     "src/include/Terrain/Voxel.hpp"
+    "src/include/Terrain/TerrainConfig.hpp"
     "src/include/Terrain/Mesher.hpp"
     "src/include/Terrain/TerrainMeshGrid.hpp"
     "src/include/Terrain/TerrainHorizonDistance.hpp"

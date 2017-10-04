@@ -7,6 +7,8 @@
 //
 
 #include "Terrain/VoxelDataSerializer.hpp"
+#include "Terrain/TerrainConfig.hpp"
+#include "Terrain/Voxel.hpp"
 #include "Exception.hpp"
 #include "zlib.h"
 
@@ -54,8 +56,8 @@ static std::vector<uint8_t> compress(const std::vector<uint8_t> &input)
 static std::vector<uint8_t> decompress(const std::vector<uint8_t> &input)
 {
     // Guess how many decompressed bytes. We're guessing the number of bytes
-    // for a 32x32x32 voxel chunk plus header.
-    constexpr size_t guess = 131104;
+    // for a voxel chunk plus header.
+    constexpr size_t guess = TERRAIN_CHUNK_SIZE*TERRAIN_CHUNK_SIZE*TERRAIN_CHUNK_SIZE*sizeof(Voxel) + sizeof(VoxelDataSerializer::Header);
     
     bool done = false;
     std::vector<uint8_t> output(guess);
