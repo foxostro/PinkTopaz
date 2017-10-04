@@ -69,6 +69,17 @@ public:
         return *this;
     }
     
+    bool operator==(const Array3D<CellType> &other) const
+    {
+        if (&other == this) {
+            return true;
+        }
+        
+        return boundingBox() == other.boundingBox() &&
+               gridResolution() == other.gridResolution() &&
+               _cells == other._cells;
+    }
+    
     // Each point in space corresponds to exactly one cell. Get the object.
     inline const CellType& reference(const glm::vec3 &p) const
     {
@@ -136,6 +147,18 @@ public:
     inline bool isValidIndex(Morton3 index) const
     {
         return (size_t)index <= _maxValidIndex;
+    }
+    
+    // Returns a pointer to the raw data. Useful for serialization.
+    void* data()
+    {
+        return (void *)&_cells[0];
+    }
+    
+    // Returns a pointer to the raw data. Useful for serialization.
+    const void* data() const
+    {
+        return (const void *)&_cells[0];
     }
     
 private:

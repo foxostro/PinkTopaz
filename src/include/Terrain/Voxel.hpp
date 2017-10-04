@@ -15,6 +15,11 @@ struct Voxel
     
     Voxel() : value(0.0f) {}
     Voxel(float v) : value(v) {}
+    
+    bool operator==(const Voxel &other) const
+    {
+        return other.value == value;
+    }
 };
 
 #endif /* Voxel_hpp */

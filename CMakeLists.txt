@@ -37,21 +37,21 @@ set(SOURCE_FILES_GRID
 
 set(SOURCE_FILES_TERRAIN
     "src/include/Terrain/Voxel.hpp"
+    "src/include/Terrain/Mesher.hpp"
+    "src/include/Terrain/TerrainMeshGrid.hpp"
+    "src/include/Terrain/TerrainHorizonDistance.hpp"
     "src/Terrain/MesherMarchingCubes.cpp" "src/include/Terrain/MesherMarchingCubes.hpp"
     "src/Terrain/MesherNaiveSurfaceNets.cpp" "src/include/Terrain/MesherNaiveSurfaceNets.hpp"
-    "src/include/Terrain/Mesher.hpp"
     "src/Terrain/VoxelData.cpp" "src/include/Terrain/VoxelData.hpp"
     "src/Terrain/TransactedVoxelData.cpp" "src/include/Terrain/TransactedVoxelData.hpp"
-    "src/Terrain/VoxelDataLoader.cpp" "src/include/Terrain/VoxelDataLoader.hpp"
     "src/Terrain/VoxelDataGenerator.cpp" "src/include/Terrain/VoxelDataGenerator.hpp"
     "src/Terrain/Terrain.cpp" "src/include/Terrain/Terrain.hpp"
     "src/Terrain/TerrainMesh.cpp" "src/include/Terrain/TerrainMesh.hpp"
     "src/Terrain/TerrainChunkQueue.cpp" "src/include/Terrain/TerrainChunkQueue.hpp"
     "src/Terrain/TerrainDrawList.cpp" "src/include/Terrain/TerrainDrawList.hpp"
-    "src/include/Terrain/TerrainMeshGrid.hpp"
-    "src/include/Terrain/TerrainHorizonDistance.hpp"
     "src/Terrain/TerrainProgressTracker.cpp" "src/include/Terrain/TerrainProgressTracker.hpp"
-    "src/include/Terrain/ChangeLog.hpp" "src/Terrain/ChangeLog.cpp"
+    "src/Terrain/ChangeLog.cpp" "src/include/Terrain/ChangeLog.hpp"
+    "src/Terrain/VoxelDataSerializer.cpp" "src/include/Terrain/VoxelDataSerializer.hpp"
     )
 
 set(SOURCE_FILES_OPENGL
@@ -302,6 +302,7 @@ add_executable(${TEST_PROG_NAME}
                "src/test/Renderer/StaticMeshSerializerTests.cpp"
                "src/test/Terrain/MesherMarchingCubesTests.cpp"
                "src/test/Terrain/MesherNaiveSurfaceNetsTests.cpp"
+               "src/test/Terrain/VoxelDataSerializerTests.cpp"
                "src/test/Noise/SimplexNoiseTests.cpp"
                
                "src/FileUtilities.cpp"
@@ -312,7 +313,8 @@ add_executable(${TEST_PROG_NAME}
                "src/Renderer/StaticMeshSerializer.cpp"
                "src/Terrain/MesherMarchingCubes.cpp"
                "src/Terrain/MesherNaiveSurfaceNets.cpp"
-               "src/Terrain/VoxelDataLoader.cpp"
+               "src/Terrain/VoxelDataSerializer.cpp"
+               "src/Terrain/VoxelDataGenerator.cpp"
                )
 target_link_libraries(${TEST_PROG_NAME}
                       ${CONAN_LIBS}
