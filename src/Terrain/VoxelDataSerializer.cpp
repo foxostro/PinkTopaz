@@ -46,7 +46,7 @@ static std::vector<uint8_t> compress(const std::vector<uint8_t> &input)
                 
             default:
                 assert(!"not reachable");
-                throw Exception("Unknown result from zlib compress.");
+                throw Exception("Unknown result from zlib compress: %d", r);
         };
     }
     
@@ -89,7 +89,7 @@ static std::vector<uint8_t> decompress(const std::vector<uint8_t> &input)
                 
             default:
                 assert(!"not reachable");
-                throw Exception("Unknown result from zlib uncompress.");
+                throw Exception("Unknown result from zlib uncompress: %d", r);
         };
     }
     
