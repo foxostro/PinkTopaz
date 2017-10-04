@@ -6,10 +6,93 @@
 //
 //
 
-#include "SDL.h"
-#include "FileUtilities.hpp"
-#include "Exception.hpp"
 #include "Terrain/VoxelDataSerializer.hpp"
+#include "Exception.hpp"
+#include "zlib.h"
+
+static std::vector<uint8_t> compress(const std::vector<uint8_t> &input)
+{
+    // Guess how many compressed bytes. We'll guess the output has the same
+    // number of bytes as the input, but it's probably smaller. That is, after
+    // all, the whole point.
+    const size_t guess = input.size();
+    
+    bool done = false;
+    std::vector<uint8_t> output(guess);
+    output.resize(guess);
+    
+    while (!done) {
+        Bytef *dest = (Bytef *)&output[0];
+        uLongf destLen = output.size();
+        const Bytef *source = (const Bytef *)&input[0];
+        uLong sourceLen = input.size();
+        int r = compress(dest, &destLen, source, sourceLen);
+        
+        switch (r) {
+            case Z_OK:
+                done = true;
+                output.resize(destLen);
+                output.shrink_to_fit();
+                break;
+                
+            case Z_BUF_ERROR:
+                output.resize(output.size() * 2);
+                break;
+                
+            case Z_MEM_ERROR:
+                throw Exception("Z_MEM_ERROR");
+                
+            default:
+                assert(!"not reachable");
+                throw Exception("Unknown result from zlib compress.");
+        };
+    }
+    
+    return output;
+}
+
+static std::vector<uint8_t> decompress(const std::vector<uint8_t> &input)
+{
+    // Guess how many decompressed bytes. We're guessing the number of bytes
+    // for a 32x32x32 voxel chunk plus header.
+    constexpr size_t guess = 131104;
+    
+    bool done = false;
+    std::vector<uint8_t> output(guess);
+    output.resize(guess);
+    
+    while (!done) {
+        Bytef *dest = (Bytef *)&output[0];
+        uLongf destLen = output.size();
+        const Bytef *source = (const Bytef *)&input[0];
+        uLong sourceLen = input.size();
+        int r = uncompress(dest, &destLen, source, sourceLen);
+        
+        switch (r) {
+            case Z_OK:
+                done = true;
+                output.resize(destLen);
+                output.shrink_to_fit();
+                break;
+                
+            case Z_BUF_ERROR:
+                output.resize(output.size() * 2);
+                break;
+                
+            case Z_MEM_ERROR:
+                throw Exception("Z_MEM_ERROR");
+                
+            case Z_DATA_ERROR:
+                throw Exception("Z_DATA_ERROR");
+                
+            default:
+                assert(!"not reachable");
+                throw Exception("Unknown result from zlib uncompress.");
+        };
+    }
+    
+    return output;
+}
 
 VoxelDataSerializer::VoxelDataSerializer()
  : VOXEL_MAGIC('lxov'), VOXEL_VERSION(1)
@@ -18,7 +101,8 @@ VoxelDataSerializer::VoxelDataSerializer()
 Array3D<Voxel> VoxelDataSerializer::load(const AABB &boundingBox,
                                          const std::vector<uint8_t> &bytes)
 {
-    const Header &header = *((Header *)bytes.data());
+    std::vector<uint8_t> decompressedBytes = decompress(bytes);
+    const Header &header = *((Header *)decompressedBytes.data());
     
     if (header.magic != VOXEL_MAGIC) {
         throw Exception("Unexpected magic number in voxel data file: found %d but expected %d", header.magic, VOXEL_MAGIC);
@@ -55,5 +139,5 @@ std::vector<uint8_t> VoxelDataSerializer::store(const Array3D<Voxel> &voxels)
     
     memcpy((void *)header.voxels, (const void *)voxels.data(), header.len);
     
-    return bytes;
+    return compress(bytes);
 }

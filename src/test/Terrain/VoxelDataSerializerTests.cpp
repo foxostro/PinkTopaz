@@ -13,7 +13,7 @@
 TEST_CASE("Test Voxel Serializer Round Trip", "[VoxelDataSerializer]") {
     VoxelDataGenerator generator(0);
     VoxelDataSerializer serializer;
-    const AABB region{{8, 8, 8},{8, 8, 8}};
+    const AABB region{{16, 16, 16},{16, 16, 16}};
     
     const auto original = generator.copy(region);
     const auto bytes = serializer.store(original);
