@@ -91,7 +91,7 @@ TEST_CASE("Test Malloc Several Small", "[Malloc]") {
 
     while (true) {
         uint8_t *allocation = malloc_zone_malloc(zone, size);
-        ck_assert_uint_eq((uintptr_t)allocation % 4, 0);
+        REQUIRE((uintptr_t)allocation % 4 == 0);
         if (!allocation) {
             break;
         }
@@ -216,8 +216,8 @@ TEST_CASE("Test Realloc Extend 0", "[Malloc]") {
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
 
     uint8_t *a = malloc_zone_malloc(zone, 1);
-    ck_assert(a);
-    ck_assert_ptr_ne(zone->head->next, nullptr);
+    REQUIRE(a);
+    REQUIRE(zone->head->next != nullptr);
 
     MallocBlock *block1 = zone->head;
     MallocBlock *block2 = zone->head->next;

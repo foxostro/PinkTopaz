@@ -64,10 +64,10 @@ MallocZone* malloc_zone_init(uint8_t *start, size_t size)
     assert(size > sizeof(MallocZone));
     memset(start, 0, size);
 
-    MallocZone *zone = start + (4 - (uintptr_t)start % 4); // 4 byte alignment
+    MallocZone *zone = (MallocZone *)(start + (4 - (uintptr_t)start % 4)); // 4 byte alignment
 
     // The first block is placed at the address immediately after the header.
-    MallocBlock *first = zone->head = (uint8_t *)zone + sizeof(MallocZone);
+    MallocBlock *first = zone->head = (MallocBlock *)((uint8_t *)zone + sizeof(MallocZone));
 
     first->prev = nullptr;
     first->next = nullptr;
@@ -115,7 +115,7 @@ void malloc_zone_free(MallocZone *self, uint8_t *ptr)
         return; // do nothing
     }
 
-    MallocBlock *block = ptr - sizeof(MallocBlock);
+    MallocBlock *block = (MallocBlock *)(ptr - sizeof(MallocBlock));
 
     // Walk over the heap and see if we can find self allocation.
     // If we cannot find it then the calling code has an error in it.
@@ -180,7 +180,7 @@ uint8_t* malloc_zone_realloc(MallocZone *self, uint8_t *ptr, size_t new_size)
         return malloc_zone_malloc(self, new_size);
     }
 
-    MallocBlock *block = ptr - sizeof(MallocBlock);
+    MallocBlock *block = (MallocBlock *)(ptr - sizeof(MallocBlock));
     assert(block->inuse);
 
     // Walk over the heap and see if we can find this allocation.

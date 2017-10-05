@@ -11,6 +11,7 @@
 
 #include <cstddef>
 #include <cstdbool>
+#include <cstdint>
 
 struct MallocBlock
 {
