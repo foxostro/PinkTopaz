@@ -151,6 +151,11 @@ set(SOURCE_FILES_PLATFORM_SUPPORT
     "src/include/RetinaSupport.h"
     )
 
+set(SOURCE_FILES_MALLOC
+    "src/include/Malloc/MallocBlock.hpp"
+    "src/Malloc/MallocZone.cpp" "src/include/Malloc/MallocZone.hpp"
+    )
+
 if(APPLE)
     list(APPEND SOURCE_FILES_PLATFORM_SUPPORT
         "src/osx/RetinaSupport.m"
@@ -191,6 +196,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_NOISE}
     ${SOURCE_FILES_MATH}
     ${SOURCE_FILES_APPLICATION}
+    ${SOURCE_FILES_MALLOC}
     )
 
 source_group("Grid" FILES ${SOURCE_FILES_GRID})
@@ -207,6 +213,7 @@ source_group("Misc" FILES ${SOURCE_FILES_MISC})
 source_group("Noise" FILES ${SOURCE_FILES_NOISE})
 source_group("Math" FILES ${SOURCE_FILES_MATH})
 source_group("Application" FILES ${SOURCE_FILES_APPLICATION})
+source_group("Malloc" FILES ${SOURCE_FILES_MALLOC})
 
 # Build the app. If we're on Apple then this is a .app bundle.
 if(APPLE)
@@ -306,6 +313,7 @@ add_executable(${TEST_PROG_NAME}
                "src/test/Terrain/MesherNaiveSurfaceNetsTests.cpp"
                "src/test/Terrain/VoxelDataSerializerTests.cpp"
                "src/test/Noise/SimplexNoiseTests.cpp"
+               "src/test/MallocTests.cpp"
                
                "src/FileUtilities.cpp"
                "src/Exception.cpp"
@@ -317,6 +325,8 @@ add_executable(${TEST_PROG_NAME}
                "src/Terrain/MesherNaiveSurfaceNets.cpp"
                "src/Terrain/VoxelDataSerializer.cpp"
                "src/Terrain/VoxelDataGenerator.cpp"
+               "src/include/Malloc/MallocBlock.hpp"
+               "src/Malloc/MallocZone.cpp" "src/include/Malloc/MallocZone.hpp"
                )
 target_link_libraries(${TEST_PROG_NAME}
                       ${CONAN_LIBS}
