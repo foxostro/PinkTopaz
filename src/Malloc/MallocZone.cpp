@@ -14,19 +14,19 @@
 constexpr size_t ALIGN = 4;
 constexpr size_t MIN_SPLIT_SIZE = sizeof(MallocBlock);
 
-static inline size_t round_up_block_size(size_t size)
+static inline size_t roundUpBlockSize(size_t size)
 {
-    size_t new_size = ((size + ALIGN - 1) / ALIGN) * ALIGN;
+    size_t newSize = ((size + ALIGN - 1) / ALIGN) * ALIGN;
 
-    if (new_size < size) { // check for overflow
-        new_size = SIZE_MAX - 3;
-        assert(new_size % ALIGN == 0);
+    if (newSize < size) { // check for overflow
+        newSize = SIZE_MAX - 3;
+        assert(newSize % ALIGN == 0);
     }
 
-    return new_size;
+    return newSize;
 }
 
-static void consider_splitting_block(MallocBlock *block, size_t size)
+static void considerSplittingBlock(MallocBlock *block, size_t size)
 {
     // Split the block if the remaining free space is big enough.
     size_t remaining_space = block->size - size;
@@ -77,7 +77,7 @@ uint8_t* MallocZone::allocate(size_t size)
     // Blocks for allocations are always multiples of four bytes in size.
     // This ensures that blocks are always aligned on four byte boundaries
     // given that the initial block is also aligned on a four byte boundary.
-    size = round_up_block_size(size);
+    size = roundUpBlockSize(size);
 
     MallocBlock *best = nullptr;
 
@@ -94,7 +94,7 @@ uint8_t* MallocZone::allocate(size_t size)
         return nullptr;
     }
 
-    consider_splitting_block(best, size);
+    considerSplittingBlock(best, size);
 
     best->inuse = true;
     return (uint8_t *)best + sizeof(MallocBlock);
@@ -111,13 +111,13 @@ void MallocZone::deallocate(uint8_t *ptr)
     // Walk over the heap and see if we can find this allocation.
     // If we cannot find it then the calling code has an error in it.
 #ifndef NDEBUG
-    bool found_it = false;
+    bool foundIt = false;
     for (MallocBlock *iter = _head; iter; iter = iter->next) {
         if (iter == block) {
-            found_it = true;
+            foundIt = true;
         }
     }
-    assert(found_it);
+    assert(foundIt);
     assert(block->inuse);
 #endif
 
@@ -163,10 +163,10 @@ void MallocZone::deallocate(uint8_t *ptr)
 // 
 // If size is zero and ptr is not nullptr, a new minimum-sized object is
 // allocated and the original object is freed.
-uint8_t* MallocZone::reallocate(uint8_t *ptr, size_t new_size)
+uint8_t* MallocZone::reallocate(uint8_t *ptr, size_t newSize)
 {
     if (!ptr) {
-        return allocate(new_size);
+        return allocate(newSize);
     }
 
     MallocBlock *block = (MallocBlock *)(ptr - sizeof(MallocBlock));
@@ -175,16 +175,16 @@ uint8_t* MallocZone::reallocate(uint8_t *ptr, size_t new_size)
     // Walk over the heap and see if we can find this allocation.
     // If we cannot find it then the calling code has an error in it.
 #ifndef NDEBUG
-    bool found_it = false;
+    bool foundIt = false;
     for (MallocBlock *iter = _head; iter; iter = iter->next) {
         if (iter == block) {
-            found_it = true;
+            foundIt = true;
         }
     }
-    assert(found_it);
+    assert(foundIt);
 #endif
 
-    if (new_size == 0) {
+    if (newSize == 0) {
         deallocate(ptr);
         return allocate(0);
     }
@@ -192,11 +192,11 @@ uint8_t* MallocZone::reallocate(uint8_t *ptr, size_t new_size)
     // Blocks for allocations are always multiples of four bytes in size.
     // This ensures that blocks are always aligned on four byte boundaries
     // given that the initial block is also aligned on a four byte boundary.
-    new_size = round_up_block_size(new_size);
+    newSize = roundUpBlockSize(newSize);
 
     // The block is already large enough to accomodate the new size.
-    if (block->size >= new_size) {
-        consider_splitting_block(block, new_size);
+    if (block->size >= newSize) {
+        considerSplittingBlock(block, newSize);
         return ptr;
     }
 
@@ -206,7 +206,7 @@ uint8_t* MallocZone::reallocate(uint8_t *ptr, size_t new_size)
     // requirements to take some of that free space by extending this block?
     if (following
         && !following->inuse
-        && (block->size + following->size + sizeof(MallocBlock)) >= new_size) {
+        && (block->size + following->size + sizeof(MallocBlock)) >= newSize) {
 
         // Remove the following block, extending this one so as to not leave a
         // hole in the zone.
@@ -218,17 +218,17 @@ uint8_t* MallocZone::reallocate(uint8_t *ptr, size_t new_size)
         }
 
         // Split the remaining free space if there's enough of it.
-        consider_splitting_block(block, new_size);
+        considerSplittingBlock(block, newSize);
 
         return ptr;
     }
 
     // Can we allocate a new block of memory for the resized allocation?
-    uint8_t *new_alloc = allocate(new_size);
-    if (new_alloc) {
-        memcpy(ptr, new_alloc, block->size);
+    uint8_t *newAlloc = allocate(newSize);
+    if (newAlloc) {
+        memcpy(ptr, newAlloc, block->size);
         deallocate(ptr);
-        return new_alloc;
+        return newAlloc;
     }
 
     MallocBlock *preceding = block->prev;
@@ -237,7 +237,7 @@ uint8_t* MallocZone::reallocate(uint8_t *ptr, size_t new_size)
     // requirements to merge into the preceding block?
     if (preceding
         && !preceding->inuse
-        && (block->size + preceding->size + sizeof(MallocBlock)) >= new_size) {
+        && (block->size + preceding->size + sizeof(MallocBlock)) >= newSize) {
 
         // Remove this block, extending the preceding one so as to not leave a
         // hole in the zone.
@@ -249,13 +249,13 @@ uint8_t* MallocZone::reallocate(uint8_t *ptr, size_t new_size)
         preceding->inuse = true;
 
         // Move the contents to the beginning of the new, combined block.
-        new_alloc = (uint8_t *)preceding + sizeof(MallocBlock);
-        memmove(ptr, new_alloc, block->size);
+        newAlloc = (uint8_t *)preceding + sizeof(MallocBlock);
+        memmove(ptr, newAlloc, block->size);
 
         // Split the remaining free space if there's enough of it.
-        consider_splitting_block(preceding, new_size);
+        considerSplittingBlock(preceding, newSize);
 
-        return new_alloc;
+        return newAlloc;
     }
 
     return nullptr;
