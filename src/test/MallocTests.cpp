@@ -22,7 +22,7 @@ constexpr size_t SMALL = 64;
 static uint8_t s_buffer[1024];
 
 TEST_CASE("Test Init", "[Malloc]") {
-    void *buffer = s_buffer + 3; // break alignment intentionally for test
+    uint8_t *buffer = s_buffer + 3; // break alignment intentionally for test
     size_t size = sizeof(s_buffer) - 3;
 
     memset(buffer, 0, size);
@@ -48,7 +48,7 @@ TEST_CASE("Test Init", "[Malloc]") {
 TEST_CASE("Test Malloc Really Big", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
-    void *allocation = malloc_zone_malloc(zone, SIZE_MAX);
+    uint8_t *allocation = malloc_zone_malloc(zone, SIZE_MAX);
     REQUIRE(allocation == nullptr);
 }
 
@@ -56,7 +56,7 @@ TEST_CASE("Test Malloc Really Big", "[Malloc]") {
 TEST_CASE("Test Malloc One Small Request", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
-    void *allocation = malloc_zone_malloc(zone, 64);
+    uint8_t *allocation = malloc_zone_malloc(zone, 64);
     REQUIRE(allocation != nullptr);
     REQUIRE((uintptr_t)allocation % 4 == 0);
 }
@@ -66,7 +66,7 @@ TEST_CASE("Test Malloc One Small Request", "[Malloc]") {
 TEST_CASE("Test Malloc One Smallest Request", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
-    void *allocation = malloc_zone_malloc(zone, SMALL);
+    uint8_t *allocation = malloc_zone_malloc(zone, SMALL);
     REQUIRE(allocation != nullptr);
     REQUIRE((uintptr_t)allocation % 4 == 0);
 }
@@ -76,7 +76,7 @@ TEST_CASE("Test Malloc One Smallest Request", "[Malloc]") {
 TEST_CASE("Test Malloc Whole Thing", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
-    void *allocation = malloc_zone_malloc(zone, zone->head->size);
+    uint8_t *allocation = malloc_zone_malloc(zone, zone->head->size);
     REQUIRE(allocation != nullptr);
     REQUIRE((uintptr_t)allocation % 4 == 0);
 }
@@ -90,7 +90,7 @@ TEST_CASE("Test Malloc Several Small", "[Malloc]") {
     size_t ex = (sizeof(s_buffer) - sizeof(MallocZone)) / (sizeof(MallocBlock) + size);
 
     while (true) {
-        void *allocation = malloc_zone_malloc(zone, size);
+        uint8_t *allocation = malloc_zone_malloc(zone, size);
         ck_assert_uint_eq((uintptr_t)allocation % 4, 0);
         if (!allocation) {
             break;
@@ -105,7 +105,7 @@ TEST_CASE("Test Malloc Several Small", "[Malloc]") {
 TEST_CASE("Test Malloc One Free one", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
-    void *alloc = malloc_zone_malloc(zone, zone->head->size);
+    uint8_t *alloc = malloc_zone_malloc(zone, zone->head->size);
     REQUIRE(alloc != nullptr);
     REQUIRE(malloc_zone_malloc(zone, zone->head->size) == nullptr);
     malloc_zone_free(zone, alloc);
@@ -117,7 +117,7 @@ TEST_CASE("Test Malloc One Free one", "[Malloc]") {
 TEST_CASE("Test Malloc Several Free One", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
-    void *allocation = malloc_zone_malloc(zone, SMALL);
+    uint8_t *allocation = malloc_zone_malloc(zone, SMALL);
     while (malloc_zone_malloc(zone, SMALL));
     malloc_zone_free(zone, allocation);
     allocation = malloc_zone_malloc(zone, SMALL);
@@ -132,22 +132,22 @@ TEST_CASE("Test Coalesce 0", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
 
-    void *a = malloc_zone_malloc(zone, SMALL);
+    uint8_t *a = malloc_zone_malloc(zone, SMALL);
     REQUIRE(a);
 
-    void *b = malloc_zone_malloc(zone, SMALL);
+    uint8_t *b = malloc_zone_malloc(zone, SMALL);
     REQUIRE(b);
 
-    void *c = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - 2*(SMALL+sizeof(MallocBlock)) - sizeof(MallocBlock));
+    uint8_t *c = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - 2*(SMALL+sizeof(MallocBlock)) - sizeof(MallocBlock));
     REQUIRE(c);
 
-    void *d = malloc_zone_malloc(zone, SMALL*2);
+    uint8_t *d = malloc_zone_malloc(zone, SMALL*2);
     REQUIRE(!d); // expected to fail
 
     malloc_zone_free(zone, a);
     malloc_zone_free(zone, b); // merge with preceding free block
 
-    void *e = malloc_zone_malloc(zone, SMALL*2);
+    uint8_t *e = malloc_zone_malloc(zone, SMALL*2);
     REQUIRE(e); // should succeed now
     REQUIRE(a == e); // using the same block as `a'
 }
@@ -160,22 +160,22 @@ TEST_CASE("Test Coalesce 1", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
 
-    void *a = malloc_zone_malloc(zone, SMALL);
+    uint8_t *a = malloc_zone_malloc(zone, SMALL);
     REQUIRE(a);
 
-    void *b = malloc_zone_malloc(zone, SMALL);
+    uint8_t *b = malloc_zone_malloc(zone, SMALL);
     REQUIRE(b);
 
-    void *c = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - 2*(SMALL+sizeof(MallocBlock)) - sizeof(MallocBlock));
+    uint8_t *c = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - 2*(SMALL+sizeof(MallocBlock)) - sizeof(MallocBlock));
     REQUIRE(c);
 
-    void *d = malloc_zone_malloc(zone, SMALL*2);
+    uint8_t *d = malloc_zone_malloc(zone, SMALL*2);
     REQUIRE(!d); // expected to fail
 
     malloc_zone_free(zone, b);
     malloc_zone_free(zone, a); // merge with the following free block
 
-    void *e = malloc_zone_malloc(zone, SMALL*2);
+    uint8_t *e = malloc_zone_malloc(zone, SMALL*2);
     REQUIRE(e); // should succeed now
     REQUIRE(a == e); // using the same block as `a'
 }
@@ -188,23 +188,23 @@ TEST_CASE("Test Coalesce 2", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
 
-    void *a = malloc_zone_malloc(zone, SMALL);
+    uint8_t *a = malloc_zone_malloc(zone, SMALL);
     REQUIRE(a);
 
-    void *b = malloc_zone_malloc(zone, SMALL);
+    uint8_t *b = malloc_zone_malloc(zone, SMALL);
     REQUIRE(b);
 
-    void *c = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - 2*(SMALL+sizeof(MallocBlock)) - sizeof(MallocBlock));
+    uint8_t *c = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - 2*(SMALL+sizeof(MallocBlock)) - sizeof(MallocBlock));
     REQUIRE(c);
 
-    void *d = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - sizeof(MallocBlock));
+    uint8_t *d = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - sizeof(MallocBlock));
     REQUIRE(!d); // expected to fail
 
     malloc_zone_free(zone, c);
     malloc_zone_free(zone, a);
     malloc_zone_free(zone, b); // preceding and following both merged here
 
-    void *e = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - sizeof(MallocBlock));
+    uint8_t *e = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - sizeof(MallocBlock));
     REQUIRE(e); // should succeed now
     REQUIRE(a == e); // using the same block as `a'
 }
@@ -215,7 +215,7 @@ TEST_CASE("Test Realloc Extend 0", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
 
-    void *a = malloc_zone_malloc(zone, 1);
+    uint8_t *a = malloc_zone_malloc(zone, 1);
     ck_assert(a);
     ck_assert_ptr_ne(zone->head->next, nullptr);
 
@@ -225,7 +225,7 @@ TEST_CASE("Test Realloc Extend 0", "[Malloc]") {
     size_t size1 = block1->size;
     size_t size2 = block2->size;
 
-    void *b = malloc_zone_realloc(zone, a, 2);
+    uint8_t *b = malloc_zone_realloc(zone, a, 2);
     REQUIRE(b);
     REQUIRE(a == b);
 
@@ -242,11 +242,11 @@ TEST_CASE("Test Realloc Extend 1", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
 
-    void *a = malloc_zone_malloc(zone, 0);
+    uint8_t *a = malloc_zone_malloc(zone, 0);
     REQUIRE(a);
     REQUIRE(zone->head->next != nullptr);
 
-    void *b = malloc_zone_realloc(zone, a, SMALL);
+    uint8_t *b = malloc_zone_realloc(zone, a, SMALL);
     REQUIRE(b);
     REQUIRE(a == b);
 
@@ -266,13 +266,13 @@ TEST_CASE("Test Realloc Relocate 0", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
 
-    void *a = malloc_zone_malloc(zone, SMALL);
+    uint8_t *a = malloc_zone_malloc(zone, SMALL);
     REQUIRE(a);
 
-    void *b = malloc_zone_malloc(zone, SMALL);
+    uint8_t *b = malloc_zone_malloc(zone, SMALL);
     REQUIRE(b);
 
-    void *c = malloc_zone_realloc(zone, a, 2*SMALL);
+    uint8_t *c = malloc_zone_realloc(zone, a, 2*SMALL);
     REQUIRE(c);
     REQUIRE(a != c);
 
@@ -309,16 +309,16 @@ TEST_CASE("Test Realloc Relocate 1", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
 
-    void *a = malloc_zone_malloc(zone, SMALL);
+    uint8_t *a = malloc_zone_malloc(zone, SMALL);
     REQUIRE(a);
 
-    void *b = malloc_zone_malloc(zone, SMALL);
+    uint8_t *b = malloc_zone_malloc(zone, SMALL);
     REQUIRE(b);
 
-    void *c = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - 2*(SMALL+sizeof(MallocBlock)) - sizeof(MallocBlock));
+    uint8_t *c = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - 2*(SMALL+sizeof(MallocBlock)) - sizeof(MallocBlock));
     REQUIRE(c);
 
-    void *d = malloc_zone_realloc(zone, a, 2*SMALL);
+    uint8_t *d = malloc_zone_realloc(zone, a, 2*SMALL);
     REQUIRE(!d);
 
     size_t count = 0;
@@ -355,13 +355,13 @@ TEST_CASE("Test Realloc Relocate 2", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
 
-    void *a = malloc_zone_malloc(zone, SMALL);
+    uint8_t *a = malloc_zone_malloc(zone, SMALL);
     REQUIRE(a);
 
-    void *b = malloc_zone_malloc(zone, SMALL);
+    uint8_t *b = malloc_zone_malloc(zone, SMALL);
     REQUIRE(b);
 
-    void *c = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - 2*(SMALL+sizeof(MallocBlock)) - sizeof(MallocBlock));
+    uint8_t *c = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - 2*(SMALL+sizeof(MallocBlock)) - sizeof(MallocBlock));
     REQUIRE(c);
 
     malloc_zone_free(zone, a);
@@ -373,7 +373,7 @@ TEST_CASE("Test Realloc Relocate 2", "[Malloc]") {
     }
 #endif
 
-    void *d = malloc_zone_realloc(zone, b, 2*SMALL);
+    uint8_t *d = malloc_zone_realloc(zone, b, 2*SMALL);
     REQUIRE(d);
     REQUIRE(a == d);
 
@@ -416,10 +416,10 @@ TEST_CASE("Test Realloc Shrink", "[Malloc]") {
     memset(s_buffer, 0, sizeof(s_buffer));
     MallocZone *zone = malloc_zone_init(s_buffer, sizeof(s_buffer));
 
-    void *a = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - sizeof(MallocBlock));
+    uint8_t *a = malloc_zone_malloc(zone, sizeof(s_buffer) - sizeof(MallocZone) - sizeof(MallocBlock));
     REQUIRE(a);
 
-    void *d = malloc_zone_realloc(zone, a, SMALL);
+    uint8_t *d = malloc_zone_realloc(zone, a, SMALL);
     REQUIRE(d);
     REQUIRE(a == d);
 

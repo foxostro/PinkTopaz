@@ -31,7 +31,7 @@ static void consider_splitting_block(MallocBlock *block, size_t size)
     // Split the block if the remaining free space is big enough.
     size_t remaining_space = block->size - size;
     if (remaining_space > MIN_SPLIT_SIZE) {
-        MallocBlock *new_block = (MallocBlock *)((void *)block + sizeof(MallocBlock) + size);
+        MallocBlock *new_block = (MallocBlock *)((uint8_t *)block + sizeof(MallocBlock) + size);
 
         assert((uintptr_t)new_block % ALIGN == 0);
         new_block->prev = block;
@@ -58,7 +58,7 @@ static void consider_splitting_block(MallocBlock *block, size_t size)
     }
 }
 
-MallocZone* malloc_zone_init(void *start, size_t size)
+MallocZone* malloc_zone_init(uint8_t *start, size_t size)
 {
     assert(start);
     assert(size > sizeof(MallocZone));
@@ -67,7 +67,7 @@ MallocZone* malloc_zone_init(void *start, size_t size)
     MallocZone *zone = start + (4 - (uintptr_t)start % 4); // 4 byte alignment
 
     // The first block is placed at the address immediately after the header.
-    MallocBlock *first = zone->head = (void *)zone + sizeof(MallocZone);
+    MallocBlock *first = zone->head = (uint8_t *)zone + sizeof(MallocZone);
 
     first->prev = nullptr;
     first->next = nullptr;
@@ -77,7 +77,7 @@ MallocZone* malloc_zone_init(void *start, size_t size)
     return zone;
 }
 
-void* malloc_zone_malloc(MallocZone *self, size_t size)
+uint8_t* malloc_zone_malloc(MallocZone *self, size_t size)
 {
     assert(self);
 
@@ -104,10 +104,10 @@ void* malloc_zone_malloc(MallocZone *self, size_t size)
     consider_splitting_block(best, size);
 
     best->inuse = true;
-    return (void *)best + sizeof(MallocBlock);
+    return (uint8_t *)best + sizeof(MallocBlock);
 }
 
-void malloc_zone_free(MallocZone *self, void *ptr)
+void malloc_zone_free(MallocZone *self, uint8_t *ptr)
 {
     assert(self);
 
@@ -172,7 +172,7 @@ void malloc_zone_free(MallocZone *self, void *ptr)
 // 
 // If size is zero and ptr is not nullptr, a new minimum-sized object is
 // allocated and the original object is freed.
-void* malloc_zone_realloc(MallocZone *self, void *ptr, size_t new_size)
+uint8_t* malloc_zone_realloc(MallocZone *self, uint8_t *ptr, size_t new_size)
 {
     assert(self);
 
@@ -235,7 +235,7 @@ void* malloc_zone_realloc(MallocZone *self, void *ptr, size_t new_size)
     }
 
     // Can we allocate a new block of memory for the resized allocation?
-    void *new_alloc = malloc_zone_malloc(self, new_size);
+    uint8_t *new_alloc = malloc_zone_malloc(self, new_size);
     if (new_alloc) {
         memcpy(ptr, new_alloc, block->size);
         malloc_zone_free(self, ptr);
@@ -260,7 +260,7 @@ void* malloc_zone_realloc(MallocZone *self, void *ptr, size_t new_size)
         preceding->inuse = true;
 
         // Move the contents to the beginning of the new, combined block.
-        new_alloc = (void *)preceding + sizeof(MallocBlock);
+        new_alloc = (uint8_t *)preceding + sizeof(MallocBlock);
         memmove(ptr, new_alloc, block->size);
 
         // Split the remaining free space if there's enough of it.
