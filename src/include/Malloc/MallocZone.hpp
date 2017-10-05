@@ -11,7 +11,8 @@
 
 #include "Malloc/MallocBlock.hpp"
 
-class MallocZone {
+class MallocZone
+{
     MallocBlock *_head;
 
 public:
@@ -23,7 +24,7 @@ public:
     // Allocates a block of memory of the given size from the malloc zone.
     // May return nullptr if the request cannot be satisfied.
     // If size is zero a new minimum-sized object is allocated.
-    uint8_t* malloc_zone_malloc(size_t size);
+    uint8_t* allocate(size_t size);
 
     // Tries to change the size of the allocation pointed to by ptr to size,
     // and returns the address of the new allocation. This may move the
@@ -38,11 +39,11 @@ public:
     // 
     // If size is zero and ptr is not nullptr, a new minimum-sized object is
     // allocated and the original object is freed.
-    uint8_t* malloc_zone_realloc(uint8_t *ptr, size_t newSize);
+    uint8_t* reallocate(uint8_t *ptr, size_t newSize);
 
     // Deallocates a memory allocation pointed to be ptr. If ptr is nullptr then
     // no operation is performed.
-    void malloc_zone_free(uint8_t *ptr);
+    void deallocate(uint8_t *ptr);
 
     inline MallocBlock* head() const {
         return _head;

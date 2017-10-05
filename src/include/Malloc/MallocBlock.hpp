@@ -13,7 +13,8 @@
 #include <cstdbool>
 #include <cstdint>
 
-struct MallocBlock {
+struct MallocBlock
+{
     MallocBlock *prev;
     MallocBlock *next;
     size_t size;

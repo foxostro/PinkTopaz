@@ -72,7 +72,7 @@ MallocZone::MallocZone(uint8_t *start, size_t size)
     _head->inuse = false;
 }
 
-uint8_t* MallocZone::malloc_zone_malloc(size_t size)
+uint8_t* MallocZone::allocate(size_t size)
 {
     // Blocks for allocations are always multiples of four bytes in size.
     // This ensures that blocks are always aligned on four byte boundaries
@@ -100,7 +100,7 @@ uint8_t* MallocZone::malloc_zone_malloc(size_t size)
     return (uint8_t *)best + sizeof(MallocBlock);
 }
 
-void MallocZone::malloc_zone_free(uint8_t *ptr)
+void MallocZone::deallocate(uint8_t *ptr)
 {
     if (!ptr) {
         return; // do nothing
@@ -163,10 +163,10 @@ void MallocZone::malloc_zone_free(uint8_t *ptr)
 // 
 // If size is zero and ptr is not nullptr, a new minimum-sized object is
 // allocated and the original object is freed.
-uint8_t* MallocZone::malloc_zone_realloc(uint8_t *ptr, size_t new_size)
+uint8_t* MallocZone::reallocate(uint8_t *ptr, size_t new_size)
 {
     if (!ptr) {
-        return malloc_zone_malloc(new_size);
+        return allocate(new_size);
     }
 
     MallocBlock *block = (MallocBlock *)(ptr - sizeof(MallocBlock));
@@ -185,8 +185,8 @@ uint8_t* MallocZone::malloc_zone_realloc(uint8_t *ptr, size_t new_size)
 #endif
 
     if (new_size == 0) {
-        malloc_zone_free(ptr);
-        return malloc_zone_malloc(0);
+        deallocate(ptr);
+        return allocate(0);
     }
 
     // Blocks for allocations are always multiples of four bytes in size.
@@ -224,10 +224,10 @@ uint8_t* MallocZone::malloc_zone_realloc(uint8_t *ptr, size_t new_size)
     }
 
     // Can we allocate a new block of memory for the resized allocation?
-    uint8_t *new_alloc = malloc_zone_malloc(new_size);
+    uint8_t *new_alloc = allocate(new_size);
     if (new_alloc) {
         memcpy(ptr, new_alloc, block->size);
-        malloc_zone_free(ptr);
+        deallocate(ptr);
         return new_alloc;
     }
 
