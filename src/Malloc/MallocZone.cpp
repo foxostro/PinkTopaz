@@ -58,29 +58,22 @@ static void consider_splitting_block(MallocBlock *block, size_t size)
     }
 }
 
-MallocZone* malloc_zone_init(uint8_t *start, size_t size)
+MallocZone::MallocZone(uint8_t *start, size_t size)
 {
     assert(start);
-    assert(size > sizeof(MallocZone));
+    assert(size > sizeof(MallocBlock));
     memset(start, 0, size);
-
-    MallocZone *zone = (MallocZone *)(start + (4 - (uintptr_t)start % 4)); // 4 byte alignment
-
-    // The first block is placed at the address immediately after the header.
-    MallocBlock *first = zone->head = (MallocBlock *)((uint8_t *)zone + sizeof(MallocZone));
-
-    first->prev = nullptr;
-    first->next = nullptr;
-    first->size = size - sizeof(MallocZone) - sizeof(MallocBlock);
-    first->inuse = false;
-
-    return zone;
+    
+    _head = (MallocBlock *)(start + (4 - (uintptr_t)start % 4)); // 4 byte alignment
+    
+    _head->prev = nullptr;
+    _head->next = nullptr;
+    _head->size = size - sizeof(MallocBlock);
+    _head->inuse = false;
 }
 
-uint8_t* malloc_zone_malloc(MallocZone *self, size_t size)
+uint8_t* MallocZone::malloc_zone_malloc(size_t size)
 {
-    assert(self);
-
     // Blocks for allocations are always multiples of four bytes in size.
     // This ensures that blocks are always aligned on four byte boundaries
     // given that the initial block is also aligned on a four byte boundary.
@@ -89,7 +82,7 @@ uint8_t* malloc_zone_malloc(MallocZone *self, size_t size)
     MallocBlock *best = nullptr;
 
     // Get the smallest free block that is large enough to satisfy the request.
-    for (MallocBlock *block = self->head; block; block = block->next) {
+    for (MallocBlock *block = _head; block; block = block->next) {
         if (block->size >= size
             && !block->inuse
             && (!best || (block->size < best->size))) {
@@ -107,21 +100,19 @@ uint8_t* malloc_zone_malloc(MallocZone *self, size_t size)
     return (uint8_t *)best + sizeof(MallocBlock);
 }
 
-void malloc_zone_free(MallocZone *self, uint8_t *ptr)
+void MallocZone::malloc_zone_free(uint8_t *ptr)
 {
-    assert(self);
-
     if (!ptr) {
         return; // do nothing
     }
 
     MallocBlock *block = (MallocBlock *)(ptr - sizeof(MallocBlock));
 
-    // Walk over the heap and see if we can find self allocation.
+    // Walk over the heap and see if we can find this allocation.
     // If we cannot find it then the calling code has an error in it.
 #ifndef NDEBUG
     bool found_it = false;
-    for (MallocBlock *iter = self->head; iter; iter = iter->next) {
+    for (MallocBlock *iter = _head; iter; iter = iter->next) {
         if (iter == block) {
             found_it = true;
         }
@@ -172,12 +163,10 @@ void malloc_zone_free(MallocZone *self, uint8_t *ptr)
 // 
 // If size is zero and ptr is not nullptr, a new minimum-sized object is
 // allocated and the original object is freed.
-uint8_t* malloc_zone_realloc(MallocZone *self, uint8_t *ptr, size_t new_size)
+uint8_t* MallocZone::malloc_zone_realloc(uint8_t *ptr, size_t new_size)
 {
-    assert(self);
-
     if (!ptr) {
-        return malloc_zone_malloc(self, new_size);
+        return malloc_zone_malloc(new_size);
     }
 
     MallocBlock *block = (MallocBlock *)(ptr - sizeof(MallocBlock));
@@ -187,7 +176,7 @@ uint8_t* malloc_zone_realloc(MallocZone *self, uint8_t *ptr, size_t new_size)
     // If we cannot find it then the calling code has an error in it.
 #ifndef NDEBUG
     bool found_it = false;
-    for (MallocBlock *iter = self->head; iter; iter = iter->next) {
+    for (MallocBlock *iter = _head; iter; iter = iter->next) {
         if (iter == block) {
             found_it = true;
         }
@@ -196,8 +185,8 @@ uint8_t* malloc_zone_realloc(MallocZone *self, uint8_t *ptr, size_t new_size)
 #endif
 
     if (new_size == 0) {
-        malloc_zone_free(self, ptr);
-        return malloc_zone_malloc(self, 0);
+        malloc_zone_free(ptr);
+        return malloc_zone_malloc(0);
     }
 
     // Blocks for allocations are always multiples of four bytes in size.
@@ -235,10 +224,10 @@ uint8_t* malloc_zone_realloc(MallocZone *self, uint8_t *ptr, size_t new_size)
     }
 
     // Can we allocate a new block of memory for the resized allocation?
-    uint8_t *new_alloc = malloc_zone_malloc(self, new_size);
+    uint8_t *new_alloc = malloc_zone_malloc(new_size);
     if (new_alloc) {
         memcpy(ptr, new_alloc, block->size);
-        malloc_zone_free(self, ptr);
+        malloc_zone_free(ptr);
         return new_alloc;
     }
 
