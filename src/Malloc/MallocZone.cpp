@@ -64,6 +64,8 @@ MallocZone::MallocZone(uint8_t *start, size_t size)
     assert(size > sizeof(MallocZone::Block));
     memset(start, 0, size);
     
+    _start = start;
+    _size = size;
     _head = (Block *)(start + (4 - (uintptr_t)start % 4)); // 4 byte alignment
     
     _head->setPrev(*this, nullptr);

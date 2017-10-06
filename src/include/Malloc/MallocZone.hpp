@@ -11,35 +11,62 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <cassert>
 
 class MallocZone
 {
 public:
-    struct Block
+    class Block
     {
+    public:
+        bool validPrevOffset;
+        bool validNextOffset;
+        ptrdiff_t prevOffset;
+        ptrdiff_t nextOffset;
         Block *_prev;
         Block *_next;
         size_t size;
         unsigned inuse;
         
+        Block()
+        : validPrevOffset(false),
+          validNextOffset(false),
+          prevOffset(0),
+          nextOffset(0),
+          _prev(nullptr),
+          _next(nullptr),
+          size(0),
+          inuse(0)
+        {}
+        
         inline void setPrev(MallocZone &zone, Block *prev)
         {
+            validPrevOffset = zone.validate((uint8_t *)prev);
+            prevOffset = (uint8_t *)prev - zone.start();
             _prev = prev;
-        }
-        
-        inline Block* getPrev(MallocZone &zone)
-        {
-            return _prev;
+            assert(_prev == getPrev(zone));
         }
         
         inline void setNext(MallocZone &zone, Block *next)
         {
+            validNextOffset = zone.validate((uint8_t *)next);
+            nextOffset = (uint8_t *)next - zone.start();
             _next = next;
+            assert(_next == getNext(zone));
+        }
+        
+        inline Block* getPrev(MallocZone &zone)
+        {
+            Block *prev = (validPrevOffset) ? (Block *)(zone.start() + prevOffset) : nullptr;
+            assert(prev == _prev);
+            return prev;
         }
         
         inline Block* getNext(MallocZone &zone)
         {
-            return _next;
+            Block *next = (validNextOffset) ? (Block *)(zone.start() + nextOffset) : nullptr;
+            assert(next == _next);
+            return next;
         }
     };
 
@@ -77,7 +104,17 @@ public:
         return _head;
     }
     
+    inline uint8_t *start() const {
+        return _start;
+    }
+    
+    inline bool validate(uint8_t *ptr) const {
+        return ptr >= _start && ptr < (_start + _size);
+    }
+    
 private:
+    uint8_t *_start;
+    size_t _size;
     Block *_head;
     
     void considerSplittingBlock(MallocZone::Block *block, size_t size);
