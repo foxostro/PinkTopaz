@@ -10,6 +10,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include "SDL.h"
 
 constexpr size_t ALIGN = 4;
 constexpr size_t MIN_SPLIT_SIZE = sizeof(MallocZone::Block);
@@ -60,6 +61,16 @@ void MallocZone::considerSplittingBlock(Block *block, size_t size)
 
 MallocZone::MallocZone(uint8_t *start, size_t size)
 {
+    setBackingMemory(start, size);
+    
+    _head->setPrev(*this, nullptr);
+    _head->setNext(*this, nullptr);
+    _head->size = size - sizeof(Block);
+    _head->inuse = false;
+}
+
+void MallocZone::setBackingMemory(uint8_t *start, size_t size)
+{
     assert(start);
     assert(size > sizeof(MallocZone::Block));
     memset(start, 0, size);
@@ -67,11 +78,6 @@ MallocZone::MallocZone(uint8_t *start, size_t size)
     _start = start;
     _size = size;
     _head = (Block *)(start + (4 - (uintptr_t)start % 4)); // 4 byte alignment
-    
-    _head->setPrev(*this, nullptr);
-    _head->setNext(*this, nullptr);
-    _head->size = size - sizeof(Block);
-    _head->inuse = false;
 }
 
 uint8_t* MallocZone::allocate(size_t size)
@@ -82,16 +88,38 @@ uint8_t* MallocZone::allocate(size_t size)
     size = roundUpBlockSize(size);
 
     Block *best = nullptr;
+    
+    size_t count = 0;
 
     // Get the smallest free block that is large enough to satisfy the request.
+    SDL_Log("searching for smallest free block");
     for (Block *block = _head; block; block = block->getNext(*this)) {
+        assert(count < 1000);
+        SDL_Log("block(%p): {next=%p, prev=%p, size=%zu, inuse=%d}",
+                block,
+                block->getNext(*this),
+                block->getPrev(*this),
+                block->size,
+                block->inuse);
+        assert(block != block->getNext(*this));
+        assert((block->getNext(*this) > block->getPrev(*this)) ||
+               (block->getNext(*this) == nullptr)
+               );
+        
         if (block->size >= size
             && !block->inuse
             && (!best || (block->size < best->size))) {
             best = block;
         }
+        ++count;
     }
-
+    
+    if (best) {
+        SDL_Log("found smallest free block at %p, size is %zu", best, best->size);
+    } else {
+        SDL_Log("failed to find a good free block");
+    }
+    
     if (!best) {
         return nullptr;
     }
@@ -150,6 +178,19 @@ void MallocZone::deallocate(uint8_t *ptr)
             following->getNext(*this)->setPrev(*this, block);
         }
     }
+
+#ifndef NDEBUG
+    for (Block *iter = _head; iter; iter = iter->getNext(*this)) {
+        SDL_Log("block(%p): {next=%p, prev=%p, size=%zu, inuse=%d}",
+                iter,
+                iter->getNext(*this),
+                iter->getPrev(*this),
+                iter->size,
+                iter->inuse);
+        assert(iter != iter->getNext(*this));
+        assert(iter->getNext(*this) > iter->getPrev(*this));
+    }
+#endif
 }
 
 // Tries to change the size of the allocation pointed to by ptr to size,
@@ -261,4 +302,24 @@ uint8_t* MallocZone::reallocate(uint8_t *ptr, size_t newSize)
     }
 
     return nullptr;
+}
+
+size_t MallocZone::getBlockSize(uint8_t *ptr)
+{
+    const Block *block = (Block *)(ptr - sizeof(Block));
+    assert(block->inuse);
+    
+    // Walk over the heap and see if we can find this allocation.
+    // If we cannot find it then the calling code has an error in it.
+#ifndef NDEBUG
+    bool foundIt = false;
+    for (Block *iter = _head; iter; iter = iter->getNext(*this)) {
+        if (iter == block) {
+            foundIt = true;
+        }
+    }
+    assert(foundIt);
+#endif
+    
+    return block->size;
 }

@@ -13,7 +13,9 @@
 #include "Terrain/VoxelDataSerializer.hpp"
 #include "Grid/RegionMutualExclusionArbitrator.hpp"
 #include "Grid/Array3D.hpp"
+#include "Malloc/MallocZone.hpp"
 #include <boost/optional.hpp>
+#include <map>
 
 // Stores/Loads voxel chunks on the file system.
 class MapRegionStore : GridIndexer
@@ -37,8 +39,19 @@ public:
     void store(const AABB &boundingBox, Morton3 key, const Array3D<Voxel> &voxels);
     
 private:
-    RegionMutualExclusionArbitrator _lockArbitrator;
+    std::mutex _mutex;
     VoxelDataSerializer _serializer;
+    size_t _zoneBackingMemorySize;
+    uint8_t *_zoneBackingMemory;
+    MallocZone _zone;
+    std::map<Morton3, ptrdiff_t> _lookup;
+    
+    bool hasBlock(Morton3 key);
+    uint8_t* getBlock(Morton3 key);
+    uint8_t* getBlockAndResize(Morton3 key, size_t size);
+    
+    void stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes);
+    boost::optional<std::vector<uint8_t>> getChunkBytesFromStash(Morton3 key);
 };
 
 #endif /* MapRegionStore_hpp */

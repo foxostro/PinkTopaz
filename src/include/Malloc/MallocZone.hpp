@@ -11,6 +11,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <cassert>
 
 class MallocZone
 {
@@ -18,13 +19,14 @@ public:
     // ~0 indicates that we do not have a valid offset
     static constexpr ptrdiff_t sentinel = ~0;
     
+#if 1
     class Block
     {
     public:
         ptrdiff_t prevOffset;
         ptrdiff_t nextOffset;
         size_t size;
-        unsigned inuse;
+        bool inuse;
         
         Block()
         : prevOffset(sentinel),
@@ -35,38 +37,72 @@ public:
         
         inline void setPrev(MallocZone &zone, Block *prev)
         {
-            if (zone.validate((uint8_t *)prev)) {
-                prevOffset = (uint8_t *)prev - zone.start();
-            } else {
-                prevOffset = sentinel;
-            }
+            assert(getPrev(zone) != prev);
+            prevOffset = zone.getOffsetFromPointer((uint8_t *)prev);
         }
         
         inline void setNext(MallocZone &zone, Block *next)
         {
-            if (zone.validate((uint8_t *)next)) {
-                nextOffset = (uint8_t *)next - zone.start();
-            } else {
-                nextOffset = sentinel;
-            }
+            assert(getNext(zone) != next);
+            nextOffset = zone.getOffsetFromPointer((uint8_t *)next);
         }
         
         inline Block* getPrev(MallocZone &zone)
         {
-            return (prevOffset == sentinel) ? nullptr : (Block *)(zone.start() + prevOffset);
+            return (Block *)zone.getPointerFromOffset(prevOffset);
         }
         
         inline Block* getNext(MallocZone &zone)
         {
-            return (nextOffset == sentinel) ? nullptr : (Block *)(zone.start() + nextOffset);
+            return (Block *)zone.getPointerFromOffset(nextOffset);
         }
     };
+#else
+    class Block
+    {
+    public:
+        Block  *_prev;
+        Block  *_next;
+        size_t size;
+        bool inuse;
+        
+        Block()
+        : _prev(nullptr),
+        _next(nullptr),
+        size(0),
+        inuse(0)
+        {}
+        
+        inline void setPrev(MallocZone &zone, Block *prev)
+        {
+            _prev = prev;
+        }
+        
+        inline void setNext(MallocZone &zone, Block *next)
+        {
+            _next = next;
+        }
+        
+        inline Block* getPrev(MallocZone &zone)
+        {
+            return _prev;
+        }
+        
+        inline Block* getNext(MallocZone &zone)
+        {
+            return _next;
+        }
+    };
+#endif
 
 public:
     // Initializes the malloc zone using the specified region of memory.
     // Returns the address of the MallocZone structure stored within the memory.
     // Allocations from the zone will always be taken from this memory region.
     MallocZone(uint8_t *start, size_t size);
+    
+    // Change the backing memory buffer.
+    void setBackingMemory(uint8_t *start, size_t size);
 
     // Allocates a block of memory of the given size from the malloc zone.
     // May return nullptr if the request cannot be satisfied.
@@ -91,17 +127,31 @@ public:
     // Deallocates a memory allocation pointed to be ptr. If ptr is nullptr then
     // no operation is performed.
     void deallocate(uint8_t *ptr);
+    
+    // Accepts a pointer returned from allocate/reallocate and returns the size
+    // of the associated block of memory.
+    size_t getBlockSize(uint8_t *ptr);
 
     inline Block* head() const {
         return _head;
     }
     
-    inline uint8_t *start() const {
-        return _start;
-    }
-    
     inline bool validate(uint8_t *ptr) const {
         return ptr >= _start && ptr < (_start + _size);
+    }
+    
+    inline uint8_t* getPointerFromOffset(ptrdiff_t offset) const
+    {
+        return (offset == sentinel) ? nullptr : (uint8_t *)(_start + offset);
+    }
+    
+    inline ptrdiff_t getOffsetFromPointer(uint8_t *pointer) const
+    {
+        if (validate(pointer)) {
+            return pointer - _start;
+        } else {
+            return sentinel;
+        }
     }
     
 private:
