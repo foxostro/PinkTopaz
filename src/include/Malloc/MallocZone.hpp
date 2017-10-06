@@ -23,8 +23,6 @@ public:
         bool validNextOffset;
         ptrdiff_t prevOffset;
         ptrdiff_t nextOffset;
-        Block *_prev;
-        Block *_next;
         size_t size;
         unsigned inuse;
         
@@ -33,8 +31,6 @@ public:
           validNextOffset(false),
           prevOffset(0),
           nextOffset(0),
-          _prev(nullptr),
-          _next(nullptr),
           size(0),
           inuse(0)
         {}
@@ -43,30 +39,22 @@ public:
         {
             validPrevOffset = zone.validate((uint8_t *)prev);
             prevOffset = (uint8_t *)prev - zone.start();
-            _prev = prev;
-            assert(_prev == getPrev(zone));
         }
         
         inline void setNext(MallocZone &zone, Block *next)
         {
             validNextOffset = zone.validate((uint8_t *)next);
             nextOffset = (uint8_t *)next - zone.start();
-            _next = next;
-            assert(_next == getNext(zone));
         }
         
         inline Block* getPrev(MallocZone &zone)
         {
-            Block *prev = (validPrevOffset) ? (Block *)(zone.start() + prevOffset) : nullptr;
-            assert(prev == _prev);
-            return prev;
+            return (validPrevOffset) ? (Block *)(zone.start() + prevOffset) : nullptr;
         }
         
         inline Block* getNext(MallocZone &zone)
         {
-            Block *next = (validNextOffset) ? (Block *)(zone.start() + nextOffset) : nullptr;
-            assert(next == _next);
-            return next;
+            return (validNextOffset) ? (Block *)(zone.start() + nextOffset) : nullptr;
         }
     };
 
