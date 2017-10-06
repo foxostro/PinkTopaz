@@ -12,7 +12,7 @@
 #include <cstring>
 
 constexpr size_t ALIGN = 4;
-constexpr size_t MIN_SPLIT_SIZE = sizeof(MallocBlock);
+constexpr size_t MIN_SPLIT_SIZE = sizeof(MallocZone::Block);
 
 static inline size_t roundUpBlockSize(size_t size)
 {
@@ -26,33 +26,33 @@ static inline size_t roundUpBlockSize(size_t size)
     return newSize;
 }
 
-static void considerSplittingBlock(MallocBlock *block, size_t size)
+void MallocZone::considerSplittingBlock(Block *block, size_t size)
 {
     // Split the block if the remaining free space is big enough.
-    size_t remaining_space = block->size - size;
-    if (remaining_space > MIN_SPLIT_SIZE) {
-        MallocBlock *new_block = (MallocBlock *)((uint8_t *)block + sizeof(MallocBlock) + size);
+    size_t remainingSpace = block->size - size;
+    if (remainingSpace > MIN_SPLIT_SIZE) {
+        Block *newBlock = (Block *)((uint8_t *)block + sizeof(Block) + size);
 
-        assert((uintptr_t)new_block % ALIGN == 0);
-        new_block->prev = block;
-        new_block->next = block->next;
-        new_block->size = remaining_space - sizeof(MallocBlock);
-        new_block->inuse = false;
+        assert((uintptr_t)newBlock % ALIGN == 0);
+        newBlock->setPrev(*this, block);
+        newBlock->setNext(*this, block->getNext(*this));
+        newBlock->size = remainingSpace - sizeof(Block);
+        newBlock->inuse = false;
 
         block->size = size;
-        if (block->next) {
-            block->next->prev = new_block;
+        if (block->getNext(*this)) {
+            block->getNext(*this)->setPrev(*this, newBlock);
         }
-        block->next = new_block;
+        block->setNext(*this, newBlock);
 
         // If the next block is empty then merge the new free block with the
         // free block that follows it.
-        MallocBlock *following = new_block->next;
+        Block *following = newBlock->getNext(*this);
         if (following && !following->inuse) {
-            new_block->size += following->size + sizeof(MallocBlock);
-            new_block->next = following->next;
-            if (following->next) {
-                following->next->prev = new_block;
+            newBlock->size += following->size + sizeof(Block);
+            newBlock->setNext(*this, following->getNext(*this));
+            if (following->getNext(*this)) {
+                following->getNext(*this)->setPrev(*this, newBlock);
             }
         }
     }
@@ -61,14 +61,14 @@ static void considerSplittingBlock(MallocBlock *block, size_t size)
 MallocZone::MallocZone(uint8_t *start, size_t size)
 {
     assert(start);
-    assert(size > sizeof(MallocBlock));
+    assert(size > sizeof(MallocZone::Block));
     memset(start, 0, size);
     
-    _head = (MallocBlock *)(start + (4 - (uintptr_t)start % 4)); // 4 byte alignment
+    _head = (Block *)(start + (4 - (uintptr_t)start % 4)); // 4 byte alignment
     
-    _head->prev = nullptr;
-    _head->next = nullptr;
-    _head->size = size - sizeof(MallocBlock);
+    _head->setPrev(*this, nullptr);
+    _head->setNext(*this, nullptr);
+    _head->size = size - sizeof(Block);
     _head->inuse = false;
 }
 
@@ -79,10 +79,10 @@ uint8_t* MallocZone::allocate(size_t size)
     // given that the initial block is also aligned on a four byte boundary.
     size = roundUpBlockSize(size);
 
-    MallocBlock *best = nullptr;
+    Block *best = nullptr;
 
     // Get the smallest free block that is large enough to satisfy the request.
-    for (MallocBlock *block = _head; block; block = block->next) {
+    for (Block *block = _head; block; block = block->getNext(*this)) {
         if (block->size >= size
             && !block->inuse
             && (!best || (block->size < best->size))) {
@@ -97,7 +97,7 @@ uint8_t* MallocZone::allocate(size_t size)
     considerSplittingBlock(best, size);
 
     best->inuse = true;
-    return (uint8_t *)best + sizeof(MallocBlock);
+    return (uint8_t *)best + sizeof(Block);
 }
 
 void MallocZone::deallocate(uint8_t *ptr)
@@ -106,13 +106,13 @@ void MallocZone::deallocate(uint8_t *ptr)
         return; // do nothing
     }
 
-    MallocBlock *block = (MallocBlock *)(ptr - sizeof(MallocBlock));
+    Block *block = (Block *)(ptr - sizeof(Block));
 
     // Walk over the heap and see if we can find this allocation.
     // If we cannot find it then the calling code has an error in it.
 #ifndef NDEBUG
     bool foundIt = false;
-    for (MallocBlock *iter = _head; iter; iter = iter->next) {
+    for (Block *iter = _head; iter; iter = iter->getNext(*this)) {
         if (iter == block) {
             foundIt = true;
         }
@@ -123,29 +123,29 @@ void MallocZone::deallocate(uint8_t *ptr)
 
     block->inuse = false;
 
-    MallocBlock *preceding = block->prev, *following = block->next;
+    Block *preceding = block->getPrev(*this), *following = block->getNext(*this);
 
     // If the preceding chunk is free then merge this one into it. This block
     // goes away and the preceding chunk expands to fill the hole.
     if (preceding && !preceding->inuse) {
-        preceding->size += block->size + sizeof(MallocBlock);
-        preceding->next = following;
+        preceding->size += block->size + sizeof(Block);
+        preceding->setNext(*this, following);
         if (following) {
-            following->prev = preceding;
+            following->setPrev(*this, preceding);
         }
 
         // Reset these pointers for a possible merge with `following', below.
         block = preceding;
-        preceding = block->prev;
+        preceding = block->getPrev(*this);
     }
 
     // If the following chunk is free then merge it into this one.
     // The following block goes away and this chunk expands to fill the hole.
     if (following && !following->inuse) {
-        block->size += following->size + sizeof(MallocBlock);
-        block->next = following->next;
-        if (following->next) {
-            following->next->prev = block;
+        block->size += following->size + sizeof(Block);
+        block->setNext(*this, following->getNext(*this));
+        if (following->getNext(*this)) {
+            following->getNext(*this)->setPrev(*this, block);
         }
     }
 }
@@ -169,14 +169,14 @@ uint8_t* MallocZone::reallocate(uint8_t *ptr, size_t newSize)
         return allocate(newSize);
     }
 
-    MallocBlock *block = (MallocBlock *)(ptr - sizeof(MallocBlock));
+    Block *block = (Block *)(ptr - sizeof(Block));
     assert(block->inuse);
 
     // Walk over the heap and see if we can find this allocation.
     // If we cannot find it then the calling code has an error in it.
 #ifndef NDEBUG
     bool foundIt = false;
-    for (MallocBlock *iter = _head; iter; iter = iter->next) {
+    for (Block *iter = _head; iter; iter = iter->getNext(*this)) {
         if (iter == block) {
             foundIt = true;
         }
@@ -200,21 +200,21 @@ uint8_t* MallocZone::reallocate(uint8_t *ptr, size_t newSize)
         return ptr;
     }
 
-    MallocBlock *following = block->next;
+    Block *following = block->getNext(*this);
 
     // If this block is followed by a free block then would it satisfy our
     // requirements to take some of that free space by extending this block?
     if (following
         && !following->inuse
-        && (block->size + following->size + sizeof(MallocBlock)) >= newSize) {
+        && (block->size + following->size + sizeof(Block)) >= newSize) {
 
         // Remove the following block, extending this one so as to not leave a
         // hole in the zone.
-        block->size = block->size + following->size + sizeof(MallocBlock);
-        block->next = following->next;
+        block->size = block->size + following->size + sizeof(Block);
+        block->setNext(*this, following->getNext(*this));
 
-        if (following->next) {
-            following->next->prev = block;
+        if (following->getNext(*this)) {
+            following->getNext(*this)->setPrev(*this, block);
         }
 
         // Split the remaining free space if there's enough of it.
@@ -231,25 +231,25 @@ uint8_t* MallocZone::reallocate(uint8_t *ptr, size_t newSize)
         return newAlloc;
     }
 
-    MallocBlock *preceding = block->prev;
+    Block *preceding = block->getPrev(*this);
 
     // If this block is preceded by a free block then would it satisfy our
     // requirements to merge into the preceding block?
     if (preceding
         && !preceding->inuse
-        && (block->size + preceding->size + sizeof(MallocBlock)) >= newSize) {
+        && (block->size + preceding->size + sizeof(Block)) >= newSize) {
 
         // Remove this block, extending the preceding one so as to not leave a
         // hole in the zone.
-        preceding->next = following;
+        preceding->setNext(*this, following);
         if (following) {
-            following->prev = preceding;
+            following->setPrev(*this, preceding);
         }
-        preceding->size = block->size + preceding->size + sizeof(MallocBlock);
+        preceding->size = block->size + preceding->size + sizeof(Block);
         preceding->inuse = true;
 
         // Move the contents to the beginning of the new, combined block.
-        newAlloc = (uint8_t *)preceding + sizeof(MallocBlock);
+        newAlloc = (uint8_t *)preceding + sizeof(Block);
         memmove(ptr, newAlloc, block->size);
 
         // Split the remaining free space if there's enough of it.

@@ -9,11 +9,39 @@
 #ifndef MallocZone_hpp
 #define MallocZone_hpp
 
-#include "Malloc/MallocBlock.hpp"
+#include <cstdint>
+#include <cstddef>
 
 class MallocZone
 {
-    MallocBlock *_head;
+public:
+    struct Block
+    {
+        Block *_prev;
+        Block *_next;
+        size_t size;
+        unsigned inuse;
+        
+        inline void setPrev(MallocZone &zone, Block *prev)
+        {
+            _prev = prev;
+        }
+        
+        inline Block* getPrev(MallocZone &zone)
+        {
+            return _prev;
+        }
+        
+        inline void setNext(MallocZone &zone, Block *next)
+        {
+            _next = next;
+        }
+        
+        inline Block* getNext(MallocZone &zone)
+        {
+            return _next;
+        }
+    };
 
 public:
     // Initializes the malloc zone using the specified region of memory.
@@ -45,9 +73,14 @@ public:
     // no operation is performed.
     void deallocate(uint8_t *ptr);
 
-    inline MallocBlock* head() const {
+    inline Block* head() const {
         return _head;
     }
+    
+private:
+    Block *_head;
+    
+    void considerSplittingBlock(MallocZone::Block *block, size_t size);
 };
 
 #endif /* MallocZone_hpp */

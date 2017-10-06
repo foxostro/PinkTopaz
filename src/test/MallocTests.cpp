@@ -35,8 +35,8 @@ TEST_CASE("Test Init", "[Malloc]") {
 
     // zone initially contains one large empty block
     REQUIRE(zone.head() != nullptr);
-    REQUIRE(zone.head()->prev == nullptr);
-    REQUIRE(zone.head()->next == nullptr);
+    REQUIRE(zone.head()->getPrev(zone) == nullptr);
+    REQUIRE(zone.head()->getNext(zone) == nullptr);
     REQUIRE(zone.head()->size < size);
     REQUIRE(!zone.head()->inuse);
 }
@@ -85,7 +85,7 @@ TEST_CASE("Test Malloc Several Small", "[Malloc]") {
     MallocZone zone(g_buffer, sizeof(g_buffer));
 
     size_t size = SMALL, i = 0;
-    size_t ex = (sizeof(g_buffer) - sizeof(MallocBlock)) / (sizeof(MallocBlock) + size);
+    size_t ex = (sizeof(g_buffer) - sizeof(MallocZone::Block)) / (sizeof(MallocZone::Block) + size);
 
     while (true) {
         uint8_t *allocation = zone.allocate(size);
@@ -136,7 +136,7 @@ TEST_CASE("Test Coalesce 0", "[Malloc]") {
     uint8_t *b = zone.allocate(SMALL);
     REQUIRE(b);
 
-    uint8_t *c = zone.allocate(sizeof(g_buffer) - sizeof(MallocBlock) - 2*(SMALL+sizeof(MallocBlock)));
+    uint8_t *c = zone.allocate(sizeof(g_buffer) - sizeof(MallocZone::Block) - 2*(SMALL+sizeof(MallocZone::Block)));
     REQUIRE(c);
 
     uint8_t *d = zone.allocate(SMALL*2);
@@ -164,7 +164,7 @@ TEST_CASE("Test Coalesce 1", "[Malloc]") {
     uint8_t *b = zone.allocate(SMALL);
     REQUIRE(b);
 
-    uint8_t *c = zone.allocate(sizeof(g_buffer) - sizeof(MallocBlock) - 2*(SMALL+sizeof(MallocBlock)));
+    uint8_t *c = zone.allocate(sizeof(g_buffer) - sizeof(MallocZone::Block) - 2*(SMALL+sizeof(MallocZone::Block)));
     REQUIRE(c);
 
     uint8_t *d = zone.allocate(SMALL*2);
@@ -192,17 +192,17 @@ TEST_CASE("Test Coalesce 2", "[Malloc]") {
     uint8_t *b = zone.allocate(SMALL);
     REQUIRE(b);
 
-    uint8_t *c = zone.allocate(sizeof(g_buffer) - sizeof(MallocBlock) - 2*(SMALL+sizeof(MallocBlock)));
+    uint8_t *c = zone.allocate(sizeof(g_buffer) - sizeof(MallocZone::Block) - 2*(SMALL+sizeof(MallocZone::Block)));
     REQUIRE(c);
 
-    uint8_t *d = zone.allocate(sizeof(g_buffer) - sizeof(MallocBlock));
+    uint8_t *d = zone.allocate(sizeof(g_buffer) - sizeof(MallocZone::Block));
     REQUIRE(!d); // expected to fail
 
     zone.deallocate(c);
     zone.deallocate(a);
     zone.deallocate(b); // preceding and following both merged here
 
-    uint8_t *e = zone.allocate(sizeof(g_buffer) - sizeof(MallocBlock));
+    uint8_t *e = zone.allocate(sizeof(g_buffer) - sizeof(MallocZone::Block));
     REQUIRE(e); // should succeed now
     REQUIRE(a == e); // using the same block as `a'
 }
@@ -215,10 +215,10 @@ TEST_CASE("Test Realloc Extend 0", "[Malloc]") {
 
     uint8_t *a = zone.allocate(1);
     REQUIRE(a);
-    REQUIRE(zone.head()->next != nullptr);
+    REQUIRE(zone.head()->getNext(zone) != nullptr);
 
-    MallocBlock *block1 = zone.head();
-    MallocBlock *block2 = zone.head()->next;
+    MallocZone::Block *block1 = zone.head();
+    MallocZone::Block *block2 = zone.head()->getNext(zone);
 
     size_t size1 = block1->size;
     size_t size2 = block2->size;
@@ -228,7 +228,7 @@ TEST_CASE("Test Realloc Extend 0", "[Malloc]") {
     REQUIRE(a == b);
 
     REQUIRE(zone.head() == block1);
-    REQUIRE(zone.head()->next == block2);
+    REQUIRE(zone.head()->getNext(zone) == block2);
     REQUIRE(block1->size == size1);
     REQUIRE(block2->size == size2);
 }
@@ -242,20 +242,20 @@ TEST_CASE("Test Realloc Extend 1", "[Malloc]") {
 
     uint8_t *a = zone.allocate(0);
     REQUIRE(a);
-    REQUIRE(zone.head()->next != nullptr);
+    REQUIRE(zone.head()->getNext(zone) != nullptr);
 
     uint8_t *b = zone.reallocate(a, SMALL);
     REQUIRE(b);
     REQUIRE(a == b);
 
-    MallocBlock *block1 = zone.head();
+    MallocZone::Block *block1 = zone.head();
     REQUIRE(block1);
 
-    MallocBlock *block2 = zone.head()->next;
+    MallocZone::Block *block2 = zone.head()->getNext(zone);
     REQUIRE(block2);
 
     REQUIRE(block1->size >= SMALL);
-    REQUIRE(block2->size >= sizeof(g_buffer) - 2*sizeof(MallocBlock) - SMALL);
+    REQUIRE(block2->size >= sizeof(g_buffer) - 2*sizeof(MallocZone::Block) - SMALL);
 }
 
 // Realloc tries to extend an allocation in place. If it cannot then it
@@ -275,7 +275,7 @@ TEST_CASE("Test Realloc Relocate 0", "[Malloc]") {
     REQUIRE(a != c);
 
     size_t count = 0;
-    for (MallocBlock *block = zone.head(); block; block = block->next) {
+    for (MallocZone::Block *block = zone.head(); block; block = block->getNext(zone)) {
         ++count;
     }
     REQUIRE(count == 4);
@@ -284,7 +284,7 @@ TEST_CASE("Test Realloc Relocate 0", "[Malloc]") {
         SMALL,
         SMALL,
         2*SMALL,
-        sizeof(g_buffer) - 4*SMALL - 4*sizeof(MallocBlock)
+        sizeof(g_buffer) - 4*SMALL - 4*sizeof(MallocZone::Block)
     };
     size_t expectedInUse[] = {
         false,
@@ -293,7 +293,7 @@ TEST_CASE("Test Realloc Relocate 0", "[Malloc]") {
         false
     };
     count = 0;
-    for (MallocBlock *block = zone.head(); block; block = block->next) {
+    for (MallocZone::Block *block = zone.head(); block; block = block->getNext(zone)) {
         REQUIRE(block->size == expectedSize[count]);
         REQUIRE(block->inuse == expectedInUse[count]);
         ++count;
@@ -313,14 +313,14 @@ TEST_CASE("Test Realloc Relocate 1", "[Malloc]") {
     uint8_t *b = zone.allocate(SMALL);
     REQUIRE(b);
 
-    uint8_t *c = zone.allocate(sizeof(g_buffer) - sizeof(MallocBlock) - 2*(SMALL+sizeof(MallocBlock)));
+    uint8_t *c = zone.allocate(sizeof(g_buffer) - sizeof(MallocZone::Block) - 2*(SMALL+sizeof(MallocZone::Block)));
     REQUIRE(c);
 
     uint8_t *d = zone.reallocate(a, 2*SMALL);
     REQUIRE(!d);
 
     size_t count = 0;
-    for (MallocBlock *block = zone.head(); block; block = block->next) {
+    for (MallocZone::Block *block = zone.head(); block; block = block->getNext(zone)) {
         ++count;
     }
     REQUIRE(count == 3);
@@ -328,7 +328,7 @@ TEST_CASE("Test Realloc Relocate 1", "[Malloc]") {
     size_t expectedSize[] = {
         SMALL,
         SMALL,
-        sizeof(g_buffer) - sizeof(MallocBlock) - 2*(SMALL+sizeof(MallocBlock))
+        sizeof(g_buffer) - sizeof(MallocZone::Block) - 2*(SMALL+sizeof(MallocZone::Block))
     };
     size_t expectedInUse[] = {
         true,
@@ -336,7 +336,7 @@ TEST_CASE("Test Realloc Relocate 1", "[Malloc]") {
         true
     };
     count = 0;
-    for (MallocBlock *block = zone.head(); block; block = block->next) {
+    for (MallocZone::Block *block = zone.head(); block; block = block->getNext(zone)) {
         REQUIRE(block->size == expectedSize[count]);
         REQUIRE(block->inuse == expectedInUse[count]);
         ++count;
@@ -359,14 +359,14 @@ TEST_CASE("Test Realloc Relocate 2", "[Malloc]") {
     uint8_t *b = zone.allocate(SMALL);
     REQUIRE(b);
 
-    uint8_t *c = zone.allocate(sizeof(g_buffer) - sizeof(MallocBlock) - 2*(SMALL+sizeof(MallocBlock)));
+    uint8_t *c = zone.allocate(sizeof(g_buffer) - sizeof(MallocZone::Block) - 2*(SMALL+sizeof(MallocZone::Block)));
     REQUIRE(c);
 
     zone.deallocate(a);
 
 #if VERBOSE
     printf("Before:\n");
-    for (MallocBlock *block = zone->head; block; block = block->next) {
+    for (Block *block = zone->head; block; block = block->getNext(*this)) {
         printf("size = %zu ; inuse = %d\n", block->size, block->inuse);
     }
 #endif
@@ -377,27 +377,27 @@ TEST_CASE("Test Realloc Relocate 2", "[Malloc]") {
 
 #if VERBOSE
     printf("After:\n");
-    for (MallocBlock *block = zone.head(); block; block = block->next) {
+    for (Block *block = zone.head(); block; block = block->getNext(zone)) {
         printf("size = %zu ; inuse = %d\n", block->size, block->inuse);
     }
 #endif
 
     size_t count = 0;
-    for (MallocBlock *block = zone.head(); block; block = block->next) {
+    for (MallocZone::Block *block = zone.head(); block; block = block->getNext(zone)) {
         ++count;
     }
     REQUIRE(count == 2);
 
     size_t expectedSize[] = {
-        2*SMALL + sizeof(MallocBlock),
-        sizeof(g_buffer) - 3*sizeof(MallocBlock) - 2*SMALL
+        2*SMALL + sizeof(MallocZone::Block),
+        sizeof(g_buffer) - 3*sizeof(MallocZone::Block) - 2*SMALL
     };
     size_t expectedInUse[] = {
         true,
         true,
     };
     count = 0;
-    for (MallocBlock *block = zone.head(); block; block = block->next) {
+    for (MallocZone::Block *block = zone.head(); block; block = block->getNext(zone)) {
         REQUIRE(block->size == expectedSize[count]);
         REQUIRE(block->inuse == expectedInUse[count]);
         ++count;
@@ -414,7 +414,7 @@ TEST_CASE("Test Realloc Shrink", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
     MallocZone zone(g_buffer, sizeof(g_buffer));
 
-    uint8_t *a = zone.allocate(sizeof(g_buffer) - sizeof(MallocBlock));
+    uint8_t *a = zone.allocate(sizeof(g_buffer) - sizeof(MallocZone::Block));
     REQUIRE(a);
 
     uint8_t *d = zone.reallocate(a, SMALL);
@@ -422,21 +422,21 @@ TEST_CASE("Test Realloc Shrink", "[Malloc]") {
     REQUIRE(a == d);
 
     size_t count = 0;
-    for (MallocBlock *block = zone.head(); block; block = block->next) {
+    for (MallocZone::Block *block = zone.head(); block; block = block->getNext(zone)) {
         ++count;
     }
     REQUIRE(count == 2);
 
     size_t expectedSize[] = {
         SMALL,
-        sizeof(g_buffer) - 2*sizeof(MallocBlock) - SMALL
+        sizeof(g_buffer) - 2*sizeof(MallocZone::Block) - SMALL
     };
     size_t expectedInUse[] = {
         true,
         false,
     };
     count = 0;
-    for (MallocBlock *block = zone.head(); block; block = block->next) {
+    for (MallocZone::Block *block = zone.head(); block; block = block->getNext(zone)) {
         REQUIRE(block->size == expectedSize[count]);
         REQUIRE(block->inuse == expectedInUse[count]);
         ++count;

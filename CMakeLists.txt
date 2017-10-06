@@ -152,7 +152,6 @@ set(SOURCE_FILES_PLATFORM_SUPPORT
     )
 
 set(SOURCE_FILES_MALLOC
-    "src/include/Malloc/MallocBlock.hpp"
     "src/Malloc/MallocZone.cpp" "src/include/Malloc/MallocZone.hpp"
     )
 
@@ -325,7 +324,6 @@ add_executable(${TEST_PROG_NAME}
                "src/Terrain/MesherNaiveSurfaceNets.cpp"
                "src/Terrain/VoxelDataSerializer.cpp"
                "src/Terrain/VoxelDataGenerator.cpp"
-               "src/include/Malloc/MallocBlock.hpp"
                "src/Malloc/MallocZone.cpp" "src/include/Malloc/MallocZone.hpp"
                )
 target_link_libraries(${TEST_PROG_NAME}
