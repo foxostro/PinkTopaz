@@ -11,50 +11,54 @@
 
 #include <cstdint>
 #include <cstddef>
-#include <cassert>
 
 class MallocZone
 {
 public:
+    // ~0 indicates that we do not have a valid offset
+    static constexpr ptrdiff_t sentinel = ~0;
+    
     class Block
     {
     public:
-        bool validPrevOffset;
-        bool validNextOffset;
         ptrdiff_t prevOffset;
         ptrdiff_t nextOffset;
         size_t size;
         unsigned inuse;
         
         Block()
-        : validPrevOffset(false),
-          validNextOffset(false),
-          prevOffset(0),
-          nextOffset(0),
+        : prevOffset(sentinel),
+          nextOffset(sentinel),
           size(0),
           inuse(0)
         {}
         
         inline void setPrev(MallocZone &zone, Block *prev)
         {
-            validPrevOffset = zone.validate((uint8_t *)prev);
-            prevOffset = (uint8_t *)prev - zone.start();
+            if (zone.validate((uint8_t *)prev)) {
+                prevOffset = (uint8_t *)prev - zone.start();
+            } else {
+                prevOffset = sentinel;
+            }
         }
         
         inline void setNext(MallocZone &zone, Block *next)
         {
-            validNextOffset = zone.validate((uint8_t *)next);
-            nextOffset = (uint8_t *)next - zone.start();
+            if (zone.validate((uint8_t *)next)) {
+                nextOffset = (uint8_t *)next - zone.start();
+            } else {
+                nextOffset = sentinel;
+            }
         }
         
         inline Block* getPrev(MallocZone &zone)
         {
-            return (validPrevOffset) ? (Block *)(zone.start() + prevOffset) : nullptr;
+            return (prevOffset == sentinel) ? nullptr : (Block *)(zone.start() + prevOffset);
         }
         
         inline Block* getNext(MallocZone &zone)
         {
-            return (validNextOffset) ? (Block *)(zone.start() + nextOffset) : nullptr;
+            return (nextOffset == sentinel) ? nullptr : (Block *)(zone.start() + nextOffset);
         }
     };
 
