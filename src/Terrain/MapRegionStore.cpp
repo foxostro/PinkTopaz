@@ -8,7 +8,6 @@
 
 #include "Terrain/MapRegionStore.hpp"
 #include "FileUtilities.hpp"
-#include "SDL.h" // for SDL_Log
 #include <boost/filesystem.hpp>
 
 static constexpr size_t initialBackingBufferSize = 256;
@@ -78,15 +77,12 @@ MallocZone::Block* MapRegionStore::getBlockAndResize(Morton3 key, size_t size)
         block = _zone.blockForOffset(offset);
     }
     
-    SDL_Log("reallocating the block for size %zu", size);
     size_t count = 0;
     block = _zone.reallocate(block, size);
     while (!block) {
         // Failed to allocate the block.
         // Resize the backing memory buffer and try again.
         const size_t newSize = _zoneBackingMemorySize * 2;
-        SDL_Log("[%zu] Resizing backing memory buffer from %zu to %zu",
-                count, _zoneBackingMemorySize, newSize);
         assert(newSize < 1024*1024*1024);
         
         // Create a new buffer with the contents of the old buffer, but bigger.
@@ -101,12 +97,9 @@ MallocZone::Block* MapRegionStore::getBlockAndResize(Morton3 key, size_t size)
         _zoneBackingMemory = newBuffer;
         _zoneBackingMemorySize = newSize;
         
-        SDL_Log("Finished resizing backing memory.\n\n\n");
-        
         block = _zone.reallocate(block, size);
         ++count;
     }
-    SDL_Log("[%zu] got the block: %p", count, block);
     
     _lookup[key] = _zone.offsetForBlock(block);
     

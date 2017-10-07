@@ -10,7 +10,9 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
-#include "SDL.h"
+#include "SDL.h" // for SDL_Log
+
+#define VERBOSE 0
 
 constexpr size_t ALIGN = 4;
 constexpr size_t MIN_SPLIT_SIZE = sizeof(MallocZone::Block);
@@ -65,7 +67,7 @@ void MallocZone::grow(uint8_t *start, size_t size)
     assert(start);
     assert(size >= header()->size); // cannot shrink
     
-#ifndef NDEBUG
+#if VERBOSE
     SDL_Log("\n\ngrow:");
     dump();
 #endif
@@ -101,7 +103,7 @@ void MallocZone::grow(uint8_t *start, size_t size)
         oldTail->size += deltaSize;
     }
     
-#ifndef NDEBUG
+#if VERBOSE
     SDL_Log("\n\nstate after internalSetBackingMemory");
     dump();
     SDL_Log("finished with grow");
@@ -111,7 +113,7 @@ void MallocZone::grow(uint8_t *start, size_t size)
 
 MallocZone::Block* MallocZone::allocate(size_t size)
 {
-#ifndef NDEBUG
+#if VERBOSE
     SDL_Log("\n\nallocate:");
     dump();
 #endif
@@ -123,7 +125,7 @@ MallocZone::Block* MallocZone::allocate(size_t size)
 
     Block *best = nullptr;
     
-#ifndef NDEBUG
+#if VERBOSE
     SDL_Log("searching for smallest free block that can fit %zu", size);
 #endif
     
@@ -138,7 +140,7 @@ MallocZone::Block* MallocZone::allocate(size_t size)
         }
     }
     
-#ifndef NDEBUG
+#if VERBOSE
     if (best) {
         SDL_Log("found smallest free block at %p, size is %u bytes", best, best->size);
     } else {
@@ -158,7 +160,7 @@ MallocZone::Block* MallocZone::allocate(size_t size)
     }
 #endif
 
-#ifndef NDEBUG
+#if VERBOSE
     SDL_Log("\n\nstate after allocate:");
     dump();
 #endif
@@ -168,13 +170,13 @@ MallocZone::Block* MallocZone::allocate(size_t size)
 
 void MallocZone::deallocate(Block *block)
 {
-#ifndef NDEBUG
+#if VERBOSE
     SDL_Log("\n\ndeallocate:");
     dump();
 #endif
     
     if (!block) {
-#ifndef NDEBUG
+#if VERBOSE
         SDL_Log("block is NULL. returning without doing anything.");
 #endif
         return; // do nothing
@@ -228,7 +230,7 @@ void MallocZone::deallocate(Block *block)
     memset(block->data, 0, block->size);
 #endif
 
-#ifndef NDEBUG
+#if VERBOSE
     SDL_Log("\n\nstate after deallocate:");
     dump();
 #endif
@@ -236,13 +238,13 @@ void MallocZone::deallocate(Block *block)
 
 MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
 {
-#ifndef NDEBUG
+#if VERBOSE
     SDL_Log("\n\nreallocate:");
     dump();
 #endif
     
     if (!block) {
-#ifndef NDEBUG
+#if VERBOSE
         SDL_Log("block is NULL so we're deferring to allocate()");
 #endif
         return allocate(newSize);
@@ -253,7 +255,7 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
     assert(blockIsInList(block));
 
     if (newSize == 0) {
-#ifndef NDEBUG
+#if VERBOSE
         SDL_Log("newSize is zero so we're deallocating and then allocating a minimum size block");
 #endif
         deallocate(block);
@@ -296,7 +298,7 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         // Split the remaining free space if there's enough of it.
         considerSplittingBlock(block, newSize);
 
-#ifndef NDEBUG
+#if VERBOSE
         SDL_Log("\n\nstate after reallocate: [case where we extend the block]");
         dump();
 #endif
@@ -310,7 +312,7 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         memcpy(newAlloc->data, block->data, block->size);
         deallocate(block);
         
-#ifndef NDEBUG
+#if VERBOSE
         SDL_Log("\n\nstate after reallocate: [case where we allocate a new block]");
         dump();
 #endif
@@ -338,7 +340,7 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         // Split the remaining free space if there's enough of it.
         considerSplittingBlock(preceding, newSize);
 
-#ifndef NDEBUG
+#if VERBOSE
         SDL_Log("\n\nstate after reallocate: [case where we merge with previous block]");
         dump();
 #endif
@@ -346,7 +348,7 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         return newAlloc;
     }
 
-#ifndef NDEBUG
+#if VERBOSE
     SDL_Log("\n\nreallocate failed, returning NULL. state after reallocate:");
     dump();
 #endif
