@@ -16,149 +16,358 @@
 class MallocZone
 {
 public:
-    // ~0 indicates that we do not have a valid offset
-    static constexpr ptrdiff_t sentinel = ~0;
+    static constexpr uint32_t ZONE_MAGIC = 0xcafecafe;
+    static constexpr uint32_t BLOCK_MAGIC = 0xbeefbeef;
     
-#if 1
-    class Block
+    // A memory allocation within the zone.
+    struct Block
+    {
+        // Magic number. For a valid block, this is set to BLOCK_MAGIC.
+        // This is a very simple way to check for some types of corruption.
+        uint32_t magic;
+        
+        // The offset (in number of bytes) of the previous block from the
+        // start of the zone.
+        // The head of the list has 0 for `prevOffset'.
+        uint32_t prevOffset;
+        
+        // 1 if the block is being used, 0 if free.
+        uint32_t inuse:1;
+        
+        // The number of bytes in `data'.
+        uint32_t size:31;
+        
+        // The memory buffer associated with the block.
+        uint8_t data[0];
+        
+        Block() : magic(BLOCK_MAGIC), prevOffset(0), inuse(0), size(0) {}
+    };
+    
+    // Header for the zone. Written to the beginning of the zone.
+    struct Header
+    {
+        // Magic number. For a valid zone, this is set to ZONE_MAGIC.
+        // This is a very simple way to check for some types of corruption.
+        uint32_t magic;
+        
+        // Size of the backing memory region.
+        uint32_t size;
+        
+        Block head;
+    };
+    
+    template<typename Z, typename T>
+    class Iterator
     {
     public:
-        ptrdiff_t prevOffset;
-        ptrdiff_t nextOffset;
-        size_t size;
-        bool inuse;
+        // No default constructor.
+        Iterator() = delete;
         
-        Block()
-        : prevOffset(sentinel),
-          nextOffset(sentinel),
-          size(0),
-          inuse(0)
-        {}
-        
-        inline void setPrev(MallocZone &zone, Block *prev)
+        // Constructor. Accepts a reference to the zone and the current block.
+        // The current block in `curr' must be a valid block in the specified
+        // zone, or else nullptr.
+        Iterator(Z *zone, T *curr)
+         : _zone(zone), _curr(curr)
         {
-            assert(getPrev(zone) != prev);
-            prevOffset = zone.getOffsetFromPointer((uint8_t *)prev);
+            assert(zone);
+            assert(!curr || zone->pointerIsInBackingMemory(curr));
         }
         
-        inline void setNext(MallocZone &zone, Block *next)
+        // Copy constructor.
+        Iterator(const Iterator<Z, T> &a) = default;
+        
+        // Pre-Increment to the next block.
+        // The block is set to nullptr at the tail.
+        Iterator<Z, T>& operator++()
         {
-            assert(getNext(zone) != next);
-            nextOffset = zone.getOffsetFromPointer((uint8_t *)next);
+            assert(_zone);
+            assert(_curr);
+            _curr = _zone->next(_curr);
+            assert(!_curr || _curr->magic == BLOCK_MAGIC);
+            return *this;
         }
         
-        inline Block* getPrev(MallocZone &zone)
+        // Post-Increment to the next block.
+        // The block is set to nullptr at the tail.
+        Iterator<Z, T> operator++(int)
         {
-            return (Block *)zone.getPointerFromOffset(prevOffset);
+            Iterator<Z, T> temp(*this);
+            operator++();
+            return temp;
         }
         
-        inline Block* getNext(MallocZone &zone)
+        T* operator*() const
         {
-            return (Block *)zone.getPointerFromOffset(nextOffset);
+            return _curr;
         }
+        
+        T* operator->() const
+        {
+            return _curr;
+        }
+        
+        // Equality operator.
+        bool operator==(const Iterator<Z, T> &a) const
+        {
+            return _zone == a._zone && _curr == a._curr;
+        }
+        
+        // Not-equality operator.
+        bool operator!=(const Iterator<Z, T> &a) const
+        {
+            return !(*this == a);
+        }
+        
+    private:
+        Z *_zone;
+        T *_curr;
     };
-#else
-    class Block
-    {
-    public:
-        Block  *_prev;
-        Block  *_next;
-        size_t size;
-        bool inuse;
-        
-        Block()
-        : _prev(nullptr),
-        _next(nullptr),
-        size(0),
-        inuse(0)
-        {}
-        
-        inline void setPrev(MallocZone &zone, Block *prev)
-        {
-            _prev = prev;
-        }
-        
-        inline void setNext(MallocZone &zone, Block *next)
-        {
-            _next = next;
-        }
-        
-        inline Block* getPrev(MallocZone &zone)
-        {
-            return _prev;
-        }
-        
-        inline Block* getNext(MallocZone &zone)
-        {
-            return _next;
-        }
-    };
-#endif
+    
+    using BlockIterator = Iterator<MallocZone, Block>;
+    using ConstBlockIterator = Iterator<const MallocZone, const Block>;
+    
+    // Default destructor.
+    ~MallocZone() = default;
+    
+    // No default constructor.
+    MallocZone() = delete;
 
-public:
-    // Initializes the malloc zone using the specified region of memory.
-    // Returns the address of the MallocZone structure stored within the memory.
-    // Allocations from the zone will always be taken from this memory region.
+    // Constructor. The zone is intialized with the specified backing memory
+    // region which is then zeroed and reset to represent a new zone.
     MallocZone(uint8_t *start, size_t size);
     
-    // Change the backing memory buffer.
-    void setBackingMemory(uint8_t *start, size_t size);
-
-    // Allocates a block of memory of the given size from the malloc zone.
-    // May return nullptr if the request cannot be satisfied.
-    // If size is zero a new minimum-sized object is allocated.
-    uint8_t* allocate(size_t size);
-
-    // Tries to change the size of the allocation pointed to by ptr to size,
-    // and returns the address of the new allocation. This may move the
-    // allocation to a different part of the heap, copying as much of the old
-    // data pointed to by ptr as will fit in the new allocation, and freeing the
-    // old allocation.
-    // 
-    // When extending an allocation, no guarantee is made as to the value of
-    // memory in the extended region.
-    // 
-    // If ptr is nullptr, realloc() is identical to a call to malloc().
-    // 
-    // If size is zero and ptr is not nullptr, a new minimum-sized object is
-    // allocated and the original object is freed.
-    uint8_t* reallocate(uint8_t *ptr, size_t newSize);
-
-    // Deallocates a memory allocation pointed to be ptr. If ptr is nullptr then
-    // no operation is performed.
-    void deallocate(uint8_t *ptr);
+    // No copy constructor.
+    MallocZone(const MallocZone &) = delete;
     
-    // Accepts a pointer returned from allocate/reallocate and returns the size
-    // of the associated block of memory.
-    size_t getBlockSize(uint8_t *ptr);
-
-    inline Block* head() const {
-        return _head;
-    }
-    
-    inline bool validate(uint8_t *ptr) const {
-        return ptr >= _start && ptr < (_start + _size);
-    }
-    
-    inline uint8_t* getPointerFromOffset(ptrdiff_t offset) const
+    // Gets the zone header.
+    inline Header* header()
     {
-        return (offset == sentinel) ? nullptr : (uint8_t *)(_start + offset);
+        assert(_header);
+        return _header;
     }
     
-    inline ptrdiff_t getOffsetFromPointer(uint8_t *pointer) const
+    // Gets the zone header.
+    inline const Header* header() const
     {
-        if (validate(pointer)) {
-            return pointer - _start;
+        assert(_header);
+        return _header;
+    }
+
+    // Gets the head of the block list.
+    inline Block* head() {
+        return &(header()->head);
+    }
+    
+    // Gets the head of the block list.
+    inline const Block* head() const {
+        return &(header()->head);
+    }
+    
+    // Gets the tail of the block list.
+    Block* tail();
+    
+    // Gets the tail of the block list.
+    const Block* tail() const;
+    
+    // Returns true if the specified address is in the backing memory region.
+    inline bool pointerIsInBackingMemory(const uint8_t *ptr) const {
+        assert(ptr);
+        const size_t size = header()->size;
+        const uint8_t *start = (uint8_t *)header();
+        const uint8_t *end = start + size;
+        return ptr >= start && ptr < end;
+    }
+    
+    // Returns true if the specified address is in the backing memory region.
+    inline bool pointerIsInBackingMemory(const Block *block) const {
+        return pointerIsInBackingMemory((const uint8_t *)block);
+    }
+    
+    // Returns true if the specified address is in the backing memory region
+    // or just after at the end of the buffer.
+    inline bool pointerIsInBackingMemoryOrJustAfter(const uint8_t *ptr) const {
+        assert(ptr);
+        const size_t size = header()->size;
+        const uint8_t *start = (uint8_t *)header();
+        const uint8_t *end = start + size;
+        return ptr >= start && ptr <= end;
+    }
+    
+    // Returns true if the specified address is in the backing memory region
+    // or just after at the end of the buffer.
+    inline bool pointerIsInBackingMemoryOrJustAfter(const Block *block) const {
+        return pointerIsInBackingMemoryOrJustAfter((const uint8_t *)block);
+    }
+    
+    // Gets the next block after the one specified.
+    // Returns nullptr if the specified block is the tail.
+    inline Block* next(const Block *block)
+    {
+        assert(pointerIsInBackingMemory(block));
+        Block *nextBlock = (Block *)(block->data + block->size);
+        assert(pointerIsInBackingMemoryOrJustAfter(nextBlock));
+        if (pointerIsInBackingMemory(nextBlock)) {
+            return nextBlock;
         } else {
-            return sentinel;
+            return nullptr;
         }
     }
     
-private:
-    uint8_t *_start;
-    size_t _size;
-    Block *_head;
+    // Gets the next block after the one specified.
+    // Returns nullptr if the specified block is the tail.
+    inline const Block* next(const Block *block) const
+    {
+        assert(pointerIsInBackingMemory(block));
+        const Block *nextBlock = (const Block *)(block->data + block->size);
+        assert(pointerIsInBackingMemoryOrJustAfter(nextBlock));
+        if (pointerIsInBackingMemory(nextBlock)) {
+            return nextBlock;
+        } else {
+            return nullptr;
+        }
+    }
     
+    // Gets the block previous to the one specified.
+    // Returns nullptr if the specified block is the head.
+    inline Block* prev(const Block *block)
+    {
+        assert(pointerIsInBackingMemory(block));
+        const unsigned offset = block->prevOffset;
+        if (offset == 0) {
+            return nullptr;
+        } else {
+            uint8_t *start = (uint8_t *)header();
+            Block *prevBlock = (Block *)(start + offset);
+            assert(pointerIsInBackingMemory(prevBlock));
+            return prevBlock;
+        }
+    }
+    
+    // Gets the block previous to the one specified.
+    // Returns nullptr if the specified block is the head.
+    inline const Block* prev(const Block *block) const
+    {
+        assert(pointerIsInBackingMemory(block));
+        const unsigned offset = block->prevOffset;
+        if (offset == 0) {
+            return nullptr;
+        } else {
+            const uint8_t *start = (const uint8_t *)header();
+            const Block *prevBlock = (const Block *)(start + offset);
+            assert(pointerIsInBackingMemory(prevBlock));
+            return prevBlock;
+        }
+    }
+    
+    // Gets the offset of the specified block from the start of the zone.
+    inline unsigned offsetForBlock(const Block *block) const
+    {
+        assert(pointerIsInBackingMemory(block));
+        const uint8_t *start = (const uint8_t *)header();
+        const uint8_t *pointer = (const uint8_t *)block;
+        return pointer - start;
+    }
+    
+    // Gets the block associated with the specified offset.
+    inline Block* blockForOffset(unsigned offset)
+    {
+        uint8_t *start = (uint8_t *)header();
+        Block *block = (Block *)(start + offset);
+        assert(blockIsInList(block));
+        return block;
+    }
+    
+    // Gets the block associated with the specified offset.
+    inline const Block* blockForOffset(unsigned offset) const
+    {
+        const uint8_t *start = (const uint8_t *)header();
+        const Block *block = (const Block *)(start + offset);
+        assert(blockIsInList(block));
+        return block;
+    }
+    
+    // Gets an iterator pointing to the head block of the list.
+    inline BlockIterator begin()
+    {
+        return BlockIterator(this, &(header()->head));
+    }
+    
+    // Gets an iterator pointing to the head block of the list.
+    inline ConstBlockIterator begin() const
+    {
+        const Block *head = (const Block *)&(header()->head);
+        return ConstBlockIterator(this, head);
+    }
+    
+    // Gets an iterator pointing to the head block of the list.
+    inline ConstBlockIterator cbegin() const
+    {
+        return begin();
+    }
+    
+    // Gets an iterator representing the end of the list.
+    // This is not the tail. Taking an iterator to the tail and incrementing it
+    // will result in this iterator.
+    inline BlockIterator end()
+    {
+        return BlockIterator(this, nullptr);
+    }
+    
+    // Gets an iterator representing the end of the list.
+    // This is not the tail. Taking an iterator to the tail and incrementing it
+    // will result in this iterator.
+    inline ConstBlockIterator end() const
+    {
+        return ConstBlockIterator(this, nullptr);
+    }
+    
+    // Gets an iterator representing the end of the list.
+    // This is not the tail. Taking an iterator to the tail and incrementing it
+    // will result in this iterator.
+    inline ConstBlockIterator cend() const
+    {
+        return end();
+    }
+    
+    // Increase the size of the backing memory buffer.
+    // The new buffer must itself be a valid zone backing buffer.
+    // Note that you must not free the old backing buffer until the call to
+    // grow() has completed.
+    void grow(uint8_t *start, size_t size);
+    
+    // Allocates a block of memory of the given size.
+    // May return nullptr if the request cannot be satisfied.
+    // If size is zero a new minimum-sized object is allocated.
+    Block* allocate(size_t size);
+    
+    // Deallocates a memory allocation pointed to by `block.'
+    // If `block' is nullptr then no operation is performed.
+    void deallocate(Block *block);
+    
+    // Tries to change the size of the allocation to size, and returns a
+    // pointer to the new block. This may move the allocation to a different
+    // part of the heap, copying as much of the old data as will fit in the new
+    // allocation, and freeing the old allocation.
+    //
+    // When extending an allocation, no guarantee is made as to the value of
+    // memory in the extended region.
+    //
+    // If block is nullptr, reallocate() is identical to a call to allocate().
+    //
+    // If size is zero and block is not nullptr, a new minimum-sized object is
+    // allocated and the original object is freed.
+    Block* reallocate(Block *block, size_t newSize);
+    
+    // Returns true if the block could be found in the list, false otherwise.
+    bool blockIsInList(const Block *block) const;
+    
+    // Print allocations to the log for debugging purposes.
+    void dump() const;
+    
+private:
+    Header *_header;
+    
+    void internalSetBackingMemory(uint8_t *start, size_t size);
     void considerSplittingBlock(MallocZone::Block *block, size_t size);
 };
 

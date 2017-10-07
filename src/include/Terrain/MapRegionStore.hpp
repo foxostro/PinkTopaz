@@ -41,14 +41,15 @@ public:
 private:
     std::mutex _mutex;
     VoxelDataSerializer _serializer;
+    
     size_t _zoneBackingMemorySize;
     uint8_t *_zoneBackingMemory;
     MallocZone _zone;
-    std::map<Morton3, ptrdiff_t> _lookup;
+    std::map<Morton3, unsigned> _lookup;
     
     bool hasBlock(Morton3 key);
-    uint8_t* getBlock(Morton3 key);
-    uint8_t* getBlockAndResize(Morton3 key, size_t size);
+    MallocZone::Block* getBlock(Morton3 key);
+    MallocZone::Block* getBlockAndResize(Morton3 key, size_t size);
     
     void stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes);
     boost::optional<std::vector<uint8_t>> getChunkBytesFromStash(Morton3 key);

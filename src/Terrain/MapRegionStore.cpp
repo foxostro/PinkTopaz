@@ -11,7 +11,7 @@
 #include "SDL.h" // for SDL_Log
 #include <boost/filesystem.hpp>
 
-static constexpr size_t initialBackingBufferSize = 1024*1024*1024;
+static constexpr size_t initialBackingBufferSize = 256;
 
 static boost::filesystem::path fileNameForChunk(Morton3 key)
 {
@@ -57,29 +57,25 @@ bool MapRegionStore::hasBlock(Morton3 key)
     return iter != _lookup.end();
 }
 
-uint8_t* MapRegionStore::getBlock(Morton3 key)
+MallocZone::Block* MapRegionStore::getBlock(Morton3 key)
 {
-    uint8_t *block = nullptr;
+    MallocZone::Block *block = nullptr;
     
     if (auto iter = _lookup.find(key); iter != _lookup.end()) {
-        const ptrdiff_t offset = iter->second;
-        block = _zone.getPointerFromOffset(offset);
-    }
-    
-    if (block) {
-        _lookup[key] = _zone.getOffsetFromPointer(block);
+        unsigned offset = iter->second;
+        block = _zone.blockForOffset(offset);
     }
     
     return block;
 }
 
-uint8_t* MapRegionStore::getBlockAndResize(Morton3 key, size_t size)
+MallocZone::Block* MapRegionStore::getBlockAndResize(Morton3 key, size_t size)
 {
-    uint8_t *block = nullptr;
+    MallocZone::Block *block = nullptr;
     
     if (auto iter = _lookup.find(key); iter != _lookup.end()) {
-        const ptrdiff_t offset = iter->second;
-        block = _zone.getPointerFromOffset(offset);
+        const unsigned offset = iter->second;
+        block = _zone.blockForOffset(offset);
     }
     
     SDL_Log("reallocating the block for size %zu", size);
@@ -91,16 +87,28 @@ uint8_t* MapRegionStore::getBlockAndResize(Morton3 key, size_t size)
         const size_t newSize = _zoneBackingMemorySize * 2;
         SDL_Log("[%zu] Resizing backing memory buffer from %zu to %zu",
                 count, _zoneBackingMemorySize, newSize);
-        assert(newSize < 1073741824);
-        _zoneBackingMemory = (uint8_t *)realloc(_zoneBackingMemory, newSize);
+        assert(newSize < 1024*1024*1024);
+        
+        // Create a new buffer with the contents of the old buffer, but bigger.
+        uint8_t *newBuffer = (uint8_t *)calloc(1, newSize);
+        memcpy(newBuffer, _zoneBackingMemory, _zoneBackingMemorySize);
+        assert(newBuffer);
+        
+        _zone.grow(newBuffer, newSize);
+        
+        // We can't free the old buffer until after the call to grow().
+        free(_zoneBackingMemory);
+        _zoneBackingMemory = newBuffer;
         _zoneBackingMemorySize = newSize;
-        _zone.setBackingMemory(_zoneBackingMemory, _zoneBackingMemorySize);
+        
+        SDL_Log("Finished resizing backing memory.\n\n\n");
+        
         block = _zone.reallocate(block, size);
         ++count;
     }
     SDL_Log("[%zu] got the block: %p", count, block);
     
-    _lookup[key] = _zone.getOffsetFromPointer(block);
+    _lookup[key] = _zone.offsetForBlock(block);
     
     return block;
 }
@@ -108,9 +116,17 @@ uint8_t* MapRegionStore::getBlockAndResize(Morton3 key, size_t size)
 void MapRegionStore::stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes)
 {
     const size_t size = bytes.size();
-    uint8_t *block = getBlockAndResize(key, size);
-    memcpy(block, &bytes[0], size);
-    _lookup[key] = _zone.getOffsetFromPointer(block);
+    assert(size > 0);
+    
+    MallocZone::Block *block = getBlockAndResize(key, size);
+    
+    // Copy the bytes into the block.
+    memcpy(block->data, &bytes[0], size);
+    
+    // Any remaining space in the block is zeroed.
+    memset(block->data + size, 0, block->size - size);
+    
+    _lookup[key] = _zone.offsetForBlock(block);
 }
 
 boost::optional<std::vector<uint8_t>> MapRegionStore::getChunkBytesFromStash(Morton3 key)
@@ -119,8 +135,8 @@ boost::optional<std::vector<uint8_t>> MapRegionStore::getChunkBytesFromStash(Mor
         return boost::none;
     }
     
-    uint8_t *block = getBlock(key);
-    size_t size = _zone.getBlockSize(block);
+    MallocZone::Block *block = getBlock(key);
+    const size_t size = block->size;
     
     std::vector<uint8_t> bytes(size);
     assert(bytes.size() >= size);
