@@ -114,7 +114,7 @@ void MallocZone::grow(uint8_t *start, size_t size)
 MallocZone::Block* MallocZone::allocate(size_t size)
 {
 #if VERBOSE
-    SDL_Log("\n\nallocate:");
+    SDL_Log("\n\nallocate(%zu):", size);
     dump();
 #endif
     
@@ -171,7 +171,7 @@ MallocZone::Block* MallocZone::allocate(size_t size)
 void MallocZone::deallocate(Block *block)
 {
 #if VERBOSE
-    SDL_Log("\n\ndeallocate:");
+    SDL_Log("\n\ndeallocate(%p):", block);
     dump();
 #endif
     
@@ -221,6 +221,13 @@ void MallocZone::deallocate(Block *block)
         // Remove the magic tag so we can't mistake this for a valid block in
         // the future.
         following->magic = 0;
+        
+        // Update the prev offset in the block after `following' so we can
+        // continue to look back.
+        following = next(following);
+        if (following) {
+            following->prevOffset = offsetForBlock(block);
+        }
     }
     
 #ifndef NDEBUG
@@ -239,7 +246,7 @@ void MallocZone::deallocate(Block *block)
 MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
 {
 #if VERBOSE
-    SDL_Log("\n\nreallocate:");
+    SDL_Log("\n\nreallocate(%p, %zu):", block, newSize);
     dump();
 #endif
     
@@ -293,7 +300,9 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         
         // Update the prev offset in the new following block.
         following = next(block);
-        following->prevOffset = offsetForBlock(block);
+        if (following) {
+            following->prevOffset = offsetForBlock(block);
+        }
 
         // Split the remaining free space if there's enough of it.
         considerSplittingBlock(block, newSize);
@@ -357,7 +366,7 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
 
 void MallocZone::dump() const
 {
-    SDL_Log("MallocZone::dump() <<<<<<<<<<<<<<<<");
+    SDL_Log("MallocZone::dump() {");
     
     // Check the magic number. If this is not set then the backing memory
     // region cannot be valid.
@@ -371,7 +380,7 @@ void MallocZone::dump() const
         assert(block);
         assert(block->magic == BLOCK_MAGIC);
         
-        SDL_Log("%p\t{next=%p, prev=%p, inuse=%d, size=%u}",
+        SDL_Log("\t%p\t{next=%p, prev=%p, inuse=%d, size=%u}",
                 block,
                 next(block),
                 prev(block),
@@ -384,7 +393,7 @@ void MallocZone::dump() const
         prevBlock = *iter;
     }
     
-    SDL_Log(">>>>>>>>>>>>>>>> MallocZone::dump()");
+    SDL_Log("}");
 }
 
 void MallocZone::internalSetBackingMemory(uint8_t *start, size_t size)
