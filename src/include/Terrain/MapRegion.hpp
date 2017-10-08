@@ -21,7 +21,7 @@
 class MapRegion
 {
 public:
-    ~MapRegion() = default;
+    ~MapRegion();
     MapRegion();
     
     // Loads a voxel chunk from file, if available.
@@ -35,21 +35,35 @@ public:
 private:
     static constexpr size_t InitialBackingBufferSize = 256;
     
+    struct LookUpTableEntry
+    {
+        uint64_t key;
+        uint32_t offset;
+    };
+    
+    struct LookupTable
+    {
+        uint32_t capacity;
+        uint32_t numberOfEntries;
+        LookUpTableEntry entries[0];
+    };
+    
     std::mutex _mutex;
     VoxelDataSerializer _serializer;
     
     size_t _zoneBackingMemorySize;
     uint8_t *_zoneBackingMemory;
-    // TODO: add a header to the backing region, including a lookup table offset
     MallocZone _zone;
-    std::map<Morton3, unsigned> _lookup; // TODO: put the lookup table in the zone
+    LookupTable *_lookup;
     
-    bool hasBlock(Morton3 key);
     MallocZone::Block* getBlock(Morton3 key);
     MallocZone::Block* getBlockAndResize(Morton3 key, size_t size);
     
     void stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes);
     boost::optional<std::vector<uint8_t>> getChunkBytesFromStash(Morton3 key);
+    
+    void storeOffsetForKey(Morton3 key, uint32_t offset);
+    boost::optional<uint32_t> loadOffsetForKey(Morton3 key);
 };
 
 #endif /* MapRegion_hpp */
