@@ -34,7 +34,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
    _voxels(std::make_shared<TransactedVoxelData>(std::make_unique<VoxelData>(
        _voxelDataGenerator,
        TERRAIN_CHUNK_SIZE,
-       std::make_unique<MapRegionStore>(_voxelDataGenerator->boundingBox(), TERRAIN_CHUNK_SIZE),
+       std::make_unique<MapRegionStore>(_voxelDataGenerator->boundingBox(), MAP_REGION_SIZE),
        dispatcherVoxelData))),
    _cameraPosition(glm::vec3())
 {

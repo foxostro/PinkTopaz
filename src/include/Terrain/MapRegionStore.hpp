@@ -13,11 +13,11 @@
 #include "Terrain/VoxelDataSerializer.hpp"
 #include "Terrain/MapRegion.hpp"
 #include "Grid/RegionMutualExclusionArbitrator.hpp"
-#include "Grid/Array3D.hpp"
+#include "Grid/SparseGrid.hpp"
 #include <boost/optional.hpp>
 
 // Stores/Loads voxel chunks on the file system.
-class MapRegionStore : GridIndexer
+class MapRegionStore
 {
 public:
     ~MapRegionStore() = default;
@@ -38,8 +38,9 @@ public:
     void store(const AABB &boundingBox, Morton3 key, const Array3D<Voxel> &voxels);
     
 private:
-    RegionMutualExclusionArbitrator _lockArbitrator;
-    MapRegion _mapRegion; // TODO: Need multiple map regions
+    SparseGrid<std::shared_ptr<MapRegion>> _regions;
+    
+    std::shared_ptr<MapRegion> get(const glm::vec3 &p);
 };
 
 #endif /* MapRegionStore_hpp */

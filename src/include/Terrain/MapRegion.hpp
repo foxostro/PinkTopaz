@@ -33,8 +33,8 @@ public:
     void store(Morton3 key, const Array3D<Voxel> &voxels);
     
 private:
-    static constexpr size_t InitialBackingBufferSize = 4096;
-    static constexpr size_t InitialLookTableCapacity = 1024;
+    static constexpr size_t InitialBackingBufferSize = 1024*1024;
+    static constexpr size_t InitialLookTableCapacity = 4096;
     
     struct LookUpTableEntry
     {
