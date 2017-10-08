@@ -10,6 +10,6 @@
 #define TerrainConfig_hpp
 
 static constexpr unsigned TERRAIN_CHUNK_SIZE = 32;
-static constexpr float ACTIVE_REGION_SIZE = 128.0f;
+static constexpr float ACTIVE_REGION_SIZE = 256.0f;
 
 #endif /* TerrainConfig_hpp */

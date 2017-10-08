@@ -101,9 +101,17 @@ VoxelDataSerializer::VoxelDataSerializer()
 {}
 
 Array3D<Voxel> VoxelDataSerializer::load(const AABB &boundingBox,
-                                         const std::vector<uint8_t> &bytes)
+                                         const std::vector<uint8_t> &bytesPlusLength)
 {
-    std::vector<uint8_t> decompressedBytes = decompress(bytes);
+    assert(bytesPlusLength.size() > sizeof(uint32_t));
+    const uint32_t size = *((uint32_t *)&bytesPlusLength[0]);
+    assert(size < bytesPlusLength.size());
+    std::vector<uint8_t> compressedBytes;
+    compressedBytes.insert(compressedBytes.end(),
+                           bytesPlusLength.begin() + sizeof(uint32_t),
+                           bytesPlusLength.begin() + sizeof(uint32_t) + size);
+    
+    std::vector<uint8_t> decompressedBytes = decompress(compressedBytes);
     const Header &header = *((Header *)decompressedBytes.data());
     
     if (header.magic != VOXEL_MAGIC) {
@@ -126,8 +134,7 @@ Array3D<Voxel> VoxelDataSerializer::load(const AABB &boundingBox,
 
 std::vector<uint8_t> VoxelDataSerializer::store(const Array3D<Voxel> &voxels)
 {
-    glm::ivec3 res = voxels.gridResolution();
-    
+    const glm::ivec3 res = voxels.gridResolution();
     const size_t numberOfVoxelBytes = res.x * res.y * res.z * sizeof(Voxel);
     std::vector<uint8_t> bytes(numberOfVoxelBytes + sizeof(Header));
     
@@ -141,5 +148,17 @@ std::vector<uint8_t> VoxelDataSerializer::store(const Array3D<Voxel> &voxels)
     
     memcpy((void *)header.voxels, (const void *)voxels.data(), header.len);
     
-    return compress(bytes);
+    auto compressedBytes = compress(bytes);
+    
+    // Add a four byte length to the beginning so we can get the uncompressed
+    // bytes back later.
+    const size_t compressedBytesSize = compressedBytes.size();
+    assert(compressedBytesSize < UINT32_MAX);
+    compressedBytes.insert(compressedBytes.begin(), 0);
+    compressedBytes.insert(compressedBytes.begin(), 0);
+    compressedBytes.insert(compressedBytes.begin(), 0);
+    compressedBytes.insert(compressedBytes.begin(), 0);
+    *((uint32_t *)&compressedBytes[0]) = (uint32_t)compressedBytesSize;
+    
+    return compressedBytes;
 }

@@ -370,9 +370,8 @@ void MallocZone::dump() const
     
     // Check the magic number. If this is not set then the backing memory
     // region cannot be valid.
-    const Header &header = *(this->header());
-    assert(header.magic == ZONE_MAGIC);
-            
+    assert(this->header()->magic == ZONE_MAGIC);
+    
     const Block *prevBlock = nullptr;
     for (auto iter = begin(); iter != end(); ++iter) {
         const Block *block = *iter;
