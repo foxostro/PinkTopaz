@@ -374,7 +374,12 @@ public:
     bool blockIsInList(const Block *block) const;
     
     // Print allocations to the log for debugging purposes.
-    void dump() const;
+    void validate(bool dump) const;
+    inline void dump() const
+    {
+        validate(true);
+        
+    }
     
 private:
     Header *_header;

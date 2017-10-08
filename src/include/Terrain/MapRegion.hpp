@@ -33,7 +33,8 @@ public:
     void store(Morton3 key, const Array3D<Voxel> &voxels);
     
 private:
-    static constexpr size_t InitialBackingBufferSize = 256;
+    static constexpr size_t InitialBackingBufferSize = 4096;
+    static constexpr size_t InitialLookTableCapacity = 1024;
     
     struct LookUpTableEntry
     {
@@ -54,7 +55,13 @@ private:
     size_t _zoneBackingMemorySize;
     uint8_t *_zoneBackingMemory;
     MallocZone _zone;
-    LookupTable *_lookup;
+    uint32_t _lookupTableOffset;
+    
+    // A call to growBackingMemory() may invalidate all Block* from the zone.
+    void growBackingMemory();
+    
+    // A call to growLookupTable() may invalidate all Block* from the zone.
+    void growLookupTable(size_t newCapacity);
     
     MallocZone::Block* getBlock(Morton3 key);
     MallocZone::Block* getBlockAndResize(Morton3 key, size_t size);
@@ -62,7 +69,26 @@ private:
     void stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes);
     boost::optional<std::vector<uint8_t>> getChunkBytesFromStash(Morton3 key);
     
+    inline MallocZone::Block* lookupTableBlock()
+    {
+        if (_lookupTableOffset == 0) {
+            return nullptr;
+        } else {
+            return _zone.blockForOffset(_lookupTableOffset);
+        }
+    }
+    
+    inline LookupTable& lookup()
+    {
+        MallocZone::Block *block = lookupTableBlock();
+        assert(block);
+        return *((LookupTable *)block->data);
+    }
+    
+    // A call to storeOffsetForKey() may invalidate all Block* from the zone.
+    // This is due to having to potentially grow the lookup table and the zone.
     void storeOffsetForKey(Morton3 key, uint32_t offset);
+    
     boost::optional<uint32_t> loadOffsetForKey(Morton3 key);
 };
 

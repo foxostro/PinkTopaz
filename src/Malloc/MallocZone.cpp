@@ -113,6 +113,8 @@ MallocZone::Block* MallocZone::allocate(size_t size)
     dump();
 #endif
     
+    validate(false);
+    
     // Blocks for allocations are always multiples of four bytes in size.
     // This ensures that blocks are always aligned on four byte boundaries
     // given that the initial block is also aligned on a four byte boundary.
@@ -160,6 +162,8 @@ MallocZone::Block* MallocZone::allocate(size_t size)
     dump();
 #endif
     
+    validate(false);
+    
     return best;
 }
 
@@ -169,6 +173,8 @@ void MallocZone::deallocate(Block *block)
     SDL_Log("\n\ndeallocate(%p):", block);
     dump();
 #endif
+    
+    validate(false);
     
     if (!block) {
 #if VERBOSE
@@ -246,6 +252,8 @@ void MallocZone::deallocate(Block *block)
     SDL_Log("\n\nstate after deallocate:");
     dump();
 #endif
+    
+    validate(false);
 }
 
 MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
@@ -254,6 +262,8 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
     SDL_Log("\n\nreallocate(%p, %zu):", block, newSize);
     dump();
 #endif
+    
+    validate(false);
     
     if (!block) {
 #if VERBOSE
@@ -283,6 +293,7 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
     // For example, the block is shrinking.
     if (block->size >= newSize) {
         considerSplittingBlock(block, newSize);
+        validate(false);
         return block;
     }
 
@@ -321,6 +332,7 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         SDL_Log("\n\nstate after reallocate: [case where we extend the block]");
         dump();
 #endif
+        validate(false);
         return block;
     }
 
@@ -335,6 +347,7 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         SDL_Log("\n\nstate after reallocate: [case where we allocate a new block]");
         dump();
 #endif
+        validate(false);
         return newAlloc;
     }
 
@@ -370,7 +383,7 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         SDL_Log("\n\nstate after reallocate: [case where we merge with previous block]");
         dump();
 #endif
-        
+        validate(false);
         return newAlloc;
     }
 
@@ -378,17 +391,19 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
     SDL_Log("\n\nreallocate failed, returning NULL. state after reallocate:");
     dump();
 #endif
+    validate(false);
     return nullptr;
 }
 
-void MallocZone::dump() const
+void MallocZone::validate(bool dump) const
 {
-    SDL_Log("MallocZone::dump() {");
+    if (dump) SDL_Log("MallocZone::dump() {");
     
     // Check the magic number. If this is not set then the backing memory
     // region cannot be valid.
     assert(this->header()->magic == ZONE_MAGIC);
     
+    int i = 0;
     const Block *prevBlock = nullptr;
     for (auto iter = begin(); iter != end(); ++iter) {
         const Block *block = *iter;
@@ -396,22 +411,24 @@ void MallocZone::dump() const
         assert(block);
         assert(block->magic == BLOCK_MAGIC);
         
-        SDL_Log("\t%p\t{next=%p, prev=%p, inuse=%d, size=%u}",
-                block,
-                next(block),
-                prev(block),
-                block->inuse,
-                block->size);
+        if (dump) SDL_Log("\t[%d]\t%p\t{next=%p, prev=%p, inuse=%d, size=%u}",
+                          i,
+                          block,
+                          next(block),
+                          prev(block),
+                          block->inuse,
+                          block->size);
         
         // The prev pointer must actually point to the previous block.
         assert(prev(block) == prevBlock);
         
         prevBlock = *iter;
+        ++i;
     }
     
     assert(tail() == blockForOffset(header()->tailOffset));
     
-    SDL_Log("}");
+    if (dump) SDL_Log("}");
 }
 
 void MallocZone::internalSetBackingMemory(uint8_t *start, size_t size)
