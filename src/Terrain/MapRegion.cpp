@@ -55,30 +55,16 @@ MallocZone::Block* MapRegion::getBlockAndResize(Morton3 key, size_t size)
         block = _zone.blockForOffset(offset);
     }
     
-    size_t count = 0;
     block = _zone.reallocate(block, size);
     while (!block) {
         // Failed to allocate the block.
         // Resize the backing memory buffer and try again.
-        const size_t newSize = _zoneBackingMemorySize * 2;
+        _zoneBackingMemorySize *= 2;
+        _zoneBackingMemory = (uint8_t *)reallocf(_zoneBackingMemory, _zoneBackingMemorySize);
+        _zone.grow(_zoneBackingMemory, _zoneBackingMemorySize);
         
-        // TODO: Change MallocZone so we can realloc or free the old buffer
-        // before we call grow().
-        
-        // Create a new buffer with the contents of the old buffer, but bigger.
-        uint8_t *newBuffer = (uint8_t *)calloc(1, newSize);
-        memcpy(newBuffer, _zoneBackingMemory, _zoneBackingMemorySize);
-        assert(newBuffer);
-        
-        _zone.grow(newBuffer, newSize);
-        
-        // We can't free the old buffer until after the call to grow().
-        free(_zoneBackingMemory);
-        _zoneBackingMemory = newBuffer;
-        _zoneBackingMemorySize = newSize;
-        
+        // Try again.
         block = _zone.reallocate(block, size);
-        ++count;
     }
     
     _lookup[key] = _zone.offsetForBlock(block);
