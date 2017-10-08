@@ -132,7 +132,7 @@ void Application::run()
         
     SDL_SetRelativeMouseMode(SDL_TRUE);
     
-    const unsigned hardwareConcurrency = 1;//std::max(1u, std::thread::hardware_concurrency());
+    const unsigned hardwareConcurrency = std::max(1u, std::thread::hardware_concurrency());
     
     inner(createDefaultGraphicsDevice(*_window),
           std::make_shared<TaskDispatcher>(1),
