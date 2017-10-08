@@ -13,6 +13,12 @@
 #include <cstddef>
 #include <cassert>
 
+// Malloc-like allocator. This allocates and deallocates blocks of memory in a
+// provided memory buffer. The heap tracking information contains no raw
+// pointers and is transparently relocatable.
+//
+// It is a design goal to be able to persistently store a MallocZone in a
+// memory mapped file.
 class MallocZone
 {
 public:
@@ -53,6 +59,12 @@ public:
         // Size of the backing memory region.
         uint32_t size;
         
+        // The offset (in number of bytes) of the tail block from the start of
+        // the zone.
+        uint32_t tailOffset;
+        
+        // The region of memory which follows the header is a list of Block
+        // structures, all placed adjacent to one another in memory.
         Block head;
     };
     
@@ -163,10 +175,10 @@ public:
         return &(header()->head);
     }
     
-    // Gets the tail of the block list.
+    // Scans the list to find the tail of the block list.
     Block* tail();
     
-    // Gets the tail of the block list.
+    // Scans the list to find the tail of the block list.
     const Block* tail() const;
     
     // Returns true if the specified address is in the backing memory region.

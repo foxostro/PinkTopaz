@@ -42,6 +42,9 @@ MallocZone::MallocZone(uint8_t *start, size_t size)
     // The initial block encompasses all memory between the end of the header
     // and the end of the memory buffer.
     head.size = size - sizeof(Header);
+    
+    // Remember where the tail block is.
+    header()->tailOffset = offsetForBlock(&head);
 }
 
 MallocZone::Block* MallocZone::tail()
@@ -65,17 +68,7 @@ const MallocZone::Block* MallocZone::tail() const
 void MallocZone::grow(uint8_t *start, size_t size)
 {
     assert(start);
-    assert(size >= header()->size); // cannot shrink
-    
-#if VERBOSE
-    SDL_Log("\n\ngrow:");
-    dump();
-#endif
-    
-    // Remember where the tail block was.
-    // Once we call internalSetBackingMemory(), the tail() method won't be able
-    // to find it as there's no explicit next pointer.
-    const unsigned tailOffset = offsetForBlock(tail());
+    assert(size > sizeof(Header));
     
     internalSetBackingMemory(start, size);
     
@@ -84,7 +77,7 @@ void MallocZone::grow(uint8_t *start, size_t size)
     assert(header()->magic == ZONE_MAGIC);
     
     // Get the tail block.
-    Block *oldTail = blockForOffset(tailOffset);
+    Block *oldTail = blockForOffset(header()->tailOffset);
     
     const uint8_t *end = start + header()->size;
     const uint8_t *endOfOldTailBlock = (const uint8_t *)oldTail->data + oldTail->size;
@@ -96,6 +89,8 @@ void MallocZone::grow(uint8_t *start, size_t size)
         const uint8_t *endOfNewTailBlock = start + size;
         newTail->size = (size_t)(endOfNewTailBlock - (uint8_t *)newTail) - sizeof(Block);
         newTail->inuse = false;
+        
+        header()->tailOffset = offsetForBlock(newTail);
     } else {
         // If the tail block is free then increase it's size to encompass the
         // rest of the newly enlarged buffer.
@@ -196,6 +191,11 @@ void MallocZone::deallocate(Block *block)
         preceding->size += block->size + sizeof(Block);
         if (following) {
             following->prevOffset = offsetForBlock(preceding);
+        } else {
+            // So, it turns out we removed the tail. The preceding block
+            // becomes the new tail. So, let's update the header accordingly.
+            assert(tail() == preceding);
+            header()->tailOffset = offsetForBlock(preceding);
         }
         
         // Remove the magic tag so we can't mistake this for a valid block in
@@ -227,6 +227,11 @@ void MallocZone::deallocate(Block *block)
         following = next(following);
         if (following) {
             following->prevOffset = offsetForBlock(block);
+        } else {
+            // So, it turns out we removed the tail. The block has become the
+            // new tail. So, let's update the header accordingly.
+            assert(tail() == block);
+            header()->tailOffset = offsetForBlock(block);
         }
     }
     
@@ -302,6 +307,11 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         following = next(block);
         if (following) {
             following->prevOffset = offsetForBlock(block);
+        } else {
+            // So, it turns out we removed the tail. The block has become the
+            // new tail. So, let's update the header accordingly.
+            assert(tail() == block);
+            header()->tailOffset = offsetForBlock(block);
         }
 
         // Split the remaining free space if there's enough of it.
@@ -340,7 +350,14 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         // hole in the zone.
         preceding->inuse = true;
         preceding->size = block->size + preceding->size + sizeof(Block);
-        following->prevOffset = offsetForBlock(preceding);
+        
+        if (following) {
+            following->prevOffset = offsetForBlock(preceding);
+        } else {
+            // It looks like `block' was the tail, which is now `preceding'.
+            assert(tail() == preceding);
+            header()->tailOffset = offsetForBlock(preceding);
+        }
 
         // Move the contents to the beginning of the new, combined block.
         newAlloc = preceding;
@@ -392,6 +409,8 @@ void MallocZone::dump() const
         prevBlock = *iter;
     }
     
+    assert(tail() == blockForOffset(header()->tailOffset));
+    
     SDL_Log("}");
 }
 
@@ -440,6 +459,9 @@ void MallocZone::considerSplittingBlock(Block *block, size_t size)
         Block *following = next(newBlock);
         if (following) {
             following->prevOffset = offsetForBlock(newBlock);
+        } else {
+            // Ok. This is the new tail. Update the header accordingly.
+            header()->tailOffset = offsetForBlock(newBlock);
         }
         
         // If the next block is empty then merge the new free block with the
@@ -456,6 +478,10 @@ void MallocZone::considerSplittingBlock(Block *block, size_t size)
             following = next(newBlock);
             if (following) {
                 following->prevOffset = offsetForBlock(newBlock);
+            } else {
+                // Ok. This is the new tail. Update the header accordingly.
+                assert(tail() == newBlock);
+                header()->tailOffset = offsetForBlock(newBlock);
             }
         }
     }

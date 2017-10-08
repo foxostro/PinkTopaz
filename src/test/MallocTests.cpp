@@ -429,6 +429,75 @@ TEST_CASE("Test Realloc Relocate 2", "[Malloc]") {
     }
 }
 
+// Like "Test Realloc Relocate 2" but we're specifically testing the case where
+// we extend the tail block backwards into the free space preceding it.
+TEST_CASE("Test Realloc Relocate 3", "[Malloc]") {
+    memset(g_buffer, 0, sizeof(g_buffer));
+    MallocZone zone(g_buffer, sizeof(g_buffer));
+    
+    MallocZone::Block *a = zone.allocate(SMALL);
+    REQUIRE(a);
+    
+    MallocZone::Block *b = zone.allocate(SMALL);
+    REQUIRE(b);
+    
+    const size_t remainingSpace = sizeof(g_buffer) -
+                                  sizeof(MallocZone::Header) -
+                                  2*sizeof(MallocZone::Block) -
+                                  2*SMALL;
+    MallocZone::Block *c = zone.allocate(remainingSpace);
+    REQUIRE(c);
+    
+    // Heap should be full now.
+    REQUIRE(!zone.allocate(0));
+    
+    // Free up a hole directly behind the tail block.
+    zone.deallocate(b);
+    
+#if VERBOSE
+    printf("Before:\n");
+    for (MallocZone::Block *block = zone->head; block; block = zone.next(block)) {
+        printf("size = %zu ; inuse = %d\n", block->size, block->inuse);
+    }
+#endif
+    
+    // If we merge the tail block into the free space preceding it then there
+    // is just enough space for this allocation to succeed.
+    MallocZone::Block *d = zone.reallocate(c, remainingSpace + SMALL + sizeof(MallocZone::Block));
+    REQUIRE(d);
+    REQUIRE(b == d);
+    
+    // TODO: Should I check that the contents were actually moved correctly?
+    
+#if VERBOSE
+    printf("After:\n");
+    for (MallocZone::Block *block = zone.head(); block; block = zone.next(block)) {
+        printf("size = %zu ; inuse = %d\n", block->size, block->inuse);
+    }
+#endif
+    
+    size_t count = 0;
+    for (MallocZone::Block *block = zone.head(); block; block = zone.next(block)) {
+        ++count;
+    }
+    REQUIRE(count == 2);
+    
+    size_t expectedSize[] = {
+        SMALL,
+        sizeof(g_buffer) - sizeof(MallocZone::Header) - sizeof(MallocZone::Block) - SMALL
+    };
+    size_t expectedInUse[] = {
+        true,
+        true,
+    };
+    count = 0;
+    for (MallocZone::Block *block = zone.head(); block; block = zone.next(block)) {
+        REQUIRE(block->size == expectedSize[count]);
+        REQUIRE(block->inuse == expectedInUse[count]);
+        ++count;
+    }
+}
+
 // Realloc tries to extend an allocation in place. If it cannot then it
 // allocates a new block and moves the allocation. In the case where the
 // preceding block has space then we merge the block into the preceding block
