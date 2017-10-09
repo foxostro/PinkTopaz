@@ -22,8 +22,8 @@
 class MallocZone
 {
 public:
-    static constexpr uint32_t ZONE_MAGIC = 0xcafecafe;
-    static constexpr uint32_t BLOCK_MAGIC = 0xbeefbeef;
+    static constexpr uint32_t ZONE_MAGIC = 'enoz';
+    static constexpr uint32_t BLOCK_MAGIC = 'kolb';
     
     // A memory allocation within the zone.
     struct Block
@@ -38,10 +38,10 @@ public:
         uint32_t prevOffset;
         
         // 1 if the block is being used, 0 if free.
-        uint32_t inuse:1;
+        uint32_t inuse;
         
         // The number of bytes in `data'.
-        uint32_t size:31;
+        uint32_t size;
         
         // The memory buffer associated with the block.
         uint8_t data[0];
