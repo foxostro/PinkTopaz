@@ -25,9 +25,7 @@ public:
     // Constructor.
     // boundingBox -- The bounding box is the bounds of the world and should
     //                match the voxel generator's bounds.
-    // mapRegionSize -- The world is divided into a grid of map regions, each of
-    //                  this size.
-    MapRegionStore(const AABB &boundingBox, unsigned mapRegionSize);
+    MapRegionStore(const AABB &boundingBox, const glm::ivec3 &gridResolution);
     
     // Loads a voxel chunk from file, if available.
     // The key uniquely identifies the chunk in the voxel chunk in space.

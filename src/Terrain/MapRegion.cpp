@@ -7,21 +7,25 @@
 //
 
 #include "Terrain/MapRegion.hpp"
+#include "SDL.h" // for SDL_Log
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 
 MapRegion::~MapRegion()
 {
-    free(_zoneBackingMemory);
+    unmapFile();
 }
 
-MapRegion::MapRegion()
- : _zoneBackingMemorySize(InitialBackingBufferSize),
-   _zoneBackingMemory((uint8_t *)calloc(1, _zoneBackingMemorySize)),
-   _zone(_zoneBackingMemory, _zoneBackingMemorySize),
+MapRegion::MapRegion(const boost::filesystem::path &regionFileName)
+ : _regionFileName(regionFileName),
+   _fd(0),
+   _zoneBackingMemorySize(0),
+   _zoneBackingMemory(nullptr),
    _lookupTableOffset(0)
 {
-    if (!_zoneBackingMemory) {
-        throw Exception("Out of Memory");
-    }
+    mapFile(InitialBackingBufferSize);
 }
 
 boost::optional<Array3D<Voxel>> MapRegion::load(const AABB &bbox, Morton3 key)
@@ -42,14 +46,90 @@ void MapRegion::store(Morton3 key, const Array3D<Voxel> &voxels)
     stashChunkBytes(key, _serializer.store(voxels));
 }
 
+void MapRegion::mapFile(size_t minimumFileSize)
+{
+    bool mustReset = false;
+    
+    unmapFile();
+    
+//    SDL_Log("[%p] mapping file: %s", this, _regionFileName.c_str());
+    
+    if ((_fd = open(_regionFileName.c_str(), O_RDWR | O_CREAT, 0)) < 0) {
+        throw Exception("Failed to open file: %s with errno=%d", _regionFileName.c_str(), errno);
+    }
+    
+    if (fchmod(_fd, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) < 0) {
+        throw Exception("Failed to chmod file: %s with errno=%d", _regionFileName.c_str(), errno);
+    }
+    
+    off_t fileSize;
+    {
+        struct stat s;
+        if (fstat(_fd, &s) < 0) {
+            close(_fd);
+            throw Exception("Failed to stat file: %s with errno=%d", _regionFileName.c_str(), errno);
+        }
+        fileSize = s.st_size;
+    }
+    
+    if (fileSize == 0) {
+        mustReset = true;
+    }
+    
+    if (fileSize < minimumFileSize) {
+        if (ftruncate(_fd, minimumFileSize) < 0) {
+            close(_fd);
+            throw Exception("Failed to resize file: %s with errno=%d", _regionFileName.c_str(), errno);
+        }
+        fileSize = minimumFileSize;
+    }
+    
+    _zoneBackingMemorySize = fileSize;
+    _zoneBackingMemory = (uint8_t *)mmap(nullptr,
+                                         fileSize,
+                                         PROT_READ | PROT_WRITE,
+                                         MAP_SHARED,
+                                         _fd,
+                                         0);
+    
+    if (MAP_FAILED == _zoneBackingMemory) {
+        close(_fd);
+        throw Exception("Failed to map file: %s with errno=%d", _regionFileName.c_str(), errno);
+    }
+    
+    if (mustReset) {
+//        SDL_Log("[%p] resetting zone for file: %s", this, _regionFileName.c_str());
+        _zone.reset(_zoneBackingMemory, _zoneBackingMemorySize);
+    } else {
+        _zone.grow(_zoneBackingMemory, _zoneBackingMemorySize);
+    }
+}
+
+void MapRegion::unmapFile()
+{
+    if (_zoneBackingMemory) {
+//        SDL_Log("[%p] unmapping file: %s", this, _regionFileName.c_str());
+        
+        if (munmap(_zoneBackingMemory, _zoneBackingMemorySize) < 0) {
+            SDL_Log("Failed to unmap file.");
+        }
+        
+        _zoneBackingMemory = nullptr;
+        _zoneBackingMemorySize = 0;
+    }
+    
+    if (_fd) {
+        if (close(_fd) < 0) {
+            SDL_Log("Failed to close file.");
+        }
+        _fd = 0;
+    }
+}
+
 void MapRegion::growBackingMemory()
 {
-    _zoneBackingMemorySize *= 2;
-    _zoneBackingMemory = (uint8_t *)reallocf(_zoneBackingMemory, _zoneBackingMemorySize);
-    if (!_zoneBackingMemory) {
-        throw Exception("Out of Memory");
-    }
-    _zone.grow(_zoneBackingMemory, _zoneBackingMemorySize);
+    unmapFile();
+    mapFile(_zoneBackingMemorySize * 2);
 }
 
 void MapRegion::growLookupTable(size_t newCapacity)

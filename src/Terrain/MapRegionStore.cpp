@@ -7,12 +7,11 @@
 //
 
 #include "Terrain/MapRegionStore.hpp"
+#include "FileUtilities.hpp"
 
-MapRegionStore::MapRegionStore(const AABB &bbox, unsigned mapRegionSize)
- : _regions(bbox, glm::ivec3(bbox.extent*2.f) / (int)mapRegionSize)
-{
-    _regions.setCountLimit(128); // TODO: Look up the max file descriptors on this system.
-}
+MapRegionStore::MapRegionStore(const AABB &bbox, const glm::ivec3 &res)
+ : _regions(bbox, res)
+{}
 
 boost::optional<Array3D<Voxel>>
 MapRegionStore::load(const AABB &boundingBox, Morton3 key)
@@ -30,7 +29,10 @@ void MapRegionStore::store(const AABB &boundingBox,
 
 std::shared_ptr<MapRegion> MapRegionStore::get(const glm::vec3 &p)
 {
-    return _regions.get(_regions.indexAtPoint(p), [=]{
-        return std::make_shared<MapRegion>();
+    const Morton3 index = _regions.indexAtPoint(p);
+    return _regions.get(index, [=]{
+        boost::filesystem::path name("MapRegion_" + std::to_string((size_t)index) + ".bin");
+        boost::filesystem::path path(getPrefPath() / name);
+        return std::make_shared<MapRegion>(path);
     });
 }

@@ -141,15 +141,15 @@ public:
     // Default destructor.
     ~MallocZone() = default;
     
-    // No default constructor.
-    MallocZone() = delete;
-
-    // Constructor. The zone is intialized with the specified backing memory
-    // region which is then zeroed and reset to represent a new zone.
-    MallocZone(uint8_t *start, size_t size);
+    // Default constructor. The zone begins with no backing memory buffer.
+    // A call to grow() is necessary before any allocations may be made.
+    MallocZone();
     
     // No copy constructor.
     MallocZone(const MallocZone &) = delete;
+    
+    // Reset the zone so it is entirely free.
+    void reset(uint8_t *start, size_t size);
     
     // Gets the zone header.
     inline Header* header()

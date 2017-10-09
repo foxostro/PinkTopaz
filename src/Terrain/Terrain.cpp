@@ -31,11 +31,6 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
    _dispatcherRebuildMesh(dispatcherRebuildMesh),
    _mesher(std::make_shared<MesherNaiveSurfaceNets>()),
    _voxelDataGenerator(std::make_shared<VoxelDataGenerator>(/* random seed = */ 52)),
-   _voxels(std::make_shared<TransactedVoxelData>(std::make_unique<VoxelData>(
-       _voxelDataGenerator,
-       TERRAIN_CHUNK_SIZE,
-       std::make_unique<MapRegionStore>(_voxelDataGenerator->boundingBox(), MAP_REGION_SIZE),
-       dispatcherVoxelData))),
    _cameraPosition(glm::vec3())
 {
     // Load terrain texture array from a single image.
@@ -87,6 +82,15 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     _defaultMesh->shader = shader;
     _defaultMesh->texture = texture;
     _defaultMesh->textureSampler = sampler;
+    
+    const auto mapRegionBox = _voxelDataGenerator->boundingBox();
+    const auto mapRegionRes = _voxelDataGenerator->countCellsInRegion(mapRegionBox) / (int)MAP_REGION_SIZE;
+    auto mapRegionStore = std::make_unique<MapRegionStore>(mapRegionBox, mapRegionRes);
+    auto voxelData = std::make_unique<VoxelData>(_voxelDataGenerator,
+                                                 TERRAIN_CHUNK_SIZE,
+                                                 std::move(mapRegionStore),
+                                                 dispatcherVoxelData);
+    _voxels = std::make_unique<TransactedVoxelData>(std::move(voxelData));
     
     const AABB box = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
     const glm::ivec3 res = _voxelDataGenerator->countCellsInRegion(box) / (int)TERRAIN_CHUNK_SIZE;
@@ -145,8 +149,9 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     if (missingMeshes.empty()) {
         // If no meshes were missing then increase the horizon distance so
         // we can fetch meshes further away next time.
-        float d = _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
-        SDL_Log("Increasing horizon distance to %.2f", d);
+        _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
+//        float d = _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
+//        SDL_Log("Increasing horizon distance to %.2f", d);
     } else {
         _dispatcher->async([this, missingMeshes{std::move(missingMeshes)}]{
             fetchMeshes(missingMeshes);

@@ -29,7 +29,9 @@ static inline size_t roundUpBlockSize(size_t size)
     return newSize;
 }
 
-MallocZone::MallocZone(uint8_t *start, size_t size)
+MallocZone::MallocZone() : _header(nullptr) {}
+
+void MallocZone::reset(uint8_t *start, size_t size)
 {
     internalSetBackingMemory(start, size);
     
@@ -45,6 +47,8 @@ MallocZone::MallocZone(uint8_t *start, size_t size)
     
     // Remember where the tail block is.
     header()->tailOffset = offsetForBlock(&head);
+    
+    validate(false);
 }
 
 MallocZone::Block* MallocZone::tail()

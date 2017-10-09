@@ -11,18 +11,17 @@
 
 #include "Terrain/Voxel.hpp"
 #include "Terrain/VoxelDataSerializer.hpp"
-#include "Grid/RegionMutualExclusionArbitrator.hpp"
 #include "Grid/Array3D.hpp"
 #include "Malloc/MallocZone.hpp"
 #include <boost/optional.hpp>
-#include <map>
+#include <boost/filesystem.hpp>
 
 // Stores/Loads voxel chunks on the file system.
 class MapRegion
 {
 public:
     ~MapRegion();
-    MapRegion();
+    MapRegion(const boost::filesystem::path &regionFileName);
     
     // Loads a voxel chunk from file, if available.
     // The key uniquely identifies the chunk in the voxel chunk in space.
@@ -33,8 +32,8 @@ public:
     void store(Morton3 key, const Array3D<Voxel> &voxels);
     
 private:
-    static constexpr size_t InitialBackingBufferSize = 1024*1024;
-    static constexpr size_t InitialLookTableCapacity = 4096;
+    static constexpr size_t InitialBackingBufferSize = 1024 * 512;
+    static constexpr size_t InitialLookTableCapacity = 128;
     
     struct LookUpTableEntry
     {
@@ -50,12 +49,16 @@ private:
     };
     
     std::mutex _mutex;
+    boost::filesystem::path _regionFileName;
+    int _fd;
     VoxelDataSerializer _serializer;
-    
     size_t _zoneBackingMemorySize;
     uint8_t *_zoneBackingMemory;
     MallocZone _zone;
     uint32_t _lookupTableOffset;
+    
+    void mapFile(size_t minimumFileSize);
+    void unmapFile();
     
     // A call to growBackingMemory() may invalidate all Block* from the zone.
     void growBackingMemory();
