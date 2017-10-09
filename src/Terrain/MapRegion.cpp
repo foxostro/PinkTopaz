@@ -36,22 +36,22 @@ void MapRegion::mapFile(size_t minimumFileSize)
 {
     _file.unmapFile();
     bool mustReset = _file.mapFile(minimumFileSize);
+    size_t newZoneSize = _file.size() - sizeof(Header);
     
     if (mustReset) {
         header()->magic = MAP_REGION_MAGIC;
-        header()->zoneSize = _file.size() - sizeof(Header);
+        header()->zoneSize = newZoneSize;
         _zone.reset(header()->zoneData, header()->zoneSize);
     } else {
         if (header()->magic != MAP_REGION_MAGIC) {
             throw Exception("Unexpected magic number in map region file: found %d but expected %d", header()->magic, MAP_REGION_MAGIC);
         }
-        _zone.grow(header()->zoneData, header()->zoneSize);
+        _zone.grow(header()->zoneData, newZoneSize);
     }
 }
 
 void MapRegion::growBackingMemory()
 {
-    _file.unmapFile();
     mapFile(_file.size() * 2);
 }
 

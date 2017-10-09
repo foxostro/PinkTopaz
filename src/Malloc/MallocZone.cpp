@@ -71,6 +71,10 @@ const MallocZone::Block* MallocZone::tail() const
 
 void MallocZone::grow(uint8_t *start, size_t size)
 {
+#if VERBOSE
+    SDL_Log("[zone=%p] grow:", this);
+#endif
+    
     assert(start);
     assert(size > sizeof(Header));
     
@@ -89,15 +93,27 @@ void MallocZone::grow(uint8_t *start, size_t size)
     
     if (oldTail->inuse) {
         // If the tail block not free then add a new free tail block at the end.
+        
+#if VERBOSE
+        SDL_Log("[zone=%p] adding new tail block", this);
+#endif
+        
         Block *newTail = (Block *)endOfOldTailBlock;
         const uint8_t *endOfNewTailBlock = start + size;
+        newTail->magic = BLOCK_MAGIC;
         newTail->size = (size_t)(endOfNewTailBlock - (uint8_t *)newTail) - sizeof(Block);
         newTail->inuse = false;
+        newTail->prevOffset = offsetForBlock(oldTail);
         
         header()->tailOffset = offsetForBlock(newTail);
     } else {
         // If the tail block is free then increase it's size to encompass the
         // rest of the newly enlarged buffer.
+        
+#if VERBOSE
+        SDL_Log("[zone=%p] enlarging existing tail block", this);
+#endif
+        
         const size_t deltaSize = end - endOfOldTailBlock;
         oldTail->size += deltaSize;
     }
