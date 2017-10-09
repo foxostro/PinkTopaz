@@ -7,22 +7,9 @@
 //
 
 #include "Terrain/MapRegion.hpp"
-#include "SDL.h" // for SDL_Log
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-
-MapRegion::~MapRegion()
-{
-    unmapFile();
-}
 
 MapRegion::MapRegion(const boost::filesystem::path &regionFileName)
- : _regionFileName(regionFileName),
-   _fd(0),
-   _backingMemorySize(0),
-   _backingMemory(nullptr)
+ : _file(regionFileName)
 {
     mapFile(InitialBackingBufferSize);
 }
@@ -47,59 +34,12 @@ void MapRegion::store(Morton3 key, const Array3D<Voxel> &voxels)
 
 void MapRegion::mapFile(size_t minimumFileSize)
 {
-    bool mustReset = false;
-    
-    unmapFile();
-    
-//    SDL_Log("[%p] mapping file: %s", this, _regionFileName.c_str());
-    
-    if ((_fd = open(_regionFileName.c_str(), O_RDWR | O_CREAT, 0)) < 0) {
-        throw Exception("Failed to open file: %s with errno=%d", _regionFileName.c_str(), errno);
-    }
-    
-    if (fchmod(_fd, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) < 0) {
-        throw Exception("Failed to chmod file: %s with errno=%d", _regionFileName.c_str(), errno);
-    }
-    
-    off_t fileSize;
-    {
-        struct stat s;
-        if (fstat(_fd, &s) < 0) {
-            close(_fd);
-            throw Exception("Failed to stat file: %s with errno=%d", _regionFileName.c_str(), errno);
-        }
-        fileSize = s.st_size;
-    }
-    
-    if (fileSize == 0) {
-        mustReset = true;
-    }
-    
-    if (fileSize < minimumFileSize) {
-        if (ftruncate(_fd, minimumFileSize) < 0) {
-            close(_fd);
-            throw Exception("Failed to resize file: %s with errno=%d", _regionFileName.c_str(), errno);
-        }
-        fileSize = minimumFileSize;
-    }
-    
-    _backingMemorySize = fileSize;
-    _backingMemory = (uint8_t *)mmap(nullptr,
-                                     fileSize,
-                                     PROT_READ | PROT_WRITE,
-                                     MAP_SHARED,
-                                     _fd,
-                                     0);
-    
-    if (MAP_FAILED == _backingMemory) {
-        close(_fd);
-        throw Exception("Failed to map file: %s with errno=%d", _regionFileName.c_str(), errno);
-    }
+    _file.unmapFile();
+    bool mustReset = _file.mapFile(minimumFileSize);
     
     if (mustReset) {
-//        SDL_Log("[%p] resetting zone for file: %s", this, _regionFileName.c_str());
         header()->magic = MAP_REGION_MAGIC;
-        header()->zoneSize = fileSize - sizeof(Header);
+        header()->zoneSize = _file.size() - sizeof(Header);
         _zone.reset(header()->zoneData, header()->zoneSize);
     } else {
         if (header()->magic != MAP_REGION_MAGIC) {
@@ -109,31 +49,10 @@ void MapRegion::mapFile(size_t minimumFileSize)
     }
 }
 
-void MapRegion::unmapFile()
-{
-    if (_backingMemory) {
-//        SDL_Log("[%p] unmapping file: %s", this, _regionFileName.c_str());
-        
-        if (munmap(_backingMemory, _backingMemorySize) < 0) {
-            SDL_Log("Failed to unmap file.");
-        }
-        
-        _backingMemory = nullptr;
-        _backingMemorySize = 0;
-    }
-    
-    if (_fd) {
-        if (close(_fd) < 0) {
-            SDL_Log("Failed to close file.");
-        }
-        _fd = 0;
-    }
-}
-
 void MapRegion::growBackingMemory()
 {
-    unmapFile();
-    mapFile(_backingMemorySize * 2);
+    _file.unmapFile();
+    mapFile(_file.size() * 2);
 }
 
 void MapRegion::growLookupTable(size_t newCapacity)

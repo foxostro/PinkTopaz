@@ -120,11 +120,12 @@ set(SOURCE_FILES_OTHER_ECS
     )
 
 set(SOURCE_FILES_MISC
-    "src/FileUtilities.cpp" "src/include/FileUtilities.hpp"
-    "src/Exception.cpp" "src/include/Exception.hpp"
-    "src/FrameTimer.cpp" "src/include/FrameTimer.hpp"
-    "src/TaskDispatcher.cpp" "src/include/TaskDispatcher.hpp"
     "src/include/UniqueName.hpp"
+    "src/include/Exception.hpp" "src/Exception.cpp" 
+    "src/include/FileUtilities.hpp" "src/FileUtilities.cpp"
+    "src/include/MemoryMappedFile.hpp" "src/MemoryMappedFile.cpp"
+    "src/include/FrameTimer.hpp" "src/FrameTimer.cpp"
+    "src/include/TaskDispatcher.hpp" "src/TaskDispatcher.cpp"
     )
 
 set(SOURCE_FILES_NOISE

@@ -13,6 +13,7 @@
 #include "Terrain/VoxelDataSerializer.hpp"
 #include "Grid/Array3D.hpp"
 #include "Malloc/MallocZone.hpp"
+#include "MemoryMappedFile.hpp"
 #include <boost/optional.hpp>
 #include <boost/filesystem.hpp>
 
@@ -20,7 +21,6 @@
 class MapRegion
 {
 public:
-    ~MapRegion();
     MapRegion(const boost::filesystem::path &regionFileName);
     
     // Loads a voxel chunk from file, if available.
@@ -58,17 +58,15 @@ private:
     };
     
     std::mutex _mutex;
-    boost::filesystem::path _regionFileName;
-    int _fd;
+    MemoryMappedFile _file;
     VoxelDataSerializer _serializer;
     MallocZone _zone;
-    size_t _backingMemorySize;
-    uint8_t *_backingMemory;
     
     inline Header* header()
     {
-        assert(_backingMemory);
-        return (Header *)_backingMemory;
+        Header *header = (Header *)_file.mapping();
+        assert(header);
+        return header;
     }
     
     void mapFile(size_t minimumFileSize);
