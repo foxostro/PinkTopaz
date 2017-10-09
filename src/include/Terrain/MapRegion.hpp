@@ -33,7 +33,8 @@ public:
     
 private:
     static constexpr size_t InitialBackingBufferSize = 1024 * 512;
-    static constexpr size_t InitialLookTableCapacity = 128;
+    static constexpr size_t InitialLookTableCapacity = 256;
+    static constexpr uint32_t MAP_REGION_MAGIC = 'rpam';
     
     struct LookUpTableEntry
     {
@@ -48,14 +49,27 @@ private:
         LookUpTableEntry entries[0];
     };
     
+    struct Header
+    {
+        uint32_t magic;
+        uint32_t lookupTableOffset;
+        uint32_t zoneSize;
+        uint8_t zoneData[0];
+    };
+    
     std::mutex _mutex;
     boost::filesystem::path _regionFileName;
     int _fd;
     VoxelDataSerializer _serializer;
-    size_t _zoneBackingMemorySize;
-    uint8_t *_zoneBackingMemory;
     MallocZone _zone;
-    uint32_t _lookupTableOffset;
+    size_t _backingMemorySize;
+    uint8_t *_backingMemory;
+    
+    inline Header* header()
+    {
+        assert(_backingMemory);
+        return (Header *)_backingMemory;
+    }
     
     void mapFile(size_t minimumFileSize);
     void unmapFile();
@@ -74,10 +88,10 @@ private:
     
     inline MallocZone::Block* lookupTableBlock()
     {
-        if (_lookupTableOffset == 0) {
+        if (header()->lookupTableOffset == 0) {
             return nullptr;
         } else {
-            return _zone.blockForOffset(_lookupTableOffset);
+            return _zone.blockForOffset(header()->lookupTableOffset);
         }
     }
     

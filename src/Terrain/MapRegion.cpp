@@ -21,9 +21,8 @@ MapRegion::~MapRegion()
 MapRegion::MapRegion(const boost::filesystem::path &regionFileName)
  : _regionFileName(regionFileName),
    _fd(0),
-   _zoneBackingMemorySize(0),
-   _zoneBackingMemory(nullptr),
-   _lookupTableOffset(0)
+   _backingMemorySize(0),
+   _backingMemory(nullptr)
 {
     mapFile(InitialBackingBufferSize);
 }
@@ -84,38 +83,43 @@ void MapRegion::mapFile(size_t minimumFileSize)
         fileSize = minimumFileSize;
     }
     
-    _zoneBackingMemorySize = fileSize;
-    _zoneBackingMemory = (uint8_t *)mmap(nullptr,
-                                         fileSize,
-                                         PROT_READ | PROT_WRITE,
-                                         MAP_SHARED,
-                                         _fd,
-                                         0);
+    _backingMemorySize = fileSize;
+    _backingMemory = (uint8_t *)mmap(nullptr,
+                                     fileSize,
+                                     PROT_READ | PROT_WRITE,
+                                     MAP_SHARED,
+                                     _fd,
+                                     0);
     
-    if (MAP_FAILED == _zoneBackingMemory) {
+    if (MAP_FAILED == _backingMemory) {
         close(_fd);
         throw Exception("Failed to map file: %s with errno=%d", _regionFileName.c_str(), errno);
     }
     
     if (mustReset) {
 //        SDL_Log("[%p] resetting zone for file: %s", this, _regionFileName.c_str());
-        _zone.reset(_zoneBackingMemory, _zoneBackingMemorySize);
+        header()->magic = MAP_REGION_MAGIC;
+        header()->zoneSize = fileSize - sizeof(Header);
+        _zone.reset(header()->zoneData, header()->zoneSize);
     } else {
-        _zone.grow(_zoneBackingMemory, _zoneBackingMemorySize);
+        if (header()->magic != MAP_REGION_MAGIC) {
+            throw Exception("Unexpected magic number in map region file: found %d but expected %d", header()->magic, MAP_REGION_MAGIC);
+        }
+        _zone.grow(header()->zoneData, header()->zoneSize);
     }
 }
 
 void MapRegion::unmapFile()
 {
-    if (_zoneBackingMemory) {
+    if (_backingMemory) {
 //        SDL_Log("[%p] unmapping file: %s", this, _regionFileName.c_str());
         
-        if (munmap(_zoneBackingMemory, _zoneBackingMemorySize) < 0) {
+        if (munmap(_backingMemory, _backingMemorySize) < 0) {
             SDL_Log("Failed to unmap file.");
         }
         
-        _zoneBackingMemory = nullptr;
-        _zoneBackingMemorySize = 0;
+        _backingMemory = nullptr;
+        _backingMemorySize = 0;
     }
     
     if (_fd) {
@@ -129,7 +133,7 @@ void MapRegion::unmapFile()
 void MapRegion::growBackingMemory()
 {
     unmapFile();
-    mapFile(_zoneBackingMemorySize * 2);
+    mapFile(_backingMemorySize * 2);
 }
 
 void MapRegion::growLookupTable(size_t newCapacity)
@@ -139,7 +143,7 @@ void MapRegion::growLookupTable(size_t newCapacity)
     while (!(newBlock = _zone.reallocate(lookupTableBlock(), newSize))) {
         growBackingMemory();
     }
-    _lookupTableOffset = _zone.offsetForBlock(newBlock);
+    header()->lookupTableOffset = _zone.offsetForBlock(newBlock);
 }
 
 MallocZone::Block* MapRegion::getBlock(Morton3 key)

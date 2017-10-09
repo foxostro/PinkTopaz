@@ -103,21 +103,22 @@ void MallocZone::grow(uint8_t *start, size_t size)
     }
     
 #if VERBOSE
-    SDL_Log("\n\nstate after internalSetBackingMemory");
-    dump();
-    SDL_Log("finished with grow");
-    SDL_Log("\n\n\n");
+    SDL_Log("[zone=%p] state after grow:", this);
+#endif
+    
+    validate(VERBOSE);
+    
+#if VERBOSE
+    SDL_Log("[zone=%p] finished with grow", this);
 #endif
 }
 
 MallocZone::Block* MallocZone::allocate(size_t size)
 {
 #if VERBOSE
-    SDL_Log("\n\nallocate(%zu):", size);
+    SDL_Log("[zone=%p] allocate(%zu):", this, size);
     dump();
 #endif
-    
-    validate(false);
     
     // Blocks for allocations are always multiples of four bytes in size.
     // This ensures that blocks are always aligned on four byte boundaries
@@ -127,7 +128,7 @@ MallocZone::Block* MallocZone::allocate(size_t size)
     Block *best = nullptr;
     
 #if VERBOSE
-    SDL_Log("searching for smallest free block that can fit %zu", size);
+    SDL_Log("[zone=%p] searching for smallest free block that can fit %zu", this, size);
 #endif
     
     // Get the smallest free block that is large enough to satisfy the request.
@@ -143,9 +144,9 @@ MallocZone::Block* MallocZone::allocate(size_t size)
     
 #if VERBOSE
     if (best) {
-        SDL_Log("found smallest free block at %p, size is %u bytes", best, best->size);
+        SDL_Log("[zone=%p] found smallest free block at %p, size is %u bytes", this, best, best->size);
     } else {
-        SDL_Log("failed to find a good free block");
+        SDL_Log("[zone=%p] failed to find a good free block", this);
     }
 #endif
     
@@ -162,11 +163,9 @@ MallocZone::Block* MallocZone::allocate(size_t size)
 #endif
 
 #if VERBOSE
-    SDL_Log("\n\nstate after allocate:");
+    SDL_Log("[zone=%p] state after allocate:", this);
     dump();
 #endif
-    
-    validate(false);
     
     return best;
 }
@@ -174,15 +173,13 @@ MallocZone::Block* MallocZone::allocate(size_t size)
 void MallocZone::deallocate(Block *block)
 {
 #if VERBOSE
-    SDL_Log("\n\ndeallocate(%p):", block);
+    SDL_Log("[zone=%p] deallocate(%p):", this, block);
     dump();
 #endif
     
-    validate(false);
-    
     if (!block) {
 #if VERBOSE
-        SDL_Log("block is NULL. returning without doing anything.");
+        SDL_Log("[zone=%p] block is NULL. returning without doing anything.", this);
 #endif
         return; // do nothing
     }
@@ -253,25 +250,21 @@ void MallocZone::deallocate(Block *block)
 #endif
 
 #if VERBOSE
-    SDL_Log("\n\nstate after deallocate:");
+    SDL_Log("[zone=%p] state after deallocate:", this);
     dump();
 #endif
-    
-    validate(false);
 }
 
 MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
 {
 #if VERBOSE
-    SDL_Log("\n\nreallocate(%p, %zu):", block, newSize);
+    SDL_Log("[zone=%p] reallocate(%p, %zu):", this, block, newSize);
     dump();
 #endif
     
-    validate(false);
-    
     if (!block) {
 #if VERBOSE
-        SDL_Log("block is NULL so we're deferring to allocate()");
+        SDL_Log("[zone=%p] block is NULL so we're deferring to allocate()", this);
 #endif
         return allocate(newSize);
     }
@@ -282,7 +275,7 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
 
     if (newSize == 0) {
 #if VERBOSE
-        SDL_Log("newSize is zero so we're deallocating and then allocating a minimum size block");
+        SDL_Log("[zone=%p] newSize is zero so we're deallocating and then allocating a minimum size block", this);
 #endif
         deallocate(block);
         return allocate(0);
@@ -333,10 +326,9 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         considerSplittingBlock(block, newSize);
 
 #if VERBOSE
-        SDL_Log("\n\nstate after reallocate: [case where we extend the block]");
+        SDL_Log("[zone=%p] state after reallocate: [case where we extend the block]", this);
         dump();
 #endif
-        validate(false);
         return block;
     }
 
@@ -348,10 +340,9 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         deallocate(block);
         
 #if VERBOSE
-        SDL_Log("\n\nstate after reallocate: [case where we allocate a new block]");
+        SDL_Log("[zone=%p] state after reallocate: [case where we allocate a new block]", this);
         dump();
 #endif
-        validate(false);
         return newAlloc;
     }
 
@@ -384,24 +375,22 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         considerSplittingBlock(preceding, newSize);
 
 #if VERBOSE
-        SDL_Log("\n\nstate after reallocate: [case where we merge with previous block]");
+        SDL_Log("[zone=%p] state after reallocate: [case where we merge with previous block]", this);
         dump();
 #endif
-        validate(false);
         return newAlloc;
     }
 
 #if VERBOSE
-    SDL_Log("\n\nreallocate failed, returning NULL. state after reallocate:");
+    SDL_Log("[zone=%p] reallocate failed, returning NULL. state after reallocate:", this);
     dump();
 #endif
-    validate(false);
     return nullptr;
 }
 
 void MallocZone::validate(bool dump) const
 {
-    if (dump) SDL_Log("MallocZone::dump() {");
+    if (dump) SDL_Log("[zone=%p] MallocZone::dump() {", this);
     
     // Check the magic number. If this is not set then the backing memory
     // region cannot be valid.
@@ -415,7 +404,8 @@ void MallocZone::validate(bool dump) const
         assert(block);
         assert(block->magic == BLOCK_MAGIC);
         
-        if (dump) SDL_Log("\t[%d]\t%p\t{next=%p, prev=%p, inuse=%d, size=%u}",
+        if (dump) SDL_Log("[zone=%p] \t[%d]\t%p\t{next=%p, prev=%p, inuse=%d, size=%u}",
+                          this,
                           i,
                           block,
                           next(block),
@@ -432,7 +422,7 @@ void MallocZone::validate(bool dump) const
     
     assert(tail() == blockForOffset(header()->tailOffset));
     
-    if (dump) SDL_Log("}");
+    if (dump) SDL_Log("[zone=%p] }", this);
 }
 
 void MallocZone::internalSetBackingMemory(uint8_t *start, size_t size)
