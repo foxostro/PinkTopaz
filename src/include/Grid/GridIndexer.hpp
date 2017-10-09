@@ -244,6 +244,61 @@ public:
         IteratorType _begin, _end;
     };
     
+    // Range over grid cells which fall within a specified frustum.
+    class FrustumRange
+    {
+    public:
+        FrustumRange() = delete;
+        
+        FrustumRange(const Frustum &frustum,
+                     const AABB &sliceBoundingBox,
+                     const GridIndexer &grid)
+        {
+            const auto &res = grid.gridResolution();
+            const auto &bbox = grid.boundingBox();
+            assert((res.x == res.y) && (res.x == res.z));
+            assert(isPowerOfTwo(res.x));
+            forEachCell(0, ilog2(res.x), bbox, frustum, sliceBoundingBox,
+                        _cells, grid);
+        }
+        
+        inline auto begin() const
+        {
+            return _cells.begin();
+        }
+        
+        inline auto end() const
+        {
+            return _cells.end();
+        }
+        
+    private:
+        std::vector<glm::ivec3> _cells;
+        
+        // Iterate over cells which fall within the specified frustum.
+        void forEachCell(size_t depth,
+                         size_t depthOfLeaves,
+                         const AABB &box,
+                         const Frustum &frustum,
+                         const AABB &sliceBoundingBox,
+                         std::vector<glm::ivec3> &cells,
+                         const GridIndexer &grid) const
+        {
+            if (frustum.boxIsInside(box) &&
+                frustum.boxIsInside(sliceBoundingBox)) {
+                
+                if (depth == depthOfLeaves) {
+                    cells.push_back(grid.cellCoordsAtPoint(box.center));
+                } else {
+                    for (auto &octant : box.octants()) {
+                        forEachCell(depth+1, depthOfLeaves, octant, frustum,
+                                    sliceBoundingBox, cells, grid);
+                    }
+                }
+            }
+        }
+    };
+    
     virtual ~GridIndexer() = default;
     
     GridIndexer(const AABB &boundingBox,
@@ -476,6 +531,12 @@ public:
         ExclusiveIterator<glm::ivec3> end(minCellCoords, maxCellCoords, maxCellCoords);
         
         return Range<ExclusiveIterator<glm::ivec3>>(begin, end);
+    }
+    
+    // Return a range object which can iterate over a frustum within the grid.
+    auto slice(const Frustum &frustum, const AABB &sliceBoundingBox) const
+    {
+        return FrustumRange(frustum, sliceBoundingBox, *this);
     }
     
     // Return a Range object which can iterate over evenly spaced points in the

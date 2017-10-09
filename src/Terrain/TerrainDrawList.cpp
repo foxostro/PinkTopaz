@@ -26,31 +26,30 @@ TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
         }
     }
     
-    std::vector<AABB> missingMeshes;
-    
     // Draw each cell that is in the camera view-frustum.
-    // If the draw list is missing any mesh in the active region then report
-    // that to the caller.
-    for (const auto &cellCoords : _front.slice(activeRegion)) {
-        const AABB cell = _front.cellAtCellCoords(cellCoords);
+    for (const auto &cellCoords : _front.slice(frustum, activeRegion)) {
         const Morton3 index = _front.indexAtCellCoords(cellCoords);
         boost::optional<MeshPtr> maybeMesh = _front.getIfExists(index);
         
-        bool missing = true;
-        
-        if (maybeMesh) {
-            const MeshPtr &meshPtr = *maybeMesh;
-            if (meshPtr) {
-                missing = false;
-                const RenderableStaticMesh &drawThis = *meshPtr;
-                if ((drawThis.vertexCount > 0) && frustum.boxIsInside(cell)) {
-                    encoder->setVertexBuffer(drawThis.buffer, 0);
-                    encoder->drawPrimitives(Triangles, 0, drawThis.vertexCount, 1);
-                }
+        if (maybeMesh && *maybeMesh) {
+            const RenderableStaticMesh &drawThis = **maybeMesh;
+            if (drawThis.vertexCount > 0) {
+                encoder->setVertexBuffer(drawThis.buffer, 0);
+                encoder->drawPrimitives(Triangles, 0, drawThis.vertexCount, 1);
             }
         }
-        
-        if (missing) {
+    }
+    
+    std::vector<AABB> missingMeshes;
+    
+    // If the draw list is missing any mesh in the active region then report
+    // that to the caller.
+    for (const auto &cellCoords : _front.slice(activeRegion)) {
+        const Morton3 index = _front.indexAtCellCoords(cellCoords);
+        boost::optional<MeshPtr> maybeMesh = _front.getIfExists(index);
+        const bool notMissing = maybeMesh && *maybeMesh;
+        if (!notMissing) {
+            const AABB cell = _front.cellAtCellCoords(cellCoords);
             missingMeshes.push_back(cell);
         }
     }
