@@ -17,26 +17,25 @@ MapRegion::MapRegion(const boost::filesystem::path &regionFileName)
 
 boost::optional<Array3D<Voxel>> MapRegion::load(const AABB &bbox, Morton3 key)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
-    if (const auto maybeBytes = getChunkBytesFromStash(key); maybeBytes) {
+    boost::optional<std::vector<uint8_t>> maybeBytes(getChunkBytesFromStash(key));
+    
+    if (maybeBytes) {
         const auto &bytes = *maybeBytes;
         try {
-            auto chunk = _serializer.load(bbox, bytes);
+            const auto chunk = _serializer.load(bbox, bytes);
             return boost::make_optional(chunk);
         } catch(const VoxelDataException &exception) {
             SDL_LogError(SDL_LOG_CATEGORY_ERROR,
                          "MapRegion failed to deserialize voxels."\
                          "Treating as-if it is not cached.");
-            return boost::none;
         }
-    } else {
-        return boost::none;
     }
+    
+    return boost::none;
 }
 
 void MapRegion::store(Morton3 key, const Array3D<Voxel> &voxels)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
     stashChunkBytes(key, _serializer.store(voxels));
 }
 
@@ -112,6 +111,8 @@ MallocZone::Block* MapRegion::getBlockAndResize(Morton3 key, size_t size)
 
 void MapRegion::stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes)
 {
+    std::lock_guard<std::mutex> lock(_mutex);
+    
     const size_t size = bytes.size();
     assert(size > 0);
     MallocZone::Block *block = getBlockAndResize(key, size);
@@ -122,6 +123,8 @@ void MapRegion::stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes)
 boost::optional<std::vector<uint8_t>>
 MapRegion::getChunkBytesFromStash(Morton3 key)
 {
+    std::lock_guard<std::mutex> lock(_mutex);
+    
     if (!loadOffsetForKey(key)) {
         return boost::none;
     }
