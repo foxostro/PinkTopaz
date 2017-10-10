@@ -7,6 +7,7 @@
 //
 
 #include "Terrain/MapRegion.hpp"
+#include "SDL.h" // for SDL_Log
 
 MapRegion::MapRegion(const boost::filesystem::path &regionFileName)
  : _file(regionFileName)
@@ -19,8 +20,15 @@ boost::optional<Array3D<Voxel>> MapRegion::load(const AABB &bbox, Morton3 key)
     std::lock_guard<std::mutex> lock(_mutex);
     if (const auto maybeBytes = getChunkBytesFromStash(key); maybeBytes) {
         const auto &bytes = *maybeBytes;
-        auto chunk = _serializer.load(bbox, bytes);
-        return boost::make_optional(chunk);
+        try {
+            auto chunk = _serializer.load(bbox, bytes);
+            return boost::make_optional(chunk);
+        } catch(const VoxelDataException &exception) {
+            SDL_LogError(SDL_LOG_CATEGORY_ERROR,
+                         "MapRegion failed to deserialize voxels."\
+                         "Treating as-if it is not cached.");
+            return boost::none;
+        }
     } else {
         return boost::none;
     }
@@ -40,12 +48,18 @@ void MapRegion::mapFile(size_t minimumFileSize)
     
     if (mustReset) {
         header()->magic = MAP_REGION_MAGIC;
+        header()->version = MAP_REGION_VERSION;
         header()->zoneSize = newZoneSize;
         _zone.reset(header()->zoneData, header()->zoneSize);
     } else {
         if (header()->magic != MAP_REGION_MAGIC) {
             throw Exception("Unexpected magic number in map region file: found %d but expected %d", header()->magic, MAP_REGION_MAGIC);
         }
+        
+        if (header()->version != MAP_REGION_VERSION) {
+            throw Exception("Unexpected version number in map region file: found %d but expected %d", header()->version, MAP_REGION_VERSION);
+        }
+        
         _zone.grow(header()->zoneData, newZoneSize);
     }
 }

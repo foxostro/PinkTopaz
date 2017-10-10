@@ -35,6 +35,7 @@ private:
     static constexpr size_t InitialBackingBufferSize = 1024 * 512;
     static constexpr size_t InitialLookTableCapacity = 256;
     static constexpr uint32_t MAP_REGION_MAGIC = 'rpam';
+    static constexpr uint32_t MAP_REGION_VERSION = 0;
     
     struct LookUpTableEntry
     {
@@ -52,6 +53,7 @@ private:
     struct Header
     {
         uint32_t magic;
+        uint32_t version;
         uint32_t lookupTableOffset;
         uint32_t zoneSize;
         uint8_t zoneData[0];
