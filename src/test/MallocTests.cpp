@@ -16,7 +16,6 @@
 #include <cassert>
 #include <cstring>
 
-#define VERBOSE 0
 constexpr size_t SMALL = 64;
 
 static uint8_t g_buffer[1024];
@@ -25,7 +24,8 @@ TEST_CASE("Test Init", "[Malloc]") {
     const size_t size = sizeof(g_buffer);
 
     memset(g_buffer, 0, size);
-    MallocZone zone(g_buffer, size);
+    MallocZone zone;
+    zone.reset(g_buffer, size);
 
     // zone initially contains one large empty block
     MallocZone::Block *head = zone.head();
@@ -40,7 +40,8 @@ TEST_CASE("Test Init", "[Malloc]") {
 // than the size of the zone itself.
 TEST_CASE("Test Malloc Really Big", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
     MallocZone::Block *allocation = zone.allocate(SIZE_MAX);
     REQUIRE(allocation == nullptr);
 }
@@ -48,7 +49,8 @@ TEST_CASE("Test Malloc Really Big", "[Malloc]") {
 // Starting with an empty zone, we should be able to satisfy a small request.
 TEST_CASE("Test Malloc One Small Request", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
     MallocZone::Block *allocation = zone.allocate(SMALL);
     REQUIRE(allocation != nullptr);
     REQUIRE(allocation->size >= SMALL);
@@ -59,7 +61,8 @@ TEST_CASE("Test Malloc One Small Request", "[Malloc]") {
 // size zero block. This returns a minimum size heap block.
 TEST_CASE("Test Malloc One Zero Size Request", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
     MallocZone::Block *allocation = zone.allocate(0);
     REQUIRE(allocation != nullptr);
     REQUIRE(allocation->size >= 0);
@@ -70,7 +73,8 @@ TEST_CASE("Test Malloc One Zero Size Request", "[Malloc]") {
 // of the zone's free space.
 TEST_CASE("Test Malloc Whole Thing", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
     size_t size = zone.head()->size;
     MallocZone::Block *allocation = zone.allocate(size);
     REQUIRE(allocation != nullptr);
@@ -81,7 +85,8 @@ TEST_CASE("Test Malloc Whole Thing", "[Malloc]") {
 // Starting with an empty zone, we should be able to several small requests.
 TEST_CASE("Test Malloc Several Small", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
 
     size_t size = SMALL, i = 0;
     size_t ex = (sizeof(g_buffer) - sizeof(MallocZone::Block)) / (sizeof(MallocZone::Block) + size);
@@ -101,7 +106,8 @@ TEST_CASE("Test Malloc Several Small", "[Malloc]") {
 // We should be able to allocate one, free one, and then allocate another.
 TEST_CASE("Test Malloc One Free one", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
     MallocZone::Block *alloc = zone.allocate(zone.head()->size);
     REQUIRE(alloc != nullptr);
     REQUIRE(zone.allocate(zone.head()->size) == nullptr);
@@ -113,7 +119,8 @@ TEST_CASE("Test Malloc One Free one", "[Malloc]") {
 // Freeing allocations should release memory to the zone for future allocations.
 TEST_CASE("Test Malloc Several Free One", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
     MallocZone::Block *allocation = zone.allocate(SMALL);
     while (zone.allocate(SMALL));
     zone.deallocate(allocation);
@@ -127,7 +134,8 @@ TEST_CASE("Test Malloc Several Free One", "[Malloc]") {
 // a preceding free block.
 TEST_CASE("Test Coalesce 0", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
 
     MallocZone::Block *a = zone.allocate(SMALL);
     REQUIRE(a);
@@ -159,7 +167,8 @@ TEST_CASE("Test Coalesce 0", "[Malloc]") {
 // a following free block.
 TEST_CASE("Test Coalesce 1", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
 
     MallocZone::Block *a = zone.allocate(SMALL);
     REQUIRE(a);
@@ -191,7 +200,8 @@ TEST_CASE("Test Coalesce 1", "[Malloc]") {
 // a preceding and following free block in one step.
 TEST_CASE("Test Coalesce 2", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
 
     MallocZone::Block *a = zone.allocate(SMALL);
     REQUIRE(a);
@@ -222,7 +232,8 @@ TEST_CASE("Test Coalesce 2", "[Malloc]") {
 // If the block already has capacity then there's no need to change anything.
 TEST_CASE("Test Realloc Extend 0", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
 
     MallocZone::Block *a = zone.allocate(1);
     REQUIRE(a);
@@ -249,7 +260,8 @@ TEST_CASE("Test Realloc Extend 0", "[Malloc]") {
 // it there.
 TEST_CASE("Test Realloc Extend 1", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
 
     MallocZone::Block *a = zone.allocate(0);
     REQUIRE(a);
@@ -273,7 +285,8 @@ TEST_CASE("Test Realloc Extend 1", "[Malloc]") {
 // allocates a new block and moves the allocation.
 TEST_CASE("Test Realloc Relocate 0", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
 
     MallocZone::Block *a = zone.allocate(SMALL);
     REQUIRE(a);
@@ -316,7 +329,8 @@ TEST_CASE("Test Realloc Relocate 0", "[Malloc]") {
 // allocation fails then realloc returns nullptr.
 TEST_CASE("Test Realloc Relocate 1", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
 
     MallocZone::Block *a = zone.allocate(SMALL);
     REQUIRE(a);
@@ -372,7 +386,8 @@ TEST_CASE("Test Realloc Relocate 1", "[Malloc]") {
 // and the current block.
 TEST_CASE("Test Realloc Relocate 2", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
 
     MallocZone::Block *a = zone.allocate(SMALL);
     REQUIRE(a);
@@ -389,23 +404,9 @@ TEST_CASE("Test Realloc Relocate 2", "[Malloc]") {
 
     zone.deallocate(a);
 
-#if VERBOSE
-    printf("Before:\n");
-    for (MallocZone::Block *block = zone->head; block; block = zone.next(block)) {
-        printf("size = %zu ; inuse = %d\n", block->size, block->inuse);
-    }
-#endif
-
     MallocZone::Block *d = zone.reallocate(b, 2*SMALL);
     REQUIRE(d);
     REQUIRE(a == d);
-
-#if VERBOSE
-    printf("After:\n");
-    for (MallocZone::Block *block = zone.head(); block; block = zone.next(block)) {
-        printf("size = %zu ; inuse = %d\n", block->size, block->inuse);
-    }
-#endif
 
     size_t count = 0;
     for (MallocZone::Block *block = zone.head(); block; block = zone.next(block)) {
@@ -433,7 +434,8 @@ TEST_CASE("Test Realloc Relocate 2", "[Malloc]") {
 // we extend the tail block backwards into the free space preceding it.
 TEST_CASE("Test Realloc Relocate 3", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
     
     MallocZone::Block *a = zone.allocate(SMALL);
     REQUIRE(a);
@@ -454,13 +456,6 @@ TEST_CASE("Test Realloc Relocate 3", "[Malloc]") {
     // Free up a hole directly behind the tail block.
     zone.deallocate(b);
     
-#if VERBOSE
-    printf("Before:\n");
-    for (MallocZone::Block *block = zone->head; block; block = zone.next(block)) {
-        printf("size = %zu ; inuse = %d\n", block->size, block->inuse);
-    }
-#endif
-    
     // If we merge the tail block into the free space preceding it then there
     // is just enough space for this allocation to succeed.
     MallocZone::Block *d = zone.reallocate(c, remainingSpace + SMALL + sizeof(MallocZone::Block));
@@ -468,13 +463,6 @@ TEST_CASE("Test Realloc Relocate 3", "[Malloc]") {
     REQUIRE(b == d);
     
     // TODO: Should I check that the contents were actually moved correctly?
-    
-#if VERBOSE
-    printf("After:\n");
-    for (MallocZone::Block *block = zone.head(); block; block = zone.next(block)) {
-        printf("size = %zu ; inuse = %d\n", block->size, block->inuse);
-    }
-#endif
     
     size_t count = 0;
     for (MallocZone::Block *block = zone.head(); block; block = zone.next(block)) {
@@ -506,7 +494,8 @@ TEST_CASE("Test Realloc Relocate 3", "[Malloc]") {
 // and the current block.
 TEST_CASE("Test Realloc Shrink", "[Malloc]") {
     memset(g_buffer, 0, sizeof(g_buffer));
-    MallocZone zone(g_buffer, sizeof(g_buffer));
+    MallocZone zone;
+    zone.reset(g_buffer, sizeof(g_buffer));
 
     MallocZone::Block *a = zone.allocate(sizeof(g_buffer) - sizeof(MallocZone::Header) - sizeof(MallocZone::Block));
     REQUIRE(a);
