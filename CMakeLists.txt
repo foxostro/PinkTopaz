@@ -319,7 +319,7 @@ add_executable(${TEST_PROG_NAME}
                "src/test/Terrain/MesherNaiveSurfaceNetsTests.cpp"
                "src/test/Terrain/VoxelDataSerializerTests.cpp"
                "src/test/Noise/SimplexNoiseTests.cpp"
-               "src/test/MallocTests.cpp"
+               "src/test/BlockDataStoreTests.cpp"
                
                "src/FileUtilities.cpp"
                "src/Exception.cpp"
