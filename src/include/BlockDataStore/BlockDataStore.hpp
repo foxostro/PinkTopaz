@@ -12,6 +12,7 @@
 #include "BlockDataStore/ManagedMallocZone.hpp"
 #include <boost/optional.hpp>
 #include <boost/filesystem.hpp>
+#include <mutex>
 
 // Stores/Loads blocks of unstructured data on the file system.
 class BlockDataStore
@@ -30,8 +31,8 @@ public:
     void store(Key key, const std::vector<uint8_t> &data);
     
 private:
-    static constexpr size_t InitialBackingBufferSize = 1024 * 512;
-    static constexpr size_t InitialLookTableCapacity = 256;
+    static constexpr size_t InitialBackingBufferSize = 128;
+    static constexpr size_t InitialLookTableCapacity = 32;
     
     struct LookUpTableEntry
     {
@@ -46,6 +47,7 @@ private:
         LookUpTableEntry entries[0];
     };
     
+    std::mutex _mutex;
     ManagedMallocZone _zone;
     
     // A call to growLookupTable() may invalidate all Block* from the zone.

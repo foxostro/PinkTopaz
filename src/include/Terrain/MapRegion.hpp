@@ -29,7 +29,6 @@ public:
     void store(Morton3 key, const Array3D<Voxel> &voxels);
     
 private:
-    std::mutex _mutex;
     VoxelDataSerializer _serializer;
     BlockDataStore _dataStore;
 };

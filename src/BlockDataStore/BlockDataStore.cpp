@@ -15,6 +15,7 @@ BlockDataStore::BlockDataStore(const boost::filesystem::path &regionFileName)
 
 void BlockDataStore::store(Key key, const std::vector<uint8_t> &bytes)
 {
+    std::lock_guard<std::mutex> lock(_mutex);
     const size_t size = bytes.size();
     assert(size > 0);
     BoxedMallocZone::BoxedBlock block = getBlockAndResize(key, size);
@@ -24,6 +25,8 @@ void BlockDataStore::store(Key key, const std::vector<uint8_t> &bytes)
 
 boost::optional<std::vector<uint8_t>> BlockDataStore::load(Key key)
 {
+    std::lock_guard<std::mutex> lock(_mutex);
+    
     if (!loadOffsetForKey(key)) {
         return boost::none;
     }
@@ -66,7 +69,10 @@ BoxedMallocZone::BoxedBlock BlockDataStore::getBlockAndResize(Key key, size_t si
 
 BoxedMallocZone::BoxedBlock BlockDataStore::lookupTableBlock()
 {
-    return _zone.blockPointerForOffset(_zone.header()->lookupTableOffset);
+    auto header = _zone.header();
+    assert(header);
+    auto offset = header->lookupTableOffset;
+    return _zone.blockPointerForOffset(offset);
 }
 
 BlockDataStore::LookupTable& BlockDataStore::lookup()
