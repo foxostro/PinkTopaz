@@ -12,7 +12,7 @@
 #include "Terrain/Voxel.hpp"
 #include "Terrain/VoxelDataSerializer.hpp"
 #include "Grid/Array3D.hpp"
-#include "Malloc/MallocZone.hpp"
+#include "Malloc/BoxedMallocZone.hpp"
 #include "MemoryMappedFile.hpp"
 #include <boost/optional.hpp>
 #include <boost/filesystem.hpp>
@@ -62,7 +62,7 @@ private:
     std::mutex _mutex;
     MemoryMappedFile _file;
     VoxelDataSerializer _serializer;
-    MallocZone _zone;
+    BoxedMallocZone _zone;
     
     inline Header* header()
     {
@@ -80,25 +80,20 @@ private:
     // A call to growLookupTable() may invalidate all Block* from the zone.
     void growLookupTable(size_t newCapacity);
     
-    MallocZone::Block* getBlock(Morton3 key);
-    MallocZone::Block* getBlockAndResize(Morton3 key, size_t size);
+    BoxedMallocZone::BlockPointer getBlock(Morton3 key);
+    BoxedMallocZone::BlockPointer getBlockAndResize(Morton3 key, size_t size);
     
     void stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes);
     boost::optional<std::vector<uint8_t>> getChunkBytesFromStash(Morton3 key);
     
-    inline MallocZone::Block* lookupTableBlock()
+    inline BoxedMallocZone::BlockPointer lookupTableBlock()
     {
-        if (header()->lookupTableOffset == 0) {
-            return nullptr;
-        } else {
-            return _zone.blockForOffset(header()->lookupTableOffset);
-        }
+        return _zone.blockPointerForOffset(header()->lookupTableOffset);
     }
     
     inline LookupTable& lookup()
     {
-        MallocZone::Block *block = lookupTableBlock();
-        assert(block);
+        BoxedMallocZone::BlockPointer block = lookupTableBlock();
         return *((LookupTable *)block->data);
     }
     

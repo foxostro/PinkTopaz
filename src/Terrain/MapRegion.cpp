@@ -49,6 +49,7 @@ void MapRegion::mapFile(size_t minimumFileSize)
         header()->magic = MAP_REGION_MAGIC;
         header()->version = MAP_REGION_VERSION;
         header()->zoneSize = newZoneSize;
+        header()->lookupTableOffset = BoxedMallocZone::NullOffset;
         _zone.reset(header()->zoneData, header()->zoneSize);
     } else {
         if (header()->magic != MAP_REGION_MAGIC) {
@@ -65,48 +66,56 @@ void MapRegion::mapFile(size_t minimumFileSize)
 
 void MapRegion::growBackingMemory()
 {
+    SDL_Log("growBackingMemory");
     mapFile(_file.size() * 2);
 }
 
 void MapRegion::growLookupTable(size_t newCapacity)
 {
+    SDL_Log("growLookupTable");
+    
     const size_t newSize = sizeof(LookupTable) + sizeof(LookUpTableEntry) * newCapacity;
-    MallocZone::Block *newBlock;
-    while (!(newBlock = _zone.reallocate(lookupTableBlock(), newSize))) {
-        growBackingMemory();
+    
+    while (true) {
+        auto offsetOfLookupTable = lookupTableBlock().getOffset();
+        auto newBlock = _zone.reallocate(offsetOfLookupTable, newSize);
+        if (!newBlock) {
+            growBackingMemory();
+        } else {
+            header()->lookupTableOffset = newBlock.getOffset();
+            break;
+        }
     }
-    header()->lookupTableOffset = _zone.offsetForBlock(newBlock);
 }
 
-MallocZone::Block* MapRegion::getBlock(Morton3 key)
+BoxedMallocZone::BlockPointer MapRegion::getBlock(Morton3 key)
 {
     if (auto maybeOffset = loadOffsetForKey(key); maybeOffset) {
-        return _zone.blockForOffset(*maybeOffset);
+        return _zone.blockPointerForOffset(*maybeOffset);
+    } else {
+        return BoxedMallocZone::BlockPointer(_zone);
     }
-    return nullptr;
 }
 
-MallocZone::Block* MapRegion::getBlockAndResize(Morton3 key, size_t size)
+BoxedMallocZone::BlockPointer MapRegion::getBlockAndResize(Morton3 key, size_t size)
 {
-    MallocZone::Block *block = getBlock(key);
-    unsigned offset;
+    BoxedMallocZone::Offset offset = BoxedMallocZone::NullOffset;
+    BoxedMallocZone::BlockPointer block = getBlock(key);
     
     if (block) {
-        offset = _zone.offsetForBlock(block);
+        offset = block.getOffset();
+    }
+    
+    while (true) {
+        block = _zone.reallocate(block.getOffset(), size);
         
-        while (!(block = _zone.reallocate(_zone.blockForOffset(offset), size))){
-            growBackingMemory();
-        }
-    } else {
-        while (!(block = _zone.allocate(size))) {
+        if (block) {
+            storeOffsetForKey(key, block.getOffset());
+            return block;
+        } else {
             growBackingMemory();
         }
     }
-    
-    offset = _zone.offsetForBlock(block);
-    storeOffsetForKey(key, offset); // storeOffsetForKey may invalidate `block'.
-    block = _zone.blockForOffset(offset);
-    return block;
 }
 
 void MapRegion::stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes)
@@ -115,7 +124,7 @@ void MapRegion::stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes)
     
     const size_t size = bytes.size();
     assert(size > 0);
-    MallocZone::Block *block = getBlockAndResize(key, size);
+    BoxedMallocZone::BlockPointer block = getBlockAndResize(key, size);
     memcpy(block->data, &bytes[0], size);
     memset(block->data + size, 0, block->size - size);
 }
@@ -129,7 +138,7 @@ MapRegion::getChunkBytesFromStash(Morton3 key)
         return boost::none;
     }
     
-    MallocZone::Block *block = getBlock(key);
+    BoxedMallocZone::BlockPointer block = getBlock(key);
     const size_t size = block->size;
     
     std::vector<uint8_t> bytes(size);
