@@ -10,10 +10,8 @@
 #include "SDL.h" // for SDL_Log
 
 MapRegion::MapRegion(const boost::filesystem::path &regionFileName)
- : _file(regionFileName)
-{
-    mapFile(InitialBackingBufferSize);
-}
+ : _zone(regionFileName, InitialBackingBufferSize)
+{}
 
 boost::optional<Array3D<Voxel>> MapRegion::load(const AABB &bbox, Morton3 key)
 {
@@ -39,83 +37,30 @@ void MapRegion::store(Morton3 key, const Array3D<Voxel> &voxels)
     stashChunkBytes(key, _serializer.store(voxels));
 }
 
-void MapRegion::mapFile(size_t minimumFileSize)
-{
-    _file.unmapFile();
-    bool mustReset = _file.mapFile(minimumFileSize);
-    size_t newZoneSize = _file.size() - sizeof(Header);
-    
-    if (mustReset) {
-        header()->magic = MAP_REGION_MAGIC;
-        header()->version = MAP_REGION_VERSION;
-        header()->zoneSize = newZoneSize;
-        header()->lookupTableOffset = BoxedMallocZone::NullOffset;
-        _zone.reset(header()->zoneData, header()->zoneSize);
-    } else {
-        if (header()->magic != MAP_REGION_MAGIC) {
-            throw Exception("Unexpected magic number in map region file: found %d but expected %d", header()->magic, MAP_REGION_MAGIC);
-        }
-        
-        if (header()->version != MAP_REGION_VERSION) {
-            throw Exception("Unexpected version number in map region file: found %d but expected %d", header()->version, MAP_REGION_VERSION);
-        }
-        
-        _zone.grow(header()->zoneData, newZoneSize);
-    }
-}
-
-void MapRegion::growBackingMemory()
-{
-    SDL_Log("growBackingMemory");
-    mapFile(_file.size() * 2);
-}
-
 void MapRegion::growLookupTable(size_t newCapacity)
 {
-    SDL_Log("growLookupTable");
-    
     const size_t newSize = sizeof(LookupTable) + sizeof(LookUpTableEntry) * newCapacity;
-    
-    while (true) {
-        auto offsetOfLookupTable = lookupTableBlock().getOffset();
-        auto newBlock = _zone.reallocate(offsetOfLookupTable, newSize);
-        if (!newBlock) {
-            growBackingMemory();
-        } else {
-            header()->lookupTableOffset = newBlock.getOffset();
-            break;
-        }
-    }
+    auto lookUpTable = lookupTableBlock();
+    auto newBlock = _zone.reallocate(std::move(lookUpTable), newSize);
+    assert(newBlock);
+    _zone.header()->lookupTableOffset = newBlock.getOffset();
 }
 
 BoxedMallocZone::BoxedBlock MapRegion::getBlock(Morton3 key)
 {
+    auto offset = BoxedMallocZone::NullOffset;
     if (auto maybeOffset = loadOffsetForKey(key); maybeOffset) {
-        return _zone.blockPointerForOffset(*maybeOffset);
-    } else {
-        return BoxedMallocZone::BoxedBlock(_zone);
+        offset = *maybeOffset;
     }
+    return _zone.blockPointerForOffset(offset);
 }
 
 BoxedMallocZone::BoxedBlock MapRegion::getBlockAndResize(Morton3 key, size_t size)
 {
-    BoxedMallocZone::Offset offset = BoxedMallocZone::NullOffset;
-    BoxedMallocZone::BoxedBlock block = getBlock(key);
-    
-    if (block) {
-        offset = block.getOffset();
-    }
-    
-    while (true) {
-        block = _zone.reallocate(block.getOffset(), size);
-        
-        if (block) {
-            storeOffsetForKey(key, block.getOffset());
-            return block;
-        } else {
-            growBackingMemory();
-        }
-    }
+    auto block = _zone.reallocate(getBlock(key), size);
+    assert(block);
+    storeOffsetForKey(key, block.getOffset());
+    return block;
 }
 
 void MapRegion::stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes)
@@ -146,6 +91,16 @@ MapRegion::getChunkBytesFromStash(Morton3 key)
     memcpy(&bytes[0], block->data, size);
     
     return boost::make_optional(bytes);
+}
+
+BoxedMallocZone::BoxedBlock MapRegion::lookupTableBlock()
+{
+    return _zone.blockPointerForOffset(_zone.header()->lookupTableOffset);
+}
+
+MapRegion::LookupTable& MapRegion::lookup()
+{
+    return *((LookupTable *)lookupTableBlock()->data);
 }
 
 void MapRegion::storeOffsetForKey(Morton3 mortonKey, uint32_t offset)

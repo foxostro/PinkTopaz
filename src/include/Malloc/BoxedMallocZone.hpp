@@ -38,11 +38,11 @@ public:
         
         BoxedBlock(BoxedMallocZone &zone, Offset offset)
          : _zone(zone), _offset(offset)
-        {
-            assert(_offset != 0);
-        }
+        {}
         
-        BoxedBlock(const BoxedBlock &ptr) = delete;
+        BoxedBlock(const BoxedBlock &ptr)
+         : _zone(ptr._zone), _offset(ptr._offset)
+        {}
         
         BoxedBlock(BoxedBlock &&ptr)
          : _zone(ptr._zone),
@@ -50,6 +50,13 @@ public:
         {
             assert(_offset != 0);
             ptr._offset = NullOffset;
+        }
+        
+        BoxedBlock& operator=(const BoxedBlock &ptr)
+        {
+            assert(&_zone == &ptr._zone);
+            _offset = ptr._offset;
+            return *this;
         }
         
         BoxedBlock& operator=(BoxedBlock &&ptr)
@@ -140,6 +147,9 @@ private:
     
     // Gets the block associated with the specified offset.
     MallocZone::Block* blockForOffset(Offset offset);
+    
+    void mapFile(size_t minimumFileSize);
+    void growBackingMemory();
 };
 
 #endif /* BoxedMallocZone_hpp */

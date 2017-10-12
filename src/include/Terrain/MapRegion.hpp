@@ -12,8 +12,7 @@
 #include "Terrain/Voxel.hpp"
 #include "Terrain/VoxelDataSerializer.hpp"
 #include "Grid/Array3D.hpp"
-#include "Malloc/BoxedMallocZone.hpp"
-#include "MemoryMappedFile.hpp"
+#include "Malloc/ManagedMallocZone.hpp"
 #include <boost/optional.hpp>
 #include <boost/filesystem.hpp>
 
@@ -34,8 +33,6 @@ public:
 private:
     static constexpr size_t InitialBackingBufferSize = 1024 * 512;
     static constexpr size_t InitialLookTableCapacity = 256;
-    static constexpr uint32_t MAP_REGION_MAGIC = 'rpam';
-    static constexpr uint32_t MAP_REGION_VERSION = 0;
     
     struct LookUpTableEntry
     {
@@ -50,32 +47,9 @@ private:
         LookUpTableEntry entries[0];
     };
     
-    struct Header
-    {
-        uint32_t magic;
-        uint32_t version;
-        uint32_t lookupTableOffset;
-        uint32_t zoneSize;
-        uint8_t zoneData[0];
-    };
-    
     std::mutex _mutex;
-    MemoryMappedFile _file;
     VoxelDataSerializer _serializer;
-    BoxedMallocZone _zone;
-    
-    inline Header* header()
-    {
-        Header *header = (Header *)_file.mapping();
-        assert(header);
-        return header;
-    }
-    
-    void mapFile(size_t minimumFileSize);
-    void unmapFile();
-    
-    // A call to growBackingMemory() may invalidate all Block* from the zone.
-    void growBackingMemory();
+    ManagedMallocZone _zone;
     
     // A call to growLookupTable() may invalidate all Block* from the zone.
     void growLookupTable(size_t newCapacity);
@@ -86,16 +60,8 @@ private:
     void stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes);
     boost::optional<std::vector<uint8_t>> getChunkBytesFromStash(Morton3 key);
     
-    inline BoxedMallocZone::BoxedBlock lookupTableBlock()
-    {
-        return _zone.blockPointerForOffset(header()->lookupTableOffset);
-    }
-    
-    inline LookupTable& lookup()
-    {
-        BoxedMallocZone::BoxedBlock block = lookupTableBlock();
-        return *((LookupTable *)block->data);
-    }
+    BoxedMallocZone::BoxedBlock lookupTableBlock();
+    LookupTable& lookup();
     
     // A call to storeOffsetForKey() may invalidate all Block* from the zone.
     // This is due to having to potentially grow the lookup table and the zone.
