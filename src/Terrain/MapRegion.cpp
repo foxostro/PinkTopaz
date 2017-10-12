@@ -88,19 +88,19 @@ void MapRegion::growLookupTable(size_t newCapacity)
     }
 }
 
-BoxedMallocZone::BlockPointer MapRegion::getBlock(Morton3 key)
+BoxedMallocZone::BoxedBlock MapRegion::getBlock(Morton3 key)
 {
     if (auto maybeOffset = loadOffsetForKey(key); maybeOffset) {
         return _zone.blockPointerForOffset(*maybeOffset);
     } else {
-        return BoxedMallocZone::BlockPointer(_zone);
+        return BoxedMallocZone::BoxedBlock(_zone);
     }
 }
 
-BoxedMallocZone::BlockPointer MapRegion::getBlockAndResize(Morton3 key, size_t size)
+BoxedMallocZone::BoxedBlock MapRegion::getBlockAndResize(Morton3 key, size_t size)
 {
     BoxedMallocZone::Offset offset = BoxedMallocZone::NullOffset;
-    BoxedMallocZone::BlockPointer block = getBlock(key);
+    BoxedMallocZone::BoxedBlock block = getBlock(key);
     
     if (block) {
         offset = block.getOffset();
@@ -124,7 +124,7 @@ void MapRegion::stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes)
     
     const size_t size = bytes.size();
     assert(size > 0);
-    BoxedMallocZone::BlockPointer block = getBlockAndResize(key, size);
+    BoxedMallocZone::BoxedBlock block = getBlockAndResize(key, size);
     memcpy(block->data, &bytes[0], size);
     memset(block->data + size, 0, block->size - size);
 }
@@ -138,7 +138,7 @@ MapRegion::getChunkBytesFromStash(Morton3 key)
         return boost::none;
     }
     
-    BoxedMallocZone::BlockPointer block = getBlock(key);
+    BoxedMallocZone::BoxedBlock block = getBlock(key);
     const size_t size = block->size;
     
     std::vector<uint8_t> bytes(size);

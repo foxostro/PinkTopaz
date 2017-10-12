@@ -22,29 +22,29 @@ public:
     using Offset = uint32_t;
     static constexpr Offset NullOffset = std::numeric_limits<uint32_t>::max();
     
-    class BlockPointer
+    class BoxedBlock
     {
         BoxedMallocZone &_zone;
         Offset _offset;
 
     public:
-        ~BlockPointer() = default;
+        ~BoxedBlock() = default;
         
-        BlockPointer() = delete;
+        BoxedBlock() = delete;
         
-        BlockPointer(BoxedMallocZone &zone)
+        BoxedBlock(BoxedMallocZone &zone)
          : _zone(zone), _offset(NullOffset)
         {}
         
-        BlockPointer(BoxedMallocZone &zone, Offset offset)
+        BoxedBlock(BoxedMallocZone &zone, Offset offset)
          : _zone(zone), _offset(offset)
         {
             assert(_offset != 0);
         }
         
-        BlockPointer(const BlockPointer &ptr) = delete;
+        BoxedBlock(const BoxedBlock &ptr) = delete;
         
-        BlockPointer(BlockPointer &&ptr)
+        BoxedBlock(BoxedBlock &&ptr)
          : _zone(ptr._zone),
            _offset(ptr._offset)
         {
@@ -52,7 +52,7 @@ public:
             ptr._offset = NullOffset;
         }
         
-        BlockPointer& operator=(BlockPointer &&ptr)
+        BoxedBlock& operator=(BoxedBlock &&ptr)
         {
             assert(&_zone == &ptr._zone);
             _offset = ptr._offset;
@@ -105,7 +105,7 @@ public:
     void reset(uint8_t *start, size_t size);
     
     // Gets the block associated with the specified offset.
-    BlockPointer blockPointerForOffset(Offset offset);
+    BoxedBlock blockPointerForOffset(Offset offset);
     
     // Increase the size of the backing memory buffer.
     // The new buffer must itself be a valid zone backing buffer.
@@ -114,11 +114,11 @@ public:
     // Allocates a block of memory of the given size.
     // May return a Null object if the request cannot be satisfied.
     // If size is zero a new minimum-sized object is allocated.
-    BlockPointer allocate(size_t size);
+    BoxedBlock allocate(size_t size);
     
     // Deallocates a memory allocation refered to by `block'.
     // If the block is a Null object then no operation is performed.
-    void deallocate(BlockPointer &&block);
+    void deallocate(BoxedBlock &&block);
     
     // Tries to change the size of the allocation to size, and returns a
     // BlockPointer referring to the new allocation. This may move the
@@ -133,7 +133,7 @@ public:
     //
     // If size is zero and the block is not a Null object then a new minimum-
     // sized object is allocated and the original object is freed.
-    BlockPointer reallocate(Offset offset, size_t newSize);
+    BoxedBlock reallocate(Offset offset, size_t newSize);
     
 private:
     MallocZone _zone;

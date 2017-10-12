@@ -17,10 +17,10 @@ void BoxedMallocZone::reset(uint8_t *start, size_t size)
     _zone.reset(start, size);
 }
 
-BoxedMallocZone::BlockPointer
+BoxedMallocZone::BoxedBlock
 BoxedMallocZone::blockPointerForOffset(Offset offset)
 {
-    return BlockPointer(*this, offset);
+    return BoxedBlock(*this, offset);
 }
 
 void BoxedMallocZone::grow(uint8_t *start, size_t size)
@@ -28,7 +28,7 @@ void BoxedMallocZone::grow(uint8_t *start, size_t size)
     _zone.grow(start, size);
 }
 
-BoxedMallocZone::BlockPointer BoxedMallocZone::allocate(size_t size)
+BoxedMallocZone::BoxedBlock BoxedMallocZone::allocate(size_t size)
 {
     MallocZone::Block *block = _zone.allocate(size);
     Offset offset;
@@ -37,16 +37,16 @@ BoxedMallocZone::BlockPointer BoxedMallocZone::allocate(size_t size)
     } else {
         offset = NullOffset;
     }
-    return BlockPointer(*this, offset);
+    return BoxedBlock(*this, offset);
 }
 
-void BoxedMallocZone::deallocate(BlockPointer &&ptr)
+void BoxedMallocZone::deallocate(BoxedBlock &&ptr)
 {
     MallocZone::Block *block = blockForOffset(ptr.getOffset());
     _zone.deallocate(block);
 }
 
-BoxedMallocZone::BlockPointer
+BoxedMallocZone::BoxedBlock
 BoxedMallocZone::reallocate(Offset offsetOfOldBlock, size_t newSize)
 {
     MallocZone::Block *oldBlock = blockForOffset(offsetOfOldBlock);
@@ -57,7 +57,7 @@ BoxedMallocZone::reallocate(Offset offsetOfOldBlock, size_t newSize)
     } else {
         offset = NullOffset;
     }
-    return BlockPointer(*this, offset);
+    return BoxedBlock(*this, offset);
 }
 
 MallocZone::Block* BoxedMallocZone::blockForOffset(Offset offset)

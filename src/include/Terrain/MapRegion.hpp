@@ -80,20 +80,20 @@ private:
     // A call to growLookupTable() may invalidate all Block* from the zone.
     void growLookupTable(size_t newCapacity);
     
-    BoxedMallocZone::BlockPointer getBlock(Morton3 key);
-    BoxedMallocZone::BlockPointer getBlockAndResize(Morton3 key, size_t size);
+    BoxedMallocZone::BoxedBlock getBlock(Morton3 key);
+    BoxedMallocZone::BoxedBlock getBlockAndResize(Morton3 key, size_t size);
     
     void stashChunkBytes(Morton3 key, const std::vector<uint8_t> &bytes);
     boost::optional<std::vector<uint8_t>> getChunkBytesFromStash(Morton3 key);
     
-    inline BoxedMallocZone::BlockPointer lookupTableBlock()
+    inline BoxedMallocZone::BoxedBlock lookupTableBlock()
     {
         return _zone.blockPointerForOffset(header()->lookupTableOffset);
     }
     
     inline LookupTable& lookup()
     {
-        BoxedMallocZone::BlockPointer block = lookupTableBlock();
+        BoxedMallocZone::BoxedBlock block = lookupTableBlock();
         return *((LookupTable *)block->data);
     }
     
