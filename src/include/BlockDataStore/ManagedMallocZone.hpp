@@ -9,7 +9,7 @@
 #ifndef ManagedMallocZone_hpp
 #define ManagedMallocZone_hpp
 
-#include "Malloc/BoxedMallocZone.hpp"
+#include "BlockDataStore/BoxedMallocZone.hpp"
 #include "MemoryMappedFile.hpp"
 #include <boost/filesystem.hpp>
 

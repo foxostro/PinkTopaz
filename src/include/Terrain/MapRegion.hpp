@@ -12,7 +12,7 @@
 #include "Terrain/Voxel.hpp"
 #include "Terrain/VoxelDataSerializer.hpp"
 #include "Grid/Array3D.hpp"
-#include "Malloc/BlockDataStore.hpp"
+#include "BlockDataStore/BlockDataStore.hpp"
 
 // Stores/Loads voxel chunks on the file system.
 class MapRegion

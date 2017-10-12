@@ -6,7 +6,7 @@
 //
 //
 
-#include "Malloc/BlockDataStore.hpp"
+#include "BlockDataStore/BlockDataStore.hpp"
 #include "SDL.h" // for SDL_Log
 
 BlockDataStore::BlockDataStore(const boost::filesystem::path &regionFileName)

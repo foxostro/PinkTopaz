@@ -9,7 +9,7 @@
 #ifndef BlockDataStore_hpp
 #define BlockDataStore_hpp
 
-#include "Malloc/ManagedMallocZone.hpp"
+#include "BlockDataStore/ManagedMallocZone.hpp"
 #include <boost/optional.hpp>
 #include <boost/filesystem.hpp>
 

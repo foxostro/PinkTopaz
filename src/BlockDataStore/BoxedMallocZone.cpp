@@ -6,7 +6,7 @@
 //
 //
 
-#include "Malloc/BoxedMallocZone.hpp"
+#include "BlockDataStore/BoxedMallocZone.hpp"
 
 BoxedMallocZone::~BoxedMallocZone() = default;
 

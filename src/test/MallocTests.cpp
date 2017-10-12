@@ -7,7 +7,7 @@
 //
 
 #include "catch.hpp"
-#include "Malloc/MallocZone.hpp"
+#include "BlockDataStore/MallocZone.hpp"
 
 #include <cstdlib>
 #include <cstdio>

@@ -153,11 +153,11 @@ set(SOURCE_FILES_PLATFORM_SUPPORT
     "src/include/MemoryMappedFile.hpp"
     )
 
-set(SOURCE_FILES_MALLOC
-    "src/Malloc/MallocZone.cpp" "src/include/Malloc/MallocZone.hpp"
-    "src/Malloc/BoxedMallocZone.cpp" "src/include/Malloc/BoxedMallocZone.hpp"
-    "src/Malloc/ManagedMallocZone.cpp" "src/include/Malloc/ManagedMallocZone.hpp"
-    "src/Malloc/BlockDataStore.cpp" "src/include/Malloc/BlockDataStore.hpp"
+set(SOURCE_FILES_BLOCK_DATA_STORE
+    "src/BlockDataStore/MallocZone.cpp" "src/include/BlockDataStore/MallocZone.hpp"
+    "src/BlockDataStore/BoxedMallocZone.cpp" "src/include/BlockDataStore/BoxedMallocZone.hpp"
+    "src/BlockDataStore/ManagedMallocZone.cpp" "src/include/BlockDataStore/ManagedMallocZone.hpp"
+    "src/BlockDataStore/BlockDataStore.cpp" "src/include/BlockDataStore/BlockDataStore.hpp"
     )
 
 if(APPLE)
@@ -202,7 +202,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_NOISE}
     ${SOURCE_FILES_MATH}
     ${SOURCE_FILES_APPLICATION}
-    ${SOURCE_FILES_MALLOC}
+    ${SOURCE_FILES_BLOCK_DATA_STORE}
     )
 
 source_group("Grid" FILES ${SOURCE_FILES_GRID})
@@ -219,7 +219,7 @@ source_group("Misc" FILES ${SOURCE_FILES_MISC})
 source_group("Noise" FILES ${SOURCE_FILES_NOISE})
 source_group("Math" FILES ${SOURCE_FILES_MATH})
 source_group("Application" FILES ${SOURCE_FILES_APPLICATION})
-source_group("Malloc" FILES ${SOURCE_FILES_MALLOC})
+source_group("Block Data Store" FILES ${SOURCE_FILES_BLOCK_DATA_STORE})
 
 # Build the app. If we're on Apple then this is a .app bundle.
 if(APPLE)
@@ -331,7 +331,7 @@ add_executable(${TEST_PROG_NAME}
                "src/Terrain/MesherNaiveSurfaceNets.cpp"
                "src/Terrain/VoxelDataSerializer.cpp"
                "src/Terrain/VoxelDataGenerator.cpp"
-               "src/Malloc/MallocZone.cpp" "src/include/Malloc/MallocZone.hpp"
+               "src/BlockDataStore/MallocZone.cpp" "src/include/BlockDataStore/MallocZone.hpp"
                )
 target_link_libraries(${TEST_PROG_NAME}
                       ${CONAN_LIBS}

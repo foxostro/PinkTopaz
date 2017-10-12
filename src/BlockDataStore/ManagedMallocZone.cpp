@@ -6,7 +6,7 @@
 //
 //
 
-#include "Malloc/ManagedMallocZone.hpp"
+#include "BlockDataStore/ManagedMallocZone.hpp"
 #include "Exception.hpp"
 
 ManagedMallocZone::ManagedMallocZone(const boost::filesystem::path &fileName,
