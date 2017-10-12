@@ -10,7 +10,7 @@
 #include "SDL.h" // for SDL_Log
 
 MapRegion::MapRegion(const boost::filesystem::path &regionFileName)
- : _dataStore(regionFileName)
+ : _dataStore(regionFileName, 'rpam', 0)
 {}
 
 boost::optional<Array3D<Voxel>> MapRegion::load(const AABB &bbox, Morton3 key)

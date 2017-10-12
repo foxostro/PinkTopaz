@@ -20,7 +20,9 @@ class BlockDataStore
 public:
     using Key = uint64_t;
     
-    BlockDataStore(const boost::filesystem::path &regionFileName);
+    BlockDataStore(const boost::filesystem::path &regionFileName,
+                   uint32_t magic,
+                   uint32_t version);
     
     // Loads a voxel chunk from file, if available.
     // The key uniquely identifies the chunk in the voxel chunk in space.

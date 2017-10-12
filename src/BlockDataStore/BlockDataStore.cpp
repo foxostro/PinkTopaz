@@ -9,8 +9,13 @@
 #include "BlockDataStore/BlockDataStore.hpp"
 #include "SDL.h" // for SDL_Log
 
-BlockDataStore::BlockDataStore(const boost::filesystem::path &regionFileName)
- : _zone(regionFileName, InitialBackingBufferSize)
+BlockDataStore::BlockDataStore(const boost::filesystem::path &regionFileName,
+                               uint32_t magic,
+                               uint32_t version)
+ : _zone(regionFileName,
+         InitialBackingBufferSize,
+         magic,
+         version)
 {}
 
 void BlockDataStore::store(Key key, const std::vector<uint8_t> &bytes)

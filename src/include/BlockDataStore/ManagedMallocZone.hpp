@@ -26,7 +26,8 @@ public:
     };
     
     ManagedMallocZone(const boost::filesystem::path &regionFileName,
-                      size_t initialFileSize);
+                      size_t initialFileSize,
+                      uint32_t magic, uint32_t version);
     
     BoxedMallocZone::BoxedBlock blockPointerForOffset(BoxedMallocZone::Offset offset);
     BoxedMallocZone::BoxedBlock allocate(size_t size);
@@ -39,8 +40,8 @@ public:
     }
     
 private:
-    static constexpr uint32_t MANAGED_MALLOC_ZONE_MAGIC = 'rpam';
-    static constexpr uint32_t MANAGED_MALLOC_ZONE_VERSION = 0;
+    const uint32_t _magic;
+    const uint32_t _version;
     
     MemoryMappedFile _file;
     BoxedMallocZone _zone;

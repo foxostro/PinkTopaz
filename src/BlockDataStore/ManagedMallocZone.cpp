@@ -10,8 +10,9 @@
 #include "Exception.hpp"
 
 ManagedMallocZone::ManagedMallocZone(const boost::filesystem::path &fileName,
-                                     size_t initialFileSize)
- : _file(fileName)
+                                     size_t initialFileSize,
+                                     uint32_t magic, uint32_t version)
+ : _magic(magic), _version(version), _file(fileName)
 {
     mapFile(initialFileSize);
 }
@@ -63,18 +64,18 @@ void ManagedMallocZone::mapFile(size_t minimumFileSize)
     size_t newZoneSize = _file.size() - sizeof(Header);
     
     if (mustReset) {
-        header()->magic = MANAGED_MALLOC_ZONE_MAGIC;
-        header()->version = MANAGED_MALLOC_ZONE_VERSION;
+        header()->magic = _magic;
+        header()->version = _version;
         header()->zoneSize = newZoneSize;
         header()->lookupTableOffset = BoxedMallocZone::NullOffset;
         _zone.reset(header()->zoneData, header()->zoneSize);
     } else {
-        if (header()->magic != MANAGED_MALLOC_ZONE_MAGIC) {
-            throw Exception("Unexpected magic number in managed file: found %d but expected %d", header()->magic, MANAGED_MALLOC_ZONE_MAGIC);
+        if (header()->magic != _magic) {
+            throw Exception("Unexpected magic number in managed file: found %d but expected %d", header()->magic, _magic);
         }
         
-        if (header()->version != MANAGED_MALLOC_ZONE_VERSION) {
-            throw Exception("Unexpected version number in managed file: found %d but expected %d", header()->version, MANAGED_MALLOC_ZONE_VERSION);
+        if (header()->version != _version) {
+            throw Exception("Unexpected version number in managed file: found %d but expected %d", header()->version, _version);
         }
         
         _zone.grow(header()->zoneData, newZoneSize);
