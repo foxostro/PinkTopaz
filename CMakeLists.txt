@@ -157,6 +157,7 @@ set(SOURCE_FILES_MALLOC
     "src/Malloc/MallocZone.cpp" "src/include/Malloc/MallocZone.hpp"
     "src/Malloc/BoxedMallocZone.cpp" "src/include/Malloc/BoxedMallocZone.hpp"
     "src/Malloc/ManagedMallocZone.cpp" "src/include/Malloc/ManagedMallocZone.hpp"
+    "src/Malloc/BlockDataStore.cpp" "src/include/Malloc/BlockDataStore.hpp"
     )
 
 if(APPLE)
