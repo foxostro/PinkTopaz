@@ -54,7 +54,7 @@ bool MemoryMappedFile::mapFile(size_t minimumFileSize)
         didCreateFile = true;
     }
     
-    if (fileSize < minimumFileSize) {
+    if ((size_t)fileSize < minimumFileSize) {
         if (ftruncate(_fd, minimumFileSize) < 0) {
             close(_fd);
             throw Exception("Failed to resize file: %s with errno=%d", _fileName.c_str(), errno);

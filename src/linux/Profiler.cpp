@@ -7,34 +7,33 @@
 //
 
 #include "Profiler.hpp"
-#include <dispatch/dispatch.h>
-#include <sys/kdebug_signpost.h>
+#include <mutex>
 
-class ProfilerMacOS : public Profiler
+class ProfilerLinux : public Profiler
 {
 public:
     void start(Label label) override
     {
-        kdebug_signpost_start((uint32_t)label, 0, 0, 0, 0);
+        // stub
     }
     
     void end(Label label) override
     {
-        kdebug_signpost_end((uint32_t)label, 0, 0, 0, 0);
+        // stub
     }
     
     void signPost(Label label) override
     {
-        kdebug_signpost((uint32_t)label, 0, 0, 0, 0);
+        // stub
     }
 };
 
 std::shared_ptr<Profiler> getProfiler()
 {
-    static std::shared_ptr<Profiler> instance;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        instance = std::make_shared<ProfilerMacOS>();
+    static std::shared_ptr<Profiler> profiler;
+    static std::once_flag flag;
+    std::call_once(flag, [&]{
+        profiler = std::make_shared<ProfilerLinux>();
     });
-    return instance;
+    return profiler;
 }

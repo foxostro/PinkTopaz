@@ -12,6 +12,7 @@
 #include "Grid/GridIndexer.hpp"
 #include "Grid/GridLRU.hpp"
 #include <unordered_map>
+#include <mutex>
 
 // SparseGrid divides space into a regular grid of cells where each cell is
 // associated with an element. Access to elements is synchronized to avoid

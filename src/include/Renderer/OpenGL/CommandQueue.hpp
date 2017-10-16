@@ -13,6 +13,7 @@
 #include <mutex>
 #include <thread>
 #include <string>
+#include <functional>
     
 class CommandQueue
 {

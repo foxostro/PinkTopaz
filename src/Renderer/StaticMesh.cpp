@@ -7,6 +7,7 @@
 //
 
 #include "Renderer/StaticMesh.hpp"
+#include <cstring>
 
 StaticMesh::StaticMesh()
 {

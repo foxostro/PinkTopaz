@@ -342,9 +342,9 @@ TEST_CASE("Test Indexing", "[Array3D]") {
     
     Morton3 index;
     
-    for (size_t x = 0; x < res.x; ++x) {
-        for (size_t y = 0; y < res.y; ++y) {
-            for (size_t z = 0; z < res.z; ++z) {
+    for (int x = 0; x < res.x; ++x) {
+        for (int y = 0; y < res.y; ++y) {
+            for (int z = 0; z < res.z; ++z) {
                 index = myArray.indexAtCellCoords(ivec3(x, y, z));
                 REQUIRE(myArray.isValidIndex(index));
             }

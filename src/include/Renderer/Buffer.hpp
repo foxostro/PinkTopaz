@@ -9,8 +9,9 @@
 #ifndef Buffer_hpp
 #define Buffer_hpp
 
-#include <cstddef>
+#include <cstdint>
 #include <vector>
+#include <string>
     
 enum BufferUsage
 {

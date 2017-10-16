@@ -13,6 +13,7 @@
 #include <glm/gtx/component_wise.hpp>
 #include <vector>
 #include <sstream>
+#include <array>
 
 // An axis-aligned bounding box.
 template<typename TYPE>

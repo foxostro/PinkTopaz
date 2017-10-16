@@ -12,6 +12,7 @@
 
 #include "zlib.h"
 #include <boost/crc.hpp>
+#include <cstring>
 
 static uint32_t computeChecksum(const std::vector<uint8_t> &input)
 {

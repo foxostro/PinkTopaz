@@ -50,14 +50,14 @@ SimplexNoise::SimplexNoise(unsigned seed)
     constexpr size_t N = 256;
     unsigned char permfill[N];
     
-    for (int i = 0; i < N; ++i) {
+    for (unsigned i = 0; i < N; ++i) {
         permfill[i] = i+1;
     }
     
     std::mt19937 e1(seed);
     shuffle(permfill, N, e1);
     
-    for (int i = 0; i < N*2; ++i) {
+    for (unsigned i = 0; i < N*2; ++i) {
         perm[i] = permfill[i & 255];
         permMod12[i] = perm[i] % 12;
     }

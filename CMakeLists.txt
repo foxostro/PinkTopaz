@@ -14,17 +14,20 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 
     set(CMAKE_CXX_FLAGS_RELEASE "/MD")
     set(CMAKE_CXX_FLAGS_DEBUG "/MD /Zi")
-else()
-    if(APPLE)
+elseif(APPLE)
+    if(USE_METAL)
+        set(APPLE_FLAGS "-DMETAL_ENABLED ${APPLE_FLAGS}")
+    else(USE_METAL)
         set(APPLE_FLAGS "")
-        if(USE_METAL)
-            set(APPLE_FLAGS "-DMETAL_ENABLED ${APPLE_FLAGS}")
-        endif(USE_METAL)
-    endif(APPLE)
+    endif(USE_METAL)
     
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
     set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
+else()
+    set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
+    set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror -std=c++17")
 endif()
 
 set(SOURCE_FILES_GRID
@@ -238,18 +241,23 @@ if(APPLE)
     find_library(QUARTZ_CORE_LIBRARY QuartzCore)
     find_path(QUARTZ_CORE_INCLUDE_DIR QuartzCore/QuartzCore.h)
 
-    set(MACOS_LIBRARIES
+    set(ADDITIONAL_LIBRARIES
         ${METAL_LIBRARY}
         ${QUARTZ_CORE_LIBRARY}
         )
         
-    set(MACOS_INCLUDE_DIRS
+    set(ADDITIONAL_INCLUDE_DIRS
         ${METAL_INCLUDE_DIR}
         ${QUARTZ_CORE_INCLUDE_DIR}
         )
-else()
-    set(MACOS_LIBRARIES "")
-    set(MACOS_INCLUDE_DIRS "")
+else(APPLE)
+    if (WIN32)
+        set(ADDITIONAL_LIBRARIES "")
+        set(ADDITIONAL_INCLUDE_DIRS "")
+    else(WIN32)
+        set(ADDITIONAL_LIBRARIES "atomic")
+        set(ADDITIONAL_INCLUDE_DIRS "")
+    endif(WIN32)
 endif(APPLE)
 
 # Cmake configures a header file with some macros.
@@ -258,12 +266,12 @@ configure_file("${PROJECT_SOURCE_DIR}/src/pinktopaz_config.h.in"
 
 include_directories("${PROJECT_SOURCE_DIR}/src/include"
                     ${OPENGL_INCLUDE_DIRS}
-                    ${MACOS_INCLUDE_DIRS}
+		    ${ADDITIONAL_INCLUDE_DIRS}
                     )
 target_link_libraries(${APP_NAME}
                       ${CONAN_LIBS}
                       ${OPENGL_LIBRARIES}
-                      ${MACOS_LIBRARIES}
+		      ${ADDITIONAL_LIBRARIES}
                       )
 
 if(APPLE)
@@ -287,12 +295,10 @@ if(APPLE)
                        COMMAND ./sign_the_app_bundle $<TARGET_FILE_DIR:${APP_NAME}>/../..
                        )
 else(APPLE)
-    if(WIN32)
-        # On Windows, copy the resources to the same directory as the executable.
-        add_custom_command(TARGET ${APP_NAME} POST_BUILD
-                           COMMAND ${CMAKE_COMMAND} -E copy_directory "./res" $<TARGET_FILE_DIR:${APP_NAME}>/
-                           )
-    endif(WIN32)
+    # On Windows, copy the resources to the same directory as the executable.
+    add_custom_command(TARGET ${APP_NAME} POST_BUILD
+                       COMMAND ${CMAKE_COMMAND} -E copy_directory "./res" $<TARGET_FILE_DIR:${APP_NAME}>/
+                       )
 endif(APPLE)
 
 

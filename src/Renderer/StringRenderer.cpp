@@ -70,14 +70,14 @@ bool StringRenderer::placeGlyph(FT_Face &face,
     rowHeight = std::max(rowHeight, height);
     
     // Validate the cursor. Can the glyph fit on this row?
-    if ((cursor.x + width) >= atlasSurface->w) {
+    if ((cursor.x + width) >= (size_t)atlasSurface->w) {
         // Go to the next row.
         cursor.x = 0;
         cursor.y += rowHeight;
         rowHeight = height;
         
         // Have we run out of rows? If so then try a bigger atlas.
-        if ((cursor.y + height) >= atlasSurface->h) {
+        if ((cursor.y + height) >= (size_t)atlasSurface->h) {
             return false;
         }
     }
