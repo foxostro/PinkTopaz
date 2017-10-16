@@ -131,7 +131,8 @@ Array3D<Voxel> VoxelDataSerializer::load(const AABB &boundingBox,
     
     const std::vector<uint8_t> compressedBytes(header.compressedBytes, header.compressedBytes + header.len);
     
-    if (uint32_t s = computeChecksum(compressedBytes); header.checksum != s) {
+    uint32_t s = computeChecksum(compressedBytes);
+    if (header.checksum != s) {
         throw VoxelDataChecksumException(header.checksum, s);
     }
     

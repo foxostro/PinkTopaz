@@ -99,19 +99,24 @@ public:
         r.y = y;
         r.z = z;
     }
-    
+
+    static inline glm::ivec3 decode(uint32_t morton)
+    {
+        glm::ivec3 result;
+        decode(result, morton);
+        return result;
+    }
+
 #endif /* defined(__BMI2__) */
     
     ~Morton3() = default;
     
     // Default constructor
     Morton3() : _mortonCode(0) {}
-    
-    // Construct from a uint32_t which carries a morton code.
-    Morton3(uint32_t mortonCode) : _mortonCode(mortonCode) {}
-    
-    // Construct from a size_t which carries a morton code.
-    Morton3(size_t mortonCode) : _mortonCode(mortonCode) {}
+
+    // Constructor.
+    template<typename T>
+    Morton3(T mortonCode) : _mortonCode(mortonCode) {}
     
     // Construct by encoding the specified integer coordinates as a Morton Code.
     Morton3(const glm::ivec3 &p) : _mortonCode(Morton3::encode(p)) {}

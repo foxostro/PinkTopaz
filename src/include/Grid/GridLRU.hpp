@@ -20,7 +20,8 @@ public:
     // Mark the item as being recently used.
     void reference(KeyType key)
     {
-        if (auto mapIter = _lookup.find(key); mapIter != _lookup.end()) {
+        auto mapIter = _lookup.find(key);
+        if (mapIter != _lookup.end()) {
             // Move the element to the end of the list.
             auto listIter = mapIter->second;
             _list.splice(_list.end(), _list, listIter);

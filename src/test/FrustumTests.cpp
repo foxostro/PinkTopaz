@@ -65,7 +65,7 @@ TEST_CASE("Test Camera Plane Extraction 2", "[Frustum]") {
                              vec3(0.f, 1.f, 0.f)); // up
     
     // Setup a standard perspective projection matrix.
-    constexpr float fovy = pi<float>() * 0.25f;
+    static const float fovy = pi<float>() * 0.25f;
     constexpr float znear = 1.0f;
     constexpr float zfar = 10.0f;
     constexpr float aspectRatio = 800.0f / 600.0f;

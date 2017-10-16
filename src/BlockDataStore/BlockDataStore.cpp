@@ -58,7 +58,8 @@ void BlockDataStore::growLookupTable(size_t newCapacity)
 BoxedMallocZone::BoxedBlock BlockDataStore::getBlock(Key key)
 {
     auto offset = BoxedMallocZone::NullOffset;
-    if (auto maybeOffset = loadOffsetForKey(key); maybeOffset) {
+    auto maybeOffset = loadOffsetForKey(key);
+    if (maybeOffset) {
         offset = *maybeOffset;
     }
     return _zone.blockPointerForOffset(offset);
