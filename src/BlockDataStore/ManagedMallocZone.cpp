@@ -59,7 +59,6 @@ BoxedMallocZone::BoxedBlock ManagedMallocZone::reallocate(BoxedMallocZone::Boxed
 
 void ManagedMallocZone::mapFile(size_t minimumFileSize)
 {
-    _file.unmapFile();
     bool mustReset = _file.mapFile(minimumFileSize);
     size_t newZoneSize = _file.size() - sizeof(Header);
     

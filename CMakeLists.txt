@@ -22,7 +22,7 @@ elseif(APPLE)
     endif(USE_METAL)
     
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
     set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
 else()
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
@@ -128,6 +128,7 @@ set(SOURCE_FILES_MISC
     "src/include/FileUtilities.hpp" "src/FileUtilities.cpp"
     "src/include/FrameTimer.hpp" "src/FrameTimer.cpp"
     "src/include/TaskDispatcher.hpp" "src/TaskDispatcher.cpp"
+    "src/include/MemoryMappedFile.hpp" "src/MemoryMappedFile.cpp"
     )
 
 set(SOURCE_FILES_NOISE
@@ -153,7 +154,6 @@ set(SOURCE_FILES_PLATFORM_SUPPORT
     "src/include/VideoRefreshRate.hpp"
     "src/include/Profiler.hpp"
     "src/include/RetinaSupport.h"
-    "src/include/MemoryMappedFile.hpp"
     )
 
 set(SOURCE_FILES_BLOCK_DATA_STORE
@@ -169,7 +169,6 @@ if(APPLE)
         "src/osx/GraphicsDeviceFactory.mm"
         "src/osx/VideoRefreshRate.cpp"
         "src/osx/Profiler.cpp"
-        "src/osx/MemoryMappedFile.cpp"
         )
 else(APPLE)
 	if(WIN32)
@@ -185,7 +184,6 @@ else(APPLE)
             "src/linux/GraphicsDeviceFactory.cpp"
             "src/linux/VideoRefreshRate.cpp"
             "src/linux/Profiler.cpp"
-            "src/osx/MemoryMappedFile.cpp" # written against POSIX
             )
 	endif(WIN32)
 endif(APPLE)

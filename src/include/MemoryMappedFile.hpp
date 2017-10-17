@@ -9,12 +9,11 @@
 #ifndef MemoryMappedFile_hpp
 #define MemoryMappedFile_hpp
 
+#include <memory>
 #include <boost/filesystem.hpp>
+#include <boost/iostreams/device/mapped_file.hpp>
 
 // Map a file in memory without having to be concerned with platform details.
-//
-// We don't want to use mapped files from boost::iostreams because we need to
-// be able to truncate files too.
 class MemoryMappedFile
 {
 public:
@@ -31,31 +30,21 @@ public:
     // Unmap the file.
     void unmapFile();
     
-    inline boost::filesystem::path fileName() const
-    {
-        return _fileName;
-    }
+    // Get the name of the file to be mapped.
+    boost::filesystem::path fileName() const;
     
-    inline void* mapping()
-    {
-        return _mapping;
-    }
+    // Get a pointer to the mapped region.
+    void* mapping();
     
-    inline const void* mapping() const
-    {
-        return _mapping;
-    }
+    // Get a pointer to the mapped region.
+    const void* mapping() const;
     
-    inline size_t size() const
-    {
-        return _size;
-    }
+    // Get the number of bytes in the mapped region.
+    size_t size() const;
     
 private:
     boost::filesystem::path _fileName;
-    int _fd;
-    void *_mapping;
-    size_t _size;
+    boost::iostreams::mapped_file _fileMapping;
 };
 
 #endif /* MemoryMappedFile_hpp */
