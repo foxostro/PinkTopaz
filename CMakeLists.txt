@@ -180,7 +180,7 @@ else(APPLE)
             "src/windows/GraphicsDeviceFactory.cpp"
             "src/windows/VideoRefreshRate.cpp"
             "src/windows/Profiler.cpp"
-        	"src/windows/ThreadName.cpp"
+            "src/windows/ThreadName.cpp"
             )
 	else(WIN32)
         list(APPEND SOURCE_FILES_PLATFORM_SUPPORT
@@ -188,7 +188,7 @@ else(APPLE)
             "src/linux/GraphicsDeviceFactory.cpp"
             "src/linux/VideoRefreshRate.cpp"
             "src/linux/Profiler.cpp"
-        	"src/linux/ThreadName.cpp"
+            "src/linux/ThreadName.cpp"
             )
 	endif(WIN32)
 endif(APPLE)
@@ -330,20 +330,25 @@ add_executable(${TEST_PROG_NAME}
                "src/test/Noise/SimplexNoiseTests.cpp"
                "src/test/BlockDataStoreTests.cpp"
                
-               "src/FileUtilities.cpp"
-               "src/Exception.cpp"
-               "src/TaskDispatcher.cpp"
-               "src/Noise/SimplexNoise.cpp"
-               "src/Renderer/StaticMesh.cpp"
-               "src/Renderer/StaticMeshSerializer.cpp"
-               "src/Terrain/MesherMarchingCubes.cpp"
-               "src/Terrain/MesherNaiveSurfaceNets.cpp"
-               "src/Terrain/VoxelDataSerializer.cpp"
-               "src/Terrain/VoxelDataGenerator.cpp"
-               "src/BlockDataStore/MallocZone.cpp" "src/include/BlockDataStore/MallocZone.hpp"
+               ${SOURCE_FILES_GRID}
+               ${SOURCE_FILES_TERRAIN}
+               ${SOURCE_FILES_OTHER_ECS}
+               ${SOURCE_FILES_RENDERER}
+               ${SOURCE_FILES_SYSTEMS}
+               ${SOURCE_FILES_COMPONENTS}
+               ${SOURCE_FILES_EVENTS}
+               ${SOURCE_FILES_OPENGL}
+               ${SOURCE_FILES_METAL}
+               ${SOURCE_FILES_PLATFORM_SUPPORT}
+               ${SOURCE_FILES_MISC}
+               ${SOURCE_FILES_NOISE}
+               ${SOURCE_FILES_MATH}
+               ${SOURCE_FILES_BLOCK_DATA_STORE}
                )
 target_link_libraries(${TEST_PROG_NAME}
                       ${CONAN_LIBS}
+                      ${OPENGL_LIBRARIES}
+		      ${ADDITIONAL_LIBRARIES}
                       )
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake.modules/")
 include(ParseAndAddCatchTests)
