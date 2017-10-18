@@ -132,12 +132,12 @@ void Application::run()
         
     SDL_SetRelativeMouseMode(SDL_TRUE);
     
-    const unsigned hardwareConcurrency = std::max(1u, std::thread::hardware_concurrency());
+    const unsigned h = std::max(1u, std::thread::hardware_concurrency());
     
     inner(createDefaultGraphicsDevice(*_window),
-          std::make_shared<TaskDispatcher>(1),
-          std::make_shared<TaskDispatcher>(hardwareConcurrency),
-          std::make_shared<TaskDispatcher>(hardwareConcurrency));
+          std::make_shared<TaskDispatcher>("High Priority TaskDispatcher", 1),
+          std::make_shared<TaskDispatcher>("Low Priority TaskDispatcher", h),
+          std::make_shared<TaskDispatcher>("Voxel Data TaskDispatcher", h));
 
     SDL_DestroyWindow(_window);
     _window = nullptr;

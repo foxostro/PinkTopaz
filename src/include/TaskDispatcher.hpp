@@ -83,7 +83,8 @@ class TaskDispatcher
 {
 public:
     TaskDispatcher() = delete;
-    TaskDispatcher(unsigned numThreads);
+    TaskDispatcher(const std::string &name,
+                   unsigned numThreads);
     ~TaskDispatcher();
     
     // Returns true if the dispatcher is shutting down or has already shutdown.
@@ -150,7 +151,7 @@ public:
     }
     
 private:
-    void worker();
+    void worker(const std::string &name);
     
     std::vector<std::thread> _threads;
     std::mutex _lockTaskPosted;

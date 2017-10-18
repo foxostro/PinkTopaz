@@ -154,6 +154,8 @@ set(SOURCE_FILES_PLATFORM_SUPPORT
     "src/include/VideoRefreshRate.hpp"
     "src/include/Profiler.hpp"
     "src/include/RetinaSupport.h"
+    "src/include/RetinaSupport.h"
+    "src/include/ThreadName.hpp"
     )
 
 set(SOURCE_FILES_BLOCK_DATA_STORE
@@ -169,6 +171,7 @@ if(APPLE)
         "src/osx/GraphicsDeviceFactory.mm"
         "src/osx/VideoRefreshRate.cpp"
         "src/osx/Profiler.cpp"
+        "src/osx/ThreadName.cpp"
         )
 else(APPLE)
 	if(WIN32)
@@ -177,6 +180,7 @@ else(APPLE)
             "src/windows/GraphicsDeviceFactory.cpp"
             "src/windows/VideoRefreshRate.cpp"
             "src/windows/Profiler.cpp"
+        	"src/windows/ThreadName.cpp"
             )
 	else(WIN32)
         list(APPEND SOURCE_FILES_PLATFORM_SUPPORT
@@ -184,6 +188,7 @@ else(APPLE)
             "src/linux/GraphicsDeviceFactory.cpp"
             "src/linux/VideoRefreshRate.cpp"
             "src/linux/Profiler.cpp"
+        	"src/linux/ThreadName.cpp"
             )
 	endif(WIN32)
 endif(APPLE)

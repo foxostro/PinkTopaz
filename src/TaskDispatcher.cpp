@@ -7,13 +7,16 @@
 //
 
 #include "TaskDispatcher.hpp"
+#include "ThreadName.hpp"
 #include <algorithm>
 
-TaskDispatcher::TaskDispatcher(unsigned numThreads) : _threadShouldExit(false)
+TaskDispatcher::TaskDispatcher(const std::string &name,
+                               unsigned numThreads)
+ : _threadShouldExit(false)
 {
     for (unsigned i = 0; i < numThreads; ++i) {
-        _threads.emplace_back([this]{
-            worker();
+        _threads.emplace_back([this, name]{
+            worker(name);
         });
     }
 }
@@ -40,8 +43,10 @@ void TaskDispatcher::shutdown()
     _threads.clear();
 }
 
-void TaskDispatcher::worker()
+void TaskDispatcher::worker(const std::string &name)
 {
+    setNameForCurrentThread(name);
+
     while (true) {
         std::shared_ptr<AbstractTask> taskPtr;
         
