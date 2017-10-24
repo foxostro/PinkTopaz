@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.5)
+cmake_minimum_required (VERSION 3.9)
 project (PinkTopaz)
 set(APP_NAME "PinkTopaz")
 
@@ -9,11 +9,22 @@ if(APPLE)
     option(USE_METAL "Use the Metal graphics API on macOS." TRUE)
 endif()
 
+set(CMAKE_CXX_STANDARD 17)
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-	set(CMAKE_CXX_FLAGS "/arch:AVX2 /EHsc /D__BMI2__ /D__LZCNT__ /D__POPCNT__ /D_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH /std:c++latest")
+    set(CMAKE_CXX_FLAGS "/arch:AVX2 /EHsc /D__BMI2__ /D__LZCNT__ /D__POPCNT__ /D_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH")
+
+    if(MSVC_VERSION LESS 1900)
+        message(WARNING "This probably won't build with Visual Studio older than MS Visual Studio 2015.")
+    elseif(MSVC_VERSION EQUAL 1900)
+        # Visual Studio 2015 does not support /std:c++17 so we have to specify /std:c++latest here.
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
+    endif()
 
     set(CMAKE_CXX_FLAGS_RELEASE "/MD")
     set(CMAKE_CXX_FLAGS_DEBUG "/MD /Zi")
+
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${APP_NAME}})
 elseif(APPLE)
     if(USE_METAL)
         set(APPLE_FLAGS "-DMETAL_ENABLED ${APPLE_FLAGS}")
@@ -23,11 +34,11 @@ elseif(APPLE)
     
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-    set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror -std=c++1z ${APPLE_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror ${APPLE_FLAGS}")
 else()
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
-    set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror -std=c++17")
+    set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror")
 endif()
 
 set(SOURCE_FILES_GRID
