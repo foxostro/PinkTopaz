@@ -238,12 +238,14 @@ source_group("Math" FILES ${SOURCE_FILES_MATH})
 source_group("Application" FILES ${SOURCE_FILES_APPLICATION})
 source_group("Block Data Store" FILES ${SOURCE_FILES_BLOCK_DATA_STORE})
 
-# Build the app. If we're on Apple then this is a .app bundle.
+# Build the app.
 if(APPLE)
-add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
-else(APPLE)
-add_executable(${APP_NAME} ${SOURCE_FILES})
-endif(APPLE)
+    add_executable(${APP_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
+elseif(WIN32)
+    add_executable(${APP_NAME} WIN32 ${SOURCE_FILES})
+else()
+    add_executable(${APP_NAME} ${SOURCE_FILES})
+endif()
 
 find_package(OpenGL REQUIRED)
 
