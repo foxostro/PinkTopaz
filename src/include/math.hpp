@@ -65,7 +65,7 @@ static inline bool isPowerOfTwo(uint32_t x)
 static inline bool isPowerOfTwo(uint32_t x)
 {
     // See <http://graphics.stanford.edu/~seander/bithacks.html#DetermineIfPowerOf2>
-    return (x && !(x & (x - 1))) == 0;
+    return (x && !(x & (x - 1)));
 }
 #endif // defined(__POPCNT__)
 
