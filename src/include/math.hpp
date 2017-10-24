@@ -14,6 +14,7 @@
 
 #if defined(_MSC_VER)
 #include <intrin.h>
+#define __lzcnt32 _lzcnt_u32
 #else
 #include <x86intrin.h>
 #endif
