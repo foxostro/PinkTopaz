@@ -10,6 +10,7 @@
 #define VertexFormat_hpp
 
 #include <vector>
+#include <cstddef>
 
 enum AttributeType
 {
