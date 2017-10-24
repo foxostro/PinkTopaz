@@ -85,6 +85,13 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                 case SDL_KEYDOWN:
                     gameWorld.events.emit(KeypressEvent(e.key.keysym.sym,
                                                         true));
+
+					// Quit on Control+Q too.
+					if (e.key.keysym.sym == SDLK_q && (SDL_GetModState() & KMOD_CTRL)) {
+						SDL_Event event;
+						event.type = SDL_QUIT;
+						SDL_PushEvent(&event);
+					}
                     break;
                     
                 case SDL_KEYUP:
