@@ -3,7 +3,7 @@ SDL2/2.0.5@lasote/stable
 SDL2_image/2.0.1@lasote/stable
 freetype/2.6.3@lasote/stable
 glm/0.9.7.6@dlarudgus20/stable
-EntityX/1.2.0@foxostro/testing
+EntityX/1.2.0@foxostro/stable
 glew/2.0.0@coding3d/stable
 Boost/1.64.0@conan/stable
 Catch/1.9.3@uilianries/stable

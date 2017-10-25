@@ -26,7 +26,7 @@ This variable is used by the script "sign_the_app_bundle" to sign the app bundle
 
 5. Add the bintray Conan repo (needed to find Boost):
 
-    % conan remote add bintray https://api.bintray.com/conan/conan-community/conan
+    % conan remote add PinkTopaz https://api.bintray.com/conan/foxostro/PinkTopaz
 
 6. Use conan to install dependencies:
 
