@@ -50,7 +50,7 @@ Building on Windows
 
 4. Add the bintray Conan repo (needed to find Boost):
 
-    % conan remote add bintray https://api.bintray.com/conan/conan-community/conan
+    % conan remote add PinkTopaz https://api.bintray.com/conan/foxostro/PinkTopaz
 
 5. Use conan to install dependencies:
 
