@@ -44,7 +44,7 @@ This variable is used by the script "sign_the_app_bundle" to sign the app bundle
 Building on Windows
 ===================
 
-1. Install Microsoft Visual Studio 2015. Dependencies do not build with VS 2017. 
+1. Install Microsoft Visual Studio 2017.
 
 3. Install Conan. See <https://www.conan.io/downloads> for details.
 
@@ -52,13 +52,13 @@ Building on Windows
 
     % conan remote add PinkTopaz https://api.bintray.com/conan/foxostro/PinkTopaz
 
-5. Use conan to install dependencies:
+5. Use conan to install dependencies. Use the Developer Console:
 
-    % conan install --build=missing --settings compiler="Visual Studio" --settings compiler.version=14 .
+    % conan install . --build=missing --settings compiler="Visual Studio" --settings compiler.version=15
 
 6. Configure the CMake project:
 
-    % cmake -G "Visual Studio 14 2015 Win64" .
+    % cmake -G "Visual Studio 15 2017 Win64" .
 
 7. Build it:
 
