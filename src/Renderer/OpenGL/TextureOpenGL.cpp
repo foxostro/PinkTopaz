@@ -126,15 +126,15 @@ void TextureOpenGL::commonInit(const TextureDescriptor &desc,
         switch (target)
         {
             case GL_TEXTURE_2D:
-                glTexImage2D(target, level, internalFormat, desc.width,
-                             desc.height, border, externalFormat, dataType,
-                             bytes);
+                glTexImage2D(target, level, internalFormat, (GLsizei)desc.width,
+                             (GLsizei)desc.height, border, externalFormat,
+                             dataType, bytes);
                 break;
                 
             case GL_TEXTURE_2D_ARRAY:
-                glTexImage3D(target, level, internalFormat, desc.width,
-                             desc.height, desc.depth, border, externalFormat,
-                             dataType, bytes);
+                glTexImage3D(target, level, internalFormat, (GLsizei)desc.width,
+                             (GLsizei)desc.height, (GLsizei)desc.depth, border,
+                             externalFormat, dataType, bytes);
                 break;
         }
         

@@ -43,7 +43,7 @@ void MallocZone::reset(uint8_t *start, size_t size)
     
     // The initial block encompasses all memory between the end of the header
     // and the end of the memory buffer.
-    head.size = size - sizeof(Header);
+    head.size = (uint32_t)(size - sizeof(Header));
     
     // Remember where the tail block is.
     header()->tailOffset = offsetForBlock(&head);
@@ -101,7 +101,7 @@ void MallocZone::grow(uint8_t *start, size_t size)
         Block *newTail = (Block *)endOfOldTailBlock;
         const uint8_t *endOfNewTailBlock = start + size;
         newTail->magic = BLOCK_MAGIC;
-        newTail->size = (size_t)(endOfNewTailBlock - (uint8_t *)newTail) - sizeof(Block);
+        newTail->size = (uint32_t)(endOfNewTailBlock - (uint8_t *)newTail) - sizeof(Block);
         newTail->inuse = false;
         newTail->prevOffset = offsetForBlock(oldTail);
         
@@ -445,10 +445,11 @@ void MallocZone::internalSetBackingMemory(uint8_t *start, size_t size)
 {
     assert(start);
     assert(size > sizeof(Header));
+    assert(size < UINT32_MAX);
     
     _header = (Header *)start;
     _header->magic = ZONE_MAGIC;
-    _header->size = size;
+    _header->size = (uint32_t)size;
     
     // Do not modify the contents of the zone. It's a design goal to be able
     // to pass in valid zone backing memory to restore a zone.
@@ -476,11 +477,11 @@ void MallocZone::considerSplittingBlock(Block *block, size_t size)
         assert((uintptr_t)newBlock % ALIGN == 0); // Block structures are always aligned.
         
         newBlock->prevOffset = offsetForBlock(block);
-        newBlock->size = remainingSpace - sizeof(Block);
+        newBlock->size = (uint32_t)(remainingSpace - sizeof(Block));
         newBlock->inuse = false;
         newBlock->magic = BLOCK_MAGIC;
         
-        block->size = size;
+        block->size = (uint32_t)size;
         
         // Update the prev offset of the next block so we can look back.
         Block *following = next(newBlock);

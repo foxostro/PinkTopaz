@@ -84,7 +84,7 @@ void CommandEncoderOpenGL::setFragmentSampler(const std::shared_ptr<TextureSampl
     _encoderCommandQueue.enqueue(_id, __FUNCTION__, [=]{
         auto sampler = std::dynamic_pointer_cast<TextureSamplerOpenGL>(abstractSampler);
         GLuint handle = sampler->getHandle();
-        glBindSampler(index, handle);
+        glBindSampler((GLuint)index, handle);
         CHECK_GL_ERROR();
     });
 }

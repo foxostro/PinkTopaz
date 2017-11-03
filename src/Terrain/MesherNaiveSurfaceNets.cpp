@@ -337,7 +337,7 @@ StaticMesh MesherNaiveSurfaceNets::extract(const Array3D<Voxel> &voxels,
 {
     StaticMesh geometry;
     
-    for (const auto &cellCoords : voxels.slice(aabb)) {
+    for (const auto cellCoords : voxels.slice(aabb)) {
         const AABB cell = voxels.cellAtCellCoords(cellCoords);
         const Morton3 thisIndex = voxels.indexAtCellCoords(cellCoords);
         const Voxel &thisVoxel = voxels.reference(thisIndex);

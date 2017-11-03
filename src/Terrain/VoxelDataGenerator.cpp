@@ -105,7 +105,7 @@ Array3D<Voxel> VoxelDataGenerator::copy(const AABB &region) const
     const auto res = countCellsInRegion(adjusted);
     Array3D<Voxel> dst(adjusted, res);
     
-    for (const auto &cellCoords : dst.slice(adjusted)) {
+    for (const auto cellCoords : dst.slice(adjusted)) {
         const auto cellCenter = dst.cellCenterAtCellCoords(cellCoords);
         Voxel &value = dst.mutableReference(cellCoords);
         generateTerrainVoxel(*_noiseSource0,

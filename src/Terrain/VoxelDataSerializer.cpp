@@ -169,7 +169,7 @@ std::vector<uint8_t> VoxelDataSerializer::store(const Array3D<Voxel> &voxels)
     header.w = res.x;
     header.h = res.y;
     header.d = res.z;
-    header.len = compressedBytes.size();
+    header.len = (uint32_t)compressedBytes.size();
     
     memcpy((void *)header.compressedBytes,
            (const void *)compressedBytes.data(),

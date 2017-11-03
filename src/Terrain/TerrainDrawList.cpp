@@ -44,7 +44,7 @@ TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
     
     // If the draw list is missing any mesh in the active region then report
     // that to the caller.
-    for (const auto &cellCoords : _front.slice(activeRegion)) {
+    for (const auto cellCoords : _front.slice(activeRegion)) {
         const Morton3 index = _front.indexAtCellCoords(cellCoords);
         boost::optional<MeshPtr> maybeMesh = _front.getIfExists(index);
         const bool notMissing = maybeMesh && *maybeMesh;
