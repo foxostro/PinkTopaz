@@ -206,7 +206,7 @@ void Terrain::rebuildMeshInResponseToChanges(const ChangeLog &changeLog)
     for (const auto &change : changeLog) {
         const AABB &region = change.affectedRegion;
         std::vector<AABB> meshCells;
-        for (const auto &cellCoords : _meshes->slice(region)) {
+        for (const auto cellCoords : _meshes->slice(region)) {
             const AABB cell = _meshes->cellAtCellCoords(cellCoords);
             meshCells.push_back(cell);
         }

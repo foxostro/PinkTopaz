@@ -107,7 +107,7 @@ public:
         
         std::vector<boost::future<ResultType>> futures;
         
-        for (const auto &obj : range) {
+        for (const auto obj : range) {
             futures.emplace_back(async([functionObject, obj]{
                 return functionObject(obj);
             }));

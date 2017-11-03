@@ -65,7 +65,7 @@ void ManagedMallocZone::mapFile(size_t minimumFileSize)
     if (mustReset) {
         header()->magic = _magic;
         header()->version = _version;
-        header()->zoneSize = newZoneSize;
+        header()->zoneSize = (uint32_t)newZoneSize;
         header()->lookupTableOffset = BoxedMallocZone::NullOffset;
         _zone.reset(header()->zoneData, header()->zoneSize);
     } else {

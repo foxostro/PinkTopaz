@@ -57,8 +57,8 @@ std::vector<uint8_t> StaticMeshSerializer::save(const StaticMesh &mesh)
     header.w = 256; // unused field
     header.h = 256; // unused field
     header.d = 256; // unused field
-    header.numVerts = vertices.size();
-    header.len = vertices.size() * sizeof(FileVertex);
+    header.numVerts = (int32_t)vertices.size();
+    header.len = (uint32_t)(vertices.size() * sizeof(FileVertex));
     
     for (size_t i = 0, n = header.numVerts; i < n; ++i)
     {

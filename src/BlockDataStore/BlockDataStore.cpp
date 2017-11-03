@@ -105,7 +105,7 @@ void BlockDataStore::storeOffsetForKey(Key key, BoxedMallocZone::Offset offset)
     
     // Grow the lookup table, if necessary.
     if (lookup().numberOfEntries >= lookup().capacity) {
-        size_t newCapacity = lookup().capacity * 2;
+        uint32_t newCapacity = lookup().capacity * 2;
         growLookupTable(newCapacity);
         lookup().capacity = newCapacity;
     }

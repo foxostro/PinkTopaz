@@ -277,7 +277,7 @@ public:
         assert(pointerIsInBackingMemory(block));
         const uint8_t *start = (const uint8_t *)header();
         const uint8_t *pointer = (const uint8_t *)block;
-        return pointer - start;
+        return (unsigned)(pointer - start);
     }
     
     // Gets the block associated with the specified offset.

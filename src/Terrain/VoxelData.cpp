@@ -52,7 +52,7 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
         // the chunk. Iterate over chunk voxels that fall within the region.
         // Copy each of those voxels into the destination array.
         const AABB subRegion = chunk->boundingBox().intersect(region);
-        for (const auto &voxelCoords : chunk->slice(subRegion)) {
+        for (const auto voxelCoords : chunk->slice(subRegion)) {
             const auto voxelCenter = chunk->cellCenterAtCellCoords(voxelCoords);
             dst.mutableReference(voxelCenter) = chunk->reference(voxelCoords);
         }
@@ -67,7 +67,7 @@ void VoxelData::store(const Array3D<Voxel> &voxels)
 {
     const AABB region = voxels.boundingBox();
     
-    for (const auto &chunkCellCoords : _chunks.slice(region)) {
+    for (const auto chunkCellCoords : _chunks.slice(region)) {
         const AABB chunkBoundingBox = cellAtCellCoords(chunkCellCoords);
         const Morton3 chunkIndex = indexAtCellCoords(chunkCellCoords);
         ChunkPtr chunk = get(chunkBoundingBox, chunkIndex);
@@ -76,7 +76,7 @@ void VoxelData::store(const Array3D<Voxel> &voxels)
         // the chunk. Iterate over chunk voxels that fall within the region.
         // Copy each of those voxels into the destination array.
         const AABB subRegion = chunkBoundingBox.intersect(region);
-        for (const auto &voxelCellCoords : chunk->slice(subRegion)) {
+        for (const auto voxelCellCoords : chunk->slice(subRegion)) {
             Voxel &dst = chunk->mutableReference(voxelCellCoords);
             
             const auto cellCenter = chunk->cellCenterAtCellCoords(voxelCellCoords);
