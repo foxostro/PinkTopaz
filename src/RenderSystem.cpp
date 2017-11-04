@@ -21,7 +21,7 @@
 
 RenderSystem::RenderSystem(const std::shared_ptr<GraphicsDevice> &dev)
  : FONT_NAME("vegur/Vegur-Regular.otf"),
-   FONT_SIZE(48),
+   FONT_SIZE(24),
    _graphicsDevice(dev),
    _stringRenderer(dev, FONT_NAME, FONT_SIZE),
    _frameTimer(_stringRenderer)
@@ -124,5 +124,6 @@ void RenderSystem::receive(const WindowSizeChangedEvent &event)
     constexpr float zfar = 256.0f;
     _viewport = glm::ivec4(0, 0, event.width * event.windowScaleFactor, event.height * event.windowScaleFactor);
     _proj = glm::perspective(glm::pi<float>() * 0.25f, (float)event.width / event.height, znear, zfar);
+    _stringRenderer.setWindowScaleFactor(event.windowScaleFactor);
     _graphicsDevice->windowSizeChanged();
 }

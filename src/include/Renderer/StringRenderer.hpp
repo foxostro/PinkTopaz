@@ -71,6 +71,12 @@ public:
     // Change the contents of a string that was previously added.
     void replaceContents(StringHandle &handle, const std::string &contents);
     
+    // Set the scale factor for converting from points to pixels.
+    // This is necessary on macOS systems with Retina displays, where the scale
+    // factor is 2. Other systems usually have a scale factor of 1, which is the
+    // default.
+    void setWindowScaleFactor(unsigned windowScaleFactor);
+    
 private:
     struct Glyph
     {
@@ -135,6 +141,9 @@ private:
     VertexFormat _vertexFormat;
     RenderPassDescriptor _renderPassDescriptor;
     std::list<String> _strings;
+    unsigned _windowScaleFactor;
+    boost::filesystem::path _fontName;
+    unsigned _fontSize;
 };
 
 #endif /* StringRenderer_hpp */

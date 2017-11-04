@@ -38,7 +38,7 @@ void FrameTimer::tick()
         if (_firstReportingPeriod) {
             _firstReportingPeriod = false;
             const glm::vec4 color(0.2f, 0.2f, 0.2f, 1.0f);
-            const glm::vec2 position(30.0f, 1140.0f);
+            const glm::vec2 position(15.0f, 570.0f);
             _frameTimeLabel = _stringRenderer.add(s, position, color);
         } else {
             _stringRenderer.replaceContents(_frameTimeLabel, s);

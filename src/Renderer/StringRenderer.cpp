@@ -277,7 +277,10 @@ StringRenderer::makeTextureAtlas(const boost::filesystem::path &fontName,
 StringRenderer::StringRenderer(const std::shared_ptr<GraphicsDevice> &dev,
                                const boost::filesystem::path &fontName,
                                unsigned fontSize)
-: _graphicsDevice(dev)
+ : _graphicsDevice(dev),
+   _windowScaleFactor(1),
+   _fontName(fontName),
+   _fontSize(fontSize)
 {
     _renderPassDescriptor.clear = false;
     
@@ -294,7 +297,7 @@ StringRenderer::StringRenderer(const std::shared_ptr<GraphicsDevice> &dev,
                                           "text_vert", "text_frag",
                                           true);
     
-    _textureAtlas = makeTextureAtlas(fontName, fontSize);
+    _textureAtlas = makeTextureAtlas(_fontName, _fontSize*_windowScaleFactor);
     
     TextureSamplerDescriptor samplerDesc = {
         ClampToEdge,
@@ -346,7 +349,7 @@ void StringRenderer::rebuildVertexBuffer(String &string)
     uint8_t* dst = (uint8_t *)&vertexData[0];
     
     // Iterate through all characters
-    glm::vec2 basePos = string.position;
+    glm::vec2 basePos = string.position * (float)_windowScaleFactor;
     std::string::const_iterator c;
     for (c = text.begin(); c != text.end(); c++)
     {
@@ -432,4 +435,14 @@ void StringRenderer::replaceContents(StringHandle &handle,
 {
     handle->contents = contents;
     rebuildVertexBuffer(*handle);
+}
+
+void StringRenderer::setWindowScaleFactor(unsigned windowScaleFactor)
+{
+    assert(windowScaleFactor > 0);
+    _windowScaleFactor = windowScaleFactor;
+    _textureAtlas = makeTextureAtlas(_fontName, _fontSize*_windowScaleFactor);
+    for (auto &s : _strings) {
+        rebuildVertexBuffer(s);
+    }
 }
