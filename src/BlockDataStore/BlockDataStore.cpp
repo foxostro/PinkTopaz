@@ -9,7 +9,7 @@
 #include "BlockDataStore/BlockDataStore.hpp"
 #include "SDL.h" // for SDL_Log
 
-BlockDataStore::BlockDataStore(const boost::filesystem::path &regionFileName,
+BlockDataStore::BlockDataStore(const std::string &regionFileName,
                                uint32_t magic,
                                uint32_t version)
  : _zone(regionFileName,

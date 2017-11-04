@@ -18,7 +18,7 @@
 class MapRegion
 {
 public:
-    MapRegion(const boost::filesystem::path &regionFileName);
+    MapRegion(const std::string &regionFileName);
     
     // Loads a voxel chunk from file, if available.
     // The key uniquely identifies the chunk in the voxel chunk in space.

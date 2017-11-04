@@ -9,7 +9,7 @@
 #include "BlockDataStore/ManagedMallocZone.hpp"
 #include "Exception.hpp"
 
-ManagedMallocZone::ManagedMallocZone(const boost::filesystem::path &fileName,
+ManagedMallocZone::ManagedMallocZone(const std::string &fileName,
                                      size_t initialFileSize,
                                      uint32_t magic, uint32_t version)
  : _magic(magic), _version(version), _file(fileName)

@@ -15,14 +15,14 @@
 #include <boost/optional.hpp>
 
 // Gets the contents of the file from disk. Throws on file error.
-std::string stringFromFileContents(const boost::filesystem::path &path);
+std::string stringFromFileContents(const std::string &path);
 
 // Gets the contents of the file from disk, if available. Else, returns none.
-boost::optional<std::vector<uint8_t>> binaryFileContents(const boost::filesystem::path &path);
+boost::optional<std::vector<uint8_t>> binaryFileContents(const std::string &path);
 
 // Saves the specified bytes to disk.
-void saveBinaryFile(const boost::filesystem::path &path, const std::vector<uint8_t> &bytes);
+void saveBinaryFile(const std::string &path, const std::vector<uint8_t> &bytes);
 
-boost::filesystem::path getPrefPath();
+std::string getPrefPath();
 
 #endif /* FileUtilities_hpp */

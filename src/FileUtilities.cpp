@@ -12,9 +12,8 @@
 #include <streambuf>
 #include "SDL.h"
 
-std::string stringFromFileContents(const boost::filesystem::path &path)
+std::string stringFromFileContents(const std::string &filePathStr)
 {
-	const std::string filePathStr = path.string();
     const char *filePath = filePathStr.c_str();
     
     std::ifstream in(filePath, std::ios::in | std::ios::binary);
@@ -34,9 +33,8 @@ std::string stringFromFileContents(const boost::filesystem::path &path)
 }
 
 boost::optional<std::vector<uint8_t>>
-binaryFileContents(const boost::filesystem::path &path)
+binaryFileContents(const std::string &filePathStr)
 {
-	const std::string filePathStr = path.string();
 	const char *filePath = filePathStr.c_str();
     
     std::ifstream in(filePath, std::ios::in | std::ios::binary);
@@ -55,9 +53,8 @@ binaryFileContents(const boost::filesystem::path &path)
     return boost::make_optional(std::move(contents));
 }
 
-void saveBinaryFile(const boost::filesystem::path &path, const std::vector<uint8_t> &bytes)
+void saveBinaryFile(const std::string &filePathStr, const std::vector<uint8_t> &bytes)
 {
-	const std::string filePathStr = path.string();
 	const char *filePath = filePathStr.c_str();
     
     std::ofstream out(filePath, std::ios::out | std::ios::binary);
@@ -70,10 +67,10 @@ void saveBinaryFile(const boost::filesystem::path &path, const std::vector<uint8
     out.close();
 }
 
-boost::filesystem::path getPrefPath()
+std::string getPrefPath()
 {
     char *s = SDL_GetPrefPath("foxostro", "PinkTopaz");
-    boost::filesystem::path prefPath(s);
+    std::string prefPath(s);
     SDL_free(s);
     return prefPath;
 }

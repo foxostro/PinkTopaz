@@ -126,8 +126,7 @@ void Application::run()
     // On Mac OS, this is the bundle "Resources" directory.
     {
         char *pathStr = SDL_GetBasePath();
-        boost::filesystem::path cwd(pathStr);
-        boost::filesystem::current_path(cwd);
+        boost::filesystem::current_path(pathStr);
         SDL_free(pathStr);
     }
 

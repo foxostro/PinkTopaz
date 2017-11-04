@@ -20,7 +20,7 @@ class BlockDataStore
 public:
     using Key = uint64_t;
     
-    BlockDataStore(const boost::filesystem::path &regionFileName,
+    BlockDataStore(const std::string &regionFileName,
                    uint32_t magic,
                    uint32_t version);
     

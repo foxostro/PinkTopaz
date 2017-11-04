@@ -21,7 +21,7 @@ public:
     ~MemoryMappedFile();
     
     // Constructor. The file won't be mapped until the next call to mapFile().
-    MemoryMappedFile(const boost::filesystem::path &regionFileName);
+    MemoryMappedFile(const std::string &regionFileName);
     
     // Map the file. Truncate size to at least the specified size.
     // Returns true if this caused the file to be created.
@@ -31,7 +31,7 @@ public:
     void unmapFile();
     
     // Get the name of the file to be mapped.
-    boost::filesystem::path fileName() const;
+    std::string fileName() const;
     
     // Get a pointer to the mapped region.
     void* mapping();
@@ -43,7 +43,7 @@ public:
     size_t size() const;
     
 private:
-    boost::filesystem::path _fileName;
+    std::string _fileName;
     boost::iostreams::mapped_file _fileMapping;
 };
 

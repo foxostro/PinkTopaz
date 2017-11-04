@@ -9,7 +9,7 @@
 #include "Terrain/MapRegion.hpp"
 #include "SDL.h" // for SDL_Log
 
-MapRegion::MapRegion(const boost::filesystem::path &regionFileName)
+MapRegion::MapRegion(const std::string &regionFileName)
  : _dataStore(regionFileName, 'rpam', 0)
 {}
 

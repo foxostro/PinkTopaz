@@ -217,7 +217,7 @@ SDL_Surface* StringRenderer::atlasSearch(FT_Face &face, unsigned fontSize)
     return atlasSurface;
 }
 
-SDL_Surface* StringRenderer::genTextureAtlas(const boost::filesystem::path &fontName,
+SDL_Surface* StringRenderer::genTextureAtlas(const std::string &fontName,
                                              unsigned fontSize)
 {
     FT_Library ft;
@@ -226,7 +226,7 @@ SDL_Surface* StringRenderer::genTextureAtlas(const boost::filesystem::path &font
     }
     
     FT_Face face;
-    if (FT_New_Face(ft, fontName.string().c_str(), 0, &face)) {
+    if (FT_New_Face(ft, fontName.c_str(), 0, &face)) {
         throw Exception("Failed to load the font: %s", fontName.c_str());
     }
     
@@ -247,28 +247,14 @@ SDL_Surface* StringRenderer::genTextureAtlas(const boost::filesystem::path &font
 }
 
 std::shared_ptr<Texture>
-StringRenderer::makeTextureAtlas(const boost::filesystem::path &fontName,
+StringRenderer::makeTextureAtlas(const std::string &fontName,
                                  unsigned fontSize)
 {
     // Font texture atlas is cached between runs of the game.
-    boost::filesystem::path atlasFileName = getPrefPath();
-    atlasFileName.append("font" + std::to_string(fontSize) + ".png");
+    std::string atlasFileName = getPrefPath();
+    atlasFileName += "font" + std::to_string(fontSize) + ".png";
     
-    SDL_Surface *atlasSurface = nullptr;
-
-#if 0
-    if (boost::filesystem::exists(atlasFileName)) {
-        atlasSurface = IMG_Load(atlasFileName.string().c_str());
-#error TODO: Need to save/load the glyphs too.
-        SDL_Log("Loading font texture atlas from file: %s", atlasFileName.string().c_str());
-    } else {
-        atlasSurface = genTextureAtlas(fontName, fontSize);
-        IMG_SavePNG(atlasSurface, atlasFileName.string().c_str());
-        SDL_Log("Saving font texture atlas to file: %s", atlasFileName.string().c_str());
-    }
-#else
-    atlasSurface = genTextureAtlas(fontName, fontSize);
-#endif
+    SDL_Surface *atlasSurface = genTextureAtlas(fontName, fontSize);
 
     // We only want to store the RED components in the GPU texture.
     std::vector<uint8_t> atlasPixels = getGrayScaleImageBytes(atlasSurface);
@@ -287,7 +273,7 @@ StringRenderer::makeTextureAtlas(const boost::filesystem::path &fontName,
 }
 
 StringRenderer::StringRenderer(const std::shared_ptr<GraphicsDevice> &dev,
-                               const boost::filesystem::path &fontName,
+                               const std::string &fontName,
                                unsigned fontSize)
  : _graphicsDevice(dev),
    _windowScaleFactor(1),

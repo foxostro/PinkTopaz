@@ -32,7 +32,7 @@ public:
     void receive(const WindowSizeChangedEvent &event);
         
 private:
-    const boost::filesystem::path FONT_NAME;
+    const std::string FONT_NAME;
     const unsigned FONT_SIZE;
     
     glm::ivec4 _viewport;

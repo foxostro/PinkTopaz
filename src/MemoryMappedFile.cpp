@@ -15,7 +15,7 @@ MemoryMappedFile::~MemoryMappedFile()
     unmapFile();
 }
 
-MemoryMappedFile::MemoryMappedFile(const boost::filesystem::path &fileName)
+MemoryMappedFile::MemoryMappedFile(const std::string &fileName)
  : _fileName(fileName)
 {}
 
@@ -54,7 +54,7 @@ void MemoryMappedFile::unmapFile()
     _fileMapping.close();
 }
 
-boost::filesystem::path MemoryMappedFile::fileName() const
+std::string MemoryMappedFile::fileName() const
 {
     return _fileName;
 }

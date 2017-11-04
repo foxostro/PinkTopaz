@@ -52,7 +52,7 @@ public:
     using StringHandle = std::list<String>::iterator;
     
     StringRenderer(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
-                   const boost::filesystem::path &fontName,
+                   const std::string &fontName,
                    unsigned fontSize);
     ~StringRenderer() = default;
     
@@ -117,12 +117,12 @@ private:
     SDL_Surface* atlasSearch(FT_Face &face, unsigned fontSize);
     
     // Returns a font texture atlas for the specified font and size.
-    SDL_Surface* genTextureAtlas(const boost::filesystem::path &fontName,
+    SDL_Surface* genTextureAtlas(const std::string &fontName,
                                  unsigned fontSize);
     
     // Returns a texture which holds the font texture atlas for the
     // specified font and specified font size.
-    std::shared_ptr<Texture> makeTextureAtlas(const boost::filesystem::path &fontName,
+    std::shared_ptr<Texture> makeTextureAtlas(const std::string &fontName,
                                               unsigned fontSize);
     
     // Rebuilds the internal vertex buffer for a string. This is useful
@@ -142,7 +142,7 @@ private:
     RenderPassDescriptor _renderPassDescriptor;
     std::list<String> _strings;
     unsigned _windowScaleFactor;
-    boost::filesystem::path _fontName;
+    std::string _fontName;
     unsigned _fontSize;
 };
 
