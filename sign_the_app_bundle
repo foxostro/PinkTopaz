@@ -1,5 +1,9 @@
 #!/bin/sh
 # Code sign the application bundle on Apple systems.
-BUNDLE=`./abspath $1`
-codesign --force --sign "$MAC_DEVELOPER_IDENTITY" -v --deep "$BUNDLE"
-exit $?
+if [[ -z "${DEPLOY_ENV}" ]]; then
+	>&2 echo "Warning: Skipping code signing because \$MAC_DEVELOPER_IDENTITY is not defined."
+else
+	BUNDLE=`./abspath $1`
+	codesign --force --sign "$MAC_DEVELOPER_IDENTITY" -v --deep "$BUNDLE"
+	exit $?
+fi
