@@ -254,10 +254,22 @@ StringRenderer::makeTextureAtlas(const boost::filesystem::path &fontName,
     boost::filesystem::path atlasFileName = getPrefPath();
     atlasFileName.append("font" + std::to_string(fontSize) + ".png");
     
-    SDL_Surface *atlasSurface = genTextureAtlas(fontName, fontSize);
-    IMG_SavePNG(atlasSurface, atlasFileName.string().c_str());
-    SDL_Log("Saving font texture atlas to file: %s", atlasFileName.string().c_str());
-    
+    SDL_Surface *atlasSurface = nullptr;
+
+#if 0
+    if (boost::filesystem::exists(atlasFileName)) {
+        atlasSurface = IMG_Load(atlasFileName.string().c_str());
+#error TODO: Need to save/load the glyphs too.
+        SDL_Log("Loading font texture atlas from file: %s", atlasFileName.string().c_str());
+    } else {
+        atlasSurface = genTextureAtlas(fontName, fontSize);
+        IMG_SavePNG(atlasSurface, atlasFileName.string().c_str());
+        SDL_Log("Saving font texture atlas to file: %s", atlasFileName.string().c_str());
+    }
+#else
+    atlasSurface = genTextureAtlas(fontName, fontSize);
+#endif
+
     // We only want to store the RED components in the GPU texture.
     std::vector<uint8_t> atlasPixels = getGrayScaleImageBytes(atlasSurface);
     TextureDescriptor texDesc = {
