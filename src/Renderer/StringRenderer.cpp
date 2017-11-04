@@ -201,7 +201,7 @@ StringRenderer::getCharSet(FT_Face &face)
 
 SDL_Surface* StringRenderer::atlasSearch(FT_Face &face, unsigned fontSize)
 {
-    constexpr size_t initialAtlasSize = 288;
+    constexpr size_t initialAtlasSize = 160;
     constexpr size_t maxAtlasSize = 4096;
     size_t atlasSize;
     SDL_Surface *atlasSurface = nullptr;
