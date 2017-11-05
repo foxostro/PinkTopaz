@@ -99,6 +99,7 @@ endif(APPLE)
 
 set(SOURCE_FILES_RENDERER
     "src/Renderer/StringRenderer.cpp" "src/include/Renderer/StringRenderer.hpp"
+    "src/Renderer/FontTextureAtlas.cpp" "src/include/Renderer/FontTextureAtlas.hpp"
     "src/Renderer/StaticMesh.cpp" "src/include/Renderer/StaticMesh.hpp"
     "src/Renderer/StaticMeshSerializer.cpp" "src/include/Renderer/StaticMeshSerializer.hpp"
     "src/include/Renderer/GraphicsDevice.hpp"
