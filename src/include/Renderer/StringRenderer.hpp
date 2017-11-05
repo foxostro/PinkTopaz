@@ -13,20 +13,19 @@
 #include "Renderer/TextureSampler.hpp"
 #include "Renderer/Buffer.hpp"
 #include "Renderer/GraphicsDevice.hpp"
+#include "CerealGLM.hpp"
 
-#include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 
 #include <memory>
-#include <map>
+#include <unordered_map>
 #include <list>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
 #include "SDL.h"
-
 #include <boost/filesystem.hpp>
 
 class StringRenderer
@@ -85,6 +84,12 @@ private:
         glm::ivec2 size;
         glm::ivec2 bearing;
         unsigned advance; // Given in 1/64 points.
+        
+        template<class Archive>
+        void serialize(Archive &ar)
+        {
+            ar(uvOrigin, uvExtent, size, bearing, advance);
+        }
     };
     
     // Gets the image bytes from the specified surface. The image data
@@ -94,7 +99,7 @@ private:
     static bool placeGlyph(FT_Face &face,
                            FT_ULong c,
                            SDL_Surface *atlasSurface,
-                           std::map<char, Glyph> &glyphs,
+                           std::unordered_map<char, Glyph> &glyphs,
                            glm::ivec2 &cursor,
                            size_t &rowHeight);
     
@@ -135,7 +140,7 @@ private:
     
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<Texture> _textureAtlas;
-    std::map<char, Glyph> _glyphs;
+    std::unordered_map<char, Glyph> _glyphs;
     std::shared_ptr<Shader> _shader;
     std::shared_ptr<TextureSampler> _sampler;
     VertexFormat _vertexFormat;

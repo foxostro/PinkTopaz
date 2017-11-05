@@ -15,6 +15,9 @@
 #include "SDL.h"
 #include "SDL_image.h"
 
+#include <fstream>
+#include <cereal/types/unordered_map.hpp>
+
 std::vector<uint8_t> StringRenderer::getGrayScaleImageBytes(SDL_Surface *surface)
 {
     const size_t w = surface->w;
@@ -54,7 +57,7 @@ std::vector<uint8_t> StringRenderer::getGrayScaleImageBytes(SDL_Surface *surface
 bool StringRenderer::placeGlyph(FT_Face &face,
                                 FT_ULong c,
                                 SDL_Surface *atlasSurface,
-                                std::map<char, Glyph> &glyphs,
+                                std::unordered_map<char, Glyph> &glyphs,
                                 glm::ivec2 &cursor,
                                 size_t &rowHeight)
 {
@@ -250,25 +253,39 @@ std::shared_ptr<Texture>
 StringRenderer::makeTextureAtlas(const boost::filesystem::path &fontName,
                                  unsigned fontSize)
 {
-    // Font texture atlas is cached between runs of the game.
-    boost::filesystem::path atlasFileName = getPrefPath();
-    atlasFileName.append("font" + std::to_string(fontSize) + ".png");
+    const std::string baseName = "font" + std::to_string(fontSize);
+    const boost::filesystem::path prefPath = getPrefPath();
+    const boost::filesystem::path atlasImageFilename = prefPath / (baseName + ".png");
+    const boost::filesystem::path atlasDictionaryFilename = prefPath / (baseName + ".cereal");
     
     SDL_Surface *atlasSurface = nullptr;
-
-#if 0
-    if (boost::filesystem::exists(atlasFileName)) {
-        atlasSurface = IMG_Load(atlasFileName.string().c_str());
-#error TODO: Need to save/load the glyphs too.
-        SDL_Log("Loading font texture atlas from file: %s", atlasFileName.string().c_str());
+    
+    // Font texture atlas is cached between runs of the game.
+    if (boost::filesystem::exists(atlasImageFilename) &&
+        boost::filesystem::exists(atlasDictionaryFilename)) {
+        
+        SDL_Log("Loading font texture atlas from files: \"%s\" and \"%s\"",
+                atlasImageFilename.string().c_str(),
+                atlasDictionaryFilename.string().c_str());
+        
+        atlasSurface = IMG_Load(atlasImageFilename.string().c_str());
+        
+        std::ifstream is(atlasDictionaryFilename.string().c_str(), std::ios::binary);
+        cereal::BinaryInputArchive archive(is);
+        archive(_glyphs);
     } else {
         atlasSurface = genTextureAtlas(fontName, fontSize);
-        IMG_SavePNG(atlasSurface, atlasFileName.string().c_str());
-        SDL_Log("Saving font texture atlas to file: %s", atlasFileName.string().c_str());
+        
+        SDL_Log("Saving font texture atlas to files: \"%s\" and \"%s\"",
+                atlasImageFilename.string().c_str(),
+                atlasDictionaryFilename.string().c_str());
+        
+        IMG_SavePNG(atlasSurface, atlasImageFilename.string().c_str());
+        
+        std::ofstream os(atlasDictionaryFilename.string().c_str(), std::ios::binary);
+        cereal::BinaryOutputArchive archive(os);
+        archive(_glyphs);
     }
-#else
-    atlasSurface = genTextureAtlas(fontName, fontSize);
-#endif
 
     // We only want to store the RED components in the GPU texture.
     std::vector<uint8_t> atlasPixels = getGrayScaleImageBytes(atlasSurface);

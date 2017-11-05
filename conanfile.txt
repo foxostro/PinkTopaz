@@ -7,6 +7,7 @@ EntityX/1.2.0@foxostro/stable
 glew/2.0.0@coding3d/stable
 Boost/1.64.0@conan/stable
 Catch/1.9.3@uilianries/stable
+cereal/1.2.2@foxostro/stable
 
 [options]
 SDL2:shared=False

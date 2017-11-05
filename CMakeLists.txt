@@ -135,6 +135,7 @@ set(SOURCE_FILES_OTHER_ECS
 
 set(SOURCE_FILES_MISC
     "src/include/UniqueName.hpp"
+    "src/include/CerealGLM.hpp"
     "src/include/Exception.hpp" "src/Exception.cpp" 
     "src/include/FileUtilities.hpp" "src/FileUtilities.cpp"
     "src/include/FrameTimer.hpp" "src/FrameTimer.cpp"
