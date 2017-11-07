@@ -250,6 +250,7 @@ void FontTextureAtlas::blitGlyph(SDL_Surface *atlasSurface,
 
 bool FontTextureAtlas::placeGlyph(FT_Face &face,
                                   FT_Stroker &stroker,
+                                  const FontAttributes &attr,
                                   FT_ULong c,
                                   SDL_Surface *atlasSurface,
                                   glm::ivec2 &cursor,
@@ -301,13 +302,13 @@ bool FontTextureAtlas::placeGlyph(FT_Face &face,
     blitGlyph(atlasSurface,
               bitmapGlyphInterior->bitmap,
               cursor + offset,
-              glm::vec4(0.9f, 0.9f, 0.9f, 1.0f),
+              attr.color,
               COLOR_KEY);
     
     blitGlyph(atlasSurface,
               bitmapGlyphBorder->bitmap,
               cursor,
-              glm::vec4(0.1f, 0.1f, 0.1f, 1.0f),
+              attr.borderColor,
               BLEND);
     
     // Now store the glyph for later use.
@@ -334,6 +335,7 @@ bool FontTextureAtlas::placeGlyph(FT_Face &face,
 SDL_Surface*
 FontTextureAtlas::makeTextureAtlas(FT_Face &face,
                                    FT_Stroker &stroker,
+                                   const FontAttributes &attr,
                                    const std::vector<std::pair<char, unsigned>> &characters,
                                    size_t size)
 {
@@ -360,7 +362,9 @@ FontTextureAtlas::makeTextureAtlas(FT_Face &face,
     
     for (auto &character : characters) {
         char c = character.first;
-        if (!placeGlyph(face, stroker, c, atlasSurface, cursor, rowHeight)) {
+        if (!placeGlyph(face, stroker, attr, c,
+                        atlasSurface, cursor, rowHeight)) {
+            
             SDL_FreeSurface(atlasSurface);
             atlasSurface = nullptr;
             _glyphs.clear();
@@ -396,7 +400,8 @@ FontTextureAtlas::getCharSet(FT_Face &face)
 
 SDL_Surface*
 FontTextureAtlas::atlasSearch(FT_Face &face,
-                              FT_Stroker &stroker)
+                              FT_Stroker &stroker,
+                              const FontAttributes &attr)
 {
     constexpr size_t initialAtlasSize = 160;
     constexpr size_t maxAtlasSize = 4096;
@@ -407,7 +412,7 @@ FontTextureAtlas::atlasSearch(FT_Face &face,
     
     for(atlasSize = initialAtlasSize; !atlasSurface && atlasSize < maxAtlasSize; atlasSize += 32) {
         SDL_Log("Trying to create texture atlas of size %d", (int)atlasSize);
-        atlasSurface = makeTextureAtlas(face, stroker, chars, atlasSize);
+        atlasSurface = makeTextureAtlas(face, stroker, attr, chars, atlasSize);
     }
     
     return atlasSurface;
@@ -435,10 +440,11 @@ FontTextureAtlas::genTextureAtlas(const FontAttributes &attr)
         throw Exception("Failed to create the font stroker.");
     }
     
+    // TODO: Support both bordered and non-bordered text.
     assert(attr.border > 0 && attr.border < 12 && "sanity check");
     FT_Stroker_Set(stroker, attr.border * 64, FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0);
     
-    SDL_Surface *atlasSurface = atlasSearch(face, stroker);
+    SDL_Surface *atlasSurface = atlasSearch(face, stroker, attr);
     
     FT_Stroker_Done(stroker);
     FT_Done_Face(face);

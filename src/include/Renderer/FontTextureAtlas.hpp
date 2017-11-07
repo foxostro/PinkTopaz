@@ -38,6 +38,8 @@ public:
         boost::filesystem::path fontName;
         unsigned fontSize;
         unsigned border;
+        glm::vec4 color;
+        glm::vec4 borderColor;
     };
     
     struct Glyph
@@ -109,6 +111,7 @@ private:
     // Draw a glyph into the specified surface.
     bool placeGlyph(FT_Face &face,
                     FT_Stroker &stroker,
+                    const FontAttributes &attr,
                     FT_ULong c,
                     SDL_Surface *atlasSurface,
                     glm::ivec2 &cursor,
@@ -125,6 +128,7 @@ private:
     SDL_Surface*
     makeTextureAtlas(FT_Face &face,
                      FT_Stroker &stroker,
+                     const FontAttributes &attr,
                      const std::vector<std::pair<char, unsigned>> &chars,
                      size_t atlasSize);
     
@@ -133,7 +137,8 @@ private:
     // When this method returns, `_glyphs' will contain valid glyph metrics.
     SDL_Surface*
     atlasSearch(FT_Face &face,
-                FT_Stroker &stroker);
+                FT_Stroker &stroker,
+                const FontAttributes &attr);
     
     // Returns a font texture atlas for the specified font and size.
     SDL_Surface* genTextureAtlas(const FontAttributes &attributes);
