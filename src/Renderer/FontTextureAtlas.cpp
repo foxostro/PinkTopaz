@@ -301,13 +301,13 @@ bool FontTextureAtlas::placeGlyph(FT_Face &face,
     blitGlyph(atlasSurface,
               bitmapGlyphInterior->bitmap,
               cursor + offset,
-              glm::vec4(0.3f, 0.3f, 0.3f, 1.0f),
+              glm::vec4(0.9f, 0.9f, 0.9f, 1.0f),
               COLOR_KEY);
     
     blitGlyph(atlasSurface,
               bitmapGlyphBorder->bitmap,
               cursor,
-              glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
+              glm::vec4(0.1f, 0.1f, 0.1f, 1.0f),
               BLEND);
     
     // Now store the glyph for later use.
@@ -317,8 +317,8 @@ bool FontTextureAtlas::placeGlyph(FT_Face &face,
         glm::vec2((float)bitmapBorder.width / atlasSurface->h,
                   (float)bitmapBorder.rows / atlasSurface->h),
         glm::ivec2(bitmapBorder.width, bitmapBorder.rows),
-        glm::ivec2(face->glyph->bitmap_left,
-                   face->glyph->bitmap_top),
+        glm::ivec2(bitmapGlyphBorder->left,
+                   bitmapGlyphBorder->top),
         (unsigned)face->glyph->advance.x
     };
     

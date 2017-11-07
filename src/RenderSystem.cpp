@@ -21,7 +21,7 @@
 
 RenderSystem::RenderSystem(const std::shared_ptr<GraphicsDevice> &dev)
  : FONT_NAME("vegur/Vegur-Regular.otf"),
-   FONT_SIZE(96),
+   FONT_SIZE(36),
    _graphicsDevice(dev),
    _stringRenderer(dev, FONT_NAME, FONT_SIZE),
    _frameTimer(_stringRenderer)
