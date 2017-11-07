@@ -18,7 +18,7 @@
 #include "CerealGLM.hpp"
 
 static constexpr bool FORCE_REBUILD = true;
-static constexpr int border = 4;
+static constexpr int border = 2;
 
 FontTextureAtlas::FontTextureAtlas(GraphicsDevice &graphicsDevice,
                                    const FontAttributes &attributes)
@@ -64,7 +64,7 @@ FontTextureAtlas::FontTextureAtlas(GraphicsDevice &graphicsDevice,
         RGBA8,                                // format
         static_cast<size_t>(atlasSurface->w), // width
         static_cast<size_t>(atlasSurface->h), // height
-        4,                                    // depth
+        1,                                    // depth
         4,                                    // unpackAlignment
         false,                                // generateMipMaps
     };
@@ -147,13 +147,13 @@ FontTextureAtlas::getGlyph(FT_Face &face,
 }
 
 void FontTextureAtlas::blitGlyph(SDL_Surface *atlasSurface,
-                                 FT_BitmapGlyph bitmapGlyph,
+                                 FT_Bitmap &bitmap,
                                  const glm::ivec2 &cursor,
-                                 const glm::vec4 &color)
+                                 const glm::vec4 &color,
+                                 BlitMode mode)
 {
     assert(atlasSurface);
     
-    FT_Bitmap &bitmap = bitmapGlyph->bitmap;
     const size_t width = bitmap.width;
     const size_t height = bitmap.rows;
     const size_t n = width * height;
@@ -165,20 +165,51 @@ void FontTextureAtlas::blitGlyph(SDL_Surface *atlasSurface,
     const uint8_t gshift = atlasSurface->format->Gshift;
     const uint8_t bshift = atlasSurface->format->Rshift;
     const uint8_t ashift = atlasSurface->format->Ashift;
-    for (size_t i = 0; i < n; ++i) {
-        const float luminance = (float)glyphBytes[i] / 255.f;
-        const float r = color.r * luminance;
-        const float g = color.g * luminance;
-        const float b = color.b * luminance;
-        const float a = color.a * luminance;
-        const uint32_t redComp   = r * 255.f;
-        const uint32_t greenComp = g * 255.f;
-        const uint32_t blueComp  = b * 255.f;
-        const uint32_t alphaComp = a * 255.f;
-        pixels[i] = (redComp   << rshift)
-                  | (greenComp << gshift)
-                  | (blueComp  << bshift)
-                  | (alphaComp << ashift);
+    
+    switch (mode) {
+        case BLEND:
+            for (size_t i = 0; i < n; ++i) {
+                const float luminance = (float)glyphBytes[i] / 255.f;
+                const float r = color.r * luminance;
+                const float g = color.g * luminance;
+                const float b = color.b * luminance;
+                const float a = color.a * luminance;
+                const uint32_t redComp   = r * 255.f;
+                const uint32_t greenComp = g * 255.f;
+                const uint32_t blueComp  = b * 255.f;
+                const uint32_t alphaComp = a * 255.f;
+                pixels[i] = (redComp   << rshift)
+                | (greenComp << gshift)
+                | (blueComp  << bshift)
+                | (alphaComp << ashift);
+            }
+            break;
+            
+        case COLOR_KEY:
+            for (size_t i = 0; i < n; ++i) {
+                const uint8_t ilum = glyphBytes[i];
+                if (ilum == 0) {
+                    pixels[i] = 0;
+                } else {
+                    const float luminance = (float)ilum / 255.f;
+                    const float r = color.r * luminance;
+                    const float g = color.g * luminance;
+                    const float b = color.b * luminance;
+                    const float a = color.a;
+                    const uint32_t redComp   = r * 255.f;
+                    const uint32_t greenComp = g * 255.f;
+                    const uint32_t blueComp  = b * 255.f;
+                    const uint32_t alphaComp = a * 255.f;
+                    pixels[i] = (redComp   << rshift)
+                    | (greenComp << gshift)
+                    | (blueComp  << bshift)
+                    | (alphaComp << ashift);
+                }
+            }
+            break;
+            
+        default:
+            assert(!"unreachable");
     }
     
     // Create a surface with the glpyh image.
@@ -227,11 +258,13 @@ bool FontTextureAtlas::placeGlyph(FT_Face &face,
 {
     FT_Glyph glyphBorder = getGlyph(face, stroker, c, BORDER);
     FT_Glyph_To_Bitmap(&glyphBorder, FT_RENDER_MODE_NORMAL, nullptr, true);
+    assert(glyphBorder->format == FT_GLYPH_FORMAT_BITMAP);
     FT_BitmapGlyph bitmapGlyphBorder = (FT_BitmapGlyph)glyphBorder;
     FT_Bitmap &bitmapBorder = bitmapGlyphBorder->bitmap;
 
     FT_Glyph glyphInterior = getGlyph(face, stroker, c, INTERIOR);
     FT_Glyph_To_Bitmap(&glyphInterior, FT_RENDER_MODE_NORMAL, nullptr, true);
+    assert(glyphInterior->format == FT_GLYPH_FORMAT_BITMAP);
     FT_BitmapGlyph bitmapGlyphInterior = (FT_BitmapGlyph)glyphInterior;
     
     rowHeight = std::max(rowHeight, (size_t)bitmapBorder.rows);
@@ -248,16 +281,35 @@ bool FontTextureAtlas::placeGlyph(FT_Face &face,
             return false;
         }
     }
-
-    blitGlyph(atlasSurface,
-              bitmapGlyphInterior,
-              cursor + 2*glm::ivec2(border, border),
-              glm::vec4(0.3f, 0.3f, 0.3f, 1.0f));
+    
+    // To achieve the outline, we render the interior first and render the
+    // border second. The two layers must be aligned using the `left' and `top'
+    // properties of the glyphs because the bitmaps are different sizes.
+    //
+    // Additionally, as FreeType doesn't give us alpha values in glyph bitmaps,
+    // we must take care when creating assumed alpha values from the gray scale
+    // bitmap. For the interior, we assume that black means clear and everything
+    // else uses the alpha in the specified interior color. For the exterior,
+    // we assume that alpha scales with luminance and blend when we blit. The
+    // outer edge of the border thus blends with the surface background color
+    // and gives the glyph a soft outer edge. The inner edge of the border
+    // blends with the fully opaque values from the interior bitmap and the
+    // result is a fully opaque inner edge.
+    
+    const glm::ivec2 offset(bitmapGlyphInterior->left - bitmapGlyphBorder->left,
+                            bitmapGlyphBorder->top - bitmapGlyphInterior->top);
     
     blitGlyph(atlasSurface,
-              bitmapGlyphBorder,
+              bitmapGlyphInterior->bitmap,
+              cursor + offset,
+              glm::vec4(0.3f, 0.3f, 0.3f, 1.0f),
+              COLOR_KEY);
+    
+    blitGlyph(atlasSurface,
+              bitmapGlyphBorder->bitmap,
               cursor,
-              glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+              glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
+              BLEND);
     
     // Now store the glyph for later use.
     _glyphs[(char)c] = (Glyph){

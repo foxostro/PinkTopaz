@@ -93,11 +93,17 @@ private:
                       FT_ULong charcode,
                       GlyphStyle style);
     
-    // Blit the specified glyph into the surface at the cursor position.
+    // Blit the specified bitmap into the surface at the cursor position.
+    enum BlitMode
+    {
+        COLOR_KEY,
+        BLEND
+    };
     void blitGlyph(SDL_Surface *atlasSurface,
-                   FT_BitmapGlyph glyph,
+                   FT_Bitmap &bitmap,
                    const glm::ivec2 &cursor,
-                   const glm::vec4 &color);
+                   const glm::vec4 &color,
+                   BlitMode mode);
     
     // Draw a glyph into the specified surface.
     bool placeGlyph(FT_Face &face,
