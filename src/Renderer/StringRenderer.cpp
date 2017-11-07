@@ -34,7 +34,7 @@ StringRenderer::StringRenderer(const std::shared_ptr<GraphicsDevice> &dev,
                                           "text_vert", "text_frag",
                                           true);
     
-    _fontTextureAtlas = std::make_unique<FontTextureAtlas>(*_graphicsDevice, _fontName, _fontSize*_windowScaleFactor);
+    regenerateFontTextureAtlas();
     
     TextureSamplerDescriptor samplerDesc = {
         ClampToEdge,
@@ -185,8 +185,16 @@ void StringRenderer::setWindowScaleFactor(unsigned windowScaleFactor)
 {
     assert(windowScaleFactor > 0);
     _windowScaleFactor = windowScaleFactor;
-    _fontTextureAtlas = std::make_unique<FontTextureAtlas>(*_graphicsDevice, _fontName, _fontSize*_windowScaleFactor);
+    regenerateFontTextureAtlas();
     for (auto &s : _strings) {
         rebuildVertexBuffer(s);
     }
+}
+
+void StringRenderer::regenerateFontTextureAtlas()
+{
+    FontTextureAtlas::FontAttributes attributes;
+    attributes.fontName = _fontName;
+    attributes.fontSize = _fontSize*_windowScaleFactor;
+    _fontTextureAtlas = std::make_unique<FontTextureAtlas>(*_graphicsDevice, attributes);
 }

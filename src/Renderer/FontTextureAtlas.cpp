@@ -18,10 +18,9 @@
 #include "CerealGLM.hpp"
 
 FontTextureAtlas::FontTextureAtlas(GraphicsDevice &graphicsDevice,
-                                   const boost::filesystem::path &fontName,
-                                   unsigned fontSize)
- {
-    const std::string baseName = "font" + std::to_string(fontSize);
+                                   const FontAttributes &attributes)
+{
+    const std::string baseName = "font" + std::to_string(attributes.fontSize);
     const boost::filesystem::path prefPath = getPrefPath();
     const boost::filesystem::path atlasImageFilename = prefPath / (baseName + ".png");
     const boost::filesystem::path atlasDictionaryFilename = prefPath / (baseName + ".cereal");
@@ -42,7 +41,7 @@ FontTextureAtlas::FontTextureAtlas(GraphicsDevice &graphicsDevice,
         cereal::BinaryInputArchive archive(is);
         archive(_glyphs);
     } else {
-        atlasSurface = genTextureAtlas(fontName, fontSize);
+        atlasSurface = genTextureAtlas(attributes);
         
         SDL_Log("Saving font texture atlas to files: \"%s\" and \"%s\"",
                 atlasImageFilename.string().c_str(),
@@ -274,8 +273,7 @@ SDL_Surface* FontTextureAtlas::atlasSearch(FT_Face &face, unsigned fontSize)
 }
 
 SDL_Surface*
-FontTextureAtlas::genTextureAtlas(const boost::filesystem::path &fontName,
-                                  unsigned fontSize)
+FontTextureAtlas::genTextureAtlas(const FontAttributes &attr)
 {
     FT_Library ft;
     if (FT_Init_FreeType(&ft)) {
@@ -283,15 +281,15 @@ FontTextureAtlas::genTextureAtlas(const boost::filesystem::path &fontName,
     }
     
     FT_Face face;
-    if (FT_New_Face(ft, fontName.string().c_str(), 0, &face)) {
-        throw Exception("Failed to load the font: %s", fontName.c_str());
+    if (FT_New_Face(ft, attr.fontName.string().c_str(), 0, &face)) {
+        throw Exception("Failed to load the font: %s", attr.fontName.c_str());
     }
     
-    if (FT_Set_Pixel_Sizes(face, 0, fontSize)) {
+    if (FT_Set_Pixel_Sizes(face, 0, attr.fontSize)) {
         throw Exception("Failed to set the font size.");
     }
     
-    SDL_Surface *atlasSurface = atlasSearch(face, fontSize);
+    SDL_Surface *atlasSurface = atlasSearch(face, attr.fontSize);
     
     FT_Done_Face(face);
     FT_Done_FreeType(ft);

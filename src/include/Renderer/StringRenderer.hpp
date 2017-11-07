@@ -71,6 +71,9 @@ private:
     // when the projection changes, or the color changes, for example.
     void rebuildUniformBuffer(String &string, const glm::mat4x4 &proj);
     
+    // Regenerate the texture atlas according to the current window scale.
+    void regenerateFontTextureAtlas();
+    
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::unique_ptr<FontTextureAtlas> _fontTextureAtlas;
     std::shared_ptr<Shader> _shader;

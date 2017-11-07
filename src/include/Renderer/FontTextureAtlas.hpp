@@ -32,6 +32,12 @@
 class FontTextureAtlas
 {
 public:
+    struct FontAttributes
+    {
+        boost::filesystem::path fontName;
+        unsigned fontSize;
+    };
+    
     struct Glyph
     {
         glm::vec2 uvOrigin;
@@ -50,8 +56,7 @@ public:
     ~FontTextureAtlas() = default;
     
     FontTextureAtlas(GraphicsDevice &graphicsDevice,
-                     const boost::filesystem::path &fontName,
-                     unsigned fontSize);
+                     const FontAttributes &attributes);
     
     inline std::shared_ptr<Texture> getTexture()
     {
@@ -102,8 +107,7 @@ private:
     SDL_Surface* atlasSearch(FT_Face &face, unsigned fontSize);
     
     // Returns a font texture atlas for the specified font and size.
-    SDL_Surface* genTextureAtlas(const boost::filesystem::path &fontName,
-                                 unsigned fontSize);
+    SDL_Surface* genTextureAtlas(const FontAttributes &attributes);
     
     std::shared_ptr<Texture> _textureAtlas;
     std::unordered_map<char, Glyph> _glyphs;
