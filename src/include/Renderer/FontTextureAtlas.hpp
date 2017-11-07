@@ -37,6 +37,7 @@ public:
     {
         boost::filesystem::path fontName;
         unsigned fontSize;
+        unsigned border;
     };
     
     struct Glyph
@@ -132,8 +133,7 @@ private:
     // When this method returns, `_glyphs' will contain valid glyph metrics.
     SDL_Surface*
     atlasSearch(FT_Face &face,
-                FT_Stroker &stroker,
-                unsigned fontSize);
+                FT_Stroker &stroker);
     
     // Returns a font texture atlas for the specified font and size.
     SDL_Surface* genTextureAtlas(const FontAttributes &attributes);

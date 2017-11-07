@@ -196,5 +196,6 @@ void StringRenderer::regenerateFontTextureAtlas()
     FontTextureAtlas::FontAttributes attributes;
     attributes.fontName = _fontName;
     attributes.fontSize = _fontSize*_windowScaleFactor;
+    attributes.border = 2;
     _fontTextureAtlas = std::make_unique<FontTextureAtlas>(*_graphicsDevice, attributes);
 }

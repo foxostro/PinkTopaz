@@ -18,7 +18,6 @@
 #include "CerealGLM.hpp"
 
 static constexpr bool FORCE_REBUILD = true;
-static constexpr int border = 2;
 
 FontTextureAtlas::FontTextureAtlas(GraphicsDevice &graphicsDevice,
                                    const FontAttributes &attributes)
@@ -397,8 +396,7 @@ FontTextureAtlas::getCharSet(FT_Face &face)
 
 SDL_Surface*
 FontTextureAtlas::atlasSearch(FT_Face &face,
-                              FT_Stroker &stroker,
-                              unsigned fontSize)
+                              FT_Stroker &stroker)
 {
     constexpr size_t initialAtlasSize = 160;
     constexpr size_t maxAtlasSize = 4096;
@@ -437,9 +435,10 @@ FontTextureAtlas::genTextureAtlas(const FontAttributes &attr)
         throw Exception("Failed to create the font stroker.");
     }
     
-    FT_Stroker_Set(stroker, border * 64, FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0);
+    assert(attr.border > 0 && attr.border < 12 && "sanity check");
+    FT_Stroker_Set(stroker, attr.border * 64, FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0);
     
-    SDL_Surface *atlasSurface = atlasSearch(face, stroker, attr.fontSize);
+    SDL_Surface *atlasSurface = atlasSearch(face, stroker);
     
     FT_Stroker_Done(stroker);
     FT_Done_Face(face);
