@@ -17,6 +17,9 @@
 #include <cereal/types/unordered_map.hpp>
 #include "CerealGLM.hpp"
 
+static constexpr bool FORCE_REBUILD = true;
+static constexpr int border = 4;
+
 FontTextureAtlas::FontTextureAtlas(GraphicsDevice &graphicsDevice,
                                    const FontAttributes &attributes)
 {
@@ -28,7 +31,8 @@ FontTextureAtlas::FontTextureAtlas(GraphicsDevice &graphicsDevice,
     SDL_Surface *atlasSurface = nullptr;
     
     // Font texture atlas is cached between runs of the game.
-    if (boost::filesystem::exists(atlasImageFilename) &&
+    if (!FORCE_REBUILD &&
+        boost::filesystem::exists(atlasImageFilename) &&
         boost::filesystem::exists(atlasDictionaryFilename)) {
         
         SDL_Log("Loading font texture atlas from files: \"%s\" and \"%s\"",
@@ -54,20 +58,18 @@ FontTextureAtlas::FontTextureAtlas(GraphicsDevice &graphicsDevice,
         archive(_glyphs);
     }
     
-    // We only want to store the RED components in the GPU texture.
-    std::vector<uint8_t> atlasPixels = getGrayScaleImageBytes(atlasSurface);
+    // Turn the SDL surface into a texture.
     TextureDescriptor texDesc = {
-        Texture2D,
-        R8,
-        (size_t)atlasSurface->w,
-        (size_t)atlasSurface->h,
-        1,
-        1,
-        false
+        Texture2D,                            // type
+        RGBA8,                                // format
+        static_cast<size_t>(atlasSurface->w), // width
+        static_cast<size_t>(atlasSurface->h), // height
+        4,                                    // depth
+        4,                                    // unpackAlignment
+        false,                                // generateMipMaps
     };
+    _textureAtlas = graphicsDevice.makeTexture(texDesc, atlasSurface->pixels);
     SDL_FreeSurface(atlasSurface);
-    
-    _textureAtlas = graphicsDevice.makeTexture(texDesc, atlasPixels);
 }
 
 std::vector<uint8_t> FontTextureAtlas::getGrayScaleImageBytes(SDL_Surface *surface)
@@ -106,51 +108,77 @@ std::vector<uint8_t> FontTextureAtlas::getGrayScaleImageBytes(SDL_Surface *surfa
     return atlasPixels;
 }
 
-bool FontTextureAtlas::placeGlyph(FT_Face &face,
-                                  FT_ULong c,
-                                  SDL_Surface *atlasSurface,
-                                  std::unordered_map<char, Glyph> &glyphs,
-                                  glm::ivec2 &cursor,
-                                  size_t &rowHeight)
+FT_Glyph
+FontTextureAtlas::getGlyph(FT_Face &face,
+                           FT_Stroker &stroker,
+                           FT_ULong charcode,
+                           GlyphStyle style)
 {
-    if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
-        throw Exception("Failed to load the glyph %c.", (char)c);
+    FT_UInt glyphIndex = FT_Get_Char_Index(face, charcode);
+    if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_DEFAULT)) {
+        throw Exception("Failed to load the glyph \"%c\"", (char)charcode);
     }
     
-    const size_t width = face->glyph->bitmap.width;
-    const size_t height = face->glyph->bitmap.rows;
+    FT_Glyph glyph;
+    if (FT_Get_Glyph(face->glyph, &glyph)) {
+        throw Exception("Failed to get the glyph \"%c\"", (char)charcode);
+    }
+    
+    switch (style) {
+        case INTERIOR:
+            if (FT_Glyph_StrokeBorder(&glyph, stroker, true, true)) {
+                FT_Done_Glyph(glyph);
+                throw Exception("Failed to stroke the inside of the glyph \"%c\"", (char)charcode);
+            }
+            break;
+            
+        case BORDER:
+            if (FT_Glyph_Stroke(&glyph, stroker, true)) {
+                FT_Done_Glyph(glyph);
+                throw Exception("Failed to stroke the border of the glyph \"%c\"", (char)charcode);
+            }
+            break;
+            
+        default:
+            assert(!"not reachable");
+    }
+    
+    return glyph;
+}
+
+void FontTextureAtlas::blitGlyph(SDL_Surface *atlasSurface,
+                                 FT_BitmapGlyph bitmapGlyph,
+                                 const glm::ivec2 &cursor,
+                                 const glm::vec4 &color)
+{
+    assert(atlasSurface);
+    
+    FT_Bitmap &bitmap = bitmapGlyph->bitmap;
+    const size_t width = bitmap.width;
+    const size_t height = bitmap.rows;
     const size_t n = width * height;
-    const uint8_t *glyphBytes = face->glyph->bitmap.buffer;
-    
-    rowHeight = std::max(rowHeight, height);
-    
-    // Validate the cursor. Can the glyph fit on this row?
-    if ((cursor.x + width) >= (size_t)atlasSurface->w) {
-        // Go to the next row.
-        cursor.x = 0;
-        cursor.y += rowHeight;
-        rowHeight = height;
-        
-        // Have we run out of rows? If so then try a bigger atlas.
-        if ((cursor.y + height) >= (size_t)atlasSurface->h) {
-            return false;
-        }
-    }
+    const uint8_t *glyphBytes = bitmap.buffer;
     
     // Convert grayscale image to RGBA so we can use SDL_Surface.
     std::vector<uint32_t> pixels(n);
-    const uint8_t rshift = atlasSurface->format->Rshift;
+    const uint8_t rshift = atlasSurface->format->Bshift;
     const uint8_t gshift = atlasSurface->format->Gshift;
-    const uint8_t bshift = atlasSurface->format->Bshift;
+    const uint8_t bshift = atlasSurface->format->Rshift;
     const uint8_t ashift = atlasSurface->format->Ashift;
-    for(size_t i = 0; i < n; ++i)
-    {
-        uint32_t component = glyphBytes[i];
-        constexpr uint8_t alpha = 0xff;
-        pixels[i] = (alpha << ashift)
-        | (component << rshift)
-        | (component << gshift)
-        | (component << bshift);
+    for (size_t i = 0; i < n; ++i) {
+        const float luminance = (float)glyphBytes[i] / 255.f;
+        const float r = color.r * luminance;
+        const float g = color.g * luminance;
+        const float b = color.b * luminance;
+        const float a = color.a * luminance;
+        const uint32_t redComp   = r * 255.f;
+        const uint32_t greenComp = g * 255.f;
+        const uint32_t blueComp  = b * 255.f;
+        const uint32_t alphaComp = a * 255.f;
+        pixels[i] = (redComp   << rshift)
+                  | (greenComp << gshift)
+                  | (blueComp  << bshift)
+                  | (alphaComp << ashift);
     }
     
     // Create a surface with the glpyh image.
@@ -164,6 +192,14 @@ bool FontTextureAtlas::placeGlyph(FT_Face &face,
                                                          0x00ff0000,
                                                          0xff000000);
     
+    if (!glyphSurface) {
+        throw Exception("Failed to create SDL surface for glyph");
+    }
+    
+    if (SDL_SetSurfaceBlendMode(glyphSurface, SDL_BLENDMODE_BLEND)) {
+        throw Exception("Failed to set font texture atlas blend mode.");
+    }
+    
     // Blit the glyph into the texture atlas at the cursor position.
     SDL_Rect src = {
         0, 0,
@@ -175,30 +211,78 @@ bool FontTextureAtlas::placeGlyph(FT_Face &face,
         (int)width, (int)height,
     };
     
-    SDL_BlitSurface(glyphSurface, &src, atlasSurface, &dst);
+    if (SDL_BlitSurface(glyphSurface, &src, atlasSurface, &dst)) {
+        throw Exception("Failed to blit glpyh into font texture atlas surface.");
+    }
+    
     SDL_FreeSurface(glyphSurface);
+}
+
+bool FontTextureAtlas::placeGlyph(FT_Face &face,
+                                  FT_Stroker &stroker,
+                                  FT_ULong c,
+                                  SDL_Surface *atlasSurface,
+                                  glm::ivec2 &cursor,
+                                  size_t &rowHeight)
+{
+    FT_Glyph glyphBorder = getGlyph(face, stroker, c, BORDER);
+    FT_Glyph_To_Bitmap(&glyphBorder, FT_RENDER_MODE_NORMAL, nullptr, true);
+    FT_BitmapGlyph bitmapGlyphBorder = (FT_BitmapGlyph)glyphBorder;
+    FT_Bitmap &bitmapBorder = bitmapGlyphBorder->bitmap;
+
+    FT_Glyph glyphInterior = getGlyph(face, stroker, c, INTERIOR);
+    FT_Glyph_To_Bitmap(&glyphInterior, FT_RENDER_MODE_NORMAL, nullptr, true);
+    FT_BitmapGlyph bitmapGlyphInterior = (FT_BitmapGlyph)glyphInterior;
+    
+    rowHeight = std::max(rowHeight, (size_t)bitmapBorder.rows);
+    
+    // Validate the cursor. Can the glyph fit on this row?
+    if ((cursor.x + bitmapBorder.width) >= (size_t)atlasSurface->w) {
+        // Go to the next row.
+        cursor.x = 0;
+        cursor.y += rowHeight;
+        rowHeight = bitmapBorder.rows;
+        
+        // Have we run out of rows? If so then try a bigger atlas.
+        if ((cursor.y + bitmapBorder.rows) >= (size_t)atlasSurface->h) {
+            return false;
+        }
+    }
+
+    blitGlyph(atlasSurface,
+              bitmapGlyphInterior,
+              cursor + 2*glm::ivec2(border, border),
+              glm::vec4(0.3f, 0.3f, 0.3f, 1.0f));
+    
+    blitGlyph(atlasSurface,
+              bitmapGlyphBorder,
+              cursor,
+              glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
     
     // Now store the glyph for later use.
-    Glyph glyph = {
+    _glyphs[(char)c] = (Glyph){
         glm::vec2((float)cursor.x / atlasSurface->w,
                   (float)cursor.y / atlasSurface->w),
-        glm::vec2((float)width / atlasSurface->h,
-                  (float)height / atlasSurface->h),
-        glm::ivec2(width, height),
+        glm::vec2((float)bitmapBorder.width / atlasSurface->h,
+                  (float)bitmapBorder.rows / atlasSurface->h),
+        glm::ivec2(bitmapBorder.width, bitmapBorder.rows),
         glm::ivec2(face->glyph->bitmap_left,
                    face->glyph->bitmap_top),
         (unsigned)face->glyph->advance.x
     };
-    glyphs.insert(std::pair<char, Glyph>((char)c, glyph));
     
     // Increment the cursor. We've already validated for this glyph.
-    cursor.x += width;
+    cursor.x += bitmapBorder.width;
+    
+    FT_Done_Glyph(glyphInterior);
+    FT_Done_Glyph(glyphBorder);
     
     return true;
 }
 
 SDL_Surface*
 FontTextureAtlas::makeTextureAtlas(FT_Face &face,
+                                   FT_Stroker &stroker,
                                    const std::vector<std::pair<char, unsigned>> &characters,
                                    size_t size)
 {
@@ -215,11 +299,17 @@ FontTextureAtlas::makeTextureAtlas(FT_Face &face,
                                                      0x00ff0000,
                                                      0xff000000);
     
-    for (auto &character : characters)
-    {
+    if (!atlasSurface) {
+        throw Exception("Failed to create SDL surface for font texture atlas");
+    }
+    
+    if (SDL_SetSurfaceBlendMode(atlasSurface, SDL_BLENDMODE_BLEND)) {
+        throw Exception("Failed to set font texture atlas blend mode.");
+    }
+    
+    for (auto &character : characters) {
         char c = character.first;
-        if (!placeGlyph(face, c, atlasSurface, _glyphs,
-                        cursor, rowHeight)) {
+        if (!placeGlyph(face, stroker, c, atlasSurface, cursor, rowHeight)) {
             SDL_FreeSurface(atlasSurface);
             atlasSurface = nullptr;
             _glyphs.clear();
@@ -235,8 +325,7 @@ FontTextureAtlas::getCharSet(FT_Face &face)
 {
     std::vector<std::pair<char, unsigned>> characters;
     
-    for (FT_ULong c = 32; c < 127; c++)
-    {
+    for (FT_ULong c = 32; c < 127; c++) {
         if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
             throw Exception("Failed to load the glyph %c.", (char)c);
         }
@@ -254,7 +343,10 @@ FontTextureAtlas::getCharSet(FT_Face &face)
     return characters;
 }
 
-SDL_Surface* FontTextureAtlas::atlasSearch(FT_Face &face, unsigned fontSize)
+SDL_Surface*
+FontTextureAtlas::atlasSearch(FT_Face &face,
+                              FT_Stroker &stroker,
+                              unsigned fontSize)
 {
     constexpr size_t initialAtlasSize = 160;
     constexpr size_t maxAtlasSize = 4096;
@@ -263,10 +355,9 @@ SDL_Surface* FontTextureAtlas::atlasSearch(FT_Face &face, unsigned fontSize)
     
     auto chars = getCharSet(face);
     
-    for(atlasSize = initialAtlasSize; !atlasSurface && atlasSize < maxAtlasSize; atlasSize += 32)
-    {
+    for(atlasSize = initialAtlasSize; !atlasSurface && atlasSize < maxAtlasSize; atlasSize += 32) {
         SDL_Log("Trying to create texture atlas of size %d", (int)atlasSize);
-        atlasSurface = makeTextureAtlas(face, chars, atlasSize);
+        atlasSurface = makeTextureAtlas(face, stroker, chars, atlasSize);
     }
     
     return atlasSurface;
@@ -275,13 +366,13 @@ SDL_Surface* FontTextureAtlas::atlasSearch(FT_Face &face, unsigned fontSize)
 SDL_Surface*
 FontTextureAtlas::genTextureAtlas(const FontAttributes &attr)
 {
-    FT_Library ft;
-    if (FT_Init_FreeType(&ft)) {
+    FT_Library library;
+    if (FT_Init_FreeType(&library)) {
         throw Exception("Failed to initialize Freetype.");
     }
     
     FT_Face face;
-    if (FT_New_Face(ft, attr.fontName.string().c_str(), 0, &face)) {
+    if (FT_New_Face(library, attr.fontName.string().c_str(), 0, &face)) {
         throw Exception("Failed to load the font: %s", attr.fontName.c_str());
     }
     
@@ -289,10 +380,18 @@ FontTextureAtlas::genTextureAtlas(const FontAttributes &attr)
         throw Exception("Failed to set the font size.");
     }
     
-    SDL_Surface *atlasSurface = atlasSearch(face, attr.fontSize);
+    FT_Stroker stroker;
+    if (FT_Stroker_New(library, &stroker)) {
+        throw Exception("Failed to create the font stroker.");
+    }
     
+    FT_Stroker_Set(stroker, border * 64, FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0);
+    
+    SDL_Surface *atlasSurface = atlasSearch(face, stroker, attr.fontSize);
+    
+    FT_Stroker_Done(stroker);
     FT_Done_Face(face);
-    FT_Done_FreeType(ft);
+    FT_Done_FreeType(library);
     
     if (!atlasSurface) {
         throw Exception("Failed to generate font texture atlas.");

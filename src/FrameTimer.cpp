@@ -11,12 +11,12 @@
 #include <sstream>
     
 FrameTimer::FrameTimer(StringRenderer &stringRenderer)
-    : _stringRenderer(stringRenderer),
-    _framesBetweenReport(60),
-    _timeAccum(0),
-    _countDown(60),
-    _firstReportingPeriod(true),
-    _ticksBeginMs(SDL_GetTicks())
+ : _stringRenderer(stringRenderer),
+   _framesBetweenReport(60),
+   _timeAccum(0),
+   _countDown(60),
+   _firstReportingPeriod(true),
+   _ticksBeginMs(SDL_GetTicks())
 {}
     
 void FrameTimer::tick()
@@ -37,7 +37,7 @@ void FrameTimer::tick()
             
         if (_firstReportingPeriod) {
             _firstReportingPeriod = false;
-            const glm::vec4 color(0.2f, 0.2f, 0.2f, 1.0f);
+            const glm::vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
             const glm::vec2 position(15.0f, 570.0f);
             _frameTimeLabel = _stringRenderer.add(s, position, color);
         } else {

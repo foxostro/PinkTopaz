@@ -19,6 +19,7 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_STROKER_H
 
 #include "SDL.h"
 
@@ -80,13 +81,31 @@ private:
     // other components are discarded.
     static std::vector<uint8_t> getGrayScaleImageBytes(SDL_Surface *surf);
     
+    enum GlyphStyle
+    {
+        BORDER,
+        INTERIOR
+    };
+    
+    // Gets the glyph for the specified character.
+    FT_Glyph getGlyph(FT_Face &face,
+                      FT_Stroker &stroker,
+                      FT_ULong charcode,
+                      GlyphStyle style);
+    
+    // Blit the specified glyph into the surface at the cursor position.
+    void blitGlyph(SDL_Surface *atlasSurface,
+                   FT_BitmapGlyph glyph,
+                   const glm::ivec2 &cursor,
+                   const glm::vec4 &color);
+    
     // Draw a glyph into the specified surface.
-    static bool placeGlyph(FT_Face &face,
-                           FT_ULong c,
-                           SDL_Surface *atlasSurface,
-                           std::unordered_map<char, Glyph> &glyphs,
-                           glm::ivec2 &cursor,
-                           size_t &rowHeight);
+    bool placeGlyph(FT_Face &face,
+                    FT_Stroker &stroker,
+                    FT_ULong c,
+                    SDL_Surface *atlasSurface,
+                    glm::ivec2 &cursor,
+                    size_t &rowHeight);
     
     // Returns a sorted list of pairs where each pair is made of a character
     // that belongs in the font texture atlas, and it's height.
@@ -98,13 +117,17 @@ private:
     // this size.
     SDL_Surface*
     makeTextureAtlas(FT_Face &face,
+                     FT_Stroker &stroker,
                      const std::vector<std::pair<char, unsigned>> &chars,
                      size_t atlasSize);
     
     // Searches for, and returns, the smallest font texture atlas that can
     // accomodate the specified font at the specified font size.
     // When this method returns, `_glyphs' will contain valid glyph metrics.
-    SDL_Surface* atlasSearch(FT_Face &face, unsigned fontSize);
+    SDL_Surface*
+    atlasSearch(FT_Face &face,
+                FT_Stroker &stroker,
+                unsigned fontSize);
     
     // Returns a font texture atlas for the specified font and size.
     SDL_Surface* genTextureAtlas(const FontAttributes &attributes);
