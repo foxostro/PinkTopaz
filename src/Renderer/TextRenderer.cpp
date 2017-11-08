@@ -1,17 +1,17 @@
 //
-//  StringRenderer.cpp
+//  TextRenderer.cpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 2/28/17.
 //
 //
 
-#include "Renderer/StringRenderer.hpp"
+#include "Renderer/TextRenderer.hpp"
 #include "Exception.hpp"
 
 #include <glm/gtc/matrix_transform.hpp> // for glm::ortho
 
-StringRenderer::StringRenderer(const std::shared_ptr<GraphicsDevice> &dev,
+TextRenderer::TextRenderer(const std::shared_ptr<GraphicsDevice> &dev,
                                const boost::filesystem::path &fontName,
                                unsigned fontSize)
  : _graphicsDevice(dev),
@@ -45,7 +45,7 @@ StringRenderer::StringRenderer(const std::shared_ptr<GraphicsDevice> &dev,
     _sampler = _graphicsDevice->makeTextureSampler(samplerDesc);
 }
 
-void StringRenderer::draw(const std::shared_ptr<CommandEncoder> &encoder,
+void TextRenderer::draw(const std::shared_ptr<CommandEncoder> &encoder,
                           const glm::ivec4 &vp)
 {
     bool projectionValid = false;
@@ -73,7 +73,7 @@ void StringRenderer::draw(const std::shared_ptr<CommandEncoder> &encoder,
     }
 }
 
-void StringRenderer::rebuildVertexBuffer(String &string)
+void TextRenderer::rebuildVertexBuffer(String &string)
 {
     const std::string &text = string.contents;
     const size_t glyphCount = text.size();
@@ -125,7 +125,7 @@ void StringRenderer::rebuildVertexBuffer(String &string)
     string.buffer->replace(std::move(vertexData));
 }
 
-void StringRenderer::rebuildUniformBuffer(String &string,
+void TextRenderer::rebuildUniformBuffer(String &string,
                                           const glm::mat4x4 &projection)
 {
     StringUniforms uniforms = {
@@ -135,7 +135,7 @@ void StringRenderer::rebuildUniformBuffer(String &string,
     string.uniforms->replace(sizeof(uniforms), &uniforms);
 }
 
-StringRenderer::StringHandle StringRenderer::add(const std::string &str,
+TextRenderer::StringHandle TextRenderer::add(const std::string &str,
                                                  const glm::vec2 &position,
                                                  const glm::vec4 &color)
 {
@@ -169,19 +169,19 @@ StringRenderer::StringHandle StringRenderer::add(const std::string &str,
     return handle;
 }
 
-void StringRenderer::remove(StringRenderer::StringHandle &handle)
+void TextRenderer::remove(TextRenderer::StringHandle &handle)
 {
     _strings.erase(handle);
 }
 
-void StringRenderer::replaceContents(StringHandle &handle,
+void TextRenderer::replaceContents(StringHandle &handle,
                                      const std::string &contents)
 {
     handle->contents = contents;
     rebuildVertexBuffer(*handle);
 }
 
-void StringRenderer::setWindowScaleFactor(unsigned windowScaleFactor)
+void TextRenderer::setWindowScaleFactor(unsigned windowScaleFactor)
 {
     assert(windowScaleFactor > 0);
     _windowScaleFactor = windowScaleFactor;
@@ -191,7 +191,7 @@ void StringRenderer::setWindowScaleFactor(unsigned windowScaleFactor)
     }
 }
 
-void StringRenderer::regenerateFontTextureAtlas()
+void TextRenderer::regenerateFontTextureAtlas()
 {
     FontTextureAtlas::FontAttributes attributes;
     attributes.fontName = _fontName;

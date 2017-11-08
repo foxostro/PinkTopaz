@@ -1,5 +1,5 @@
 //
-//  StringRenderer.hpp
+//  TextRenderer.hpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 2/28/17.

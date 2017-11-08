@@ -17,7 +17,7 @@
 #include "TerrainComponent.hpp"
 #include "WindowSizeChangedEvent.hpp"
 #include "Renderer/GraphicsDevice.hpp"
-#include "Renderer/StringRenderer.hpp"
+#include "Renderer/TextRenderer.hpp"
 #include "FrameTimer.hpp"
 
 // System for rendering game objects in the world.
@@ -40,7 +40,7 @@ private:
     entityx::Entity _terrainEntity;
     entityx::Entity _activeCamera;
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
-    StringRenderer _stringRenderer;
+    TextRenderer _stringRenderer;
     FrameTimer _frameTimer;
 };
 

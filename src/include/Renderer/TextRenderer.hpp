@@ -1,19 +1,19 @@
 //
-//  StringRenderer.hpp
+//  TextRenderer.hpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 2/28/17.
 //
 //
 
-#ifndef StringRenderer_hpp
-#define StringRenderer_hpp
+#ifndef TextRenderer_hpp
+#define TextRenderer_hpp
 
 #include "Renderer/FontTextureAtlas.hpp"
 
 // Draws strings on screen.
 // All strings must be in one font face and one font size.
-class StringRenderer
+class TextRenderer
 {
 public:
     struct StringUniforms
@@ -35,11 +35,11 @@ public:
     
     using StringHandle = std::list<String>::iterator;
     
-    StringRenderer(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+    TextRenderer(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                    const boost::filesystem::path &fontName,
                    unsigned fontSize);
     
-    ~StringRenderer() = default;
+    ~TextRenderer() = default;
     
     // Draws all registered strings.
     void draw(const std::shared_ptr<CommandEncoder> &encoder,
@@ -86,4 +86,4 @@ private:
     unsigned _fontSize;
 };
 
-#endif /* StringRenderer_hpp */
+#endif /* TextRenderer_hpp */

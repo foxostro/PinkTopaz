@@ -9,22 +9,22 @@
 #ifndef FrameTimer_hpp
 #define FrameTimer_hpp
 
-#include "Renderer/StringRenderer.hpp"
+#include "Renderer/TextRenderer.hpp"
     
 // Measures the time each frame takes and displays that on the screen.
 class FrameTimer
 {
 public:
-    FrameTimer(StringRenderer &stringRenderer);
+    FrameTimer(TextRenderer &stringRenderer);
         
     // Call after swapBuffers() to calculate the time and update the UI.
     void tick();
         
 private:
-    StringRenderer &_stringRenderer;
+    TextRenderer &_stringRenderer;
     const unsigned _framesBetweenReport;
         
-    StringRenderer::StringHandle _frameTimeLabel;
+    TextRenderer::StringHandle _frameTimeLabel;
     unsigned _timeAccum;
     unsigned _countDown;
     bool _firstReportingPeriod;
