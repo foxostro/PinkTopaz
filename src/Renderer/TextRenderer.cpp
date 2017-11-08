@@ -94,7 +94,7 @@ void TextRenderer::rebuildVertexBuffer(String &string)
             throw Exception("Unknown character \"%c\"", *c);
         }
         
-        const FontTextureAtlas::Glyph &glyph = *maybeGlyph;
+        const auto &glyph = *maybeGlyph;
         
         const glm::vec2 offset(glyph.bearing.x, glyph.bearing.y - glyph.size.y);
         const glm::vec2 pos = basePos + offset;
