@@ -102,6 +102,7 @@ set(SOURCE_FILES_RENDERER
     "src/Renderer/Glyph.cpp" "src/include/Renderer/Glyph.hpp"
     "src/include/Renderer/GlyphRenderer.hpp"
     "src/Renderer/GlyphRendererOutline.cpp" "src/include/Renderer/GlyphRendererOutline.hpp"
+    "src/Renderer/GlyphRendererRegular.cpp" "src/include/Renderer/GlyphRendererRegular.hpp"
     "src/include/Renderer/PackedGlyph.hpp"
     "src/Renderer/FontTextureAtlasBuilder.cpp" "src/include/Renderer/FontTextureAtlasBuilder.hpp"
     "src/Renderer/FontTextureAtlas.cpp" "src/include/Renderer/FontTextureAtlas.hpp"

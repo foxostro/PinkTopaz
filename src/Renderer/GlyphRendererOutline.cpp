@@ -36,7 +36,7 @@ GlyphRendererOutline::GlyphRendererOutline(FT_Library &library,
                    0);
 }
 
-std::unique_ptr<Glyph>
+std::shared_ptr<Glyph>
 GlyphRendererOutline::render(FT_ULong charcode)
 {
     FT_Glyph glyphBorder = getGlyph(charcode, BORDER);
@@ -102,7 +102,7 @@ GlyphRendererOutline::render(FT_ULong charcode)
     
     const glm::ivec2 bearing(bitmapGlyphBorder->left, bitmapGlyphBorder->top);
     const unsigned advance = getFace()->glyph->advance.x;
-    return std::make_unique<Glyph>(bearing, advance, finalGlyphSurface);
+    return std::make_shared<Glyph>(bearing, advance, finalGlyphSurface);
 }
 
 void GlyphRendererOutline::blitGlyph(SDL_Surface *dstSurface,

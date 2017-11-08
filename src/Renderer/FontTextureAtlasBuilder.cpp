@@ -8,6 +8,7 @@
 
 #include "Renderer/FontTextureAtlasBuilder.hpp"
 #include "Renderer/GlyphRendererOutline.hpp"
+#include "Renderer/GlyphRendererRegular.hpp"
 #include "Exception.hpp"
 #include "FileUtilities.hpp"
 
@@ -40,7 +41,7 @@ FontTextureAtlasBuilder::FontTextureAtlasBuilder(const TextAttributes &attr)
     }
     
     {
-        GlyphRendererOutline glyphRenderer(library, face, attr);
+        GlyphRendererRegular glyphRenderer(library, face, attr);
         _atlasSurface = atlasSearch(face, glyphRenderer);
         if (!_atlasSurface) {
             throw Exception("Failed to generate font texture atlas.");

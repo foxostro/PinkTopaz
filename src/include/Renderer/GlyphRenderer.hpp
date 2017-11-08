@@ -31,7 +31,7 @@ public:
     {}
     
     // Render the glyph into a surface.
-    virtual std::unique_ptr<Glyph> render(FT_ULong charcode) = 0;
+    virtual std::shared_ptr<Glyph> render(FT_ULong charcode) = 0;
     
     inline const TextAttributes& getAttributes() const { return _attributes; }
     inline FT_Face& getFace() { return _face; }

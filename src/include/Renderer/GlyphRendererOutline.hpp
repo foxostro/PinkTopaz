@@ -31,7 +31,7 @@ public:
                          const TextAttributes &attributes);
     
     // Render the glyph into a surface.
-    std::unique_ptr<Glyph> render(FT_ULong charcode) override;
+    std::shared_ptr<Glyph> render(FT_ULong charcode) override;
     
 private:
     enum GlyphStyle
