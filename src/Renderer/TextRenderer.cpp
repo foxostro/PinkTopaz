@@ -44,7 +44,7 @@ TextRenderer::TextRenderer(const std::shared_ptr<GraphicsDevice> &dev,
 }
 
 void TextRenderer::draw(const std::shared_ptr<CommandEncoder> &encoder,
-                          const glm::ivec4 &vp)
+                        const glm::ivec4 &vp)
 {
     bool projectionValid = false;
     glm::mat4 projection;
@@ -124,7 +124,7 @@ void TextRenderer::rebuildVertexBuffer(String &string)
 }
 
 void TextRenderer::rebuildUniformBuffer(String &string,
-                                          const glm::mat4x4 &projection)
+                                        const glm::mat4x4 &projection)
 {
     StringUniforms uniforms = {
         string.color,
@@ -158,10 +158,14 @@ TextRenderer::StringHandle TextRenderer::add(const std::string &str,
     const size_t bufferSize = bytesPerVertex * vertexCount;
     
     handle->vertexCount = vertexCount;
-    handle->buffer = _graphicsDevice->makeBuffer(bufferSize, StaticDraw, ArrayBuffer);
+    handle->buffer = _graphicsDevice->makeBuffer(bufferSize,
+                                                 StaticDraw,
+                                                 ArrayBuffer);
     rebuildVertexBuffer(*handle);
     
-    handle->uniforms = _graphicsDevice->makeBuffer(sizeof(StringUniforms), StaticDraw, UniformBuffer);
+    handle->uniforms = _graphicsDevice->makeBuffer(sizeof(StringUniforms),
+                                                   StaticDraw,
+                                                   UniformBuffer);
     rebuildUniformBuffer(*handle, glm::mat4x4());
     
     return handle;
@@ -173,7 +177,7 @@ void TextRenderer::remove(TextRenderer::StringHandle &handle)
 }
 
 void TextRenderer::replaceContents(StringHandle &handle,
-                                     const std::string &contents)
+                                   const std::string &contents)
 {
     handle->contents = contents;
     rebuildVertexBuffer(*handle);

@@ -98,13 +98,14 @@ else(APPLE)
 endif(APPLE)
 
 set(SOURCE_FILES_RENDERER
-
     "src/include/Renderer/TextAttributes.hpp"
-    "src/include/Renderer/Glyph.hpp" "src/Renderer/Glyph.cpp"
-    "src/include/Renderer/GlyphRendererOutline.hpp" "src/Renderer/GlyphRendererOutline.cpp"
+    "src/Renderer/Glyph.cpp" "src/include/Renderer/Glyph.hpp"
     "src/include/Renderer/GlyphRenderer.hpp"
+    "src/Renderer/GlyphRendererOutline.cpp" "src/include/Renderer/GlyphRendererOutline.hpp"
+    "src/include/Renderer/PackedGlyph.hpp"
+    "src/Renderer/FontTextureAtlasBuilder.cpp" "src/include/Renderer/FontTextureAtlasBuilder.hpp"
     "src/Renderer/FontTextureAtlas.cpp" "src/include/Renderer/FontTextureAtlas.hpp"
-    
+
     "src/Renderer/TextRenderer.cpp" "src/include/Renderer/TextRenderer.hpp"
     "src/Renderer/StaticMesh.cpp" "src/include/Renderer/StaticMesh.hpp"
     "src/Renderer/StaticMeshSerializer.cpp" "src/include/Renderer/StaticMeshSerializer.hpp"
