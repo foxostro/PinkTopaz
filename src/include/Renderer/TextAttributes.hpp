@@ -10,7 +10,7 @@
 #define TextAttributes_hpp
 
 #include <boost/filesystem.hpp>
-#include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
 
 struct TextAttributes
 {

@@ -11,7 +11,7 @@
 
 #include "Renderer/Texture.hpp"
 #include "Renderer/GraphicsDevice.hpp"
-#include "Renderer/TextAttributes.hpp"
+#include "Renderer/GlyphRenderer.hpp"
 
 #include <glm/vec2.hpp>
 
@@ -20,121 +20,11 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include FT_STROKER_H
 
 #include "SDL.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
-
-#include "Exception.hpp"
-
-class Glyph
-{
-public:
-    ~Glyph()
-    {
-        SDL_FreeSurface(_surface);
-    }
-    
-    Glyph(const glm::ivec2 &bearing, unsigned advance, SDL_Surface *surface)
-     : _bearing(bearing), _advance(advance), _surface(surface)
-    {}
-    
-    inline const glm::ivec2& getBearing() const { return _bearing; }
-    inline unsigned getAdvance() const { return _advance; }
-    inline SDL_Surface* getSurface() { return _surface; }
-    
-    glm::ivec2 getSize()
-    {
-        return glm::ivec2(_surface->w, _surface->h);
-    }
-    
-    // Blit the glyph into the destination surface at the cursor position.
-    void blit(SDL_Surface *dstSurface, const glm::ivec2 &cursor)
-    {
-        SDL_Rect src = {
-            0, 0,
-            getSize().x, getSize().y
-        };
-        
-        SDL_Rect dst = {
-            cursor.x, cursor.y,
-            getSize().x, getSize().y
-        };
-        
-        if (SDL_BlitSurface(getSurface(), &src, dstSurface, &dst)) {
-            throw Exception("Failed to blit glpyh into destination surface.");
-        }
-    }
-    
-private:
-    glm::ivec2 _bearing;
-    unsigned _advance;
-    SDL_Surface *_surface;
-};
-
-class GlyphRenderer
-{
-public:
-    virtual ~GlyphRenderer() = default;
-    
-    GlyphRenderer(FT_Library &library,
-                  FT_Face &face,
-                  const TextAttributes &attributes)
-     : _library(library), _face(face), _attributes(attributes)
-    {}
-    
-    // Render the glyph into a surface.
-    virtual std::unique_ptr<Glyph> render(FT_ULong charcode) = 0;
-    
-    inline const TextAttributes& getAttributes() const { return _attributes; }
-    inline FT_Face& getFace() { return _face; }
-    inline FT_Library& getLibrary() { return _library; }
-    
-private:
-    FT_Library &_library;
-    FT_Face &_face;
-    TextAttributes _attributes;
-};
-
-class GlyphRendererOutline : public GlyphRenderer
-{
-public:
-    ~GlyphRendererOutline();
-    
-    GlyphRendererOutline(FT_Library &library,
-                         FT_Face &face,
-                         const TextAttributes &attributes);
-    
-    // Render the glyph into a surface.
-    std::unique_ptr<Glyph> render(FT_ULong charcode) override;
-    
-private:
-    enum GlyphStyle
-    {
-        BORDER,
-        INTERIOR
-    };
-    
-    enum BlitMode
-    {
-        COLOR_KEY,
-        BLEND
-    };
-    
-    // Blit the specified bitmap into the surface at the cursor position.
-    void blitGlyph(SDL_Surface *dst,
-                   FT_Bitmap &bitmap,
-                   const glm::ivec2 &cursor,
-                   const glm::vec4 &color,
-                   BlitMode mode);
-    
-    // Gets the glyph for the specified character.
-    FT_Glyph getGlyph(FT_ULong charcode, GlyphStyle style);
-    
-    FT_Stroker _stroker;
-};
 
 // Creates a texture atlas which contains packed font glyphs for string drawing.
 // Besides generating the image itself, this class also records metadata on how
