@@ -42,6 +42,12 @@ public:
     }
     
 private:
+    // Create a glypg renderer which can accomodate the specified attributes.
+    std::shared_ptr<GlyphRenderer>
+    makeGlyphRenderer(FT_Library &library,
+                      FT_Face &face,
+                      const TextAttributes &a);
+    
     // Searches for, and returns, the smallest font texture atlas that can
     // accomodate the specified font at the specified font size.
     // When this method returns, `_glyphs' will contain valid glyph metrics.

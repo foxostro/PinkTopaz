@@ -41,8 +41,8 @@ FontTextureAtlasBuilder::FontTextureAtlasBuilder(const TextAttributes &attr)
     }
     
     {
-        GlyphRendererRegular glyphRenderer(library, face, attr);
-        _atlasSurface = atlasSearch(face, glyphRenderer);
+        std::shared_ptr<GlyphRenderer> glyphRenderer = makeGlyphRenderer(library, face, attr);
+        _atlasSurface = atlasSearch(face, *glyphRenderer);
         if (!_atlasSurface) {
             throw Exception("Failed to generate font texture atlas.");
         }
@@ -57,6 +57,18 @@ SDL_Surface* FontTextureAtlasBuilder::copySurface()
     return SDL_ConvertSurface(_atlasSurface,
                               _atlasSurface->format,
                               SDL_SWSURFACE);
+}
+
+std::shared_ptr<GlyphRenderer>
+FontTextureAtlasBuilder::makeGlyphRenderer(FT_Library &library,
+                                           FT_Face &face,
+                                           const TextAttributes &attr)
+{
+    if (attr.border == 0) {
+        return std::dynamic_pointer_cast<GlyphRenderer>(std::make_shared<GlyphRendererRegular>(library, face, attr));
+    } else {
+        return std::dynamic_pointer_cast<GlyphRenderer>(std::make_shared<GlyphRendererOutline>(library, face, attr));
+    }
 }
 
 SDL_Surface*
