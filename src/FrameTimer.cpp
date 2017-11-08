@@ -10,8 +10,8 @@
 #include "SDL.h"
 #include <sstream>
     
-FrameTimer::FrameTimer(TextRenderer &stringRenderer)
- : _stringRenderer(stringRenderer),
+FrameTimer::FrameTimer(TextRenderer &textRenderer)
+ : _textRenderer(textRenderer),
    _framesBetweenReport(60),
    _timeAccum(0),
    _countDown(60),
@@ -39,9 +39,9 @@ void FrameTimer::tick()
             _firstReportingPeriod = false;
             const glm::vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
             const glm::vec2 position(15.0f, 570.0f);
-            _frameTimeLabel = _stringRenderer.add(s, position, color);
+            _frameTimeLabel = _textRenderer.add(s, position, color);
         } else {
-            _stringRenderer.replaceContents(_frameTimeLabel, s);
+            _textRenderer.replaceContents(_frameTimeLabel, s);
         }
             
         _countDown = _framesBetweenReport;

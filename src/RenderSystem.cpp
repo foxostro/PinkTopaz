@@ -10,6 +10,7 @@
 #include "Renderer/Shader.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/RenderPassDescriptor.hpp"
+#include "Renderer/TextAttributes.hpp"
 #include "Transform.hpp"
 #include "RenderableStaticMesh.hpp"
 #include "TerrainComponent.hpp"
@@ -20,11 +21,15 @@
 #include <glm/gtc/matrix_transform.hpp> // for perspective()
 
 RenderSystem::RenderSystem(const std::shared_ptr<GraphicsDevice> &dev)
- : FONT_NAME("vegur/Vegur-Regular.otf"),
-   FONT_SIZE(36),
-   _graphicsDevice(dev),
-   _stringRenderer(dev, FONT_NAME, FONT_SIZE),
-   _frameTimer(_stringRenderer)
+ : _graphicsDevice(dev),
+   _textRenderer(dev, (TextAttributes){
+       /*fontName=*/ "vegur/Vegur-Regular.otf",
+       /*fontSize=*/ 36,
+       /*border=*/ 1,
+       /*color=*/ glm::vec4(0.9f, 0.9f, 0.9f, 1.0f),
+       /*borderColor=*/ glm::vec4(0.1f, 0.1f, 0.1f, 1.0f)
+   }),
+   _frameTimer(_textRenderer)
 {}
 
 void RenderSystem::configure(entityx::EventManager &em)
@@ -96,7 +101,7 @@ void RenderSystem::update(entityx::EntityManager &es,
     
     // Draw text strings on the screen last because they blend.
     encoder->setDepthTest(false);
-    _stringRenderer.draw(encoder, _viewport);
+    _textRenderer.draw(encoder, _viewport);
     
     encoder->commit();
     
@@ -124,6 +129,6 @@ void RenderSystem::receive(const WindowSizeChangedEvent &event)
     constexpr float zfar = 256.0f;
     _viewport = glm::ivec4(0, 0, event.width * event.windowScaleFactor, event.height * event.windowScaleFactor);
     _proj = glm::perspective(glm::pi<float>() * 0.25f, (float)event.width / event.height, znear, zfar);
-    _stringRenderer.setWindowScaleFactor(event.windowScaleFactor);
+    _textRenderer.setWindowScaleFactor(event.windowScaleFactor);
     _graphicsDevice->windowSizeChanged();
 }

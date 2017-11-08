@@ -36,8 +36,7 @@ public:
     using StringHandle = std::list<String>::iterator;
     
     TextRenderer(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
-                   const boost::filesystem::path &fontName,
-                   unsigned fontSize);
+                 const TextAttributes &attributes);
     
     ~TextRenderer() = default;
     
@@ -82,8 +81,7 @@ private:
     RenderPassDescriptor _renderPassDescriptor;
     std::list<String> _strings;
     unsigned _windowScaleFactor;
-    boost::filesystem::path _fontName;
-    unsigned _fontSize;
+    TextAttributes _attributes;
 };
 
 #endif /* TextRenderer_hpp */

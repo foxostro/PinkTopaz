@@ -15,13 +15,13 @@
 class FrameTimer
 {
 public:
-    FrameTimer(TextRenderer &stringRenderer);
+    FrameTimer(TextRenderer &textRenderer);
         
     // Call after swapBuffers() to calculate the time and update the UI.
     void tick();
         
 private:
-    TextRenderer &_stringRenderer;
+    TextRenderer &_textRenderer;
     const unsigned _framesBetweenReport;
         
     TextRenderer::StringHandle _frameTimeLabel;

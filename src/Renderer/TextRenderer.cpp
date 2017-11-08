@@ -12,12 +12,10 @@
 #include <glm/gtc/matrix_transform.hpp> // for glm::ortho
 
 TextRenderer::TextRenderer(const std::shared_ptr<GraphicsDevice> &dev,
-                               const boost::filesystem::path &fontName,
-                               unsigned fontSize)
+                           const TextAttributes &attributes)
  : _graphicsDevice(dev),
    _windowScaleFactor(1),
-   _fontName(fontName),
-   _fontSize(fontSize)
+   _attributes(attributes)
 {
     _renderPassDescriptor.clear = false;
     
@@ -193,11 +191,7 @@ void TextRenderer::setWindowScaleFactor(unsigned windowScaleFactor)
 
 void TextRenderer::regenerateFontTextureAtlas()
 {
-    TextAttributes attributes;
-    attributes.fontName = _fontName;
-    attributes.fontSize = _fontSize*_windowScaleFactor;
-    attributes.border = 1;
-    attributes.borderColor = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
-    attributes.color = glm::vec4(0.9f, 0.9f, 0.9f, 1.0f);
+    TextAttributes attributes = _attributes;
+    attributes.fontSize = _attributes.fontSize * _windowScaleFactor;
     _fontTextureAtlas = std::make_unique<FontTextureAtlas>(*_graphicsDevice, attributes);
 }

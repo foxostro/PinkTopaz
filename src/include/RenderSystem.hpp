@@ -32,15 +32,12 @@ public:
     void receive(const WindowSizeChangedEvent &event);
         
 private:
-    const boost::filesystem::path FONT_NAME;
-    const unsigned FONT_SIZE;
-    
     glm::ivec4 _viewport;
     glm::mat4x4 _proj;
     entityx::Entity _terrainEntity;
     entityx::Entity _activeCamera;
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
-    TextRenderer _stringRenderer;
+    TextRenderer _textRenderer;
     FrameTimer _frameTimer;
 };
 
