@@ -98,6 +98,7 @@ else(APPLE)
 endif(APPLE)
 
 set(SOURCE_FILES_RENDERER
+	"src/include/Renderer/TextAttributes.hpp"
     "src/Renderer/TextRenderer.cpp" "src/include/Renderer/TextRenderer.hpp"
     "src/Renderer/FontTextureAtlas.cpp" "src/include/Renderer/FontTextureAtlas.hpp"
     "src/Renderer/StaticMesh.cpp" "src/include/Renderer/StaticMesh.hpp"

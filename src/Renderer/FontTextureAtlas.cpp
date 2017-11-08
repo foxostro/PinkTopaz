@@ -20,7 +20,7 @@
 static constexpr bool FORCE_REBUILD = true;
 
 FontTextureAtlas::FontTextureAtlas(GraphicsDevice &graphicsDevice,
-                                   const FontAttributes &attributes)
+                                   const TextAttributes &attributes)
 {
     const std::string baseName = "font" + std::to_string(attributes.fontSize);
     const boost::filesystem::path prefPath = getPrefPath();
@@ -250,7 +250,7 @@ void FontTextureAtlas::blitGlyph(SDL_Surface *atlasSurface,
 
 bool FontTextureAtlas::placeGlyph(FT_Face &face,
                                   FT_Stroker &stroker,
-                                  const FontAttributes &attr,
+                                  const TextAttributes &attr,
                                   FT_ULong c,
                                   SDL_Surface *atlasSurface,
                                   glm::ivec2 &cursor,
@@ -335,7 +335,7 @@ bool FontTextureAtlas::placeGlyph(FT_Face &face,
 SDL_Surface*
 FontTextureAtlas::makeTextureAtlas(FT_Face &face,
                                    FT_Stroker &stroker,
-                                   const FontAttributes &attr,
+                                   const TextAttributes &attr,
                                    const std::vector<std::pair<char, unsigned>> &characters,
                                    size_t size)
 {
@@ -401,7 +401,7 @@ FontTextureAtlas::getCharSet(FT_Face &face)
 SDL_Surface*
 FontTextureAtlas::atlasSearch(FT_Face &face,
                               FT_Stroker &stroker,
-                              const FontAttributes &attr)
+                              const TextAttributes &attr)
 {
     constexpr size_t initialAtlasSize = 160;
     constexpr size_t maxAtlasSize = 4096;
@@ -419,7 +419,7 @@ FontTextureAtlas::atlasSearch(FT_Face &face,
 }
 
 SDL_Surface*
-FontTextureAtlas::genTextureAtlas(const FontAttributes &attr)
+FontTextureAtlas::genTextureAtlas(const TextAttributes &attr)
 {
     FT_Library library;
     if (FT_Init_FreeType(&library)) {

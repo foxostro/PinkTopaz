@@ -193,7 +193,7 @@ void TextRenderer::setWindowScaleFactor(unsigned windowScaleFactor)
 
 void TextRenderer::regenerateFontTextureAtlas()
 {
-    FontTextureAtlas::FontAttributes attributes;
+    TextAttributes attributes;
     attributes.fontName = _fontName;
     attributes.fontSize = _fontSize*_windowScaleFactor;
     attributes.border = 1;
