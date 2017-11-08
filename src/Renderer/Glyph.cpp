@@ -15,8 +15,11 @@ Glyph::~Glyph()
     SDL_FreeSurface(_surface);
 }
 
-Glyph::Glyph(const glm::ivec2 &bearing, unsigned advance, SDL_Surface *surface)
- : _bearing(bearing), _advance(advance), _surface(surface)
+Glyph::Glyph(char charcode,
+             const glm::ivec2 &bearing,
+             unsigned advance,
+             SDL_Surface *surface)
+ : _charcode(charcode), _bearing(bearing), _advance(advance), _surface(surface)
 {}
 
 glm::ivec2 Glyph::getSize()

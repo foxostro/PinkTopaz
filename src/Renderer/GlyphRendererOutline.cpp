@@ -102,7 +102,10 @@ GlyphRendererOutline::render(FT_ULong charcode)
     
     const glm::ivec2 bearing(bitmapGlyphBorder->left, bitmapGlyphBorder->top);
     const unsigned advance = getFace()->glyph->advance.x;
-    return std::make_shared<Glyph>(bearing, advance, finalGlyphSurface);
+    return std::make_shared<Glyph>((char)charcode,
+                                   bearing,
+                                   advance,
+                                   finalGlyphSurface);
 }
 
 void GlyphRendererOutline::blitGlyph(SDL_Surface *dstSurface,

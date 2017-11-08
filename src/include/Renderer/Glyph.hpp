@@ -16,8 +16,12 @@ class Glyph
 {
 public:
     ~Glyph();
-    Glyph(const glm::ivec2 &bearing, unsigned advance, SDL_Surface *surface);
+    Glyph(char charcode,
+          const glm::ivec2 &bearing,
+          unsigned advance,
+          SDL_Surface *surface);
     
+    inline char getCharCode() const { return _charcode; }
     inline const glm::ivec2& getBearing() const { return _bearing; }
     inline unsigned getAdvance() const { return _advance; }
     inline SDL_Surface* getSurface() { return _surface; }
@@ -28,6 +32,7 @@ public:
     void blit(SDL_Surface *dstSurface, const glm::ivec2 &cursor);
     
 private:
+    char _charcode;
     glm::ivec2 _bearing;
     unsigned _advance;
     SDL_Surface *_surface;

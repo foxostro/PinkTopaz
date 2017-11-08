@@ -15,6 +15,7 @@
 #include <glm/vec2.hpp>
 
 #include <unordered_map>
+#include <vector>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -51,29 +52,21 @@ private:
     // Searches for, and returns, the smallest font texture atlas that can
     // accomodate the specified font at the specified font size.
     // When this method returns, `_glyphs' will contain valid glyph metrics.
-    SDL_Surface* atlasSearch(FT_Face &face, GlyphRenderer &glyphRenderer);
+    SDL_Surface* atlasSearch(GlyphRenderer &glyphRenderer);
     
     // Creates a font texture atlas with the specified character set.
     // The atlas size is directly specified. Though, this method will return
     // false if it is not possible to pack all characters into a surface of
     // this size.
     SDL_Surface*
-    makeTextureAtlas(FT_Face &face,
-                     GlyphRenderer &glyphRenderer,
-                     const std::vector<std::pair<char, unsigned>> &chars,
+    makeTextureAtlas(const std::vector<std::pair<char, std::shared_ptr<Glyph>>> &glyphs,
                      size_t atlasSize);
     
     // Draw a glyph into the specified surface.
-    bool placeGlyph(FT_Face &face,
-                    GlyphRenderer &glyphRenderer,
-                    FT_ULong charcode,
+    bool placeGlyph(Glyph &glyph,
                     SDL_Surface *atlasSurface,
                     glm::ivec2 &cursor,
                     size_t &rowHeight);
-    
-    // Returns a sorted list of pairs where each pair is made of a character
-    // that belongs in the font texture atlas, and it's height.
-    std::vector<std::pair<char, unsigned>> getCharSet(FT_Face &f);
     
     SDL_Surface *_atlasSurface;
     std::unordered_map<char, PackedGlyph> _glyphs;

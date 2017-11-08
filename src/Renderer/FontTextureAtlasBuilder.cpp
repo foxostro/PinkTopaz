@@ -42,7 +42,7 @@ FontTextureAtlasBuilder::FontTextureAtlasBuilder(const TextAttributes &attr)
     
     {
         std::shared_ptr<GlyphRenderer> glyphRenderer = makeGlyphRenderer(library, face, attr);
-        _atlasSurface = atlasSearch(face, *glyphRenderer);
+        _atlasSurface = atlasSearch(*glyphRenderer);
         if (!_atlasSurface) {
             throw Exception("Failed to generate font texture atlas.");
         }
@@ -72,30 +72,44 @@ FontTextureAtlasBuilder::makeGlyphRenderer(FT_Library &library,
 }
 
 SDL_Surface*
-FontTextureAtlasBuilder::atlasSearch(FT_Face &face,
-                                     GlyphRenderer &glyphRenderer)
+FontTextureAtlasBuilder::atlasSearch(GlyphRenderer &glyphRenderer)
 {
     constexpr size_t initialAtlasSize = 160;
     constexpr size_t maxAtlasSize = 4096;
     SDL_Surface *atlasSurface = nullptr;
     
-    auto chars = getCharSet(face);
+    // Render all the glyphs into separate surfaces.
+    std::unordered_map<char, std::shared_ptr<Glyph>> glyphs;
+    for (FT_ULong charcode = 32; charcode < 127; ++charcode) {
+        glyphs[(char)charcode] = glyphRenderer.render(charcode);
+    }
     
+    // Sort glyphs by height.
+    std::vector<std::pair<char, std::shared_ptr<Glyph>>> sortedGlyphs;
+    for (auto pair : glyphs) {
+        sortedGlyphs.emplace_back(pair);
+    }
+    std::sort(sortedGlyphs.begin(), sortedGlyphs.end(),
+              [](const std::pair<char, std::shared_ptr<Glyph>> &left,
+                 const std::pair<char, std::shared_ptr<Glyph>> &right) -> bool {
+                  return (left.second->getSize().y < right.second->getSize().y);
+              });
+    
+    // Pack glyphs into a texture atlas. If we can't fit them all then we
+    // increase the size and try again.
     for(size_t atlasSize = initialAtlasSize;
         !atlasSurface && atlasSize < maxAtlasSize;
         atlasSize += 32) {
         
         SDL_Log("Trying to create texture atlas of size %d", (int)atlasSize);
-        atlasSurface = makeTextureAtlas(face, glyphRenderer, chars, atlasSize);
+        atlasSurface = makeTextureAtlas(sortedGlyphs, atlasSize);
     }
     
     return atlasSurface;
 }
 
 SDL_Surface*
-FontTextureAtlasBuilder::makeTextureAtlas(FT_Face &face,
-                                          GlyphRenderer &glyphRenderer,
-                                          const std::vector<std::pair<char, unsigned>> &characters,
+FontTextureAtlasBuilder::makeTextureAtlas(const std::vector<std::pair<char, std::shared_ptr<Glyph>>> &glyphs,
                                           size_t size)
 {
     _glyphs.clear();
@@ -119,10 +133,8 @@ FontTextureAtlasBuilder::makeTextureAtlas(FT_Face &face,
         throw Exception("Failed to set font texture atlas blend mode.");
     }
     
-    for (auto &character : characters) {
-        char charcode = character.first;
-        if (!placeGlyph(face, glyphRenderer, charcode,
-                        atlasSurface, cursor, rowHeight)) {
+    for (auto& [charcode, glyph] : glyphs) {
+        if (!placeGlyph(*glyph, atlasSurface, cursor, rowHeight)) {
             
             SDL_FreeSurface(atlasSurface);
             atlasSurface = nullptr;
@@ -134,68 +146,41 @@ FontTextureAtlasBuilder::makeTextureAtlas(FT_Face &face,
     return atlasSurface;
 }
 
-bool FontTextureAtlasBuilder::placeGlyph(FT_Face &face,
-                                         GlyphRenderer &glyphRenderer,
-                                         FT_ULong charcode,
+bool FontTextureAtlasBuilder::placeGlyph(Glyph &glyph,
                                          SDL_Surface *atlasSurface,
                                          glm::ivec2 &cursor,
                                          size_t &rowHeight)
 {
-    auto glyph = glyphRenderer.render(charcode);
-    
-    rowHeight = std::max(rowHeight, (size_t)glyph->getSize().y);
+    rowHeight = std::max(rowHeight, (size_t)glyph.getSize().y);
     
     // Validate the cursor. Can the glyph fit on this row?
-    if ((cursor.x + glyph->getSize().x) >= (size_t)atlasSurface->w) {
+    if ((cursor.x + glyph.getSize().x) >= (size_t)atlasSurface->w) {
         // Go to the next row.
         cursor.x = 0;
         cursor.y += rowHeight;
-        rowHeight = glyph->getSize().y;
+        rowHeight = glyph.getSize().y;
         
         // Have we run out of rows? If so then try a bigger atlas.
-        if ((cursor.y + glyph->getSize().y) >= (size_t)atlasSurface->h) {
+        if ((cursor.y + glyph.getSize().y) >= (size_t)atlasSurface->h) {
             return false;
         }
     }
     
-    glyph->blit(atlasSurface, cursor);
+    glyph.blit(atlasSurface, cursor);
     
     // Now store the packed glyph for later use.
-    _glyphs[(char)charcode] = (PackedGlyph){
+    _glyphs[glyph.getCharCode()] = (PackedGlyph){
         glm::vec2((float)cursor.x / atlasSurface->w,
                   (float)cursor.y / atlasSurface->w),
-        glm::vec2((float)glyph->getSize().x / atlasSurface->h,
-                  (float)glyph->getSize().y / atlasSurface->h),
-        glyph->getSize(),
-        glyph->getBearing(),
-        glyph->getAdvance()
+        glm::vec2((float)glyph.getSize().x / atlasSurface->h,
+                  (float)glyph.getSize().y / atlasSurface->h),
+        glyph.getSize(),
+        glyph.getBearing(),
+        glyph.getAdvance()
     };
     
     // Increment the cursor. We've already validated for this glyph.
-    cursor.x += glyph->getSize().x;
+    cursor.x += glyph.getSize().x;
     
     return true;
-}
-
-std::vector<std::pair<char, unsigned>>
-FontTextureAtlasBuilder::getCharSet(FT_Face &face)
-{
-    std::vector<std::pair<char, unsigned>> characters;
-    
-    for (FT_ULong c = 32; c < 127; c++) {
-        if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
-            throw Exception("Failed to load the glyph %c.", (char)c);
-        }
-        
-        unsigned height = face->glyph->bitmap.rows;
-        characters.emplace_back(std::make_pair((char)c, height));
-    }
-    
-    std::sort(characters.begin(), characters.end(),
-              [](const std::pair<char, int> &left,
-                 const std::pair<char, int> &right) -> bool {
-                  return (left.second < right.second);
-              });
-    
-    return characters;
 }
