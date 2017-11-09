@@ -15,6 +15,7 @@
 #include <glm/vec2.hpp>
 #include <unordered_map>
 #include <boost/optional.hpp>
+#include <boost/filesystem.hpp>
 
 struct SDL_Surface;
 
@@ -25,7 +26,8 @@ class FontTextureAtlas
 public:
     ~FontTextureAtlas();
     
-    FontTextureAtlas(const TextAttributes &attributes);
+    FontTextureAtlas(const boost::filesystem::path &cacheDir,
+                     const TextAttributes &attributes);
     
     // Get the glyph for the specified character code.
     boost::optional<PackedGlyph> getGlyph(char c) const;

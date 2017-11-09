@@ -9,7 +9,6 @@
 #include "Renderer/FontTextureAtlas.hpp"
 #include "Renderer/FontTextureAtlasBuilder.hpp"
 #include "Exception.hpp"
-#include "FileUtilities.hpp"
 
 #include "SDL.h"
 #include "SDL_image.h"
@@ -23,14 +22,14 @@ FontTextureAtlas::~FontTextureAtlas()
     SDL_FreeSurface(_atlasSurface);
 }
 
-FontTextureAtlas::FontTextureAtlas(const TextAttributes &attributes)
+FontTextureAtlas::FontTextureAtlas(const boost::filesystem::path &cacheDir,
+                                   const TextAttributes &attributes)
 {
     std::hash<TextAttributes> hasher;
     const std::string baseName = "font" + std::to_string(attributes.fontSize)
                                + "_" + std::to_string(hasher(attributes));
-    const boost::filesystem::path prefPath = getPrefPath();
-    const boost::filesystem::path atlasImageFilename = prefPath / (baseName + ".png");
-    const boost::filesystem::path atlasDictionaryFilename = prefPath / (baseName + ".cereal");
+    const boost::filesystem::path atlasImageFilename = cacheDir / (baseName + ".png");
+    const boost::filesystem::path atlasDictionaryFilename = cacheDir / (baseName + ".cereal");
     
 #ifdef FORCE_REBUILD_FONT_TEXTURE_ATLAS
     constexpr bool forceRebuild = true;

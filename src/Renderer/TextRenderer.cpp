@@ -8,6 +8,7 @@
 
 #include "Renderer/TextRenderer.hpp"
 #include "Exception.hpp"
+#include "FileUtilities.hpp"
 
 #include <glm/gtc/matrix_transform.hpp> // for glm::ortho
 
@@ -197,7 +198,7 @@ void TextRenderer::regenerateFontTextureAtlas()
 {
     TextAttributes attributes = _attributes;
     attributes.fontSize = _attributes.fontSize * _windowScaleFactor;
-    _fontTextureAtlas = std::make_unique<FontTextureAtlas>(attributes);
+    _fontTextureAtlas = std::make_unique<FontTextureAtlas>(getPrefPath(), attributes);
     
     SDL_Surface *surface = _fontTextureAtlas->getSurface();
     
