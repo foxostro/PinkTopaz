@@ -124,6 +124,7 @@ set(SOURCE_FILES_FONTS
     "src/Fonts/GlyphRendererOutline.cpp" "src/include/Fonts/GlyphRendererOutline.hpp"
     "src/Fonts/GlyphRendererRegular.cpp" "src/include/Fonts/GlyphRendererRegular.hpp"
     "src/include/Fonts/PackedGlyph.hpp"
+    "src/Fonts/FontTextureAtlasPacker.cpp" "src/include/Fonts/FontTextureAtlasPacker.hpp"
     "src/Fonts/FontTextureAtlasBuilder.cpp" "src/include/Fonts/FontTextureAtlasBuilder.hpp"
     "src/Fonts/FontTextureAtlas.cpp" "src/include/Fonts/FontTextureAtlas.hpp"
     )

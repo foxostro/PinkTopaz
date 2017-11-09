@@ -46,7 +46,7 @@ public:
     }
     
 private:
-    // Create a glypg renderer which can accomodate the specified attributes.
+    // Create a glyph renderer which can accomodate the specified attributes.
     std::shared_ptr<GlyphRenderer>
     makeGlyphRenderer(FT_Library &library,
                       FT_Face &face,
@@ -56,20 +56,6 @@ private:
     // accomodate the specified font at the specified font size.
     // When this method returns, `_glyphs' will contain valid glyph metrics.
     SDL_Surface* atlasSearch(GlyphRenderer &glyphRenderer);
-    
-    // Packs the glyphs into the a texture atlas of the specified size.
-    // Returns `none' if this is not possible.
-    boost::optional<std::unordered_map<char, PackedGlyph>>
-    packGlyphs(const std::unordered_map<char, std::shared_ptr<Glyph>> &glyphs,
-               size_t atlasSize);
-    
-    // Draw a glyph into the specified surface.
-    // Returns `none' if this is not possible
-    boost::optional<PackedGlyph>
-    packGlyph(Glyph &glyph,
-              size_t atlasSize,
-              glm::ivec2 &cursor,
-              size_t &rowHeight);
     
     // Create an SDL surface containing all the glyphs.
     SDL_Surface*
