@@ -10,11 +10,12 @@
 #define TextAttributes_hpp
 
 #include <boost/filesystem.hpp>
+#include <boost/functional/hash.hpp>
 #include <glm/vec4.hpp>
 
 enum TextWeight
 {
-    Light,
+    Light = 0,
     Regular,
     Bold
 };
@@ -44,5 +45,28 @@ struct TextAttributes
        weight(myWeight)
     {}
 };
+
+namespace std {
+    template <> struct hash<TextAttributes>
+    {
+        size_t operator()(const TextAttributes &attr) const
+        {
+            size_t seed = 0;
+            boost::hash_combine(seed, attr.fontName);
+            boost::hash_combine(seed, attr.fontSize);
+            boost::hash_combine(seed, attr.border);
+            boost::hash_combine(seed, attr.color.r);
+            boost::hash_combine(seed, attr.color.g);
+            boost::hash_combine(seed, attr.color.b);
+            boost::hash_combine(seed, attr.color.a);
+            boost::hash_combine(seed, attr.borderColor.r);
+            boost::hash_combine(seed, attr.borderColor.g);
+            boost::hash_combine(seed, attr.borderColor.b);
+            boost::hash_combine(seed, attr.borderColor.a);
+            boost::hash_combine(seed, (int)attr.weight);
+            return seed;
+        }
+    };
+}
 
 #endif /* TextAttributes_hpp */

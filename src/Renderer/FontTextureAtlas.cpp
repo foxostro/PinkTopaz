@@ -25,7 +25,9 @@ FontTextureAtlas::~FontTextureAtlas()
 
 FontTextureAtlas::FontTextureAtlas(const TextAttributes &attributes)
 {
-    const std::string baseName = "font" + std::to_string(attributes.fontSize);
+    std::hash<TextAttributes> hasher;
+    const std::string baseName = "font" + std::to_string(attributes.fontSize)
+                               + "_" + std::to_string(hasher(attributes));
     const boost::filesystem::path prefPath = getPrefPath();
     const boost::filesystem::path atlasImageFilename = prefPath / (baseName + ".png");
     const boost::filesystem::path atlasDictionaryFilename = prefPath / (baseName + ".cereal");
