@@ -9,8 +9,6 @@
 #ifndef FontTextureAtlas_hpp
 #define FontTextureAtlas_hpp
 
-#include "Renderer/GraphicsDevice.hpp"
-#include "Renderer/Texture.hpp"
 #include "Renderer/TextAttributes.hpp"
 #include "Renderer/PackedGlyph.hpp"
 
@@ -18,27 +16,28 @@
 #include <unordered_map>
 #include <boost/optional.hpp>
 
-// Builds a GPU texture for the font texture atlas. The font texture atlas is
-// either built from scratch or retrieved from cache.
+struct SDL_Surface;
+
+// A font texture atlas appropriate for specified TextAttributes.
+// Font texture atlases are cached on disk to avoid regenerating every time.
 class FontTextureAtlas
 {
 public:
-    ~FontTextureAtlas() = default;
+    ~FontTextureAtlas();
     
-    FontTextureAtlas(GraphicsDevice &graphicsDevice,
-                     const TextAttributes &attributes);
+    FontTextureAtlas(const TextAttributes &attributes);
     
     // Get the glyph for the specified character code.
     boost::optional<PackedGlyph> getGlyph(char c) const;
     
     // Get the texture atlas.
-    inline std::shared_ptr<Texture> getTexture()
+    inline SDL_Surface* getSurface()
     {
-        return _textureAtlas;
+        return _atlasSurface;
     }
     
 private:
-    std::shared_ptr<Texture> _textureAtlas;
+    SDL_Surface *_atlasSurface;
     std::unordered_map<char, PackedGlyph> _glyphs;
 };
 

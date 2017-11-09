@@ -52,7 +52,7 @@ void TextRenderer::draw(const std::shared_ptr<CommandEncoder> &encoder,
     encoder->setViewport(vp);
     encoder->setShader(_shader);
     encoder->setFragmentSampler(_sampler, 0);
-    encoder->setFragmentTexture(_fontTextureAtlas->getTexture(), 0);
+    encoder->setFragmentTexture(_textureAtlas, 0);
     
     for (auto &string : _strings)
     {
@@ -197,5 +197,20 @@ void TextRenderer::regenerateFontTextureAtlas()
 {
     TextAttributes attributes = _attributes;
     attributes.fontSize = _attributes.fontSize * _windowScaleFactor;
-    _fontTextureAtlas = std::make_unique<FontTextureAtlas>(*_graphicsDevice, attributes);
+    _fontTextureAtlas = std::make_unique<FontTextureAtlas>(attributes);
+    
+    SDL_Surface *surface = _fontTextureAtlas->getSurface();
+    
+    // Turn the SDL surface into a texture.
+    TextureDescriptor texDesc = {
+        Texture2D,          // type
+        RGBA8,              // format
+        (size_t)surface->w, // width
+        (size_t)surface->h, // height
+        1,                  // depth
+        4,                  // unpackAlignment
+        false,              // generateMipMaps
+    };
+    
+    _textureAtlas = _graphicsDevice->makeTexture(texDesc, surface->pixels);
 }

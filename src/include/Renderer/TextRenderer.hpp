@@ -10,6 +10,13 @@
 #define TextRenderer_hpp
 
 #include "Renderer/FontTextureAtlas.hpp"
+#include "Renderer/GraphicsDevice.hpp"
+#include "Renderer/Texture.hpp"
+#include "Renderer/Buffer.hpp"
+#include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
+#include <glm/vec2.hpp>
+#include <memory>
 
 // Draws strings on screen.
 // All strings must be in one font face and one font size.
@@ -77,6 +84,7 @@ private:
     std::unique_ptr<FontTextureAtlas> _fontTextureAtlas;
     std::shared_ptr<Shader> _shader;
     std::shared_ptr<TextureSampler> _sampler;
+    std::shared_ptr<Texture> _textureAtlas;
     VertexFormat _vertexFormat;
     RenderPassDescriptor _renderPassDescriptor;
     std::list<String> _strings;
