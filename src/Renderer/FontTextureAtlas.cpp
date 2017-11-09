@@ -18,8 +18,6 @@
 #include <cereal/types/unordered_map.hpp>
 #include "CerealGLM.hpp"
 
-static constexpr bool FORCE_REBUILD = true;
-
 FontTextureAtlas::~FontTextureAtlas()
 {
     SDL_FreeSurface(_atlasSurface);
@@ -32,8 +30,14 @@ FontTextureAtlas::FontTextureAtlas(const TextAttributes &attributes)
     const boost::filesystem::path atlasImageFilename = prefPath / (baseName + ".png");
     const boost::filesystem::path atlasDictionaryFilename = prefPath / (baseName + ".cereal");
     
+#ifdef FORCE_REBUILD_FONT_TEXTURE_ATLAS
+    constexpr bool forceRebuild = true;
+#else
+    constexpr bool forceRebuild = false;
+#endif
+    
     // Font texture atlas is cached between runs of the game.
-    if (!FORCE_REBUILD &&
+    if (!forceRebuild &&
         boost::filesystem::exists(atlasImageFilename) &&
         boost::filesystem::exists(atlasDictionaryFilename)) {
         

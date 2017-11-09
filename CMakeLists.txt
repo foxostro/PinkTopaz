@@ -9,6 +9,8 @@ if(APPLE)
     option(USE_METAL "Use the Metal graphics API on macOS." TRUE)
 endif()
 
+option(FORCE_REBUILD_FONT_TEXTURE_ATLAS "Always regenerate font texture atlases and do not cache them on disk." FALSE)
+
 set(CMAKE_CXX_STANDARD 17)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -39,6 +41,10 @@ else()
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
     set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror")
+endif()
+
+if(FORCE_REBUILD_FONT_TEXTURE_ATLAS)
+    set(CMAKE_CXX_FLAGS "-DFORCE_REBUILD_FONT_TEXTURE_ATLAS ${CMAKE_CXX_FLAGS}")
 endif()
 
 set(SOURCE_FILES_GRID
