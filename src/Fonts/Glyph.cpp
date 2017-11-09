@@ -6,7 +6,7 @@
 //
 //
 
-#include "Renderer/Glyph.hpp"
+#include "Fonts/Glyph.hpp"
 #include "Exception.hpp"
 #include "SDL.h"
 

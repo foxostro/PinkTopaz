@@ -9,7 +9,7 @@
 #ifndef TextRenderer_hpp
 #define TextRenderer_hpp
 
-#include "Renderer/FontTextureAtlas.hpp"
+#include "Fonts/FontTextureAtlas.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/Texture.hpp"
 #include "Renderer/Buffer.hpp"

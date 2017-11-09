@@ -10,7 +10,7 @@
 #include "Renderer/Shader.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/RenderPassDescriptor.hpp"
-#include "Renderer/TextAttributes.hpp"
+#include "Fonts/TextAttributes.hpp"
 #include "Transform.hpp"
 #include "RenderableStaticMesh.hpp"
 #include "TerrainComponent.hpp"

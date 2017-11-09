@@ -6,8 +6,8 @@
 //
 //
 
-#include "Renderer/FontTextureAtlas.hpp"
-#include "Renderer/FontTextureAtlasBuilder.hpp"
+#include "Fonts/FontTextureAtlas.hpp"
+#include "Fonts/FontTextureAtlasBuilder.hpp"
 #include "Exception.hpp"
 
 #include "SDL.h"

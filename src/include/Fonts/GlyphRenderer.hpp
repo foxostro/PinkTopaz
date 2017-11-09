@@ -9,8 +9,8 @@
 #ifndef GlyphRenderer_hpp
 #define GlyphRenderer_hpp
 
-#include "Renderer/Glyph.hpp"
-#include "Renderer/TextAttributes.hpp"
+#include "Fonts/Glyph.hpp"
+#include "Fonts/TextAttributes.hpp"
 
 #include "SDL.h"
 #include <glm/vec2.hpp>

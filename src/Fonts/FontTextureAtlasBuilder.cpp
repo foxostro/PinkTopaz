@@ -6,9 +6,9 @@
 //
 //
 
-#include "Renderer/FontTextureAtlasBuilder.hpp"
-#include "Renderer/GlyphRendererOutline.hpp"
-#include "Renderer/GlyphRendererRegular.hpp"
+#include "Fonts/FontTextureAtlasBuilder.hpp"
+#include "Fonts/GlyphRendererOutline.hpp"
+#include "Fonts/GlyphRendererRegular.hpp"
 #include "Exception.hpp"
 #include "FileUtilities.hpp"
 

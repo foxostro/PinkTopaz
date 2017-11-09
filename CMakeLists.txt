@@ -104,15 +104,6 @@ else(APPLE)
 endif(APPLE)
 
 set(SOURCE_FILES_RENDERER
-    "src/include/Renderer/TextAttributes.hpp"
-    "src/Renderer/Glyph.cpp" "src/include/Renderer/Glyph.hpp"
-    "src/include/Renderer/GlyphRenderer.hpp"
-    "src/Renderer/GlyphRendererOutline.cpp" "src/include/Renderer/GlyphRendererOutline.hpp"
-    "src/Renderer/GlyphRendererRegular.cpp" "src/include/Renderer/GlyphRendererRegular.hpp"
-    "src/include/Renderer/PackedGlyph.hpp"
-    "src/Renderer/FontTextureAtlasBuilder.cpp" "src/include/Renderer/FontTextureAtlasBuilder.hpp"
-    "src/Renderer/FontTextureAtlas.cpp" "src/include/Renderer/FontTextureAtlas.hpp"
-
     "src/Renderer/TextRenderer.cpp" "src/include/Renderer/TextRenderer.hpp"
     "src/Renderer/StaticMesh.cpp" "src/include/Renderer/StaticMesh.hpp"
     "src/Renderer/StaticMeshSerializer.cpp" "src/include/Renderer/StaticMeshSerializer.hpp"
@@ -124,6 +115,17 @@ set(SOURCE_FILES_RENDERER
     "src/include/Renderer/RenderPassDescriptor.hpp"
     "src/include/Renderer/Texture.hpp"
     "src/include/Renderer/TextureSampler.hpp"
+    )
+
+set(SOURCE_FILES_FONTS
+    "src/include/Fonts/TextAttributes.hpp"
+    "src/Fonts/Glyph.cpp" "src/include/Fonts/Glyph.hpp"
+    "src/include/Fonts/GlyphRenderer.hpp"
+    "src/Fonts/GlyphRendererOutline.cpp" "src/include/Fonts/GlyphRendererOutline.hpp"
+    "src/Fonts/GlyphRendererRegular.cpp" "src/include/Fonts/GlyphRendererRegular.hpp"
+    "src/include/Fonts/PackedGlyph.hpp"
+    "src/Fonts/FontTextureAtlasBuilder.cpp" "src/include/Fonts/FontTextureAtlasBuilder.hpp"
+    "src/Fonts/FontTextureAtlas.cpp" "src/include/Fonts/FontTextureAtlas.hpp"
     )
 
 set(SOURCE_FILES_SYSTEMS
@@ -225,6 +227,7 @@ set(SOURCE_FILES
     ${SOURCE_FILES_TERRAIN}
     ${SOURCE_FILES_OTHER_ECS}
     ${SOURCE_FILES_RENDERER}
+    ${SOURCE_FILES_FONTS}
     ${SOURCE_FILES_SYSTEMS}
     ${SOURCE_FILES_COMPONENTS}
     ${SOURCE_FILES_EVENTS}
@@ -244,6 +247,7 @@ source_group("ECS\\Systems" FILES ${SOURCE_FILES_SYSTEMS})
 source_group("ECS\\Components" FILES ${SOURCE_FILES_COMPONENTS})
 source_group("ECS\\Events" FILES ${SOURCE_FILES_EVENTS})
 source_group("ECS\\" FILES ${SOURCE_FILES_OTHER_ECS})
+source_group("Fonts" FILES ${SOURCE_FILES_FONTS})
 source_group("Renderer" FILES ${SOURCE_FILES_RENDERER})
 source_group("Renderer\\OpenGL" FILES ${SOURCE_FILES_OPENGL})
 source_group("Renderer\\Metal" FILES ${SOURCE_FILES_METAL})

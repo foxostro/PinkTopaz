@@ -9,8 +9,8 @@
 #ifndef FontTextureAtlasBuilder_hpp
 #define FontTextureAtlasBuilder_hpp
 
-#include "Renderer/GlyphRenderer.hpp"
-#include "Renderer/PackedGlyph.hpp"
+#include "Fonts/GlyphRenderer.hpp"
+#include "Fonts/PackedGlyph.hpp"
 
 #include <glm/vec2.hpp>
 
