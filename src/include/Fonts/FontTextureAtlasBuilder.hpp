@@ -57,19 +57,25 @@ private:
     // When this method returns, `_glyphs' will contain valid glyph metrics.
     SDL_Surface* atlasSearch(GlyphRenderer &glyphRenderer);
     
-    // Creates a font texture atlas with the specified character set.
-    // The atlas size is directly specified. Though, this method will return
-    // false if it is not possible to pack all characters into a surface of
-    // this size.
-    SDL_Surface*
-    makeTextureAtlas(const std::vector<std::pair<char, std::shared_ptr<Glyph>>> &glyphs,
-                     size_t atlasSize);
+    // Packs the glyphs into the a texture atlas of the specified size.
+    // Returns `none' if this is not possible.
+    boost::optional<std::unordered_map<char, PackedGlyph>>
+    packGlyphs(const std::unordered_map<char, std::shared_ptr<Glyph>> &glyphs,
+               size_t atlasSize);
     
     // Draw a glyph into the specified surface.
-    bool placeGlyph(Glyph &glyph,
-                    SDL_Surface *atlasSurface,
-                    glm::ivec2 &cursor,
-                    size_t &rowHeight);
+    // Returns `none' if this is not possible
+    boost::optional<PackedGlyph>
+    packGlyph(Glyph &glyph,
+              size_t atlasSize,
+              glm::ivec2 &cursor,
+              size_t &rowHeight);
+    
+    // Create an SDL surface containing all the glyphs.
+    SDL_Surface*
+    createTextureAtlas(const std::unordered_map<char, std::shared_ptr<Glyph>> &glyphs,
+                       const std::unordered_map<char, PackedGlyph> &packedGlyphs,
+                       size_t atlasSize);
     
     // Finds the path to the font file satsifying the specified attributes.
     boost::optional<boost::filesystem::path>

@@ -92,6 +92,31 @@ FontTextureAtlasBuilder::atlasSearch(GlyphRenderer &glyphRenderer)
         glyphs[(char)charcode] = glyphRenderer.render(charcode);
     }
     
+    // Pack glyphs into a texture atlas. If we can't fit them all then we
+    // increase the size and try again.
+    for(size_t atlasSize = initialAtlasSize;
+        !atlasSurface && atlasSize < maxAtlasSize;
+        atlasSize += 32) {
+        
+        SDL_Log("Trying to create texture atlas of size %d", (int)atlasSize);
+        
+        auto maybePackedGlyphs = packGlyphs(glyphs, atlasSize);
+        if (maybePackedGlyphs) {
+            // Now that glyphs have been arranged and packed, render them to
+            // a surface to create the texture atlas.
+            _glyphs = *maybePackedGlyphs;
+            atlasSurface = createTextureAtlas(glyphs, *maybePackedGlyphs,
+                                              atlasSize);
+        }
+    }
+    
+    return atlasSurface;
+}
+
+boost::optional<std::unordered_map<char, PackedGlyph>>
+FontTextureAtlasBuilder::packGlyphs(const std::unordered_map<char, std::shared_ptr<Glyph>> &glyphs,
+                                    size_t size)
+{
     // Sort glyphs by height.
     std::vector<std::pair<char, std::shared_ptr<Glyph>>> sortedGlyphs;
     for (auto pair : glyphs) {
@@ -103,30 +128,69 @@ FontTextureAtlasBuilder::atlasSearch(GlyphRenderer &glyphRenderer)
                   return (left.second->getSize().y < right.second->getSize().y);
               });
     
-    // Pack glyphs into a texture atlas. If we can't fit them all then we
-    // increase the size and try again.
-    for(size_t atlasSize = initialAtlasSize;
-        !atlasSurface && atlasSize < maxAtlasSize;
-        atlasSize += 32) {
-        
-        SDL_Log("Trying to create texture atlas of size %d", (int)atlasSize);
-        atlasSurface = makeTextureAtlas(sortedGlyphs, atlasSize);
-    }
-    
-    return atlasSurface;
-}
-
-SDL_Surface*
-FontTextureAtlasBuilder::makeTextureAtlas(const std::vector<std::pair<char, std::shared_ptr<Glyph>>> &glyphs,
-                                          size_t size)
-{
-    _glyphs.clear();
+    std::unordered_map<char, PackedGlyph> packedGlyphs;
     
     size_t rowHeight = 0;
     glm::ivec2 cursor(0, 0);
     
+    for (auto& [charcode, glyph] : glyphs) {
+        auto maybePackedGlyph = packGlyph(*glyph, size, cursor, rowHeight);
+        if (maybePackedGlyph) {
+            packedGlyphs[charcode] = *maybePackedGlyph;
+        } else {
+            return boost::none;
+        }
+    }
+    
+    return packedGlyphs;
+}
+
+boost::optional<PackedGlyph>
+FontTextureAtlasBuilder::packGlyph(Glyph &glyph,
+                                   size_t atlasSize,
+                                   glm::ivec2 &cursor,
+                                   size_t &rowHeight)
+{
+    rowHeight = std::max(rowHeight, (size_t)glyph.getSize().y);
+    
+    // Validate the cursor. Can the glyph fit on this row?
+    if ((cursor.x + glyph.getSize().x) >= (size_t)atlasSize) {
+        // Go to the next row.
+        cursor.x = 0;
+        cursor.y += rowHeight;
+        rowHeight = glyph.getSize().y;
+        
+        // Have we run out of rows? If so then try a bigger atlas.
+        if ((cursor.y + glyph.getSize().y) >= (size_t)atlasSize) {
+            return boost::none;
+        }
+    }
+    
+    // Now store the packed glyph for later use.
+    PackedGlyph packedGlyph = {
+        glm::vec2((float)cursor.x / atlasSize,
+                  (float)cursor.y / atlasSize),
+        glm::vec2((float)glyph.getSize().x / atlasSize,
+                  (float)glyph.getSize().y / atlasSize),
+        glyph.getSize(),
+        glyph.getBearing(),
+        glyph.getAdvance()
+    };
+    
+    // Increment the cursor. We've already validated for this glyph.
+    cursor.x += glyph.getSize().x;
+    
+    return boost::make_optional(packedGlyph);
+}
+
+SDL_Surface*
+FontTextureAtlasBuilder::createTextureAtlas(const std::unordered_map<char, std::shared_ptr<Glyph>> &glyphs,
+                                            const std::unordered_map<char, PackedGlyph> &packedGlyphs,
+                                            size_t atlasSize)
+{
     SDL_Surface *atlasSurface = SDL_CreateRGBSurface(0,
-                                                     (int)size, (int)size,
+                                                     (int)atlasSize,
+                                                     (int)atlasSize,
                                                      (int)(sizeof(uint32_t)*8),
                                                      0x000000ff,
                                                      0x0000ff00,
@@ -142,55 +206,18 @@ FontTextureAtlasBuilder::makeTextureAtlas(const std::vector<std::pair<char, std:
     }
     
     for (auto& [charcode, glyph] : glyphs) {
-        if (!placeGlyph(*glyph, atlasSurface, cursor, rowHeight)) {
-            
-            SDL_FreeSurface(atlasSurface);
-            atlasSurface = nullptr;
-            _glyphs.clear();
-            break;
+        auto iter = packedGlyphs.find(charcode);
+        if (iter == packedGlyphs.end()) {
+            const char c = charcode;
+            throw Exception("Packed glyphs is missing charcode %c", c);
         }
+        
+        const glm::ivec2 cursor(iter->second.uvOrigin.x * atlasSurface->w,
+                                iter->second.uvOrigin.y * atlasSurface->h);
+        glyph->blit(atlasSurface, cursor);
     }
     
     return atlasSurface;
-}
-
-bool FontTextureAtlasBuilder::placeGlyph(Glyph &glyph,
-                                         SDL_Surface *atlasSurface,
-                                         glm::ivec2 &cursor,
-                                         size_t &rowHeight)
-{
-    rowHeight = std::max(rowHeight, (size_t)glyph.getSize().y);
-    
-    // Validate the cursor. Can the glyph fit on this row?
-    if ((cursor.x + glyph.getSize().x) >= (size_t)atlasSurface->w) {
-        // Go to the next row.
-        cursor.x = 0;
-        cursor.y += rowHeight;
-        rowHeight = glyph.getSize().y;
-        
-        // Have we run out of rows? If so then try a bigger atlas.
-        if ((cursor.y + glyph.getSize().y) >= (size_t)atlasSurface->h) {
-            return false;
-        }
-    }
-    
-    glyph.blit(atlasSurface, cursor);
-    
-    // Now store the packed glyph for later use.
-    _glyphs[glyph.getCharCode()] = (PackedGlyph){
-        glm::vec2((float)cursor.x / atlasSurface->w,
-                  (float)cursor.y / atlasSurface->w),
-        glm::vec2((float)glyph.getSize().x / atlasSurface->h,
-                  (float)glyph.getSize().y / atlasSurface->h),
-        glyph.getSize(),
-        glyph.getBearing(),
-        glyph.getAdvance()
-    };
-    
-    // Increment the cursor. We've already validated for this glyph.
-    cursor.x += glyph.getSize().x;
-    
-    return true;
 }
 
 boost::optional<boost::filesystem::path>
