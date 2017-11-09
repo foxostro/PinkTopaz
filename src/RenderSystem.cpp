@@ -22,13 +22,14 @@
 
 RenderSystem::RenderSystem(const std::shared_ptr<GraphicsDevice> &dev)
  : _graphicsDevice(dev),
-   _textRenderer(dev, (TextAttributes){
-       /*fontName=*/ "vegur/Vegur-Bold.otf",
-       /*fontSize=*/ 24,
-       /*border=*/ 1,
-       /*color=*/ glm::vec4(0.9f, 0.9f, 0.9f, 1.0f),
-       /*borderColor=*/ glm::vec4(0.1f, 0.1f, 0.1f, 1.0f)
-   }),
+   _textRenderer(dev, TextAttributes(
+       /*fontName=*/    "Vegur",
+       /*fontSize=*/    24,
+       /*border=*/      1,
+       /*color=*/       glm::vec4(0.9f, 0.9f, 0.9f, 1.0f),
+       /*borderColor=*/ glm::vec4(0.1f, 0.1f, 0.1f, 1.0f),
+       /*weight=*/      Bold
+   )),
    _frameTimer(_textRenderer)
 {}
 

@@ -19,6 +19,8 @@
 #include <cereal/types/unordered_map.hpp>
 #include "CerealGLM.hpp"
 
+#include <boost/algorithm/string/find.hpp>
+
 FontTextureAtlasBuilder::~FontTextureAtlasBuilder()
 {
     SDL_FreeSurface(_atlasSurface);
@@ -26,13 +28,19 @@ FontTextureAtlasBuilder::~FontTextureAtlasBuilder()
 
 FontTextureAtlasBuilder::FontTextureAtlasBuilder(const TextAttributes &attr)
 {
+    auto maybeFontPath = getFontPath(attr);
+    if (!maybeFontPath) {
+        throw Exception("Failed to find font file for \"%s\"",
+                        attr.fontName.c_str());
+    }
+    
     FT_Library library;
     if (FT_Init_FreeType(&library)) {
         throw Exception("Failed to initialize Freetype.");
     }
     
     FT_Face face;
-    if (FT_New_Face(library, attr.fontName.string().c_str(), 0, &face)) {
+    if (FT_New_Face(library, maybeFontPath->string().c_str(), 0, &face)) {
         throw Exception("Failed to load the font: %s", attr.fontName.c_str());
     }
     
@@ -183,4 +191,41 @@ bool FontTextureAtlasBuilder::placeGlyph(Glyph &glyph,
     cursor.x += glyph.getSize().x;
     
     return true;
+}
+
+boost::optional<boost::filesystem::path>
+FontTextureAtlasBuilder::getFontPath(const TextAttributes &attr)
+{
+    std::string weight;
+    
+    switch (attr.weight) {
+        case Light:
+            weight = "Light";
+            break;
+            
+        case Regular:
+            weight = "Regular";
+            break;
+            
+        case Bold:
+            weight = "Bold";
+            break;
+            
+        default:
+            assert(!"unreachable");
+    }
+    
+    boost::filesystem::path directory(".");
+    boost::filesystem::recursive_directory_iterator iter(directory);
+    
+    for (const boost::filesystem::path &path : iter) {
+        if (boost::filesystem::is_regular_file(path)
+            && path.string().find(attr.fontName) != std::string::npos
+            && path.string().find(weight) != std::string::npos) {
+            
+            return boost::make_optional(path);
+        }
+    }
+    
+    return boost::none;
 }

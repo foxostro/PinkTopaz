@@ -22,6 +22,9 @@
 
 struct SDL_Surface;
 
+#include <boost/filesystem.hpp>
+#include <boost/optional.hpp>
+
 // Creates a texture atlas which contains packed font glyphs for string drawing.
 // Besides generating the image itself, this class also records metadata on how
 // to access the atlas such as which texture coordinates correspond to which
@@ -67,6 +70,10 @@ private:
                     SDL_Surface *atlasSurface,
                     glm::ivec2 &cursor,
                     size_t &rowHeight);
+    
+    // Finds the path to the font file satsifying the specified attributes.
+    boost::optional<boost::filesystem::path>
+    getFontPath(const TextAttributes &attr);
     
     SDL_Surface *_atlasSurface;
     std::unordered_map<char, PackedGlyph> _glyphs;
