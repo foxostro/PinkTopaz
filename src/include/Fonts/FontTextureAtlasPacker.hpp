@@ -12,6 +12,8 @@
 #include "Fonts/PackedGlyph.hpp"
 #include "Fonts/Glyph.hpp"
 #include <unordered_map>
+#include <memory>
+#include <array>
 #include <boost/optional.hpp>
 
 // Arranges glyphs to pack them into a texture atlas.
@@ -21,20 +23,47 @@ public:
     ~FontTextureAtlasPacker() = default;
     FontTextureAtlasPacker() = default;
     
-    // Packs the glyphs into the a texture atlas of the specified size.
+    // Packs the glyphs into a texture atlas of the specified size.
     // Returns `none' if this is not possible.
     boost::optional<std::unordered_map<char, PackedGlyph>>
-    packGlyphs(const std::unordered_map<char, std::shared_ptr<Glyph>> &glyphs,
+    packGlyphs(const std::vector<std::shared_ptr<Glyph>> &glyphs,
                size_t atlasSize);
     
 private:
-    // Draw a glyph into the specified surface.
-    // Returns `none' if this is not possible
-    boost::optional<PackedGlyph>
-    packGlyph(Glyph &glyph,
-              size_t atlasSize,
-              glm::ivec2 &cursor,
-              size_t &rowHeight);
+    struct Rect
+    {
+        glm::ivec2 origin, size;
+        
+        Rect() {}
+        Rect(const glm::ivec2 &o, const glm::ivec2 &s) : origin(o), size(s) {}
+    };
+    
+    class Node : public std::enable_shared_from_this<Node>
+    {
+    public:
+        Node(const Rect &rect) : _rect(rect) {}
+        
+        // Insert a glyph into the tree and return the node that holds it.
+        // Returns `none' if the glyph cannot fit into the tree.
+        boost::optional<std::shared_ptr<Node>>
+        insert(const std::shared_ptr<Glyph> &glyph);
+        
+        // Gets the glyph in this node, if there is one.
+        inline const boost::optional<std::shared_ptr<Glyph>>& getGlyph() const
+        {
+            return _maybeGlyph;
+        }
+        
+        inline const Rect& getRect() const
+        {
+            return _rect;
+        }
+        
+    private:
+        Rect _rect;
+        boost::optional<std::array<std::shared_ptr<Node>, 2>> _maybeChildren;
+        boost::optional<std::shared_ptr<Glyph>> _maybeGlyph;
+    };
 };
 
 #endif /* FontTextureAtlasPacker_hpp */

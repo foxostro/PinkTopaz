@@ -97,11 +97,12 @@ GlyphRendererOutline::render(FT_ULong charcode)
               getAttributes().borderColor,
               BLEND);
     
+    const glm::ivec2 bearing(bitmapGlyphBorder->left, bitmapGlyphBorder->top);
+    const unsigned advance = getFace()->glyph->advance.x;
+    
     FT_Done_Glyph(glyphInterior);
     FT_Done_Glyph(glyphBorder);
     
-    const glm::ivec2 bearing(bitmapGlyphBorder->left, bitmapGlyphBorder->top);
-    const unsigned advance = getFace()->glyph->advance.x;
     return std::make_shared<Glyph>((char)charcode,
                                    bearing,
                                    advance,

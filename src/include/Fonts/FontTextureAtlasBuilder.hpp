@@ -59,7 +59,7 @@ private:
     
     // Create an SDL surface containing all the glyphs.
     SDL_Surface*
-    createTextureAtlas(const std::unordered_map<char, std::shared_ptr<Glyph>> &glyphs,
+    createTextureAtlas(const std::vector<std::shared_ptr<Glyph>> &glyphs,
                        const std::unordered_map<char, PackedGlyph> &packedGlyphs,
                        size_t atlasSize);
     

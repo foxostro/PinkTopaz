@@ -90,9 +90,9 @@ FontTextureAtlasBuilder::atlasSearch(GlyphRenderer &glyphRenderer)
     SDL_Surface *atlasSurface = nullptr;
     
     // Render all the glyphs into separate surfaces.
-    std::unordered_map<char, std::shared_ptr<Glyph>> glyphs;
+    std::vector<std::shared_ptr<Glyph>> glyphs;
     for (FT_ULong charcode = 32; charcode < 127; ++charcode) {
-        glyphs[(char)charcode] = glyphRenderer.render(charcode);
+        glyphs.push_back(glyphRenderer.render(charcode));
     }
     
     // Pack glyphs into a texture atlas. If we can't fit them all then we
@@ -117,7 +117,7 @@ FontTextureAtlasBuilder::atlasSearch(GlyphRenderer &glyphRenderer)
 }
 
 SDL_Surface*
-FontTextureAtlasBuilder::createTextureAtlas(const std::unordered_map<char, std::shared_ptr<Glyph>> &glyphs,
+FontTextureAtlasBuilder::createTextureAtlas(const std::vector<std::shared_ptr<Glyph>> &glyphs,
                                             const std::unordered_map<char, PackedGlyph> &packedGlyphs,
                                             size_t atlasSize)
 {
@@ -138,11 +138,11 @@ FontTextureAtlasBuilder::createTextureAtlas(const std::unordered_map<char, std::
         throw Exception("Failed to set font texture atlas blend mode.");
     }
     
-    for (auto& [charcode, glyph] : glyphs) {
+    for (const auto &glyph : glyphs) {
+        const char charcode = glyph->getCharCode();
         auto iter = packedGlyphs.find(charcode);
         if (iter == packedGlyphs.end()) {
-            const char c = charcode;
-            throw Exception("Packed glyphs is missing charcode %c", c);
+            throw Exception("Packed glyphs is missing charcode %c", charcode);
         }
         
         const glm::ivec2 cursor(iter->second.uvOrigin.x * atlasSurface->w,
