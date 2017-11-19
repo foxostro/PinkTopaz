@@ -56,6 +56,7 @@ set(SOURCE_FILES_GRID
     "src/include/Grid/FrustumRange.hpp"
     "src/include/Grid/GridIndexerRange.hpp"
     "src/include/Grid/GridPoints.hpp"
+    "src/include/Grid/GridRaycast.hpp"
     )
 
 set(SOURCE_FILES_TERRAIN
@@ -173,6 +174,7 @@ set(SOURCE_FILES_MATH
     "src/include/AABB.hpp"
     "src/include/Plane.hpp"
     "src/include/Frustum.hpp"
+    "src/include/Ray.hpp"
     "src/include/math.hpp"
     "src/include/Morton.hpp"
     )
