@@ -104,4 +104,39 @@ struct _AABB
 
 typedef _AABB<glm::vec3> AABB;
 
+template<typename PointType>
+static inline bool
+isPointInsideBox(const PointType &point,
+                 const PointType &mins,
+                 const PointType &maxs)
+{
+    return point.x >= mins.x && point.y >= mins.y && point.z >= mins.z &&
+           point.x < maxs.x && point.y < maxs.y && point.z < maxs.z;
+}
+
+
+static inline bool
+isPointInsideBox(const glm::vec3 &point, const AABB &box)
+{
+    return isPointInsideBox(point, box.mins(), box.maxs());
+}
+
+
+static inline bool
+doBoxesIntersect(const AABB &a, const AABB &b)
+{
+    const glm::vec3 a_max = a.maxs();
+    const glm::vec3 b_max = b.maxs();
+    
+    const glm::vec3 a_min = a.mins();
+    const glm::vec3 b_min = b.mins();
+    
+    return (a_max.x >= b_min.x) &&
+           (a_min.x <= b_max.x) &&
+           (a_max.y >= b_min.y) &&
+           (a_min.y <= b_max.y) &&
+           (a_max.z >= b_min.z) &&
+           (a_min.z <= b_max.z);
+}
+
 #endif /* AABB_hpp */

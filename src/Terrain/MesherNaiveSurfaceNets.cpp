@@ -8,6 +8,7 @@
 
 #include "Terrain/MesherNaiveSurfaceNets.hpp"
 #include "Renderer/TerrainVertex.hpp"
+#include "Grid/GridIndexerRange.hpp"
 #include <glm/gtx/normal.hpp>
 
 using namespace glm;
@@ -337,7 +338,7 @@ StaticMesh MesherNaiveSurfaceNets::extract(const Array3D<Voxel> &voxels,
 {
     StaticMesh geometry;
     
-    for (const auto cellCoords : voxels.slice(aabb)) {
+    for (const auto cellCoords : slice(voxels, aabb)) {
         const AABB cell = voxels.cellAtCellCoords(cellCoords);
         const Morton3 thisIndex = voxels.indexAtCellCoords(cellCoords);
         const Voxel &thisVoxel = voxels.reference(thisIndex);

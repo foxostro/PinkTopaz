@@ -8,6 +8,7 @@
 
 #include "Terrain/MesherMarchingCubes.hpp"
 #include "Renderer/TerrainVertex.hpp"
+#include "Grid/GridPoints.hpp"
 #include "math.hpp" // for clamp
 #include <glm/glm.hpp>
 #include <array>
@@ -159,7 +160,7 @@ StaticMesh MesherMarchingCubes::extract(const Array3D<Voxel> &voxels,
         vec3(-L, +L, -L)
     };
     
-    for (const vec3 pos : voxels.points(insetAABB)) {
+    for (const vec3 pos : points(voxels, insetAABB)) {
         const vec3 vertexPositions[NUM_CUBE_VERTS] = {
             pos + posOffset[0],
             pos + posOffset[1],

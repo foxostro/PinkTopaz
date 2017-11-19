@@ -11,25 +11,12 @@
 
 #include "AABB.hpp"
 #include "Exception.hpp"
-#include "Frustum.hpp"
 #include "Morton.hpp"
-#include <functional>
 
 
 #ifndef NDEBUG
 #define EnableVerboseBoundsChecking
 #endif
-
-
-template<typename PointType>
-static inline bool
-isPointInsideBox(const PointType &point,
-                 const PointType &mins,
-                 const PointType &maxs)
-{
-    return point.x >= mins.x && point.y >= mins.y && point.z >= mins.z &&
-           point.x < maxs.x && point.y < maxs.y && point.z < maxs.z;
-}
 
 
 static inline bool
@@ -38,31 +25,6 @@ isPointInsideBox(Morton3 index,
                  const glm::ivec3 &maxs)
 {
     return isPointInsideBox(index.decode(), mins, maxs);
-}
-
-
-static inline bool
-isPointInsideBox(const glm::vec3 &point, const AABB &box)
-{
-    return isPointInsideBox(point, box.mins(), box.maxs());
-}
-
-
-static inline bool
-doBoxesIntersect(const AABB &a, const AABB &b)
-{
-    const glm::vec3 a_max = a.maxs();
-    const glm::vec3 b_max = b.maxs();
-    
-    const glm::vec3 a_min = a.mins();
-    const glm::vec3 b_min = b.mins();
-    
-    return (a_max.x >= b_min.x) &&
-           (a_min.x <= b_max.x) &&
-           (a_max.y >= b_min.y) &&
-           (a_min.y <= b_max.y) &&
-           (a_max.z >= b_min.z) &&
-           (a_min.z <= b_max.z);
 }
 
 
@@ -83,222 +45,6 @@ public:
 class GridIndexer
 {
 public:
-    template<typename PointType>
-    class ExclusiveIterator
-    {
-    public:
-        ExclusiveIterator() = delete;
-        
-        ExclusiveIterator(PointType min, PointType max, PointType pos)
-         : _min(min), _max(max), _pos(pos)
-        {}
-        
-        ExclusiveIterator(const ExclusiveIterator<PointType> &a) = default;
-        
-        ExclusiveIterator<PointType>& operator++()
-        {
-            ++_pos.y;
-            if (_pos.y >= _max.y) {
-                _pos.y = _min.y;
-                
-                ++_pos.x;
-                if (_pos.x >= _max.x) {
-                    _pos.x = _min.x;
-                    
-                    ++_pos.z;
-                    if (_pos.z >= _max.z) {
-                        // sentinel value for the end of the sequence
-                        _pos = _max;
-                    }
-                }
-            }
-            
-            return *this;
-        }
-        
-        ExclusiveIterator<PointType> operator++(int)
-        {
-            ExclusiveIterator<PointType> temp(*this);
-            operator++();
-            return temp;
-        }
-        
-        PointType operator*()
-        {
-            return _pos;
-        }
-        
-        PointType* operator->()
-        {
-            return &_pos;
-        }
-        
-        bool operator==(const ExclusiveIterator<PointType> &a) const
-        {
-            return _min == a._min &&
-                   _max == a._max &&
-                   _pos == a._pos;
-        }
-        
-        bool operator!=(const ExclusiveIterator<PointType> &a) const
-        {
-            return !(*this == a);
-        }
-        
-    private:
-        PointType _min, _max, _pos;
-    };
-    
-    template<typename PointType>
-    class InclusiveIterator
-    {
-    public:
-        InclusiveIterator() = delete;
-        
-        InclusiveIterator(PointType min, PointType max,
-                          PointType pos, PointType step,
-                          bool done)
-         : _min(min), _max(max), _pos(pos), _step(step), _done(done)
-        {}
-        
-        InclusiveIterator(const InclusiveIterator<PointType> &a) = default;
-        
-        InclusiveIterator<PointType>& operator++()
-        {
-            if (!_done) {
-                _pos.y += _step.y;
-                if (_pos.y > _max.y) {
-                    _pos.y = _min.y;
-                    
-                    _pos.x += _step.x;
-                    if (_pos.x > _max.x) {
-                        _pos.x = _min.x;
-                        
-                        _pos.z += _step.z;
-                        if (_pos.z > _max.z) {
-                            _pos.z = _min.z;
-                            
-                            // sentinel value for the end of the sequence
-                            _done = true;
-                        }
-                    }
-                }
-            }
-            
-            return *this;
-        }
-        
-        InclusiveIterator<PointType> operator++(int)
-        {
-            InclusiveIterator<PointType> temp(*this);
-            operator++();
-            return temp;
-        }
-        
-        PointType operator*()
-        {
-            return _pos;
-        }
-        
-        PointType* operator->()
-        {
-            return &_pos;
-        }
-        
-        bool operator==(const InclusiveIterator<PointType> &a) const
-        {
-            return _min == a._min &&
-                   _max == a._max &&
-                   _pos == a._pos &&
-                   _done == a._done;
-        }
-        
-        bool operator!=(const InclusiveIterator<PointType> &a) const
-        {
-            return !(*this == a);
-        }
-        
-    private:
-        PointType _min, _max, _pos, _step;
-        bool _done;
-    };
-    
-    template<typename IteratorType>
-    class Range
-    {
-    public:
-        Range() = delete;
-        Range(IteratorType a, IteratorType b) : _begin(a), _end(b) {}
-        
-        IteratorType begin() const
-        {
-            return _begin;
-        }
-        
-        IteratorType end() const
-        {
-            return _end;
-        }
-        
-    private:
-        IteratorType _begin, _end;
-    };
-    
-    // Range over grid cells which fall within a specified frustum.
-    class FrustumRange
-    {
-    public:
-        FrustumRange() = delete;
-        
-        FrustumRange(const Frustum &frustum,
-                     const AABB &sliceBoundingBox,
-                     const GridIndexer &grid)
-        {
-            const auto &res = grid.gridResolution();
-            const auto &bbox = grid.boundingBox();
-            assert((res.x == res.y) && (res.x == res.z));
-            assert(isPowerOfTwo(res.x));
-            forEachCell(0, ilog2(res.x), bbox, frustum, sliceBoundingBox,
-                        _cells, grid);
-        }
-        
-        inline auto begin() const
-        {
-            return _cells.begin();
-        }
-        
-        inline auto end() const
-        {
-            return _cells.end();
-        }
-        
-    private:
-        std::vector<glm::ivec3> _cells;
-        
-        // Iterate over cells which fall within the specified frustum.
-        void forEachCell(size_t depth,
-                         size_t depthOfLeaves,
-                         const AABB &box,
-                         const Frustum &frustum,
-                         const AABB &sliceBoundingBox,
-                         std::vector<glm::ivec3> &cells,
-                         const GridIndexer &grid) const
-        {
-            if (frustum.boxIsInside(box) &&
-                frustum.boxIsInside(sliceBoundingBox)) {
-                
-                if (depth == depthOfLeaves) {
-                    cells.push_back(grid.cellCoordsAtPoint(box.center));
-                } else {
-                    for (auto &octant : box.octants()) {
-                        forEachCell(depth+1, depthOfLeaves, octant, frustum,
-                                    sliceBoundingBox, cells, grid);
-                    }
-                }
-            }
-        }
-    };
-    
     virtual ~GridIndexer() = default;
     
     GridIndexer(const AABB &boundingBox,
@@ -513,51 +259,6 @@ public:
             const glm::vec3 maxs = boundingBox().maxs();
             return point.x <= maxs.x && point.y <= maxs.y && point.z <= maxs.z;
         }
-    }
-    
-    // Return a Range object which can iterate over a sub-region of the grid.
-    auto slice(const AABB &region) const
-    {
-#ifdef EnableVerboseBoundsChecking
-        if (!inbounds(region)) {
-            throw OutOfBoundsException();
-        }
-#endif
-        
-        const auto minCellCoords = cellCoordsAtPoint(region.mins());
-        const auto maxCellCoords = cellCoordsAtPointRoundUp(region.maxs());
-        
-        ExclusiveIterator<glm::ivec3> begin(minCellCoords, maxCellCoords, minCellCoords);
-        ExclusiveIterator<glm::ivec3> end(minCellCoords, maxCellCoords, maxCellCoords);
-        
-        return Range<ExclusiveIterator<glm::ivec3>>(begin, end);
-    }
-    
-    // Return a range object which can iterate over a frustum within the grid.
-    auto slice(const Frustum &frustum, const AABB &sliceBoundingBox) const
-    {
-        return FrustumRange(frustum, sliceBoundingBox, *this);
-    }
-    
-    // Return a Range object which can iterate over evenly spaced points in the
-    // specified region of the grid.
-    // Throws an exception if the region is not within this grid.
-    auto points(const AABB &region) const
-    {
-#ifdef EnableVerboseBoundsChecking
-        if (!inbounds(region)) {
-            throw OutOfBoundsException();
-        }
-#endif
-        
-        const auto dim = cellDimensions();
-        const auto min = region.mins();
-        const auto max = region.maxs();
-        
-        InclusiveIterator<glm::vec3> begin(min, max, min, dim, false);
-        InclusiveIterator<glm::vec3> end(min, max, min, dim, true);
-        
-        return Range<InclusiveIterator<glm::vec3>>(begin, end);
     }
     
 private:

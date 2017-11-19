@@ -11,6 +11,7 @@
 
 #include "RenderableStaticMesh.hpp"
 #include "Grid/SparseGrid.hpp"
+#include "Frustum.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include <shared_mutex>
 

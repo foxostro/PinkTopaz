@@ -8,6 +8,7 @@
 
 #include "Terrain/VoxelDataGenerator.hpp"
 #include "Terrain/TerrainConfig.hpp"
+#include "Grid/GridIndexerRange.hpp"
 #include "Noise/SimplexNoise.hpp"
 
 using namespace glm;
@@ -105,7 +106,7 @@ Array3D<Voxel> VoxelDataGenerator::copy(const AABB &region) const
     const auto res = countCellsInRegion(adjusted);
     Array3D<Voxel> dst(adjusted, res);
     
-    for (const auto cellCoords : dst.slice(adjusted)) {
+    for (const auto cellCoords : slice(dst, adjusted)) {
         const auto cellCenter = dst.cellCenterAtCellCoords(cellCoords);
         Voxel &value = dst.mutableReference(cellCoords);
         generateTerrainVoxel(*_noiseSource0,

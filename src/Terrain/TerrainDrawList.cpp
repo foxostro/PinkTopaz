@@ -7,6 +7,8 @@
 //
 
 #include "Terrain/TerrainDrawList.hpp"
+#include "Grid/GridIndexerRange.hpp"
+#include "Grid/FrustumRange.hpp"
 
 TerrainDrawList::TerrainDrawList(const AABB &box, const glm::ivec3 &res)
  : _front(box, res),
@@ -27,7 +29,7 @@ TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
     }
     
     // Draw each cell that is in the camera view-frustum.
-    for (const auto &cellCoords : _front.slice(frustum, activeRegion)) {
+    for (const auto &cellCoords : slice(_front, frustum, activeRegion)) {
         const Morton3 index = _front.indexAtCellCoords(cellCoords);
         boost::optional<MeshPtr> maybeMesh = _front.getIfExists(index);
         
@@ -44,7 +46,7 @@ TerrainDrawList::draw(const std::shared_ptr<CommandEncoder> &encoder,
     
     // If the draw list is missing any mesh in the active region then report
     // that to the caller.
-    for (const auto cellCoords : _front.slice(activeRegion)) {
+    for (const auto cellCoords : slice(_front, activeRegion)) {
         const Morton3 index = _front.indexAtCellCoords(cellCoords);
         boost::optional<MeshPtr> maybeMesh = _front.getIfExists(index);
         const bool notMissing = maybeMesh && *maybeMesh;

@@ -53,6 +53,9 @@ set(SOURCE_FILES_GRID
     "src/include/Grid/GridLRU.hpp"
     "src/include/Grid/SparseGrid.hpp"
     "src/include/Grid/RegionMutualExclusionArbitrator.hpp"
+    "src/include/Grid/FrustumRange.hpp"
+    "src/include/Grid/GridIndexerRange.hpp"
+    "src/include/Grid/GridPoints.hpp"
     )
 
 set(SOURCE_FILES_TERRAIN
