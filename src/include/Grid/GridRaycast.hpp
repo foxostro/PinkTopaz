@@ -140,7 +140,7 @@ static inline auto slice(const GridIndexer &grid,
     const glm::vec3 mins = box.mins();
     const glm::vec3 p = (ray.direction - mins) / (box.extent*2.0f);
     const glm::ivec3 res = gridResolution();
-    const glm::vec3 ccDir(p.x * res.x, p.y * res.y, p.z * res.z);
+    const glm::vec3 ccDir(normalize(p.x * res.x, p.y * res.y, p.z * res.z));
     
     // Convert the world-space ray origin to cell-space.
     const glm::ivec3 iccOrigin = grid.cellCoordsAtPoint(ray.origin);
