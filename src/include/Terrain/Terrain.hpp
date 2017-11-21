@@ -50,16 +50,12 @@ public:
     // terrain chunks.
     float getFogDensity() const;
     
-private:
-    inline AABB getActiveRegion() const
+    const TransactedVoxelData& getVoxels() const
     {
-        const glm::vec3 cameraPos = _cameraPosition;
-        const float horizonDistance = _horizonDistance.get();
-        const AABB horizonBox = {cameraPos, glm::vec3(horizonDistance, horizonDistance, horizonDistance)};
-        const AABB activeRegion = _meshes->boundingBox().intersect(horizonBox);
-        return activeRegion;
+        return *_voxels;
     }
     
+private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<TaskDispatcher> _dispatcher;
     std::shared_ptr<TaskDispatcher> _dispatcherRebuildMesh;
@@ -74,6 +70,15 @@ private:
     std::atomic<glm::vec3> _cameraPosition;
     TerrainHorizonDistance _horizonDistance;
     TerrainProgressTracker _progressTracker;
+    
+    inline AABB getActiveRegion() const
+    {
+        const glm::vec3 cameraPos = _cameraPosition;
+        const float horizonDistance = _horizonDistance.get();
+        const AABB horizonBox = {cameraPos, glm::vec3(horizonDistance, horizonDistance, horizonDistance)};
+        const AABB activeRegion = _meshes->boundingBox().intersect(horizonBox);
+        return activeRegion;
+    }
     
     void fetchMeshes(const std::vector<AABB> &meshCells);
     
@@ -90,6 +95,9 @@ private:
     
     // Rebuilds the next pending mesh in the queue.
     void rebuildNextMesh();
+    
+    // Update the terrain cursor position based on the current camera facing.
+    void updateCursorPosition();
 };
 
 #endif /* Terrain_hpp */

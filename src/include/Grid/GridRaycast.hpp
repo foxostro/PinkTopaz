@@ -12,6 +12,7 @@
 
 #include "Ray.hpp"
 #include <vector>
+#include <glm/vec3.hpp>
 
 
 class GridRaycastRange
@@ -38,7 +39,7 @@ private:
     std::vector<glm::vec3> _cells;
     
     // Iterate over cells which fall within the specified frustum.
-    void raycast(const Ray &ray, size_t maxDepth) const
+    void raycast(const Ray &ray, size_t maxDepth)
     {
         /* Implementation is based on:
          * "A Fast Voxel Traversal Algorithm for Ray Tracing"
@@ -98,10 +99,6 @@ private:
         // For each step, determine which distance to the next voxel boundary is lowest (i.e.
         // which voxel boundary is nearest) and walk that way.
         for (size_t i = 0; i < maxDepth; ++i) {
-            if (y >= GSChunkSizeIntVec3.y || y < 0) {
-                return; // The vertical extent of the world is limited.
-            }
-            
             _cells.emplace_back(glm::vec3(x, y, z));
             
             // Do the next step.
@@ -135,18 +132,22 @@ static inline auto slice(const GridIndexer &grid,
     }
 #endif
     
-    // Convert the world-space ray direction to cell-space.
-    const AABB box = boundingBox();
+#if 0
+    // Convert the world-space ray direction to a cell-space direction.
+    const AABB box = grid.boundingBox();
     const glm::vec3 mins = box.mins();
     const glm::vec3 p = (ray.direction - mins) / (box.extent*2.0f);
-    const glm::ivec3 res = gridResolution();
-    const glm::vec3 ccDir(normalize(p.x * res.x, p.y * res.y, p.z * res.z));
+    const glm::ivec3 res = grid.gridResolution();
+    const glm::vec3 ccDir(glm::normalize(glm::vec3(p.x * res.x, p.y * res.y, p.z * res.z)));
     
     // Convert the world-space ray origin to cell-space.
     const glm::ivec3 iccOrigin = grid.cellCoordsAtPoint(ray.origin);
-    const glm::vec3(iccOrigin.x, iccOrigin.y, iccOrigin.z);
+    const glm::vec3 ccOrigin(iccOrigin.x, iccOrigin.y, iccOrigin.z);
     
     return GridRaycastRange(Ray(ccOrigin, ccDir), maxDepth);
+#else
+    return GridRaycastRange(ray, maxDepth);
+#endif
 }
 
 

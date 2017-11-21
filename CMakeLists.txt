@@ -136,6 +136,7 @@ set(SOURCE_FILES_FONTS
 set(SOURCE_FILES_SYSTEMS
     "src/RenderSystem.cpp" "src/include/RenderSystem.hpp"
     "src/CameraMovementSystem.cpp" "src/include/CameraMovementSystem.hpp"
+    "src/TerrainCursorSystem.cpp" "src/include/TerrainCursorSystem.hpp"
     )
 
 set(SOURCE_FILES_COMPONENTS
@@ -143,6 +144,7 @@ set(SOURCE_FILES_COMPONENTS
     "src/include/Transform.hpp"
     "src/include/RenderableStaticMesh.hpp"
     "src/include/TerrainComponent.hpp"
+    "src/include/TerrainCursor.hpp"
     )
 
 set(SOURCE_FILES_EVENTS

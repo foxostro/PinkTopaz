@@ -265,4 +265,3 @@ void Terrain::rebuildNextMesh()
     _progressTracker.finish(cell);
 #endif
 }
-

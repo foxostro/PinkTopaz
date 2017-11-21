@@ -11,7 +11,9 @@
 #include "ActiveCamera.hpp"
 #include "RenderSystem.hpp"
 #include "CameraMovementSystem.hpp"
+#include "TerrainCursorSystem.hpp"
 #include "TerrainComponent.hpp"
+#include "TerrainCursor.hpp"
 #include "Profiler.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -25,6 +27,7 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
     
     systems.add<RenderSystem>(device);
     systems.add<CameraMovementSystem>();
+    systems.add<TerrainCursorSystem>();
     systems.configure();
     
     // Setup the position and orientation of the camera.
@@ -49,10 +52,12 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
     entityx::Entity terrainEntity = entities.create();
     terrainEntity.assign<TerrainComponent>(terrainComponent);
     terrainEntity.assign<Transform>();
+    terrainEntity.assign<TerrainCursor>();
 }
 
 void World::update(entityx::TimeDelta dt)
 {
     systems.update<CameraMovementSystem>(dt);
+    systems.update<TerrainCursorSystem>(dt);
     systems.update<RenderSystem>(dt);
 }
