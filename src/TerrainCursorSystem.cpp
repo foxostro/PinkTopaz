@@ -29,25 +29,33 @@ void TerrainCursorSystem::update(entityx::EntityManager &es,
                                                                 TerrainCursor &cursor,
                                                                 Transform &terrainTransform,
                                                                 TerrainComponent &terrain) {
-            updateCursor(cursor, cameraTransform, terrainTransform, terrain);
+            
+            const glm::mat4 transform = cameraTransform.value * terrainTransform.value;
+            updateCursor(cursor, transform, terrain.terrain);
         });
     });
 }
 
 void TerrainCursorSystem::updateCursor(TerrainCursor &cursor,
-                                       const Transform &cameraTransform,
-                                       const Transform &terrainTransform,
-                                       const TerrainComponent &terrain)
+                                       const glm::mat4 &transform,
+                                       const std::shared_ptr<Terrain> &terrain)
 {
     using namespace glm;
     
-    const mat4 transform = cameraTransform.value * terrainTransform.value;
     const vec3 cameraEye(inverse(transform)[3]);
     const quat cameraOrientation = toQuat(transpose(transform));
     const vec3 rayDir = cameraOrientation * vec3(0, 0, -1);
     const Ray ray(cameraEye, rayDir);
     const AABB voxelBox{cameraEye, vec3(maxPlaceDistance+1)};
-    const auto &voxels = terrain.terrain->getVoxels();
+    const auto &voxels = terrain->getVoxels();
+    
+//    SDL_Log("ray: origin=(%.2f, %.2f, %.2f) ; direction=(%.2f, %.2f, %.2f)",
+//            ray.origin.x, ray.origin.y, ray.origin.z,
+//            ray.direction.x, ray.direction.y, ray.direction.z);
+//
+//    SDL_Log("voxelBox: center=(%.2f, %.2f, %.2f) ; extent=(%.2f, %.2f, %.2f)",
+//            voxelBox.center.x, voxelBox.center.y, voxelBox.center.z,
+//            voxelBox.extent.x, voxelBox.extent.y, voxelBox.extent.z);
     
     bool cursorIsActive = false;
     vec3 prev = ray.origin;
@@ -70,4 +78,10 @@ void TerrainCursorSystem::updateCursor(TerrainCursor &cursor,
     cursor.active = cursorIsActive;
     cursor.pos = cursorPos;
     cursor.placePos = prev;
+    
+    if (cursor.active) {
+        SDL_Log("cursorIsActive: %s", cursorIsActive ? "true" : "false");
+        SDL_Log("cursorPos: (%.2f, %.2f, %.2f)", cursorPos.x, cursorPos.y, cursorPos.z);
+        SDL_Log("prev: (%.2f, %.2f, %.2f)", prev.x, prev.y, prev.z);
+    }
 }

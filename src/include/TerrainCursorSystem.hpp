@@ -10,10 +10,9 @@
 #define TerrainCursorSystem_hpp
 
 #include <entityx/entityx.h>
-
-struct TerrainCursor;
-struct Transform;
-struct TerrainComponent;
+#include <glm/mat4x4.hpp>
+#include "Terrain/Terrain.hpp"
+#include "TerrainCursor.hpp"
 
 class TerrainCursorSystem : public entityx::System<TerrainCursorSystem>, public entityx::Receiver<TerrainCursorSystem>
 {
@@ -23,9 +22,8 @@ public:
     
 private:
     void updateCursor(TerrainCursor &cursor,
-                      const Transform &cameraTransform,
-                      const Transform &terrainTransform,
-                      const TerrainComponent &terrain);
+                      const glm::mat4 &transform,
+                      const std::shared_ptr<Terrain> &terrain);
 };
 
 #endif /* TerrainCursorSystem_hpp */
