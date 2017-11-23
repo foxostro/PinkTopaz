@@ -16,8 +16,6 @@
 #include "SDL.h"
 #include <glm/gtx/quaternion.hpp>
 
-static constexpr size_t maxPlaceDistance = 16;
-
 TerrainCursorSystem::TerrainCursorSystem(const std::shared_ptr<TaskDispatcher> &dispatcher)
  : _dispatcher(dispatcher),
    _needsUpdate(false)
@@ -92,12 +90,14 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
     }
     
     cursor.cancelled = std::make_shared<std::atomic<bool>>(false);
-    cursor.startTime = std::chrono::steady_clock::now();
-    cursor.pendingValue = _dispatcher->async([this,
-                                              canceld=cursor.cancelled,
-                                              transform,
-                                              terrain=t]{
-        return calcCursor(canceld, transform, terrain);
+    const auto startTime = std::chrono::steady_clock::now();
+    cursor.pending = _dispatcher->async([this,
+                                         startTime,
+                                         cancelled=cursor.cancelled,
+                                         transform,
+                                         terrain=t]{
+        const auto maybeValue = calcCursor(cancelled, transform, terrain);
+        return std::make_tuple(maybeValue, startTime);
     });
 }
 
@@ -105,21 +105,21 @@ void TerrainCursorSystem::pollPendingCursorUpdate(TerrainCursor &cursor)
 {
     constexpr auto instant = boost::chrono::seconds(0);
     
-    if (cursor.pendingValue.valid() && cursor.pendingValue.wait_for(instant) == boost::future_status::ready) {
-        boost::optional<TerrainCursorValue> maybe = cursor.pendingValue.get();
+    if (cursor.pending.valid() && cursor.pending.wait_for(instant) == boost::future_status::ready) {
+        const auto& [maybe, startTime] = cursor.pending.get();
         
         if (maybe) {
             cursor.value = *maybe;
             
             const auto currentTime = std::chrono::steady_clock::now();
-            const auto duration = currentTime - cursor.startTime;
+            const auto duration = currentTime - startTime;
             const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
             const std::string msStr = std::to_string(ms.count());
             SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
         }
         
         // reset
-        cursor.pendingValue = boost::future<boost::optional<TerrainCursorValue>>();
+        cursor.pending = TerrainCursor::FutureType();
     }
 }
 
@@ -144,8 +144,6 @@ TerrainCursorSystem::calcCursor(std::shared_ptr<std::atomic<bool>> cancelled,
     TerrainCursorValue cursor;
     
     cursor.active = false;
-    cursor.placePos = ray.origin;
-    vec3 cursorPos;
     
     voxels.readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
         for (const auto pos : slice(voxels, ray, maxPlaceDistance)) {

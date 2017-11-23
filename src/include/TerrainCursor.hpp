@@ -34,9 +34,18 @@ struct TerrainCursorValue
 // Component which holds a terrain cursor value calculated asynchronously.
 struct TerrainCursor
 {
+    using Tuple = std::tuple<boost::optional<TerrainCursorValue>, std::chrono::steady_clock::time_point>;
+    using FutureType = boost::future<Tuple>;
+    
+    // Cancellation token. Set to `true' when the request is cancelled.
     std::shared_ptr<std::atomic<bool>> cancelled;
-    std::chrono::steady_clock::time_point startTime;
-    boost::future<boost::optional<TerrainCursorValue>> pendingValue;
+    
+    // Future which returns the updated cursor value and the time the update
+    // reqest was issued. (The time can be used to compute the total elapsed
+    // time from issuing the request to getting the result.)
+    FutureType pending;
+    
+    // The current value of the terrain cursor.
     TerrainCursorValue value;
 };
 

@@ -31,6 +31,8 @@ public:
     void receive(const MouseMoveEvent &event);
     
 private:
+    static constexpr size_t maxPlaceDistance = 16;
+    
     // Request asynchronous update of the terrain cursor.
     // cursor -- The cursor to update.
     // transform -- The combined camera-terrain transformation.
