@@ -13,9 +13,15 @@
 #include "zlib.h"
 #include <boost/crc.hpp>
 #include <cstring>
+#include <mutex>
 
 static uint32_t computeChecksum(const std::vector<uint8_t> &input)
 {
+    // crc_32_type is not thread-safe. It has a static table which is
+    // initialized on first access and then used on subsequent accesses.
+    static std::mutex mutex;
+    std::lock_guard<std::mutex> lock(mutex);
+    
     boost::crc_32_type result;
     result.process_bytes(input.data(), input.size());
     return result.checksum();
