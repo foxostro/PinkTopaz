@@ -1,6 +1,6 @@
 #!/bin/sh
 # Code sign the application bundle on Apple systems.
-if [[ -z "${DEPLOY_ENV}" ]]; then
+if [[ -z "${MAC_DEVELOPER_IDENTITY}" ]]; then
 	>&2 echo "Warning: Skipping code signing because \$MAC_DEVELOPER_IDENTITY is not defined."
 else
 	BUNDLE=`./abspath $1`
