@@ -26,7 +26,7 @@ public:
     static constexpr uint32_t BLOCK_MAGIC = 'kolb';
     
     // A memory allocation within the zone.
-    struct Block
+    struct alignas(8) Block
     {
         // Magic number. For a valid block, this is set to BLOCK_MAGIC.
         // This is a very simple way to check for some types of corruption.

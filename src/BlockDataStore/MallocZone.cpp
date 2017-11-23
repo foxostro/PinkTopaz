@@ -14,7 +14,7 @@
 
 #define VERBOSE 0
 
-constexpr size_t ALIGN = 4;
+constexpr size_t ALIGN = alignof(MallocZone::Block);
 constexpr size_t MIN_SPLIT_SIZE = sizeof(MallocZone::Block);
 
 static inline size_t roundUpBlockSize(size_t size)
