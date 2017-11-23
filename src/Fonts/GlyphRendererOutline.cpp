@@ -175,8 +175,10 @@ void GlyphRendererOutline::blitGlyph(SDL_Surface *dstSurface,
             assert(!"unreachable");
     }
     
+    void *data = (pixels.size() > 0) ? pixels.data() : nullptr;
+    
     // Create a surface with the glpyh image.
-    SDL_Surface *glyphSurface = SDL_CreateRGBSurfaceFrom(&pixels[0],
+    SDL_Surface *glyphSurface = SDL_CreateRGBSurfaceFrom(data,
                                                          (int)width,
                                                          (int)height,
                                                          (int)(sizeof(uint32_t) * 8),
