@@ -18,22 +18,66 @@
 
 static constexpr size_t maxPlaceDistance = 4;
 
+TerrainCursorSystem::TerrainCursorSystem()
+ : _needsUpdate(false)
+{}
+
+void TerrainCursorSystem::configure(entityx::EventManager &em)
+{
+    em.subscribe<entityx::ComponentAddedEvent<ActiveCamera>>(*this);
+    em.subscribe<entityx::ComponentRemovedEvent<ActiveCamera>>(*this);
+    em.subscribe<KeypressEvent>(*this);
+    em.subscribe<MouseMoveEvent>(*this);
+}
+
 void TerrainCursorSystem::update(entityx::EntityManager &es,
                                  entityx::EventManager &events,
                                  entityx::TimeDelta deltaMilliseconds)
 {
-    es.each<ActiveCamera, Transform>([&](entityx::Entity cameraEntity,
-                                         ActiveCamera &activeCamera,
-                                         Transform &cameraTransform) {
-        es.each<TerrainCursor, Transform, TerrainComponent>([&](entityx::Entity terrainEntity,
-                                                                TerrainCursor &cursor,
-                                                                Transform &terrainTransform,
-                                                                TerrainComponent &terrain) {
-            
-            const glm::mat4 transform = cameraTransform.value * terrainTransform.value;
-            updateCursor(cursor, transform, terrain.terrain);
-        });
+    if (!_activeCamera.valid()) {
+        return;
+    }
+    
+    if (!_needsUpdate) {
+        return;
+    }
+    
+    const auto &cameraTransform = _activeCamera.component<Transform>()->value;
+    
+    es.each<TerrainCursor, Transform, TerrainComponent>([&](entityx::Entity terrainEntity,
+                                                            TerrainCursor &cursor,
+                                                            Transform &terrainTransform,
+                                                            TerrainComponent &terrain) {
+        
+        const glm::mat4 transform = cameraTransform * terrainTransform.value;
+        updateCursor(cursor, transform, terrain.terrain);
     });
+    
+    _needsUpdate = false;
+}
+
+void TerrainCursorSystem::receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)
+{
+    _activeCamera = event.entity;
+    _needsUpdate = true;
+}
+
+void TerrainCursorSystem::receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event)
+{
+    if (_activeCamera == event.entity) {
+        _activeCamera.invalidate();
+        _needsUpdate = false;
+    }
+}
+
+void TerrainCursorSystem::receive(const KeypressEvent &event)
+{
+    _needsUpdate = true;
+}
+
+void TerrainCursorSystem::receive(const MouseMoveEvent &event)
+{
+    _needsUpdate = true;
 }
 
 void TerrainCursorSystem::updateCursor(TerrainCursor &cursor,
