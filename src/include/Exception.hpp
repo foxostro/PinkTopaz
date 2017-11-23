@@ -16,10 +16,16 @@ class Exception : public std::exception
 {
 private:
     std::string _reason;
+    
+protected:
+    static std::string formatVarArgs(const std::string fmt_str, va_list ap) noexcept;
+    
+    void init(const std::string fmt_str, va_list ap) noexcept;
         
 public:
-    Exception(const std::string fmt, ...);
-        
+    Exception() = default;
+    Exception(const std::string format, ...);
+    
     virtual const char *what() const noexcept override
     {
         return _reason.c_str();

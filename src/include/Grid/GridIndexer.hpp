@@ -34,6 +34,14 @@ class OutOfBoundsException : public Exception
 {
 public:
     OutOfBoundsException() : Exception("out of bounds") {}
+    
+    OutOfBoundsException(const std::string fmt_str, ...)
+    {
+        va_list arglist;
+        va_start(arglist, fmt_str);
+        init("out of bounds: " + fmt_str, arglist);
+        va_end(arglist);
+    }
 };
 
 
