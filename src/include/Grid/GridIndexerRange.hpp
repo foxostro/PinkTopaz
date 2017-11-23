@@ -177,7 +177,10 @@ static inline auto slice(const GridIndexer &grid, const AABB &region)
 {
 #ifdef EnableVerboseBoundsChecking
     if (!grid.inbounds(region)) {
-        throw OutOfBoundsException();
+        std::string bboxStr = grid.boundingBox().to_string();
+        std::string regionStr = region.to_string();
+        throw OutOfBoundsException("grid.boundingBox=%s ; region=%s",
+                                   result, bboxStr.c_str(), regionStr.c_str());
     }
 #endif
     
