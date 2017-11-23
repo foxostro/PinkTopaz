@@ -25,8 +25,7 @@ void TerrainCursorSystem::configure(entityx::EventManager &em)
 {
     em.subscribe<entityx::ComponentAddedEvent<ActiveCamera>>(*this);
     em.subscribe<entityx::ComponentRemovedEvent<ActiveCamera>>(*this);
-    em.subscribe<KeypressEvent>(*this);
-    em.subscribe<MouseMoveEvent>(*this);
+    em.subscribe<CameraMovedEvent>(*this);
 }
 
 void TerrainCursorSystem::update(entityx::EntityManager &es,
@@ -70,12 +69,7 @@ void TerrainCursorSystem::receive(const entityx::ComponentRemovedEvent<ActiveCam
     }
 }
 
-void TerrainCursorSystem::receive(const KeypressEvent &event)
-{
-    _needsUpdate = true;
-}
-
-void TerrainCursorSystem::receive(const MouseMoveEvent &event)
+void TerrainCursorSystem::receive(const CameraMovedEvent &event)
 {
     _needsUpdate = true;
 }

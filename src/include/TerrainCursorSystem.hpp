@@ -13,8 +13,7 @@
 #include "TaskDispatcher.hpp"
 #include "TerrainCursor.hpp"
 #include "ActiveCamera.hpp"
-#include "KeypressEvent.hpp"
-#include "MouseMoveEvent.hpp"
+#include "CameraMovedEvent.hpp"
 
 #include <entityx/entityx.h>
 #include <glm/mat4x4.hpp>
@@ -27,8 +26,7 @@ public:
     void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
     void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
     void receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event);
-    void receive(const KeypressEvent &event);
-    void receive(const MouseMoveEvent &event);
+    void receive(const CameraMovedEvent &event);
     
 private:
     static constexpr size_t maxPlaceDistance = 16;

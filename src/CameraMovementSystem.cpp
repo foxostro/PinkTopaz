@@ -9,6 +9,7 @@
 #include "CameraMovementSystem.hpp"
 #include "Transform.hpp"
 #include "Exception.hpp"
+#include "CameraMovedEvent.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -101,8 +102,14 @@ void CameraMovementSystem::update(entityx::EntityManager &es,
     _eye += velocity;
     _center = _eye + worldForward;
     _up = worldUp;
-        
-    _activeCamera.component<Transform>()->value = glm::lookAt(_eye, _center, _up);
+    
+    glm::mat4 &currentTransform = _activeCamera.component<Transform>()->value;
+    const glm::mat4 updatedTransform = glm::lookAt(_eye, _center, _up);
+    
+    if (currentTransform != updatedTransform) {
+        currentTransform = updatedTransform;
+        events.emit(CameraMovedEvent());
+    }
 }
 
 void CameraMovementSystem::receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)
