@@ -27,7 +27,7 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
     
     systems.add<RenderSystem>(device);
     systems.add<CameraMovementSystem>();
-    systems.add<TerrainCursorSystem>();
+    systems.add<TerrainCursorSystem>(dispatcherHighPriority);
     systems.configure();
     
     // Setup the position and orientation of the camera.

@@ -10,9 +10,13 @@
 #define TerrainCursor_hpp
 
 #include <glm/vec3.hpp>
+#include <boost/thread/future.hpp>
+#include <boost/optional.hpp>
+#include <memory>
+#include <atomic>
 
 // Represents the cursor which selects a block of terrain.
-struct TerrainCursor
+struct TerrainCursorValue
 {
     // An inactive cursor is not drawn and cannot be used to place blocks.
     bool active;
@@ -24,7 +28,16 @@ struct TerrainCursor
     // drawn. This is usually an empty block immediately before the position.
     glm::vec3 placePos;
     
-    TerrainCursor() : active(false) {}
+    TerrainCursorValue() : active(false) {}
+};
+
+// Component which holds a terrain cursor value calculated asynchronously.
+struct TerrainCursor
+{
+    std::shared_ptr<std::atomic<bool>> cancelled;
+    std::chrono::steady_clock::time_point startTime;
+    boost::future<boost::optional<TerrainCursorValue>> pendingValue;
+    TerrainCursorValue value;
 };
 
 #endif /* TerrainCursor_hpp */

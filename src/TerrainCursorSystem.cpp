@@ -16,10 +16,11 @@
 #include "SDL.h"
 #include <glm/gtx/quaternion.hpp>
 
-static constexpr size_t maxPlaceDistance = 4;
+static constexpr size_t maxPlaceDistance = 16;
 
-TerrainCursorSystem::TerrainCursorSystem()
- : _needsUpdate(false)
+TerrainCursorSystem::TerrainCursorSystem(const std::shared_ptr<TaskDispatcher> &dispatcher)
+ : _dispatcher(dispatcher),
+   _needsUpdate(false)
 {}
 
 void TerrainCursorSystem::configure(entityx::EventManager &em)
@@ -34,26 +35,27 @@ void TerrainCursorSystem::update(entityx::EntityManager &es,
                                  entityx::EventManager &events,
                                  entityx::TimeDelta deltaMilliseconds)
 {
-    if (!_activeCamera.valid()) {
-        return;
-    }
-    
-    if (!_needsUpdate) {
-        return;
-    }
-    
-    const auto &cameraTransform = _activeCamera.component<Transform>()->value;
-    
-    es.each<TerrainCursor, Transform, TerrainComponent>([&](entityx::Entity terrainEntity,
-                                                            TerrainCursor &cursor,
-                                                            Transform &terrainTransform,
-                                                            TerrainComponent &terrain) {
+    // If the camera has moved then we need to request a new terrain cursor.
+    if (_activeCamera.valid() && _needsUpdate) {
+        _needsUpdate = false;
         
-        const glm::mat4 transform = cameraTransform * terrainTransform.value;
-        updateCursor(cursor, transform, terrain.terrain);
-    });
+        const auto &cameraTransform = _activeCamera.component<Transform>()->value;
+        
+        es.each<TerrainCursor, Transform, TerrainComponent>([&](entityx::Entity terrainEntity,
+                                                                TerrainCursor &cursor,
+                                                                Transform &terrainTransform,
+                                                                TerrainComponent &terrain) {
+            
+            const glm::mat4 transform = cameraTransform * terrainTransform.value;
+            requestCursorUpdate(cursor, transform, terrain.terrain);
+        });
+    }
     
-    _needsUpdate = false;
+    // Retrieve asynchronously calculated results when they are ready.
+    es.each<TerrainCursor>([&](entityx::Entity terrainEntity,
+                               TerrainCursor &cursor) {
+        pollPendingCursorUpdate(cursor);
+    });
 }
 
 void TerrainCursorSystem::receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)
@@ -80,11 +82,57 @@ void TerrainCursorSystem::receive(const MouseMoveEvent &event)
     _needsUpdate = true;
 }
 
-void TerrainCursorSystem::updateCursor(TerrainCursor &cursor,
-                                       const glm::mat4 &transform,
-                                       const std::shared_ptr<Terrain> &terrain)
+void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
+                                              const glm::mat4 &transform,
+                                              const std::shared_ptr<Terrain> &t)
+{
+    // Cancel any currently pending cursor request.
+    if (cursor.cancelled) {
+        cursor.cancelled->store(true);
+    }
+    
+    cursor.cancelled = std::make_shared<std::atomic<bool>>(false);
+    cursor.startTime = std::chrono::steady_clock::now();
+    cursor.pendingValue = _dispatcher->async([this,
+                                              canceld=cursor.cancelled,
+                                              transform,
+                                              terrain=t]{
+        return calcCursor(canceld, transform, terrain);
+    });
+}
+
+void TerrainCursorSystem::pollPendingCursorUpdate(TerrainCursor &cursor)
+{
+    constexpr auto instant = boost::chrono::seconds(0);
+    
+    if (cursor.pendingValue.valid() && cursor.pendingValue.wait_for(instant) == boost::future_status::ready) {
+        boost::optional<TerrainCursorValue> maybe = cursor.pendingValue.get();
+        
+        if (maybe) {
+            cursor.value = *maybe;
+            
+            const auto currentTime = std::chrono::steady_clock::now();
+            const auto duration = currentTime - cursor.startTime;
+            const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+            const std::string msStr = std::to_string(ms.count());
+            SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
+        }
+        
+        // reset
+        cursor.pendingValue = boost::future<boost::optional<TerrainCursorValue>>();
+    }
+}
+
+boost::optional<TerrainCursorValue>
+TerrainCursorSystem::calcCursor(std::shared_ptr<std::atomic<bool>> cancelled,
+                                const glm::mat4 &transform,
+                                const std::shared_ptr<Terrain> &terrain)
 {
     using namespace glm;
+    
+    if (cancelled->load()) {
+        return boost::none;
+    }
     
     const vec3 cameraEye(inverse(transform)[3]);
     const quat cameraOrientation = toQuat(transpose(transform));
@@ -93,16 +141,10 @@ void TerrainCursorSystem::updateCursor(TerrainCursor &cursor,
     const AABB voxelBox{cameraEye, vec3(maxPlaceDistance+1)};
     const auto &voxels = terrain->getVoxels();
     
-//    SDL_Log("ray: origin=(%.2f, %.2f, %.2f) ; direction=(%.2f, %.2f, %.2f)",
-//            ray.origin.x, ray.origin.y, ray.origin.z,
-//            ray.direction.x, ray.direction.y, ray.direction.z);
-//
-//    SDL_Log("voxelBox: center=(%.2f, %.2f, %.2f) ; extent=(%.2f, %.2f, %.2f)",
-//            voxelBox.center.x, voxelBox.center.y, voxelBox.center.z,
-//            voxelBox.extent.x, voxelBox.extent.y, voxelBox.extent.z);
+    TerrainCursorValue cursor;
     
-    bool cursorIsActive = false;
-    vec3 prev = ray.origin;
+    cursor.active = false;
+    cursor.placePos = ray.origin;
     vec3 cursorPos;
     
     voxels.readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
@@ -110,22 +152,14 @@ void TerrainCursorSystem::updateCursor(TerrainCursor &cursor,
             const Voxel &voxel = voxels.reference(pos);
             
             if (voxel.value != 0.f) {
-                cursorIsActive = true;
-                cursorPos = pos;
+                cursor.active = true;
+                cursor.pos = pos;
                 break;
             } else {
-                prev = pos;
+                cursor.placePos = pos;
             }
         }
     });
     
-    cursor.active = cursorIsActive;
-    cursor.pos = cursorPos;
-    cursor.placePos = prev;
-    
-    if (cursor.active) {
-        SDL_Log("cursorIsActive: %s", cursorIsActive ? "true" : "false");
-        SDL_Log("cursorPos: (%.2f, %.2f, %.2f)", cursorPos.x, cursorPos.y, cursorPos.z);
-        SDL_Log("prev: (%.2f, %.2f, %.2f)", prev.x, prev.y, prev.z);
-    }
+    return boost::make_optional(cursor);
 }
