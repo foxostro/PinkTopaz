@@ -10,7 +10,6 @@
 #define TerrainCursor_hpp
 
 #include <glm/vec3.hpp>
-#include <boost/optional.hpp>
 #include <memory>
 #include <atomic>
 
@@ -35,11 +34,8 @@ struct TerrainCursorValue
 // Component which holds a terrain cursor value, calculated asynchronously.
 struct TerrainCursor
 {
-    using Tuple = std::tuple<boost::optional<TerrainCursorValue>, std::chrono::steady_clock::time_point>;
+    using Tuple = std::tuple<TerrainCursorValue, std::chrono::steady_clock::time_point>;
     using TaskType = std::shared_ptr<Task<Tuple>>;
-    
-    // Cancellation token. Set to `true' when the request is cancelled.
-    std::shared_ptr<std::atomic<bool>> cancelled;
     
     // The task gets the updated cursor value and the time the update reqest was
     // issued. (The time can be used to compute the total elapsed time from

@@ -44,14 +44,12 @@ private:
     void pollPendingCursorUpdate(TerrainCursor &cursor);
     
     // Calculates the update terrain cursor.
-    // Returns the new terrain cursor value, or `none' if request was cancelled.
+    // Returns the new terrain cursor value.
     // Runs in an aynchronous task on a background thread.
-    // cancelled -- Set to true when the request is cancelled.
     // transform -- The combined camera-terrain transformation.
     // terrain -- The terrain on which the cursor operates.
-    boost::optional<TerrainCursorValue>
-    calcCursor(std::shared_ptr<std::atomic<bool>> cancelled,
-               const glm::mat4 &transform,
+    TerrainCursorValue
+    calcCursor(const glm::mat4 &transform,
                const std::shared_ptr<Terrain> &terrain);
     
     std::shared_ptr<TaskDispatcher> _dispatcher;

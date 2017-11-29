@@ -79,59 +79,48 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
                                               const std::shared_ptr<Terrain> &t)
 {
     // Cancel any currently pending cursor request.
-    if (cursor.cancelled) {
-        cursor.cancelled->store(true);
+    if (cursor.pending) {
+        cursor.pending->cancel();
     }
     
-    cursor.cancelled = std::make_shared<std::atomic<bool>>(false);
     const auto startTime = std::chrono::steady_clock::now();
     cursor.pending = _dispatcher->async([this,
                                          startTime,
-                                         cancelled=cursor.cancelled,
                                          transform,
                                          terrain=t]{
-        const auto maybeValue = calcCursor(cancelled, transform, terrain);
+        const auto maybeValue = calcCursor(transform, terrain);
         return std::make_tuple(maybeValue, startTime);
     });
 }
 
 void TerrainCursorSystem::pollPendingCursorUpdate(TerrainCursor &cursor)
 {
-    constexpr auto instant = boost::chrono::seconds(0);
-    
     if (!cursor.pending) {
         return;
     }
     
     auto &future = cursor.pending->getFuture();
     
-    if (future.valid() && future.wait_for(instant) == boost::future_status::ready) {
-        const auto& [maybe, startTime] = future.get();
+    if (future.is_ready()) {
+        const auto& [value, startTime] = future.get();
+    
+        cursor.value = value;
         
-        if (maybe) {
-            cursor.value = *maybe;
-            
-            const auto currentTime = std::chrono::steady_clock::now();
-            const auto duration = currentTime - startTime;
-            const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-            const std::string msStr = std::to_string(ms.count());
-            SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
-        }
+        const auto currentTime = std::chrono::steady_clock::now();
+        const auto duration = currentTime - startTime;
+        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+        const std::string msStr = std::to_string(ms.count());
+        SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
         
         cursor.pending.reset();
     }
 }
 
-boost::optional<TerrainCursorValue>
-TerrainCursorSystem::calcCursor(std::shared_ptr<std::atomic<bool>> cancelled,
-                                const glm::mat4 &transform,
+TerrainCursorValue
+TerrainCursorSystem::calcCursor(const glm::mat4 &transform,
                                 const std::shared_ptr<Terrain> &terrain)
 {
     using namespace glm;
-    
-    if (cancelled->load()) {
-        return boost::none;
-    }
     
     const vec3 cameraEye(inverse(transform)[3]);
     const quat cameraOrientation = toQuat(transpose(transform));
@@ -158,5 +147,5 @@ TerrainCursorSystem::calcCursor(std::shared_ptr<std::atomic<bool>> cancelled,
         }
     });
     
-    return boost::make_optional(cursor);
+    return cursor;
 }
