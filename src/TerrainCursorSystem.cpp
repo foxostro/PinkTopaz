@@ -99,8 +99,14 @@ void TerrainCursorSystem::pollPendingCursorUpdate(TerrainCursor &cursor)
 {
     constexpr auto instant = boost::chrono::seconds(0);
     
-    if (cursor.pending.valid() && cursor.pending.wait_for(instant) == boost::future_status::ready) {
-        const auto& [maybe, startTime] = cursor.pending.get();
+    if (!cursor.pending) {
+        return;
+    }
+    
+    auto &future = cursor.pending->getFuture();
+    
+    if (future.valid() && future.wait_for(instant) == boost::future_status::ready) {
+        const auto& [maybe, startTime] = future.get();
         
         if (maybe) {
             cursor.value = *maybe;
@@ -112,8 +118,7 @@ void TerrainCursorSystem::pollPendingCursorUpdate(TerrainCursor &cursor)
             SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
         }
         
-        // reset
-        cursor.pending = TerrainCursor::FutureType();
+        cursor.pending.reset();
     }
 }
 

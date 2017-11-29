@@ -9,6 +9,8 @@
 #ifndef TaskDispatcher_hpp
 #define TaskDispatcher_hpp
 
+#include "Exception.hpp"
+
 #include <functional>
 #include <mutex>
 #include <condition_variable>
@@ -16,11 +18,19 @@
 #include <vector>
 #include <thread>
 #include <cassert>
+#include <atomic>
 
 #define BOOST_THREAD_PROVIDES_FUTURE
 #define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
 #include <boost/thread.hpp>
 #include <boost/thread/future.hpp>
+
+// Exception thrown when a Task promise is broken.
+class BrokenPromiseException : public Exception
+{
+public:
+    BrokenPromiseException() : Exception("broken promise") {}
+};
 
 class AbstractTask
 {
@@ -33,17 +43,28 @@ public:
 template<typename ResultType>
 class Task : public AbstractTask
 {
+    std::atomic<bool> _cancelled;
     boost::packaged_task<ResultType> _task;
+    boost::future<ResultType> _future;
     
 public:
+    Task() : _cancelled(false) {}
+    
     template<typename F>
-    Task(F &&f) : _task(f) {}
+    Task(F &&f)
+     : _cancelled(false),
+       _task([this, f=std::move(f)]{
+           if (_cancelled) {
+               throw BrokenPromiseException();
+           }
+           return f();
+       }),
+       _future(_task.get_future())
+    {}
     
     void cancel() override
     {
-        // We can't really cancel a task. Instead, execute it now so we can get
-        // the result. This happens when the task queue is shutdown and flushed.
-        _task();
+        _cancelled = true;
     }
     
     void execute() override
@@ -51,31 +72,9 @@ public:
         _task();
     }
     
-    auto getFuture()
+    boost::future<ResultType>& getFuture()
     {
-        return _task.get_future();
-    }
-};
-
-template<>
-class Task<void> : public AbstractTask
-{
-    boost::packaged_task<void> _task;
-    
-public:
-    template<typename F>
-    Task(F &&f) : _task(f) {}
-    
-    void cancel() override {}
-    
-    void execute() override
-    {
-        _task();
-    }
-    
-    auto getFuture()
-    {
-        return _task.get_future();
+        return _future;
     }
 };
 
@@ -96,50 +95,49 @@ public:
     // Finish all scheduled tasks and exit all threads.
     void shutdown();
     
-    // For each element of the range, calls the specified function asynchronously,
-    // passing the element a parameter. The corresponding return function values are
-    // returned in a vector of futures.
+    // For each element of the range, calls the specified function
+    // asynchronously, passing the element a parameter. The corresponding
+    // function return values are accessible through a vector of Task objects
+    // returned by the call to map().
     template<typename RangeType, typename FunctionObjectType>
     auto map(RangeType range, FunctionObjectType &&functionObject)
     {
         using IterationType = decltype(*range.begin());
         using ResultType = typename std::result_of<FunctionObjectType(IterationType)>::type;
         
-        std::vector<boost::future<ResultType>> futures;
+        std::vector<std::shared_ptr<Task<ResultType>>> tasks;
         
         for (const auto obj : range) {
-            futures.emplace_back(async([functionObject, obj]{
+            tasks.emplace_back(async([functionObject, obj]{
                 return functionObject(obj);
             }));
         }
         
-        return futures;
+        return tasks;
     }
     
-    // Issues `count' copies of the task and returns a vector of futures.
+    // Issues `count' copies of the task and returns a vector of Task objects.
     // The function can have any return type, but must accept no parameters.
     template<typename FunctionObjectType>
     auto map(size_t count, FunctionObjectType &&functionObject)
     {
         using ResultType = typename std::result_of<FunctionObjectType()>::type;
-        std::vector<boost::future<ResultType>> futures(count);
+        std::vector<std::shared_ptr<Task<ResultType>>> tasks(count);
         for (size_t i = 0; i < count; ++i) {
-            auto future = async(std::move(functionObject));
-            futures.emplace_back(std::move(future));
+            tasks.emplace_back(async(std::move(functionObject)));
         }
-        return futures;
+        return tasks;
     }
     
     // Schedule a function to be run asynchronously on a thread in the pool.
-    // Returns a future to retrieve the function's return value.
+    // Returns a Task object from which a future can be obtained to retrieve the
+    // function's return value.
     // The function can have any return type, but must accept no parameters.
     template<typename FunctionObjectType>
     auto async(FunctionObjectType &&functionObject)
     {
         using ResultType = typename std::result_of<FunctionObjectType()>::type;
-        Task<ResultType> task(std::move(functionObject));
-        auto taskPtr = std::make_shared<Task<ResultType>>(std::move(task));
-        auto future = taskPtr->getFuture();
+        auto taskPtr = std::make_shared<Task<ResultType>>(std::move(functionObject));
         
         {
             std::unique_lock<std::mutex> lock(_lockTaskPosted);
@@ -147,7 +145,16 @@ public:
         }
         _cvarTaskPosted.notify_one();
         
-        return future;
+        return taskPtr;
+    }
+    
+    // Wait for all tasks in the range to complete.
+    template<typename TaskCollectionType>
+    void waitForAll(TaskCollectionType &tasks)
+    {
+        for (auto &task : tasks) {
+            task->getFuture().wait();
+        }
     }
     
 private:
