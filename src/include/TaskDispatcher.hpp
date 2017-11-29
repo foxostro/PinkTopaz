@@ -26,11 +26,7 @@
 #include <boost/thread/future.hpp>
 
 // Exception thrown when a Task promise is broken.
-class BrokenPromiseException : public Exception
-{
-public:
-    BrokenPromiseException() : Exception("broken promise") {}
-};
+class BrokenPromiseException : public Exception {};
 
 class AbstractTask
 {
