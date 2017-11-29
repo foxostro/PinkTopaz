@@ -10,9 +10,6 @@
 #define TerrainCursor_hpp
 
 #include <glm/vec3.hpp>
-#include <memory>
-#include <atomic>
-
 #include "TaskDispatcher.hpp"
 
 // Represents the cursor which selects a block of terrain.
