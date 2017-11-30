@@ -96,6 +96,13 @@ public:
        _task(task)
     {}
     
+    // It can be useful to access the underlying task if we need to cancel
+    // a future in a then-continuation-chain which is not the tail of the chain.
+    auto getTask()
+    {
+        return _task;
+    };
+    
     bool isValid()
     {
         return _future.is_valid();

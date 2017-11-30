@@ -9,6 +9,7 @@
 #ifndef TerrainCursor_hpp
 #define TerrainCursor_hpp
 
+#include <functional>
 #include <glm/vec3.hpp>
 #include <boost/optional.hpp>
 #include "TaskDispatcher.hpp"
@@ -29,18 +30,17 @@ struct TerrainCursorValue
     TerrainCursorValue() : active(false) {}
 };
 
-// Component which holds a terrain cursor value, calculated asynchronously.
+// Component which holds a terrain cursor value, updated asynchronously.
 struct TerrainCursor
 {
-    using Tuple = std::tuple<TerrainCursorValue, std::chrono::steady_clock::time_point>;
-    
-    // The task gets the updated cursor value and the time the update reqest was
-    // issued. (The time can be used to compute the total elapsed time from
-    // issuing the request to getting the result.)
-    boost::optional<Future<Tuple>> pending;
-    
-    // The current value of the terrain cursor.
+    // The cursor value is read and updated atomically on multiple threads.
     std::atomic<TerrainCursorValue> value;
+    
+    // If there is a pending task to update the cursor asynchronously then
+    // calling this function will cancel that task.
+    std::function<void()> canceller;
+    
+    TerrainCursor() : canceller([]{}) {}
 };
 
 #endif /* TerrainCursor_hpp */

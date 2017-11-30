@@ -39,19 +39,6 @@ private:
                              const glm::mat4 &transform,
                              const std::shared_ptr<Terrain> &terrain);
     
-    // Retrieve asynchronously calculated cursor, if results are ready.
-    // cursor -- The cursor to update.
-    void pollPendingCursorUpdate(TerrainCursor &cursor);
-    
-    // Calculates the update terrain cursor.
-    // Returns the new terrain cursor value.
-    // Runs in an aynchronous task on a background thread.
-    // transform -- The combined camera-terrain transformation.
-    // terrain -- The terrain on which the cursor operates.
-    TerrainCursorValue
-    calcCursor(const glm::mat4 &transform,
-               const std::shared_ptr<Terrain> &terrain);
-    
     std::shared_ptr<TaskDispatcher> _dispatcher;
     entityx::Entity _activeCamera;
     bool _needsUpdate;
