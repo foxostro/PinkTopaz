@@ -28,12 +28,13 @@
 // Exception thrown when a Task promise is broken.
 class BrokenPromiseException : public Exception {};
 
-class AbstractTask
+class AbstractTask : public std::enable_shared_from_this<AbstractTask>
 {
 public:
     virtual ~AbstractTask() = default;
     virtual void cancel() = 0;
     virtual void execute() = 0;
+    virtual std::vector<std::shared_ptr<AbstractTask>> getTaskChain() = 0;
 };
 
 template<typename ResultType>
@@ -41,19 +42,22 @@ class Task : public AbstractTask
 {
     std::atomic<bool> _cancelled;
     boost::packaged_task<ResultType> _task;
+    std::shared_ptr<AbstractTask> _parentTask;
     
 public:
     Task() = delete;
     
     template<typename FunctionObjectType>
-    Task(FunctionObjectType &&fn)
+    Task(FunctionObjectType &&fn,
+         const std::shared_ptr<AbstractTask> &parentTask)
      : _cancelled(false),
        _task([this, f=std::move(fn)]() mutable {
            if (_cancelled) {
                throw BrokenPromiseException();
            }
            return f();
-       })
+       }),
+       _parentTask(parentTask)
     {}
     
     void cancel() override
@@ -64,6 +68,16 @@ public:
     void execute() override
     {
         _task();
+    }
+    
+    std::vector<std::shared_ptr<AbstractTask>> getTaskChain() override
+    {
+        std::vector<std::shared_ptr<AbstractTask>> chain;
+        if (_parentTask) {
+            chain = _parentTask->getTaskChain();
+        }
+        chain.emplace_back(shared_from_this());
+        return chain;
     }
     
     boost::future<ResultType> getFuture()
@@ -98,9 +112,9 @@ public:
     
     // It can be useful to access the underlying task if we need to cancel
     // a future in a then-continuation-chain which is not the tail of the chain.
-    auto getTask()
+    std::vector<std::shared_ptr<AbstractTask>> getTaskChain()
     {
-        return _task;
+        return _task->getTaskChain();
     };
     
     bool isValid()
@@ -123,21 +137,31 @@ public:
         return _future.get();
     }
     
+    auto getCanceller()
+    {
+        return [taskChain=getTaskChain()]{
+            for (const auto &task : taskChain) {
+                task->cancel();
+            }
+        };
+    }
+    
     void cancel()
     {
-        _task->cancel();
+        getCanceller()();
     }
     
     // After this call, the Future is left in a moved-from state.
     template<typename F>
     auto then(F &&fn)
     {
-        _task.reset();
+        auto task = std::move(_task);
         auto future = std::move(_future);
         auto dispatcher = std::move(_dispatcher);
-        return dispatcher->async([fn=std::move(fn), future=std::move(future)]() mutable {
+        auto thenCont = [fn=std::move(fn), future=std::move(future)]() mutable {
             return fn(future.get());
-        });
+        };
+        return dispatcher->async(std::move(thenCont), task);
     }
 };
 
@@ -200,10 +224,11 @@ public:
     // The function object for the task may have any return type, but must
     // accept no parameters.
     template<typename FunctionObjectType>
-    auto async(FunctionObjectType &&functionObject)
+    auto async(FunctionObjectType &&functionObject,
+               std::shared_ptr<AbstractTask> parentTask = nullptr)
     {
         using ResultType = typename std::result_of<FunctionObjectType()>::type;
-        auto taskPtr = std::make_shared<Task<ResultType>>(std::move(functionObject));
+        auto taskPtr = std::make_shared<Task<ResultType>>(std::move(functionObject), parentTask);
         
         {
             std::unique_lock<std::mutex> lock(_lockTaskPosted);

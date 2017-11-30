@@ -72,13 +72,10 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
                                               const glm::mat4 &transform,
                                               const std::shared_ptr<Terrain> &t)
 {
-    // Cancel a pending cursor updates, if there is one.
+    // Cancel a pending cursor update, if there is one.
     cursor.canceller();
     
     // Schedule a task to asynchronously compute the updated cursor position.
-    // This will return a tuple containing the updated cursor value and the
-    // start time of the computation.
-    using Tuple = std::tuple<TerrainCursorValue, std::chrono::steady_clock::time_point>;
     auto future = _dispatcher->async([this,
                                       startTime=std::chrono::steady_clock::now(),
                                       transform,
@@ -110,27 +107,11 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
             }
         });
         
-        return Tuple(cursor, startTime);
-    });
-    
-    // Permit the cursor computation to be cancelled later if another request
-    // comes in before it completes.
-    //
-    // TODO: It might be possible to improve the API around this use-case by way
-    // of adding a Task-chain to the future. This would be a list of pointers
-    // to Task objects associated with futures that have been chained through
-    // then-continuations. For example, perhaps the Task itself could store a
-    // reference to a single "related" task.
-    // Then, when we make a call to Future::cancel(), it cancels all of the
-    // tasks in the chain.
-    cursor.canceller = [&cursor, task=future.getTask()]{
-        task->cancel();
-        cursor.canceller = []{};
-    };
-    
-    // As soon as the updated cursor position is available, stick it in the
-    // cursor component.
-    future.then([&cursor](Tuple tuple){
+        // Return a tuple containing the updated cursor value and the start time
+        // of the computation.
+        return std::make_tuple(cursor, startTime);
+    }).then([&cursor](auto tuple){
+        // ...and now unpack that cursor value and start time.
         const auto& [value, startTime] = tuple;
         
         cursor.value = value;
@@ -141,4 +122,6 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
         const std::string msStr = std::to_string(ms.count());
         SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
     });
+    
+    cursor.canceller = future.getCanceller();
 }
