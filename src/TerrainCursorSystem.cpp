@@ -84,13 +84,15 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
     }
     
     const auto startTime = std::chrono::steady_clock::now();
-    cursor.pending = _dispatcher->async([this,
-                                         startTime,
-                                         transform,
-                                         terrain=t]{
+    
+    auto future = _dispatcher->async([this,
+                                      startTime,
+                                      transform,
+                                      terrain=t]{
         const auto maybeValue = calcCursor(transform, terrain);
         return std::make_tuple(maybeValue, startTime);
     });
+    cursor.pending.emplace(std::move(future));
 }
 
 void TerrainCursorSystem::pollPendingCursorUpdate(TerrainCursor &cursor)
@@ -99,9 +101,9 @@ void TerrainCursorSystem::pollPendingCursorUpdate(TerrainCursor &cursor)
         return;
     }
     
-    auto &future = cursor.pending->getFuture();
+    auto &future = *cursor.pending;
     
-    if (future.is_ready()) {
+    if (future.isReady()) {
         const auto& [value, startTime] = future.get();
     
         cursor.value = value;

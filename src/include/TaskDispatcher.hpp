@@ -41,10 +41,9 @@ class Task : public AbstractTask
 {
     std::atomic<bool> _cancelled;
     boost::packaged_task<ResultType> _task;
-    boost::future<ResultType> _future;
     
 public:
-    Task() : _cancelled(false) {}
+    Task() = delete;
     
     template<typename F>
     Task(F &&f)
@@ -54,8 +53,7 @@ public:
                throw BrokenPromiseException();
            }
            return f();
-       }),
-       _future(_task.get_future())
+       })
     {}
     
     void cancel() override
@@ -68,13 +66,75 @@ public:
         _task();
     }
     
-    boost::future<ResultType>& getFuture()
+    boost::future<ResultType> getFuture()
     {
-        return _future;
+        return _task.get_future();
     }
 };
 
-class TaskDispatcher
+class TaskDispatcher;
+
+template<typename ResultType>
+class Future
+{
+private:
+    boost::future<ResultType> _future;
+    std::shared_ptr<TaskDispatcher> _dispatcher;
+    std::shared_ptr<Task<ResultType>> _task;
+    
+public:
+    ~Future() = default;
+    Future() = delete;
+    Future(const Future &future) = delete;
+    Future(Future &&future) = default;
+    
+    Future(boost::future<ResultType> &&future,
+           const std::shared_ptr<TaskDispatcher> &dispatcher,
+           const std::shared_ptr<Task<ResultType>> &task)
+     : _future(std::move(future)),
+       _dispatcher(dispatcher),
+       _task(task)
+    {}
+    
+    bool isValid()
+    {
+        return _future.is_valid();
+    }
+    
+    bool isReady()
+    {
+        return _future.is_ready();
+    }
+    
+    void wait()
+    {
+        _future.wait();
+    }
+    
+    ResultType get()
+    {
+        return _future.get();
+    }
+    
+    void cancel()
+    {
+        _task->cancel();
+    }
+    
+    // After this call, the Future is left in a moved-from state.
+    template<typename F>
+    auto then(F &&fn)
+    {
+        _task.reset();
+        auto dispatcher = std::move(_dispatcher);
+        return dispatcher->async([future=std::move(_future),
+                                  fn=std::move(fn)]{
+            return fn(future.get());
+        });
+    }
+};
+
+class TaskDispatcher : public std::enable_shared_from_this<TaskDispatcher>
 {
 public:
     TaskDispatcher() = delete;
@@ -93,7 +153,7 @@ public:
     
     // For each element of the range, calls the specified function
     // asynchronously, passing the element a parameter. The corresponding
-    // function return values are accessible through a vector of Task objects
+    // function return values are accessible through a vector of Future objects
     // returned by the call to map().
     template<typename RangeType, typename FunctionObjectType>
     auto map(RangeType range, FunctionObjectType &&functionObject)
@@ -101,34 +161,37 @@ public:
         using IterationType = decltype(*range.begin());
         using ResultType = typename std::result_of<FunctionObjectType(IterationType)>::type;
         
-        std::vector<std::shared_ptr<Task<ResultType>>> tasks;
+        std::vector<Future<ResultType>> futures;
         
         for (const auto obj : range) {
-            tasks.emplace_back(async([functionObject, obj]{
+            futures.emplace_back(async([functionObject, obj]{
                 return functionObject(obj);
             }));
         }
         
-        return tasks;
+        return futures;
     }
     
-    // Issues `count' copies of the task and returns a vector of Task objects.
+    // Issues `count' copies of the task and returns a vector of Future objects
+    // through which the function return value will become accessible later.
     // The function can have any return type, but must accept no parameters.
     template<typename FunctionObjectType>
     auto map(size_t count, FunctionObjectType &&functionObject)
     {
         using ResultType = typename std::result_of<FunctionObjectType()>::type;
-        std::vector<std::shared_ptr<Task<ResultType>>> tasks(count);
+        std::vector<Future<ResultType>> tasks;
+        tasks.reserve(count);
         for (size_t i = 0; i < count; ++i) {
             tasks.emplace_back(async(std::move(functionObject)));
         }
         return tasks;
     }
     
-    // Schedule a function to be run asynchronously on a thread in the pool.
-    // Returns a Task object from which a future can be obtained to retrieve the
-    // function's return value.
-    // The function can have any return type, but must accept no parameters.
+    // Schedule a task to be run asynchronously on a thread in the pool.
+    // Returns a Future object from which the function return value can be
+    // accessed later.
+    // The function object for the task may have any return type, but must
+    // accept no parameters.
     template<typename FunctionObjectType>
     auto async(FunctionObjectType &&functionObject)
     {
@@ -141,16 +204,9 @@ public:
         }
         _cvarTaskPosted.notify_one();
         
-        return taskPtr;
-    }
-    
-    // Wait for all tasks in the range to complete.
-    template<typename TaskCollectionType>
-    void waitForAll(TaskCollectionType &tasks)
-    {
-        for (auto &task : tasks) {
-            task->getFuture().wait();
-        }
+        return Future<ResultType>(std::move(taskPtr->getFuture()),
+                                  shared_from_this(),
+                                  taskPtr);
     }
     
 private:
@@ -163,5 +219,14 @@ private:
     std::queue<std::shared_ptr<AbstractTask>> _tasks;
     std::atomic<bool> _threadShouldExit;
 };
+
+// Wait for all futures in the range to complete.
+template<typename FutureCollectionType>
+static inline void waitForAll(FutureCollectionType &futures)
+{
+    for (auto &future : futures) {
+        future.wait();
+    }
+}
 
 #endif /* TaskDispatcher_hpp */

@@ -10,6 +10,7 @@
 #define TerrainCursor_hpp
 
 #include <glm/vec3.hpp>
+#include <boost/optional.hpp>
 #include "TaskDispatcher.hpp"
 
 // Represents the cursor which selects a block of terrain.
@@ -32,12 +33,11 @@ struct TerrainCursorValue
 struct TerrainCursor
 {
     using Tuple = std::tuple<TerrainCursorValue, std::chrono::steady_clock::time_point>;
-    using TaskType = std::shared_ptr<Task<Tuple>>;
     
     // The task gets the updated cursor value and the time the update reqest was
     // issued. (The time can be used to compute the total elapsed time from
     // issuing the request to getting the result.)
-    TaskType pending;
+    boost::optional<Future<Tuple>> pending;
     
     // The current value of the terrain cursor.
     TerrainCursorValue value;
