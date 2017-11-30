@@ -45,10 +45,10 @@ class Task : public AbstractTask
 public:
     Task() = delete;
     
-    template<typename F>
-    Task(F &&f)
+    template<typename FunctionObjectType>
+    Task(FunctionObjectType &&fn)
      : _cancelled(false),
-       _task([this, f=std::move(f)]{
+       _task([this, f=std::move(fn)]() mutable {
            if (_cancelled) {
                throw BrokenPromiseException();
            }
@@ -126,9 +126,9 @@ public:
     auto then(F &&fn)
     {
         _task.reset();
+        auto future = std::move(_future);
         auto dispatcher = std::move(_dispatcher);
-        return dispatcher->async([future=std::move(_future),
-                                  fn=std::move(fn)]{
+        return dispatcher->async([fn=std::move(fn), future=std::move(future)]() mutable {
             return fn(future.get());
         });
     }
