@@ -40,7 +40,7 @@ struct TerrainCursor
     boost::optional<Future<Tuple>> pending;
     
     // The current value of the terrain cursor.
-    TerrainCursorValue value;
+    std::atomic<TerrainCursorValue> value;
 };
 
 #endif /* TerrainCursor_hpp */

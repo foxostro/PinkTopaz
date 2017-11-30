@@ -106,7 +106,7 @@ void RenderSystem::update(entityx::EntityManager &es,
     es.each<TerrainCursor>([&](entityx::Entity terrainEntity,
                                TerrainCursor &cursor) {
         
-        TerrainCursorValue &value = cursor.value;
+        TerrainCursorValue value = cursor.value;
         if (value.active) {
             SDL_Log("RenderSystem: active: %s", value.active ? "true" : "false");
             SDL_Log("RenderSystem: pos: (%.2f, %.2f, %.2f)", value.pos.x, value.pos.y, value.pos.z);
