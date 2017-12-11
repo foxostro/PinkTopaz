@@ -19,11 +19,7 @@
 #include <thread>
 #include <cassert>
 #include <atomic>
-
-#define BOOST_THREAD_PROVIDES_FUTURE
-#define BOOST_THREAD_PROVIDES_FUTURE_CONTINUATION
-#include <boost/thread.hpp>
-#include <boost/thread/future.hpp>
+#include <future>
 
 // Exception thrown when a Task promise is broken.
 class BrokenPromiseException : public Exception {};
@@ -41,7 +37,7 @@ template<typename ResultType>
 class Task : public AbstractTask
 {
     std::atomic<bool> _cancelled;
-    boost::packaged_task<ResultType> _task;
+    std::packaged_task<ResultType()> _task;
     std::shared_ptr<AbstractTask> _parentTask;
     
 public:
@@ -80,7 +76,7 @@ public:
         return chain;
     }
     
-    boost::future<ResultType> getFuture()
+    std::future<ResultType> getFuture()
     {
         return _task.get_future();
     }
@@ -92,7 +88,7 @@ template<typename ResultType>
 class Future
 {
 private:
-    boost::future<ResultType> _future;
+    std::future<ResultType> _future;
     std::shared_ptr<TaskDispatcher> _dispatcher;
     std::shared_ptr<Task<ResultType>> _task;
     
@@ -102,7 +98,7 @@ public:
     Future(const Future &future) = delete;
     Future(Future &&future) = default;
     
-    Future(boost::future<ResultType> &&future,
+    Future(std::future<ResultType> &&future,
            const std::shared_ptr<TaskDispatcher> &dispatcher,
            const std::shared_ptr<Task<ResultType>> &task)
      : _future(std::move(future)),
