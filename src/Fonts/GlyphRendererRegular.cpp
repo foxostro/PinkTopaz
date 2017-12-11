@@ -49,7 +49,7 @@ GlyphRendererRegular::render(FT_ULong charcode)
     blitGlyph(surface, bitmap, getAttributes().color);
     
     const glm::ivec2 bearing(face->glyph->bitmap_left, face->glyph->bitmap_top);
-    const unsigned advance = face->glyph->advance.x;
+    const long advance = face->glyph->advance.x;
     return std::make_shared<Glyph>((char)charcode, bearing, advance, surface);
 }
 

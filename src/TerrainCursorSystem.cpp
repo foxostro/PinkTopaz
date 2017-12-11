@@ -94,7 +94,7 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
         cursor.active = false;
         
         voxels.readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
-            for (const auto pos : slice(voxels, ray, maxPlaceDistance)) {
+            for (const auto &pos : slice(voxels, ray, maxPlaceDistance)) {
                 const Voxel &voxel = voxels.reference(pos);
                 
                 if (voxel.value != 0.f) {
