@@ -43,7 +43,7 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
     Array3D<Voxel> dst(adjustedRegion, res);
     
     // Asynchronously fetch all the chunks in the region.
-    auto futures = _dispatcher->map(slice(_chunks, adjustedRegion), [this, region, adjustedRegion, &dst](glm::ivec3 cellCoords){
+    auto futures = _dispatcher->map(slice(_chunks, adjustedRegion), [this, adjustedRegion, &dst](glm::ivec3 cellCoords){
         const Morton3 index = _chunks.indexAtCellCoords(cellCoords);
         const AABB chunkBoundingBox = _chunks.cellAtCellCoords(cellCoords);
         ChunkPtr chunk = get(chunkBoundingBox, index);

@@ -76,8 +76,7 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
     cursor.canceller();
     
     // Schedule a task to asynchronously compute the updated cursor position.
-    auto future = _dispatcher->async([this,
-                                      startTime=std::chrono::steady_clock::now(),
+    auto future = _dispatcher->async([startTime=std::chrono::steady_clock::now(),
                                       transform,
                                       terrain=t]{
         using namespace glm;
