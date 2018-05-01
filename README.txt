@@ -18,22 +18,18 @@ This variable is used by the script "sign_the_app_bundle" to sign the app bundle
 
 3. Use Homebrew to install some build tools:
 	
-	% brew install cmake automake libtool nasm pip
+	% brew install cmake automake libtool nasm conan
 
-4. Install conan:
-
-    % pip install --user conan
-
-5. Use conan to install dependencies:
+4. Use conan to install dependencies:
 
     % conan remote add PinkTopaz https://api.bintray.com/conan/foxostro/PinkTopaz
     % conan install . --build missing
 
-6. Configure the CMake project:
+5. Configure the CMake project:
 
     % cmake -GXcode .
 
-7. Build it:
+6. Build it:
 
     % cmake --build . --target PinkTopaz
 
