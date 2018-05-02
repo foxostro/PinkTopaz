@@ -311,12 +311,12 @@ configure_file("${PROJECT_SOURCE_DIR}/src/pinktopaz_config.h.in"
 
 include_directories("${PROJECT_SOURCE_DIR}/src/include"
                     ${OPENGL_INCLUDE_DIRS}
-		    ${ADDITIONAL_INCLUDE_DIRS}
+                    ${ADDITIONAL_INCLUDE_DIRS}
                     )
 target_link_libraries(${APP_NAME}
                       ${CONAN_LIBS}
                       ${OPENGL_LIBRARIES}
-		      ${ADDITIONAL_LIBRARIES}
+                      ${ADDITIONAL_LIBRARIES}
                       )
 
 if(APPLE)
@@ -391,7 +391,7 @@ add_executable(${TEST_PROG_NAME}
 target_link_libraries(${TEST_PROG_NAME}
                       ${CONAN_LIBS}
                       ${OPENGL_LIBRARIES}
-		      ${ADDITIONAL_LIBRARIES}
+                      ${ADDITIONAL_LIBRARIES}
                       )
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake.modules/")
 include(ParseAndAddCatchTests)

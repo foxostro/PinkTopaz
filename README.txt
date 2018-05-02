@@ -34,6 +34,14 @@ This variable is used by the script "sign_the_app_bundle" to sign the app bundle
     % cmake --build . --target PinkTopaz
 
 
+Notes for MacOS
+===============
+
+If you run into issues where lldb refuses to attach to the process then enable Developer Mode like so:
+
+    % sudo /usr/sbin/DevToolsSecurity --enable
+
+
 Building on Windows
 ===================
 
