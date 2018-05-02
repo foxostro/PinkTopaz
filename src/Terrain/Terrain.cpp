@@ -9,10 +9,10 @@
 #include "Terrain/Terrain.hpp"
 #include "Terrain/MesherNaiveSurfaceNets.hpp"
 #include "Terrain/MapRegionStore.hpp"
-#include "SDL_image.h"
 #include "Profiler.hpp"
 #include "Grid/GridIndexerRange.hpp"
 #include "Grid/Array3D.hpp"
+#include "Renderer/TextureArrayLoader.hpp"
 #include <sstream>
 
 #define TERRAIN_PROGRESS_TRACKER 0
@@ -35,25 +35,8 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
    _cameraPosition(glm::vec3())
 {
     // Load terrain texture array from a single image.
-    // TODO: create a TextureArrayLoader class to encapsulate tex loading.
-    SDL_Surface *surface = IMG_Load("terrain.png");
-    
-    if (!surface) {
-        throw Exception("Failed to load terrain terrain.png.");
-    }
-    
-    TextureDescriptor texDesc = {
-        Texture2DArray,
-        BGRA8,
-        static_cast<size_t>(surface->w),
-        static_cast<size_t>(surface->w),
-        static_cast<size_t>(surface->h / surface->w),
-        4,
-        true,
-    };
-    auto texture = graphicsDevice->makeTexture(texDesc, surface->pixels);
-    
-    SDL_FreeSurface(surface);
+    TextureArrayLoader textureArrayLoader(graphicsDevice);
+    auto texture = textureArrayLoader.load("terrain.png");
     
     TextureSamplerDescriptor samplerDesc = {
         ClampToEdge,

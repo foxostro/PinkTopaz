@@ -119,6 +119,7 @@ set(SOURCE_FILES_RENDERER
     "src/include/Renderer/RenderPassDescriptor.hpp"
     "src/include/Renderer/Texture.hpp"
     "src/include/Renderer/TextureSampler.hpp"
+    "src/Renderer/TextureArrayLoader.cpp" "src/include/Renderer/TextureArrayLoader.hpp"
     )
 
 set(SOURCE_FILES_FONTS
