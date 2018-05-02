@@ -8,6 +8,8 @@
 
 #include "catch.hpp"
 #include "Grid/Array3D.hpp"
+#include "Grid/GridIndexerRange.hpp"
+#include "Grid/GridPoints.hpp"
 #include "Exception.hpp"
 #include "SDL.h"
 
@@ -243,7 +245,7 @@ TEST_CASE("Test Iteration Over Cells", "[Array3D]") {
     
     std::vector<AABB> actualCells;
     
-    for (const auto &cellCoords : myArray.slice(box)) {
+    for (const auto &cellCoords : slice(myArray, box)) {
         const auto cell = myArray.cellAtCellCoords(cellCoords);
         actualCells.push_back(cell);
     }
@@ -253,20 +255,20 @@ TEST_CASE("Test Iteration Over Cells", "[Array3D]") {
     
     // Throws an exception when the region is not in-bounds.
     const AABB negCell = {vec3(-0.5f, -0.5f, -0.5f), vec3(0.5f, 0.5f, 0.5f)};
-    REQUIRE_THROWS_AS(myArray.slice(negCell), OutOfBoundsException);
+    REQUIRE_THROWS_AS(slice(myArray, negCell), OutOfBoundsException);
     
     // If the region is a zero-sized box then we should iterate over no cells.
     const AABB zeroBox = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
     actualCells.clear();
-    for (const auto &cellCoords : myArray.slice(zeroBox)) {
+    for (const auto &cellCoords : slice(myArray, zeroBox)) {
         REQUIRE(!"We expected to iterate over zero cells in this case.");
     }
     
     // Make sure we can mutate cells and get back the changed values.
-    for (const auto &cellCoords : myArray.slice(box)) {
+    for (const auto &cellCoords : slice(myArray, box)) {
         myArray.mutableReference(cellCoords) = 42;
     }
-    for (const auto &cellCoords : myArray.slice(box)) {
+    for (const auto &cellCoords : slice(myArray, box)) {
         REQUIRE(42 == myArray.reference(cellCoords));
     }
 }
@@ -311,7 +313,7 @@ TEST_CASE("Test For Points In Grid", "[Array3D]") {
     
     std::vector<vec3> actualPoints;
     
-    for (const vec3 point : myArray.points(box)) {
+    for (const vec3 point : points(myArray, box)) {
         actualPoints.push_back(point);
     }
     
@@ -321,12 +323,12 @@ TEST_CASE("Test For Points In Grid", "[Array3D]") {
     // Throws an exception when the region is not in-bounds.
     const AABB negCell = {vec3(-0.5f, -0.5f, -0.5f), vec3(0.5f, 0.5f, 0.5f)};
     
-    REQUIRE_THROWS_AS(myArray.points(negCell), OutOfBoundsException);
+    REQUIRE_THROWS_AS(points(myArray, negCell), OutOfBoundsException);
     
     // If the region is a zero-sized box then we should iterate over one point.
     const AABB zeroBox = {vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 0.0f)};
     actualPoints.clear();
-    for (const vec3 point : myArray.points(zeroBox)) {
+    for (const vec3 point : points(myArray, zeroBox)) {
         actualPoints.push_back(point);
     }
     REQUIRE(1 == actualPoints.size());

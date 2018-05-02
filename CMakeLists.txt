@@ -385,6 +385,7 @@ add_executable(${TEST_PROG_NAME}
                ${SOURCE_FILES_MISC}
                ${SOURCE_FILES_NOISE}
                ${SOURCE_FILES_MATH}
+               ${SOURCE_FILES_FONTS}
                ${SOURCE_FILES_BLOCK_DATA_STORE}
                )
 target_link_libraries(${TEST_PROG_NAME}
