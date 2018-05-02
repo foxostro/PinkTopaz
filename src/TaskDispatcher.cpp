@@ -43,6 +43,23 @@ void TaskDispatcher::shutdown()
     _threads.clear();
 }
 
+void TaskDispatcher::flush()
+{
+    std::unique_lock<std::mutex> lock(_lockTaskPosted);
+    
+    if (_threadShouldExit) {
+        return;
+    }
+    
+    while (!_tasks.empty()) {
+        std::shared_ptr<AbstractTask> taskPtr = _tasks.front();
+        _tasks.pop();
+        
+        assert(taskPtr);
+        taskPtr->execute();
+    }
+}
+
 void TaskDispatcher::worker(const std::string &name)
 {
     setNameForCurrentThread(name);

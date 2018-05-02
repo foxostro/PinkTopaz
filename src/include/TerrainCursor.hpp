@@ -17,7 +17,7 @@
 #include "TaskDispatcher.hpp"
 
 // Represents the cursor which selects a block of terrain.
-struct TerrainCursorValue
+struct TerrainCursor
 {
     // An inactive cursor is not drawn and cannot be used to place blocks.
     bool active;
@@ -31,17 +31,6 @@ struct TerrainCursorValue
     
     // The terrain entity on which this cursor operates.
     entityx::Entity terrainEntity;
-    
-    TerrainCursorValue() : active(false) {}
-};
-
-// Component which holds a terrain cursor value, updated asynchronously.
-struct TerrainCursor
-{
-    // The cursor value is read and updated atomically on multiple threads.
-    // Take the lock before accessing `value'.
-    std::mutex lockValue;
-    TerrainCursorValue value;
     
     // If there is a pending task to update the cursor asynchronously then
     // calling this function will cancel that task.

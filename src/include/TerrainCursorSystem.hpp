@@ -12,6 +12,7 @@
 #include "Terrain/Terrain.hpp"
 #include "TaskDispatcher.hpp"
 #include "TerrainCursor.hpp"
+#include "Transform.hpp"
 #include "ActiveCamera.hpp"
 #include "CameraMovedEvent.hpp"
 
@@ -33,14 +34,16 @@ private:
     
     // Request asynchronous update of the terrain cursor.
     // cursor -- The cursor to update.
+    // cursorTransform -- The transform of the cursor, also to be updated.
     // cameraTerrainTransform -- The combined camera-terrain transformation.
     // terrain -- The terrain on which the cursor operates.
     void requestCursorUpdate(TerrainCursor &cursor,
+                             Transform &cursorTransform,
                              const glm::mat4 &cameraTerrainTransform,
-                             entityx::Entity terrainEntity,
                              const std::shared_ptr<Terrain> &terrain);
     
     std::shared_ptr<TaskDispatcher> _dispatcher;
+    std::shared_ptr<TaskDispatcher> _mainThreadDispatcher;
     entityx::Entity _activeCamera;
     bool _needsUpdate;
 };

@@ -147,15 +147,53 @@ public:
         getCanceller()();
     }
     
+    // Build a compound future.
+    //
+    // This method will dispatch a task on the current dispatcher to wait for
+    // the result of this future. Then, once the result is obtained, it will
+    // execute the specified function `fn'.
+    //
+    // The function `fn' is expected to accept a single parameter of the same
+    // type as the future's result type.
+    //
     // After this call, the Future is left in a moved-from state.
-    template<typename F>
-    auto then(F &&fn)
+    template<typename FunctionType>
+    auto then(FunctionType &&fn)
     {
         auto task = std::move(_task);
         auto future = std::move(_future);
         auto dispatcher = std::move(_dispatcher);
         auto thenCont = [fn=std::move(fn), future=std::move(future)]() mutable {
             return fn(future.get());
+        };
+        return dispatcher->async(std::move(thenCont), task);
+    }
+    
+    // Build a compound future where the next link runs on the given dispatcher.
+    // This method permits the construction of compound futures where each link
+    // executes on a different task queue.
+    //
+    // This method will dispatch a task on the current dispatcher to wait for
+    // the result of this future. Then, once the result is obtained, it will
+    // dispatch a task for `fn' on the specified second dispatcher.
+    //
+    // The function `fn' is expected to accept a single parameter of the same
+    // type as the future's result type.
+    //
+    // After this call, the Future is left in a moved-from state.
+    //
+    // TODO: Does task cancellation work when the task moves across dispatchers?
+    template<typename Dispatcher, typename FunctionType>
+    auto then(Dispatcher secondDispatcher, FunctionType &&fn)
+    {
+        auto task = std::move(_task);
+        auto future = std::move(_future);
+        auto dispatcher = std::move(_dispatcher);
+        auto thenCont = [secondDispatcher, fn=std::move(fn), future=std::move(future)]() mutable {
+            auto result = future.get();
+            return secondDispatcher->async([r=std::move(result), fn=std::move(fn)]() mutable {
+                return fn(r);
+            });
         };
         return dispatcher->async(std::move(thenCont), task);
     }
@@ -177,6 +215,9 @@ public:
     
     // Finish all scheduled tasks and exit all threads.
     void shutdown();
+    
+    // Finish all scheduled tasks.
+    void flush();
     
     // For each element of the range, calls the specified function
     // asynchronously, passing the element a parameter. The corresponding

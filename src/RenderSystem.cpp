@@ -105,17 +105,10 @@ void RenderSystem::update(entityx::EntityManager &es,
     // TODO: Draw terrain cursors.
     es.each<TerrainCursor>([&](entityx::Entity terrainEntity,
                                TerrainCursor &cursor) {
-        
-        TerrainCursorValue value;
-        {
-            std::lock_guard<std::mutex> lock(cursor.lockValue);
-            value = cursor.value;
-        }
-        
-        if (value.active) {
-            SDL_Log("RenderSystem: active: %s", value.active ? "true" : "false");
-            SDL_Log("RenderSystem: pos: (%.2f, %.2f, %.2f)", value.pos.x, value.pos.y, value.pos.z);
-            SDL_Log("RenderSystem: placePos: (%.2f, %.2f, %.2f)", value.placePos.x, value.placePos.y, value.placePos.z);
+        if (cursor.active) {
+            SDL_Log("RenderSystem: active: %s", cursor.active ? "true" : "false");
+            SDL_Log("RenderSystem: pos: (%.2f, %.2f, %.2f)", cursor.pos.x, cursor.pos.y, cursor.pos.z);
+            SDL_Log("RenderSystem: placePos: (%.2f, %.2f, %.2f)", cursor.placePos.x, cursor.placePos.y, cursor.placePos.z);
         }
     });
     
