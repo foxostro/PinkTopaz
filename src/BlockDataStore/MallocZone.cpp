@@ -136,6 +136,10 @@ MallocZone::Block* MallocZone::allocate(size_t size)
     dump();
 #endif
     
+    if (size > header()->size) {
+        return nullptr;
+    }
+    
     // Blocks for allocations are always multiples of four bytes in size.
     // This ensures that blocks are always aligned on four byte boundaries
     // given that the initial block is also aligned on a four byte boundary.
