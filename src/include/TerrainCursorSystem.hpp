@@ -33,10 +33,11 @@ private:
     
     // Request asynchronous update of the terrain cursor.
     // cursor -- The cursor to update.
-    // transform -- The combined camera-terrain transformation.
+    // cameraTerrainTransform -- The combined camera-terrain transformation.
     // terrain -- The terrain on which the cursor operates.
     void requestCursorUpdate(TerrainCursor &cursor,
-                             const glm::mat4 &transform,
+                             const glm::mat4 &cameraTerrainTransform,
+                             entityx::Entity terrainEntity,
                              const std::shared_ptr<Terrain> &terrain);
     
     std::shared_ptr<TaskDispatcher> _dispatcher;

@@ -9,6 +9,8 @@
 #ifndef TerrainCursor_hpp
 #define TerrainCursor_hpp
 
+#include <entityx/entityx.h>
+#include <mutex>
 #include <functional>
 #include <glm/vec3.hpp>
 #include <boost/optional.hpp>
@@ -27,6 +29,9 @@ struct TerrainCursorValue
     // drawn. This is usually an empty block immediately before the position.
     glm::vec3 placePos;
     
+    // The terrain entity on which this cursor operates.
+    entityx::Entity terrainEntity;
+    
     TerrainCursorValue() : active(false) {}
 };
 
@@ -34,7 +39,9 @@ struct TerrainCursorValue
 struct TerrainCursor
 {
     // The cursor value is read and updated atomically on multiple threads.
-    std::atomic<TerrainCursorValue> value;
+    // Take the lock before accessing `value'.
+    std::mutex lockValue;
+    TerrainCursorValue value;
     
     // If there is a pending task to update the cursor asynchronously then
     // calling this function will cancel that task.

@@ -15,6 +15,8 @@
 
 #include "SDL.h"
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp> // for glm::translate()
+#include <mutex>
 
 TerrainCursorSystem::TerrainCursorSystem(const std::shared_ptr<TaskDispatcher> &dispatcher)
  : _dispatcher(dispatcher),
@@ -32,19 +34,47 @@ void TerrainCursorSystem::update(entityx::EntityManager &es,
                                  entityx::EventManager &events,
                                  entityx::TimeDelta deltaMilliseconds)
 {
+    bool validActiveCamera = _activeCamera.valid();
+    
     // If the camera has moved then we need to request a new terrain cursor.
-    if (_activeCamera.valid() && _needsUpdate) {
+    if (validActiveCamera && _needsUpdate) {
         _needsUpdate = false;
         
         const auto &cameraTransform = _activeCamera.component<Transform>()->value;
         
-        es.each<TerrainCursor, Transform, TerrainComponent>([&](entityx::Entity terrainEntity,
-                                                                TerrainCursor &cursor,
-                                                                Transform &terrainTransform,
-                                                                TerrainComponent &terrain) {
+        es.each<TerrainCursor>([&](entityx::Entity cursorEntity,
+                                   TerrainCursor &cursor) {
             
-            const glm::mat4 transform = cameraTransform * terrainTransform.value;
-            requestCursorUpdate(cursor, transform, terrain.terrain);
+            entityx::Entity terrainEntity;
+            {
+                std::lock_guard<std::mutex> lock(cursor.lockValue);
+                terrainEntity = cursor.value.terrainEntity;
+            }
+            
+            const Transform *terrainTransformPtr = terrainEntity.component<Transform>().get();
+            const Transform &terrainTransform = *terrainTransformPtr;
+            
+            const TerrainComponent *terrainPtr = terrainEntity.component<TerrainComponent>().get();
+            const TerrainComponent &terrain = *terrainPtr;
+            
+            const glm::mat4 cameraTerrainTransform = cameraTransform * terrainTransform.value;
+            requestCursorUpdate(cursor,
+                                cameraTerrainTransform,
+                                terrainEntity,
+                                terrain.terrain);
+        });
+    }
+    
+    if (validActiveCamera) {
+        // TODO: This could probably be made more efficient if we could signal
+        // when the async voxel march is complete. As it is, we basically poll
+        // every frame for the updated position of the cursor.
+        es.each<TerrainCursor, Transform>([&](entityx::Entity cursorEntity,
+                                              TerrainCursor &cursor,
+                                              Transform &cursorTransform) {
+            
+            std::lock_guard<std::mutex> lock(cursor.lockValue);
+            cursorTransform.value = glm::translate(glm::mat4(1), -cursor.value.pos);
         });
     }
 }
@@ -69,7 +99,8 @@ void TerrainCursorSystem::receive(const CameraMovedEvent &event)
 }
 
 void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
-                                              const glm::mat4 &transform,
+                                              const glm::mat4 &cameraTerrainTransform,
+                                              entityx::Entity terrainEntity,
                                               const std::shared_ptr<Terrain> &t)
 {
     // Cancel a pending cursor update, if there is one.
@@ -77,43 +108,48 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
     
     // Schedule a task to asynchronously compute the updated cursor position.
     auto future = _dispatcher->async([startTime=std::chrono::steady_clock::now(),
-                                      transform,
+                                      cameraTerrainTransform,
+                                      terrainEntity,
                                       terrain=t]{
         using namespace glm;
         
-        const vec3 cameraEye(inverse(transform)[3]);
-        const quat cameraOrientation = toQuat(transpose(transform));
+        const vec3 cameraEye(inverse(cameraTerrainTransform)[3]);
+        const quat cameraOrientation = toQuat(transpose(cameraTerrainTransform));
         const vec3 rayDir = cameraOrientation * vec3(0, 0, -1);
         const Ray ray(cameraEye, rayDir);
         const AABB voxelBox{cameraEye, vec3(maxPlaceDistance+1)};
         const auto &voxels = terrain->getVoxels();
         
-        TerrainCursorValue cursor;
+        TerrainCursorValue value;
         
-        cursor.active = false;
+        value.active = false;
+        value.terrainEntity = terrainEntity;
         
         voxels.readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
             for (const auto &pos : slice(voxels, ray, maxPlaceDistance)) {
                 const Voxel &voxel = voxels.reference(pos);
                 
                 if (voxel.value != 0.f) {
-                    cursor.active = true;
-                    cursor.pos = pos;
+                    value.active = true;
+                    value.pos = pos;
                     break;
                 } else {
-                    cursor.placePos = pos;
+                    value.placePos = pos;
                 }
             }
         });
         
         // Return a tuple containing the updated cursor value and the start time
         // of the computation.
-        return std::make_tuple(cursor, startTime);
+        return std::make_tuple(value, startTime);
     }).then([&cursor](auto tuple){
         // ...and now unpack that cursor value and start time.
         const auto& [value, startTime] = tuple;
         
-        cursor.value = value;
+        {
+            std::lock_guard<std::mutex> lock(cursor.lockValue);
+            cursor.value = value;
+        }
         
         const auto currentTime = std::chrono::steady_clock::now();
         const auto duration = currentTime - startTime;

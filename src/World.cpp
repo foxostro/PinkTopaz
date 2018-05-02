@@ -52,7 +52,11 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
     entityx::Entity terrainEntity = entities.create();
     terrainEntity.assign<TerrainComponent>(terrainComponent);
     terrainEntity.assign<Transform>();
-    terrainEntity.assign<TerrainCursor>();
+    
+    entityx::Entity terrainCursor = entities.create();
+    terrainCursor.assign<Transform>();
+    terrainCursor.assign<TerrainCursor>();
+    terrainCursor.component<TerrainCursor>()->value.terrainEntity = terrainEntity;
 }
 
 void World::update(entityx::TimeDelta dt)
