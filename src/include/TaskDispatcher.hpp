@@ -30,7 +30,6 @@ public:
     virtual ~AbstractTask() = default;
     virtual void cancel() = 0;
     virtual void execute() = 0;
-    virtual std::vector<std::shared_ptr<AbstractTask>> getTaskChain() = 0;
 };
 
 template<typename ResultType>
@@ -38,22 +37,19 @@ class Task : public AbstractTask
 {
     std::atomic<bool> _cancelled;
     std::packaged_task<ResultType()> _task;
-    std::shared_ptr<AbstractTask> _parentTask;
     
 public:
     Task() = delete;
     
     template<typename FunctionObjectType>
-    Task(FunctionObjectType &&fn,
-         const std::shared_ptr<AbstractTask> &parentTask)
+    Task(FunctionObjectType &&fn)
      : _cancelled(false),
        _task([this, f=std::move(fn)]() mutable {
            if (_cancelled) {
                throw BrokenPromiseException();
            }
            return f();
-       }),
-       _parentTask(parentTask)
+       })
     {}
     
     void cancel() override
@@ -64,16 +60,6 @@ public:
     void execute() override
     {
         _task();
-    }
-    
-    std::vector<std::shared_ptr<AbstractTask>> getTaskChain() override
-    {
-        std::vector<std::shared_ptr<AbstractTask>> chain;
-        if (_parentTask) {
-            chain = _parentTask->getTaskChain();
-        }
-        chain.emplace_back(shared_from_this());
-        return chain;
     }
     
     std::future<ResultType> getFuture()
@@ -106,13 +92,6 @@ public:
        _task(task)
     {}
     
-    // It can be useful to access the underlying task if we need to cancel
-    // a future in a then-continuation-chain which is not the tail of the chain.
-    std::vector<std::shared_ptr<AbstractTask>> getTaskChain()
-    {
-        return _task->getTaskChain();
-    };
-    
     bool isValid()
     {
         return _future.is_valid();
@@ -133,18 +112,10 @@ public:
         return _future.get();
     }
     
-    auto getCanceller()
-    {
-        return [taskChain=getTaskChain()]{
-            for (const auto &task : taskChain) {
-                task->cancel();
-            }
-        };
-    }
-    
     void cancel()
     {
-        getCanceller()();
+        assert(_task);
+        _task->cancel();
     }
     
     // Build a compound future.
@@ -166,7 +137,7 @@ public:
         auto thenCont = [fn=std::move(fn), future=std::move(future)]() mutable {
             return fn(future.get());
         };
-        return dispatcher->async(std::move(thenCont), task);
+        return dispatcher->async(std::move(thenCont));
     }
     
     // Build a compound future where the next link runs on the given dispatcher.
@@ -181,8 +152,6 @@ public:
     // type as the future's result type.
     //
     // After this call, the Future is left in a moved-from state.
-    //
-    // TODO: Does task cancellation work when the task moves across dispatchers?
     template<typename Dispatcher, typename FunctionType>
     auto then(Dispatcher secondDispatcher, FunctionType &&fn)
     {
@@ -191,11 +160,12 @@ public:
         auto dispatcher = std::move(_dispatcher);
         auto thenCont = [secondDispatcher, fn=std::move(fn), future=std::move(future)]() mutable {
             auto result = future.get();
-            return secondDispatcher->async([r=std::move(result), fn=std::move(fn)]() mutable {
+            auto secondFuture = secondDispatcher->async([r=std::move(result), fn=std::move(fn)]() mutable {
                 return fn(r);
             });
+            return secondFuture.get();
         };
-        return dispatcher->async(std::move(thenCont), task);
+        return dispatcher->async(std::move(thenCont));
     }
 };
 
@@ -203,8 +173,7 @@ class TaskDispatcher : public std::enable_shared_from_this<TaskDispatcher>
 {
 public:
     TaskDispatcher() = delete;
-    TaskDispatcher(const std::string &name,
-                   unsigned numThreads);
+    TaskDispatcher(const std::string &name, unsigned numThreads);
     ~TaskDispatcher();
     
     // Returns true if the dispatcher is shutting down or has already shutdown.
@@ -261,11 +230,10 @@ public:
     // The function object for the task may have any return type, but must
     // accept no parameters.
     template<typename FunctionObjectType>
-    auto async(FunctionObjectType &&functionObject,
-               std::shared_ptr<AbstractTask> parentTask = nullptr)
+    auto async(FunctionObjectType &&functionObject)
     {
         using ResultType = typename std::result_of<FunctionObjectType()>::type;
-        auto taskPtr = std::make_shared<Task<ResultType>>(std::move(functionObject), parentTask);
+        auto taskPtr = std::make_shared<Task<ResultType>>(std::move(functionObject));
         
         {
             std::unique_lock<std::mutex> lock(_lockTaskPosted);

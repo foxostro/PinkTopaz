@@ -63,6 +63,9 @@ void TerrainCursorSystem::update(entityx::EntityManager &es,
         });
     }
     
+    // We only update the entity components on the main thread. When the async
+    // cursor request completes, it schedules a task to do this. Those tasks are
+    // executed here. (We'll probably catch it next frame at the soonest.)
     _mainThreadDispatcher->flush();
 }
 
@@ -91,12 +94,23 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
                                               const std::shared_ptr<Terrain> &t)
 {
     // Cancel a pending cursor update, if there is one.
-    cursor.canceller();
-    
+    if (cursor.cancellationToken) {
+        cursor.cancellationToken->store(true);
+    }
+
+    // TODO: It would help here to allocate these tokens from an object pool.
+    cursor.cancellationToken = std::make_shared<std::atomic<bool>>(false);
+
     // Schedule a task to asynchronously compute the updated cursor position.
-    auto future = _dispatcher->async([startTime=std::chrono::steady_clock::now(),
-                                      cameraTerrainTransform,
-                                      terrain=t]{
+    _dispatcher->async([startTime=std::chrono::steady_clock::now(),
+                        cameraTerrainTransform,
+                        terrain=t,
+                        cancellationToken=cursor.cancellationToken]{
+
+        if (cancellationToken && cancellationToken->load()) {
+            throw BrokenPromiseException();
+        }
+
         using namespace glm;
         
         const vec3 cameraEye(inverse(cameraTerrainTransform)[3]);
@@ -127,10 +141,15 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
         // of the computation.
         return std::make_tuple(active, cursorPos, placePos, startTime);
 
-    }).then(_mainThreadDispatcher, [&cursor, &cursorTransform](auto tuple){
+    }).then(_mainThreadDispatcher, [cancellationToken=cursor.cancellationToken,
+                                    &cursor,
+                                    &cursorTransform](auto tuple){
 
         // This task executes on the main thread because we'll be using it to
         // update our entity's components.
+        //
+        // TODO: Is it possible that one of these tasks will ever outlive the
+        //       components that are referenced here?
 
         const auto& [active, cursorPos, placePos, startTime] = tuple;
 
@@ -146,6 +165,4 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
         const std::string msStr = std::to_string(ms.count());
         SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
     });
-    
-    cursor.canceller = future.getCanceller();
 }

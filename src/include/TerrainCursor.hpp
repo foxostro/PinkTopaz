@@ -33,10 +33,10 @@ struct TerrainCursor
     entityx::Entity terrainEntity;
     
     // If there is a pending task to update the cursor asynchronously then
-    // calling this function will cancel that task.
-    std::function<void()> canceller;
+    // this cancellation token can be used to cancel it.
+    std::shared_ptr<std::atomic<bool>> cancellationToken;
     
-    TerrainCursor() : canceller([]{}) {}
+    TerrainCursor() = default;
 };
 
 #endif /* TerrainCursor_hpp */
