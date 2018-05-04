@@ -10,6 +10,7 @@
 #define FrustumRange_hpp
 
 #include "GridIndexer.hpp"
+#include "Frustum.hpp"
 
 // Range over grid cells which fall within a specified frustum.
 class FrustumRange

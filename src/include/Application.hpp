@@ -28,7 +28,6 @@ public:
 private:
     void inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
-               const std::shared_ptr<TaskDispatcher> &dispatcherLowPriority,
                const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData);
     
     SDL_Window *_window;

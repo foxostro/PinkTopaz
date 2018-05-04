@@ -30,13 +30,16 @@ public:
     }
     
     // Increments the horizon distance by the step.
+    // Returns a pair containing the current horizon distance a boolean
+    // indicating whether or not the value has changed.
     // Takes the lock so this is thread-safe.
-    inline float increment_clamp(float max)
+    inline std::pair<float, bool> increment_clamp(float max)
     {
         std::unique_lock<std::shared_mutex> lock(_lockHorizonDistance);
+        float prev = _targetHorizonDistance;
         _targetHorizonDistance += STEP;
         _targetHorizonDistance = std::min(_targetHorizonDistance, max);
-        return _targetHorizonDistance;
+        return std::make_pair(_targetHorizonDistance, (_targetHorizonDistance != prev));
     }
     
     // The horizon distance moves away smoothly over time.

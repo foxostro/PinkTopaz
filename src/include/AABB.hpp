@@ -14,6 +14,7 @@
 #include <vector>
 #include <sstream>
 #include <array>
+#include <boost/functional/hash.hpp>
 
 // An axis-aligned bounding box.
 template<typename TYPE>
@@ -103,6 +104,34 @@ struct _AABB
 };
 
 typedef _AABB<glm::vec3> AABB;
+
+namespace std {
+    template <> struct hash<glm::vec3>
+    {
+        size_t operator()(const glm::vec3 &point) const
+        {
+            size_t seed = 0;
+            boost::hash_combine(seed, point.x);
+            boost::hash_combine(seed, point.y);
+            boost::hash_combine(seed, point.z);
+            return seed;
+        }
+    };
+}
+
+namespace std {
+    template <> struct hash<AABB>
+    {
+        size_t operator()(const AABB &box) const
+        {
+            size_t seed = 0;
+            std::hash<glm::vec3> vecHasher;
+            boost::hash_combine(seed, vecHasher(box.center));
+            boost::hash_combine(seed, vecHasher(box.extent));
+            return seed;
+        }
+    };
+}
 
 template<typename PointType>
 static inline bool

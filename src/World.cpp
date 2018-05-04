@@ -17,10 +17,16 @@
 #include "Profiler.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+
+World::~World()
+{
+    // Some futures may be waiting on tasks in TerrainCursorSystem's main thread
+    // dispatch queue. Shutdown order matters.
+    systems.system<TerrainCursorSystem>()->shutdown();
+}
     
 World::World(const std::shared_ptr<GraphicsDevice> &device,
              const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
-             const std::shared_ptr<TaskDispatcher> &dispatcherLowPriority,
              const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData)
 {
     PROFILER(InitWorld);
@@ -31,7 +37,8 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
     systems.configure();
     
     // Setup the position and orientation of the camera.
-    glm::mat4 m = glm::rotate(glm::translate(glm::mat4(), -glm::vec3(80.1, 20.1, 140.1)),
+    const glm::vec3 cameraPosition = glm::vec3(80.1, 20.1, 140.1);
+    glm::mat4 m = glm::rotate(glm::translate(glm::mat4(), -cameraPosition),
                               glm::pi<float>() * 0.20f,
                               glm::vec3(0, 1, 0));
     
@@ -47,8 +54,8 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
     TerrainComponent terrainComponent;
     terrainComponent.terrain = std::make_shared<Terrain>(device,
                                                          dispatcherHighPriority,
-                                                         dispatcherLowPriority,
-                                                         dispatcherVoxelData);
+                                                         dispatcherVoxelData,
+                                                         cameraPosition);
     entityx::Entity terrainEntity = entities.create();
     terrainEntity.assign<TerrainComponent>(terrainComponent);
     terrainEntity.assign<Transform>();

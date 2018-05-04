@@ -72,13 +72,12 @@ set(SOURCE_FILES_TERRAIN
     "src/Terrain/VoxelDataGenerator.cpp" "src/include/Terrain/VoxelDataGenerator.hpp"
     "src/Terrain/Terrain.cpp" "src/include/Terrain/Terrain.hpp"
     "src/Terrain/TerrainMesh.cpp" "src/include/Terrain/TerrainMesh.hpp"
-    "src/Terrain/TerrainChunkQueue.cpp" "src/include/Terrain/TerrainChunkQueue.hpp"
-    "src/Terrain/TerrainDrawList.cpp" "src/include/Terrain/TerrainDrawList.hpp"
     "src/Terrain/TerrainProgressTracker.cpp" "src/include/Terrain/TerrainProgressTracker.hpp"
     "src/Terrain/ChangeLog.cpp" "src/include/Terrain/ChangeLog.hpp"
     "src/Terrain/VoxelDataSerializer.cpp" "src/include/Terrain/VoxelDataSerializer.hpp"
     "src/Terrain/MapRegionStore.cpp" "src/include/Terrain/MapRegionStore.hpp"
     "src/Terrain/MapRegion.cpp" "src/include/Terrain/MapRegion.hpp"
+    "src/Terrain/TerrainRebuildActor.cpp" "src/include/Terrain/TerrainRebuildActor.hpp"
     )
 
 set(SOURCE_FILES_OPENGL

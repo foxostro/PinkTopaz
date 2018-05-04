@@ -15,11 +15,9 @@
 #include "Terrain/VoxelDataGenerator.hpp"
 #include "Terrain/TransactedVoxelData.hpp"
 #include "Terrain/TerrainMesh.hpp"
-#include "Terrain/TerrainDrawList.hpp"
-#include "Terrain/TerrainChunkQueue.hpp"
+#include "Terrain/TerrainRebuildActor.hpp"
 #include "Terrain/TerrainMeshGrid.hpp"
 #include "Terrain/TerrainHorizonDistance.hpp"
-#include "Terrain/TerrainProgressTracker.hpp"
 #include "Terrain/TerrainConfig.hpp"
 #include "RenderableStaticMesh.hpp"
 
@@ -31,8 +29,8 @@ public:
     
     Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             const std::shared_ptr<TaskDispatcher> &dispatcher,
-            const std::shared_ptr<TaskDispatcher> &dispatcherRebuildMesh,
-            const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData);
+            const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+            glm::vec3 initialCameraPosition);
     
     // No default constructor.
     Terrain() = delete;
@@ -58,18 +56,15 @@ public:
 private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<TaskDispatcher> _dispatcher;
-    std::shared_ptr<TaskDispatcher> _dispatcherRebuildMesh;
     std::shared_ptr<Mesher> _mesher;
     std::shared_ptr<VoxelDataGenerator> _voxelDataGenerator;
     std::shared_ptr<TransactedVoxelData> _voxels;
-    std::unique_ptr<TerrainDrawList> _drawList;
     std::unique_ptr<TerrainMeshGrid> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
-    TerrainChunkQueue _meshesToRebuild;
+    std::unique_ptr<TerrainRebuildActor> _meshRebuildActor;
     glm::mat4x4 _modelViewProjection;
     std::atomic<glm::vec3> _cameraPosition;
     TerrainHorizonDistance _horizonDistance;
-    TerrainProgressTracker _progressTracker;
     
     inline AABB getActiveRegion() const
     {
@@ -79,8 +74,6 @@ private:
         const AABB activeRegion = _meshes->boundingBox().intersect(horizonBox);
         return activeRegion;
     }
-    
-    void fetchMeshes(const std::vector<AABB> &meshCells);
     
     void rebuildMeshForChunkInner(const Array3D<Voxel> &voxels,
                                   const size_t index,
@@ -94,7 +87,7 @@ private:
     void rebuildMeshInResponseToChanges(const ChangeLog &changeLog);
     
     // Rebuilds the next pending mesh in the queue.
-    void rebuildNextMesh();
+    void rebuildNextMesh(const AABB &cell);
     
     // Update the terrain cursor position based on the current camera facing.
     void updateCursorPosition();

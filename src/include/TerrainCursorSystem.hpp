@@ -29,6 +29,10 @@ public:
     void receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event);
     void receive(const CameraMovedEvent &event);
     
+    // Some futures may be waiting on tasks in TerrainCursorSystem's main thread
+    // dispatch queue. Shutdown order matters.
+    void shutdown();
+    
 private:
     static constexpr size_t maxPlaceDistance = 16;
     

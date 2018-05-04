@@ -11,28 +11,26 @@
 #include "Terrain/MapRegionStore.hpp"
 #include "Profiler.hpp"
 #include "Grid/GridIndexerRange.hpp"
+#include "Grid/FrustumRange.hpp"
 #include "Grid/Array3D.hpp"
 #include "Renderer/TextureArrayLoader.hpp"
 #include <sstream>
 
-#define TERRAIN_PROGRESS_TRACKER 0
-
 Terrain::~Terrain()
 {
+    _meshRebuildActor.reset();
     _dispatcher->shutdown();
-    _dispatcherRebuildMesh->shutdown();
 }
 
 Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                  const std::shared_ptr<TaskDispatcher> &dispatcher,
-                 const std::shared_ptr<TaskDispatcher> &dispatcherRebuildMesh,
-                 const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData)
+                 const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+                 glm::vec3 initialCameraPosition)
  : _graphicsDevice(graphicsDevice),
    _dispatcher(dispatcher),
-   _dispatcherRebuildMesh(dispatcherRebuildMesh),
    _mesher(std::make_shared<MesherNaiveSurfaceNets>()),
    _voxelDataGenerator(std::make_shared<VoxelDataGenerator>(/* random seed = */ 52)),
-   _cameraPosition(glm::vec3())
+   _cameraPosition(initialCameraPosition)
 {
     // Load terrain texture array from a single image.
     TextureArrayLoader textureArrayLoader(graphicsDevice);
@@ -78,7 +76,6 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
     const AABB box = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
     const glm::ivec3 res = _voxelDataGenerator->countCellsInRegion(box) / (int)TERRAIN_CHUNK_SIZE;
-    _drawList = std::make_unique<TerrainDrawList>(box, res);
     _meshes = std::make_unique<TerrainMeshGrid>(box, res);
 
     // Limit the sparse grids to the number of chunks in the active region.
@@ -87,7 +84,14 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     const unsigned workingSetCount = std::pow(1 + 2*ACTIVE_REGION_SIZE / TERRAIN_CHUNK_SIZE, 3);
     _voxels->setChunkCountLimit(2*workingSetCount);
     _meshes->setCountLimit(2*workingSetCount);
-    _drawList->setCountLimit(2*workingSetCount);
+    
+    // Setup an actor to rebuild chunks.
+    const unsigned numMeshRebuildThreads = std::max(1u, std::thread::hardware_concurrency());
+    _meshRebuildActor = std::make_unique<TerrainRebuildActor>(numMeshRebuildThreads,
+                                                              _cameraPosition,
+                                                              [=](const AABB &cell){
+                                                                  rebuildNextMesh(cell);
+                                                              });
     
     // When voxels change, we need to extract a polygonal mesh representation
     // of the isosurface. This mesh is what we actually draw.
@@ -110,8 +114,11 @@ void Terrain::setTerrainUniforms(const TerrainUniforms &uniforms)
     
     // Extract the camera position from the camera transform.
     const glm::vec3 cameraPos = glm::vec3(glm::inverse(uniforms.view)[3]);
-    _dispatcher->async([this, cameraPos]{
-        _cameraPosition = cameraPos;
+    _cameraPosition = cameraPos;
+    _dispatcher->async([this]{
+        if (_meshRebuildActor) {
+            _meshRebuildActor->setSearchPoint(_cameraPosition);
+        }
     });
     
     // We'll use the MVP later to extract the camera frustum.
@@ -127,44 +134,51 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     encoder->setFragmentTexture(_defaultMesh->texture, 0);
     encoder->setVertexBuffer(_defaultMesh->uniforms, 1);
     
+    const AABB activeRegion = getActiveRegion();
+    TerrainMeshGrid &meshes = *_meshes;
+    
     // Draw meshes in the camera frustum.
-    auto missingMeshes = _drawList->draw(encoder, frustum, getActiveRegion());
-    
-    if (missingMeshes.empty()) {
-        // If no meshes were missing then increase the horizon distance so
-        // we can fetch meshes further away next time.
-        _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
-//        float d = _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
-//        SDL_Log("Increasing horizon distance to %.2f", d);
-    } else {
-        _dispatcher->async([this, missingMeshes{std::move(missingMeshes)}]{
-            fetchMeshes(missingMeshes);
-        });
+    for (const glm::ivec3 cellCoords : slice(meshes, frustum, activeRegion)) {
+        const Morton3 index = meshes.indexAtCellCoords(cellCoords);
+        boost::optional<std::shared_ptr<TerrainMesh>> maybeTerrainMeshPtr = meshes.getIfExists(index);
+        
+        if (maybeTerrainMeshPtr) {
+            assert(*maybeTerrainMeshPtr);
+            const RenderableStaticMesh &drawThis = (**maybeTerrainMeshPtr).getMesh();
+            if (drawThis.vertexCount > 0) {
+                encoder->setVertexBuffer(drawThis.buffer, 0);
+                encoder->drawPrimitives(Triangles, 0, drawThis.vertexCount, 1);
+            }
+        }
     }
-}
-
-void Terrain::fetchMeshes(const std::vector<AABB> &cells)
-{
-    PROFILER(TerrainFetchMeshes);
     
-    // It's important to mark cells in the progress tracker in order of
-    // distance to the camera. If we don't do this then close chunks do not
-    // complete before far away chunks.
-    const glm::vec3 cameraPos = _cameraPosition;
-    std::vector<AABB> meshCells(cells);
-    std::sort(meshCells.begin(),
-              meshCells.end(),
-              [cameraPos](const AABB &a, const AABB &b){
-                  const auto distA = glm::distance(a.center, cameraPos);
-                  const auto distB = glm::distance(b.center, cameraPos);
-                  return distA < distB;
-              });
+    // Figure out which meshes in the active region are missing.
+    static std::vector<AABB> missingMeshes;
+    missingMeshes.clear();
+    for (const glm::ivec3 cellCoords : slice(meshes, activeRegion)) {
+        const Morton3 index = meshes.indexAtCellCoords(cellCoords);
+        const auto maybeTerrainMeshPtr = meshes.getIfExists(index);
+        if (!maybeTerrainMeshPtr) {
+            missingMeshes.push_back(meshes.cellAtCellCoords(cellCoords));
+        }
+    }
     
-    const auto meshesNewlyInflight = _progressTracker.beginCellsNotInflight(meshCells);
-    _meshesToRebuild.push(meshesNewlyInflight);
-    _dispatcherRebuildMesh->map(meshesNewlyInflight.size(), [this]{
-        rebuildNextMesh();
-    });
+    // If no meshes were missing in the active region then increase the horizon
+    // distance so we can draw meshes further away next time.
+    // Otherwise, queue the meshes to be fetched asynchronously so we can draw
+    // them later. Meshes can disappear at any time due to cache purges. So,
+    // we have to do this everytime we need a mesh and can't find it.
+    if (0 == missingMeshes.size()) {
+        auto [distance, didChange] = _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
+        if (didChange) {
+            SDL_Log("Increasing horizon distance to %.2f", distance);
+        }
+    } else {
+//        std::string activeRegionStr = activeRegion.to_string();
+//        SDL_Log("There are %zu missing meshes in active region %s.",
+//                missingMeshes.size(), activeRegionStr.c_str());
+        _meshRebuildActor->push(missingMeshes);
+    }
 }
 
 float Terrain::getFogDensity() const
@@ -194,57 +208,15 @@ void Terrain::rebuildMeshInResponseToChanges(const ChangeLog &changeLog)
             const AABB cell = _meshes->cellAtCellCoords(cellCoords);
             meshCells.push_back(cell);
         }
-        fetchMeshes(meshCells);
+        _meshRebuildActor->push(meshCells);
     }
 }
 
-void Terrain::rebuildNextMesh()
+void Terrain::rebuildNextMesh(const AABB &cell)
 {
-    PROFILER(TerrainRebuildNextMesh);
-    
-    const glm::vec3 cameraPos = _cameraPosition;
-    const float horizonDistance = _horizonDistance.get();
-    const AABB horizonBox = {cameraPos, glm::vec3(horizonDistance, horizonDistance, horizonDistance)};
-    AABB cell;
-    
-    // Grab the next mesh to rebuild that is inside the horizon.
-    while (true) {
-        auto maybeCell = _meshesToRebuild.pop();
-        if (!maybeCell) {
-            return; // Bail if there are no meshes to rebuild.
-        }
-        cell = *maybeCell;
-        
-        if (doBoxesIntersect(horizonBox, cell)) {
-            // We found a good one. Break out of the loop now.
-            break;
-        } else {
-            // This one isn't in the active region so cancel it and move on.
-            SDL_Log("Cancelling mesh at %s because it fell out of the " \
-                    "active region", cell.to_string().c_str());
-            _progressTracker.cancel(cell);
-            continue;
-        }
-    }
-    
     // Rebuild the mesh and then stick it in the grid.
+    PROFILER(TerrainRebuildNextMesh);
     auto terrainMesh = std::make_shared<TerrainMesh>(cell, _defaultMesh, _graphicsDevice, _mesher, _voxels);
     terrainMesh->rebuild();
     _meshes->set(cell.center, terrainMesh);
-    _drawList->updateDrawList(*terrainMesh);
-
-    // Mark the cell as being complete.
-#if TERRAIN_PROGRESS_TRACKER
-    {
-        const auto duration = _progressTracker.finish(cell);
-        
-        // Log the amount of time it took.
-        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-        const std::string str = std::to_string(ms.count());
-        SDL_Log("Completed mesh at %s in %s ms.",
-                cell.to_string().c_str(), str.c_str());
-    }
-#else
-    _progressTracker.finish(cell);
-#endif
 }

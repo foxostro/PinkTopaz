@@ -20,9 +20,10 @@
 class World : public entityx::EntityX
 {
 public:
+    ~World();
+    
     explicit World(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                    const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
-                   const std::shared_ptr<TaskDispatcher> &dispatcherLowPriority,
                    const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData);
         
     void update(entityx::TimeDelta dt);

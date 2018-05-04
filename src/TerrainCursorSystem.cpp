@@ -24,6 +24,11 @@ TerrainCursorSystem::TerrainCursorSystem(const std::shared_ptr<TaskDispatcher> &
    _needsUpdate(false)
 {}
 
+void TerrainCursorSystem::shutdown()
+{
+    _mainThreadDispatcher->shutdown();
+}
+
 void TerrainCursorSystem::configure(entityx::EventManager &em)
 {
     em.subscribe<entityx::ComponentAddedEvent<ActiveCamera>>(*this);
