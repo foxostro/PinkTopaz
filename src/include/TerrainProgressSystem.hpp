@@ -32,7 +32,10 @@ public:
 private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::unordered_map<Morton3, entityx::Entity> _mapCellToEntity;
-    std::deque<std::function<void(entityx::EntityManager &es)>> _commands;
+    std::deque<TerrainProgressEvent> _pendingEvents;
+    
+    void handleEvent(entityx::EntityManager &es,
+                     const TerrainProgressEvent &event);
 };
 
 #endif /* TerrainProgressSystem_hpp */
