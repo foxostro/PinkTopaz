@@ -18,6 +18,7 @@
 
 #include <entityx/entityx.h>
 #include <glm/mat4x4.hpp>
+#include <boost/pool/object_pool.hpp>
 
 class TerrainCursorSystem : public entityx::System<TerrainCursorSystem>, public entityx::Receiver<TerrainCursorSystem>
 {
@@ -45,6 +46,7 @@ private:
     std::shared_ptr<TaskDispatcher> _mainThreadDispatcher;
     entityx::Entity _activeCamera;
     bool _needsUpdate;
+    boost::object_pool<std::atomic<bool>> _cancellationtokenPool;
 };
 
 #endif /* TerrainCursorSystem_hpp */

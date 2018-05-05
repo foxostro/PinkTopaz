@@ -100,8 +100,10 @@ void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTran
         cursor.cancellationToken->store(true);
     }
 
-    // TODO: It would help here to allocate these tokens from an object pool.
-    cursor.cancellationToken = std::make_shared<std::atomic<bool>>(false);
+    cursor.cancellationToken = std::shared_ptr<std::atomic<bool>>(_cancellationtokenPool.construct(),
+                                                                  [this](std::atomic<bool> *ptr){
+                                                                      _cancellationtokenPool.free(ptr);
+                                                                  });
 
     // Schedule a task to asynchronously compute the updated cursor position.
     _dispatcher->async([startTime=std::chrono::steady_clock::now(),
