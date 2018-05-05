@@ -16,9 +16,10 @@
 #include <entityx/entityx.h>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <map>
+#include <unordered_map>
 #include "SDL.h"
-    
+
+// System for moving the camera according to keyboard and mouse input.
 class CameraMovementSystem : public entityx::System<CameraMovementSystem>, public entityx::Receiver<CameraMovementSystem>
 {
 public:
@@ -36,7 +37,7 @@ private:
     
     glm::vec3 _eye, _center, _up;
     glm::quat _rotation;
-    std::map<SDL_Keycode, bool> _keys;
+    std::unordered_map<SDL_Keycode, bool> _keys;
     entityx::Entity _activeCamera;
     glm::ivec2 _mousePosDelta;
 };

@@ -20,6 +20,11 @@
 #include <glm/mat4x4.hpp>
 #include <boost/pool/object_pool.hpp>
 
+// System for updating terrain cursors.
+// Entities which have a TerrainCursor component are terrain cursors. These
+// permit selection of individual voxels by raycasting from the camera to the
+// terrain. These entities are represented on screen via a mesh which the system
+// will sync with the cursor position.
 class TerrainCursorSystem : public entityx::System<TerrainCursorSystem>, public entityx::Receiver<TerrainCursorSystem>
 {
 public:
