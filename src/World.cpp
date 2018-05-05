@@ -18,22 +18,17 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-World::~World()
-{
-    // Some futures may be waiting on tasks in TerrainCursorSystem's main thread
-    // dispatch queue. Shutdown order matters.
-    systems.system<TerrainCursorSystem>()->shutdown();
-}
-    
 World::World(const std::shared_ptr<GraphicsDevice> &device,
              const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
-             const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData)
+             const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+             const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
 {
     PROFILER(InitWorld);
     
     systems.add<RenderSystem>(device);
     systems.add<CameraMovementSystem>();
-    systems.add<TerrainCursorSystem>(dispatcherHighPriority);
+    systems.add<TerrainCursorSystem>(dispatcherHighPriority,
+                                     mainThreadDispatcher);
     systems.configure();
     
     // Setup the position and orientation of the camera.

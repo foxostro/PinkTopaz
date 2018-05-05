@@ -18,16 +18,12 @@
 #include <glm/gtc/matrix_transform.hpp> // for glm::translate()
 #include <mutex>
 
-TerrainCursorSystem::TerrainCursorSystem(const std::shared_ptr<TaskDispatcher> &dispatcher)
+TerrainCursorSystem::TerrainCursorSystem(const std::shared_ptr<TaskDispatcher> &dispatcher,
+                                         const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
  : _dispatcher(dispatcher),
-   _mainThreadDispatcher(std::make_shared<TaskDispatcher>("TerrainCursorSystem", 0)),
+   _mainThreadDispatcher(mainThreadDispatcher),
    _needsUpdate(false)
 {}
-
-void TerrainCursorSystem::shutdown()
-{
-    _mainThreadDispatcher->shutdown();
-}
 
 void TerrainCursorSystem::configure(entityx::EventManager &em)
 {
@@ -67,11 +63,6 @@ void TerrainCursorSystem::update(entityx::EntityManager &es,
                                 terrain.terrain);
         });
     }
-    
-    // We only update the entity components on the main thread. When the async
-    // cursor request completes, it schedules a task to do this. Those tasks are
-    // executed here. (We'll probably catch it next frame at the soonest.)
-    _mainThreadDispatcher->flush();
 }
 
 void TerrainCursorSystem::receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)

@@ -25,7 +25,8 @@
 
 void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                         const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
-                        const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData)
+                        const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+                        const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
 {
     // Get the display refresh rate. This is usually 60 Hz.
     const double refreshRate = getVideoRefreshRate();
@@ -33,7 +34,8 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
     World gameWorld(graphicsDevice,
                     dispatcherHighPriority,
-                    dispatcherVoxelData);
+                    dispatcherVoxelData,
+                    mainThreadDispatcher);
     
     // Send an event containing the initial window size and scale factor.
     // This will allow the render system to setup projection matrices and such.
@@ -106,8 +108,17 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
         
         const entityx::TimeDelta frameDurationMs = std::chrono::duration_cast<std::chrono::milliseconds>(frameDuration).count();
         gameWorld.update(frameDurationMs);
+        
+        // Sometimes, we need to execute a task specifically on the main thread.
+        // For example, a background task needs to update an entity component.
+        mainThreadDispatcher->flush();
+        
 		std::this_thread::sleep_until(nextTime);
     }
+    
+    // Some futures may be waiting on tasks in main thread dispatch queue.
+    // Shutdown order matters.
+    mainThreadDispatcher->shutdown();
 }
     
 void Application::run()
@@ -141,7 +152,8 @@ void Application::run()
     
     inner(createDefaultGraphicsDevice(*_window),
           std::make_shared<TaskDispatcher>("High Priority TaskDispatcher", 1),
-          std::make_shared<TaskDispatcher>("Voxel Data TaskDispatcher", h));
+          std::make_shared<TaskDispatcher>("Voxel Data TaskDispatcher", h),
+          std::make_shared<TaskDispatcher>("Main Thread Dispatcher", 0));
 
     SDL_DestroyWindow(_window);
     _window = nullptr;

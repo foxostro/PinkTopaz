@@ -15,16 +15,17 @@
 
 // A World is the same thing as a game zone or level.
 // This is a collection of interacting entities and associated systems.
-// It is, of course, entirely possible to have multiple worlds. However, interactions across worlds are not
-// intended to be routine or easily modeled.
+// It is, of course, entirely possible to have multiple worlds. However,
+// interactions across worlds are not intended to be routine or easily modeled.
 class World : public entityx::EntityX
 {
 public:
-    ~World();
+    World() = delete;
     
-    explicit World(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
-                   const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
-                   const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData);
+    World(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+          const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
+          const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+          const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher);
         
     void update(entityx::TimeDelta dt);
 };

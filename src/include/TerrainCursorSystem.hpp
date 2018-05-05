@@ -22,16 +22,13 @@
 class TerrainCursorSystem : public entityx::System<TerrainCursorSystem>, public entityx::Receiver<TerrainCursorSystem>
 {
 public:
-    TerrainCursorSystem(const std::shared_ptr<TaskDispatcher> &dispatcher);
+    TerrainCursorSystem(const std::shared_ptr<TaskDispatcher> &dispatcher,
+                        const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher);
     void configure(entityx::EventManager &em) override;
     void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
     void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
     void receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event);
     void receive(const CameraMovedEvent &event);
-    
-    // Some futures may be waiting on tasks in TerrainCursorSystem's main thread
-    // dispatch queue. Shutdown order matters.
-    void shutdown();
     
 private:
     static constexpr size_t maxPlaceDistance = 16;
