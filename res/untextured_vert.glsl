@@ -1,17 +1,17 @@
 #version 330
 
 layout (location=0) in vec4 vp;
-layout (location=1) in vec4 vc;
 
 out vec4 color;
 
 layout (std140) uniform UntexturedUniforms
 {
     mat4 view, proj;
+    vec4 colorParameter;
 };
 
 void main()
 {
-    color = vc;
+    color = colorParameter;
     gl_Position = proj * view * vp;
 }
