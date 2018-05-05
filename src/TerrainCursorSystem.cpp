@@ -100,10 +100,7 @@ void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTran
         cursor.cancellationToken->store(true);
     }
 
-    cursor.cancellationToken = std::shared_ptr<std::atomic<bool>>(_cancellationtokenPool.construct(),
-                                                                  [this](std::atomic<bool> *ptr){
-                                                                      _cancellationtokenPool.free(ptr);
-                                                                  });
+    cursor.cancellationToken = std::make_shared<std::atomic<bool>>(false);
 
     // Schedule a task to asynchronously compute the updated cursor position.
     _dispatcher->async([startTime=std::chrono::steady_clock::now(),

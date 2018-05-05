@@ -18,7 +18,6 @@
 
 #include <entityx/entityx.h>
 #include <glm/mat4x4.hpp>
-#include <boost/pool/object_pool.hpp>
 
 // System for updating terrain cursors.
 // Entities which have a TerrainCursor component are terrain cursors. These
@@ -51,7 +50,6 @@ private:
     std::shared_ptr<TaskDispatcher> _mainThreadDispatcher;
     entityx::Entity _activeCamera;
     bool _needsUpdate;
-    boost::object_pool<std::atomic<bool>> _cancellationtokenPool;
 };
 
 #endif /* TerrainCursorSystem_hpp */
