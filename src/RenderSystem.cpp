@@ -10,7 +10,6 @@
 #include "Renderer/Shader.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/RenderPassDescriptor.hpp"
-#include "Renderer/UntexturedVertex.hpp"
 #include "Fonts/TextAttributes.hpp"
 #include "Transform.hpp"
 #include "RenderableStaticMesh.hpp"
@@ -18,6 +17,7 @@
 #include "TerrainCursor.hpp"
 #include "Exception.hpp"
 #include "Profiler.hpp"
+#include "WireframeCube.hpp"
 
 #include "SDL.h"
 #include <glm/gtc/matrix_transform.hpp> // for perspective()
@@ -80,10 +80,10 @@ void RenderSystem::update(entityx::EntityManager &es,
         mesh.uniforms->replace(sizeof(uniforms), &uniforms);
     });
     
-    es.each<RenderableStaticWireframeMesh, Transform>([&](entityx::Entity entity,
-                                                          RenderableStaticWireframeMesh &mesh,
-                                                          Transform &transform) {
-        UntexturedUniforms uniforms = {
+    es.each<WireframeCube::Renderable, Transform>([&](entityx::Entity entity,
+                                                      WireframeCube::Renderable &mesh,
+                                                      Transform &transform) {
+        WireframeCube::Uniforms uniforms = {
             cameraTransform * transform.value,
             adjust * _proj,
             mesh.color
@@ -116,8 +116,7 @@ void RenderSystem::update(entityx::EntityManager &es,
     
     // Draw wireframe boxes for things like the terrain cursor.
     encoder->setTriangleFillMode(Lines);
-    es.each<RenderableStaticWireframeMesh>([&](entityx::Entity entity,
-                                               RenderableStaticWireframeMesh &mesh){
+    es.each<WireframeCube::Renderable>([&](entityx::Entity entity, WireframeCube::Renderable &mesh){
         if (!mesh.hidden) {
             encoder->setShader(mesh.shader);
             encoder->setVertexBuffer(mesh.vertexBuffer, 0);

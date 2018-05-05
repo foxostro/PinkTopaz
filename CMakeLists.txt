@@ -120,7 +120,7 @@ set(SOURCE_FILES_RENDERER
     "src/include/Renderer/TextureSampler.hpp"
     "src/Renderer/TextureArrayLoader.cpp" "src/include/Renderer/TextureArrayLoader.hpp"
     "src/include/Renderer/TerrainVertex.hpp"
-    "src/include/Renderer/UntexturedVertex.hpp"
+    "src/Renderer/WireframeCube.cpp" "src/include/WireframeCube.hpp"
     )
 
 set(SOURCE_FILES_FONTS

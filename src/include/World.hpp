@@ -11,7 +11,6 @@
 
 #include <entityx/entityx.h>
 #include "Renderer/GraphicsDevice.hpp"
-#include "RenderableStaticMesh.hpp"
 #include "TaskDispatcher.hpp"
 
 // A World is the same thing as a game zone or level.
@@ -29,9 +28,6 @@ public:
           const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher);
         
     void update(entityx::TimeDelta dt);
-    
-private:
-    RenderableStaticWireframeMesh createCursorMesh(const std::shared_ptr<GraphicsDevice> &graphicsDevice);
 };
 
 #endif /* World_hpp */

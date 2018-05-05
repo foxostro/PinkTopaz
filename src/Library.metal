@@ -64,33 +64,35 @@ fragment float4 frag(TerrainProjectedVertex vert [[stage_in]],
 
 
 
-struct UntexturedVertex
+struct WireframeCubeVertex
 {
     float4 vp [[attribute(0)]];
 };
 
-struct UntexturedProjectedVertex
+struct WireframeCubeProjectedVertex
 {
     float4 position [[position]];
     float4 color;
 };
 
-struct UntexturedUniforms
+struct WireframeCubeUniforms
 {
     float4x4 view, proj;
     float4 color;
 };
 
-vertex UntexturedProjectedVertex untextured_vert(UntexturedVertex inVert [[stage_in]],
-                                                 constant UntexturedUniforms &u [[buffer(1)]])
+vertex WireframeCubeProjectedVertex
+wireframe_cube_vert(WireframeCubeVertex inVert [[stage_in]],
+                    constant WireframeCubeUniforms &u [[buffer(1)]])
 {
-    UntexturedProjectedVertex outVert;
+    WireframeCubeProjectedVertex outVert;
     outVert.position = u.proj * u.view * inVert.vp;
     outVert.color = u.color;
     return outVert;
 }
 
-fragment float4 untextured_frag(TerrainProjectedVertex vert [[stage_in]])
+fragment float4
+wireframe_cube_frag(WireframeCubeProjectedVertex vert [[stage_in]])
 {
     return vert.color;
 }

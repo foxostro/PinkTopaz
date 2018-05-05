@@ -29,17 +29,4 @@ struct RenderableStaticMesh
     std::shared_ptr<TextureSampler> textureSampler;
 };
 
-// Gives the entity a static wireframe mesh which is rendered to represent the
-// entity in the world. This is always untextured.
-struct RenderableStaticWireframeMesh
-{
-    bool hidden;
-    size_t vertexCount;
-    std::shared_ptr<Buffer> vertexBuffer;
-    // TODO: need an index buffer here to accompany the vertex buffer.
-    std::shared_ptr<Buffer> uniforms;
-    std::shared_ptr<Shader> shader;
-    glm::vec4 color;
-};
-
 #endif /* RenderableStaticMesh_hpp */

@@ -14,7 +14,7 @@
 #include <deque>
 
 #include "TerrainProgressEvent.hpp"
-#include "RenderableStaticMesh.hpp"
+#include "WireframeCube.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 
 // System for displaying the progress of terrain generation / loading.
@@ -30,10 +30,10 @@ public:
     void receive(const TerrainProgressEvent &event);
     
 private:
-    std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::unordered_map<Morton3, entityx::Entity> _mapCellToEntity;
     std::unordered_map<TerrainProgressEvent::State, glm::vec4> _mapStateToColor;
     std::deque<TerrainProgressEvent> _pendingEvents;
+    WireframeCube _wireframeCube;
     
     void handleEvent(entityx::EntityManager &es,
                      const TerrainProgressEvent &event);

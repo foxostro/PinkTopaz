@@ -12,6 +12,7 @@
 #include "Transform.hpp"
 #include "TerrainComponent.hpp"
 #include "Grid/GridRaycast.hpp"
+#include "WireframeCube.hpp"
 
 #include "SDL.h"
 #include <glm/gtx/quaternion.hpp>
@@ -44,7 +45,7 @@ void TerrainCursorSystem::update(entityx::EntityManager &es,
         
         const auto &cameraTransform = _activeCamera.component<Transform>()->value;
         
-        es.each<TerrainCursor, RenderableStaticWireframeMesh, Transform>([&](entityx::Entity cursorEntity, TerrainCursor &cursor, RenderableStaticWireframeMesh &cursorMesh, Transform &cursorTransform) {
+        es.each<TerrainCursor, WireframeCube::Renderable, Transform>([&](entityx::Entity cursorEntity, TerrainCursor &cursor, WireframeCube::Renderable &cursorMesh, Transform &cursorTransform) {
             
             // The terrain entity, or its components, may be invalid. Check.
             entityx::Entity terrainEntity = cursor.terrainEntity;
@@ -157,7 +158,7 @@ void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTran
         if (cursorEntity.valid()) {
             auto handleTerrainCursor = cursorEntity.component<TerrainCursor>();
             auto handleTransform = cursorEntity.component<Transform>();
-            auto handleMesh = cursorEntity.component<RenderableStaticWireframeMesh>();
+            auto handleMesh = cursorEntity.component<WireframeCube::Renderable>();
             
             if (handleTerrainCursor.valid() &&
                 handleTransform.valid() &&
@@ -171,7 +172,7 @@ void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTran
                 Transform &cursorTransform = *handleTransform.get();
                 cursorTransform.value = glm::translate(mat4(1), placePos + vec3(0.5f));
                 
-                RenderableStaticWireframeMesh &cursorMesh = *handleMesh.get();
+                WireframeCube::Renderable &cursorMesh = *handleMesh.get();
                 cursorMesh.hidden = !active;
             }
         }
