@@ -18,8 +18,6 @@
 
 GraphicsDeviceMetal::GraphicsDeviceMetal(SDL_Window &window)
 {
-    _pool = [[NSAutoreleasePool alloc] init];
-    
     id <MTLDevice> device = MTLCreateSystemDefaultDevice();
     
     // Create a Metal layer for displaying rendering results in the window.
@@ -95,7 +93,6 @@ GraphicsDeviceMetal::~GraphicsDeviceMetal()
     [_depthTexture release];
     [_depthTestOn release];
     [_depthTestOff release];
-    [_pool release];
 }
 
 std::shared_ptr<CommandEncoder>

@@ -198,6 +198,7 @@ set(SOURCE_FILES_PLATFORM_SUPPORT
     "src/include/RetinaSupport.h"
     "src/include/RetinaSupport.h"
     "src/include/ThreadName.hpp"
+    "src/include/AutoreleasePool.hpp"
     )
 
 set(SOURCE_FILES_BLOCK_DATA_STORE
@@ -214,6 +215,7 @@ if(APPLE)
         "src/osx/VideoRefreshRate.cpp"
         "src/osx/Profiler.cpp"
         "src/osx/ThreadName.cpp"
+        "src/osx/AutoreleasePool.mm"
         )
 else(APPLE)
 	if(WIN32)
@@ -223,6 +225,7 @@ else(APPLE)
             "src/windows/VideoRefreshRate.cpp"
             "src/windows/Profiler.cpp"
             "src/windows/ThreadName.cpp"
+            "src/windows/AutoreleasePool.cpp"
             )
 	else(WIN32)
         list(APPEND SOURCE_FILES_PLATFORM_SUPPORT
@@ -231,6 +234,7 @@ else(APPLE)
             "src/linux/VideoRefreshRate.cpp"
             "src/linux/Profiler.cpp"
             "src/linux/ThreadName.cpp"
+            "src/linux/AutoreleasePool.cpp"
             )
 	endif(WIN32)
 endif(APPLE)

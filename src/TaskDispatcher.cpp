@@ -8,6 +8,7 @@
 
 #include "TaskDispatcher.hpp"
 #include "ThreadName.hpp"
+#include "AutoreleasePool.hpp"
 #include <algorithm>
 
 TaskDispatcher::TaskDispatcher(const std::string &name,
@@ -28,10 +29,11 @@ TaskDispatcher::~TaskDispatcher()
 
 void TaskDispatcher::shutdown()
 {
+    AutoreleasePool pool;
+
     _threadShouldExit = true;
     
-    while (!_tasks.empty()) {
-        std::shared_ptr<AbstractTask> task(_tasks.front());
+    while (!_tasks.empty()) {        std::shared_ptr<AbstractTask> task(_tasks.front());
         _tasks.pop();
         task->cancel();
     }
@@ -45,6 +47,7 @@ void TaskDispatcher::shutdown()
 
 void TaskDispatcher::flush()
 {
+    AutoreleasePool pool;
     std::unique_lock<std::mutex> lock(_lockTaskPosted);
     
     if (_threadShouldExit) {
@@ -65,6 +68,7 @@ void TaskDispatcher::worker(const std::string &name)
     setNameForCurrentThread(name);
 
     while (true) {
+        AutoreleasePool pool;
         std::shared_ptr<AbstractTask> taskPtr;
         
         {

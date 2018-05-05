@@ -8,6 +8,7 @@
 
 #include "Terrain/TerrainRebuildActor.hpp"
 #include "ThreadName.hpp"
+#include "AutoreleasePool.hpp"
 //#include "SDL.h"
 
 // The threshold below which changes in the search point are ignored.
@@ -89,6 +90,7 @@ void TerrainRebuildActor::setSearchPoint(glm::vec3 searchPoint)
 void TerrainRebuildActor::worker()
 {
     while (!_threadShouldExit) {
+        AutoreleasePool pool;
         boost::optional<Cell> maybeCell = pop();
         if (maybeCell) {
             Cell &cell = *maybeCell;

@@ -51,7 +51,6 @@ private:
     MTLRenderPassDescriptor *_metalRenderPassDesc;
     id <CAMetalDrawable> _drawable;
     id <MTLRenderCommandEncoder> _encoder;
-    NSAutoreleasePool *_pool;
     id <MTLDepthStencilState> _depthTestOn;
     id <MTLDepthStencilState> _depthTestOff;
 };

@@ -16,6 +16,7 @@
 #include "Exception.hpp"
 #include "Profiler.hpp"
 #include "VideoRefreshRate.hpp"
+#include "AutoreleasePool.hpp"
 
 #include "SDL.h"
 #include <map>
@@ -50,6 +51,7 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
     while (true) {
         PROFILER(Frame);
+        AutoreleasePool pool;
         
         const auto newTime = std::chrono::high_resolution_clock::now();
         const auto frameDuration = newTime - currentTime;
@@ -123,6 +125,8 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
 void Application::run()
 {
+    AutoreleasePool pool;
+    
     if (!SDL_HasAVX()) {
         throw Exception("This application requires the AVX2 instruction set found on Intel Haswell chips, or newer.");
     }

@@ -21,7 +21,6 @@ CommandEncoderMetal::CommandEncoderMetal(const RenderPassDescriptor &desc,
                                          id <MTLDepthStencilState> depthTestOn,
                                          id <MTLDepthStencilState> depthTestOff)
 {
-    _pool = [[NSAutoreleasePool alloc] init];
     _commandQueue = [commandQueue retain];
     _drawable = [drawable retain];
     _commandBuffer = [[commandQueue commandBuffer] retain];
@@ -164,9 +163,6 @@ void CommandEncoderMetal::commit()
     [_encoder endEncoding];
     [_commandBuffer presentDrawable:_drawable];
     [_commandBuffer commit];
-    
-    [_pool release];
-    _pool = nil;
 }
 
 void CommandEncoderMetal::setDepthTest(bool enable)

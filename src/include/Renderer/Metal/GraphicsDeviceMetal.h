@@ -111,7 +111,6 @@ private:
     id <MTLLibrary> _library;
     id <MTLTexture> _depthTexture;
     id <MTLDepthStencilState> _depthTestOn, _depthTestOff;
-    NSAutoreleasePool *_pool;
 };
 
 #endif /* GraphicsDeviceMetal_h */
