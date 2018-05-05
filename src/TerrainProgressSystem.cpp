@@ -9,6 +9,7 @@
 #include "TerrainProgressSystem.hpp"
 #include "Transform.hpp"
 #include "Renderer/UntexturedVertex.hpp"
+#include "Exception.hpp"
 #include <glm/gtx/transform.hpp>
 
 static RenderableStaticWireframeMesh
@@ -126,34 +127,42 @@ void TerrainProgressSystem::update(entityx::EntityManager &es,
 
 void TerrainProgressSystem::receive(const TerrainProgressEvent &event)
 {
-    auto iter = _mapCellToEntity.find(event.cellCoords);
-    
-    if (iter == _mapCellToEntity.end()) {
-        // A corresponding entity does not exist.
-        if (event.state != TerrainProgressEvent::Complete) {
-            // Create the entity. We queue this to take place in the update()
-            // method where we have access to the entity manager.
-            glm::mat4 transform = glm::scale(glm::translate(glm::mat4(1), event.boundingBox.center), event.boundingBox.extent*2.f);
-            auto mesh = createWireframeBox(_graphicsDevice);
-            _commands.emplace_back([&map=_mapCellToEntity, cellCoords=event.cellCoords, mesh=std::move(mesh), transform=std::move(transform)](entityx::EntityManager &es){
+    // Queue this to take place in update() where we have access to the
+    // entity manager.
+    _commands.emplace_back([=](entityx::EntityManager &es){
+        auto iter = _mapCellToEntity.find(event.cellCoords);
+        
+        if (iter == _mapCellToEntity.end()) {
+            // A corresponding entity does not exist. Create it now if the event
+            // puts the chunk into a state where we want to show progress.
+            if (event.state != TerrainProgressEvent::Complete) {
+                entityx::Entity entity = es.create();
                 
-                Transform transformComponent;
-                transformComponent.value = transform;
+                Transform transform;
+                transform.value = glm::scale(glm::translate(glm::mat4(1), event.boundingBox.center), event.boundingBox.extent*2.f);
+                entity.assign<Transform>(transform);
                 
-                entityx::Entity testBox = es.create();
-                testBox.assign<Transform>(transform);
-                testBox.assign<RenderableStaticWireframeMesh>(mesh);
+                // TODO: Render an instanced wireframe box for each chunk. If we do this then each box only consumes one vec4 for the position and one vec4 for the color.
+                auto mesh = createWireframeBox(_graphicsDevice);
+                entity.assign<RenderableStaticWireframeMesh>(mesh);
                 
-                map[cellCoords] = testBox;
-            });
+                _mapCellToEntity[event.cellCoords] = std::move(entity);
+            }
+        } else {
+            // If the chunk is "complete" then remove the entity.
+            // We no longer need the wireframe box.
+            if (event.state == TerrainProgressEvent::Complete) {
+                entityx::Entity entity = iter->second;
+                entity.destroy();
+                
+                auto iter = _mapCellToEntity.find(event.cellCoords);
+                
+                if (iter != _mapCellToEntity.end()) {
+                    _mapCellToEntity.erase(iter);
+                } else {
+                    throw Exception("How did we get an invalid iterator here?");
+                }
+            }
         }
-    } else {
-        // A corresponding entity does exist, and we can use that.
-        if (event.state == TerrainProgressEvent::Complete) {
-            // Remove the entity as we no longer need the wireframe box.
-            entityx::Entity &entity = iter->second;
-            entity.destroy();
-            _mapCellToEntity.erase(iter);
-        }
-    }
+    });
 }
