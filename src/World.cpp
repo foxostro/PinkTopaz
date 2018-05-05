@@ -92,33 +92,33 @@ RenderableStaticWireframeMesh World::createCursorMesh(const std::shared_ptr<Grap
         3, 2, 6, 7, 4, 2, 0, 3, 1, 6, 5, 4, 1, 0
     }};
     
-    const std::array<glm::vec4, 8> vertices = {{
-        glm::vec4(-L,  L, -L, 1),
-        glm::vec4( L,  L, -L, 1),
-        glm::vec4(-L,  L,  L, 1),
-        glm::vec4( L,  L,  L, 1),
-        glm::vec4(-L, -L, -L, 1),
-        glm::vec4( L, -L, -L, 1),
-        glm::vec4( L, -L,  L, 1),
-        glm::vec4(-L, -L,  L, 1)
+    const std::array<UntexturedVertex, 8> vertices = {{
+        UntexturedVertex(glm::vec4(-L,  L, -L, 1)),
+        UntexturedVertex(glm::vec4( L,  L, -L, 1)),
+        UntexturedVertex(glm::vec4(-L,  L,  L, 1)),
+        UntexturedVertex(glm::vec4( L,  L,  L, 1)),
+        UntexturedVertex(glm::vec4(-L, -L, -L, 1)),
+        UntexturedVertex(glm::vec4( L, -L, -L, 1)),
+        UntexturedVertex(glm::vec4( L, -L,  L, 1)),
+        UntexturedVertex(glm::vec4(-L, -L,  L, 1))
     }};
     
     // TODO: Pass the index buffer to the GPU and use indexed drawing instead.
     const std::array<UntexturedVertex, 14> unpackedVertices = {{
-        {vertices[indices[0]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[1]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[2]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[3]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[4]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[5]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[6]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[7]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[8]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[9]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[10]], glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[11]], glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[12]], glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[13]], glm::vec4(1.f, 1.f, 1.f, 1.f)}
+        vertices[indices[0]],
+        vertices[indices[1]],
+        vertices[indices[2]],
+        vertices[indices[3]],
+        vertices[indices[4]],
+        vertices[indices[5]],
+        vertices[indices[6]],
+        vertices[indices[7]],
+        vertices[indices[8]],
+        vertices[indices[9]],
+        vertices[indices[10]],
+        vertices[indices[11]],
+        vertices[indices[12]],
+        vertices[indices[13]]
     }};
     
     const size_t bufferSize = unpackedVertices.size() * sizeof(UntexturedVertex);
@@ -137,15 +137,6 @@ RenderableStaticWireframeMesh World::createCursorMesh(const std::shared_ptr<Grap
             false,
             sizeof(UntexturedVertex),
             offsetof(UntexturedVertex, position)
-        };
-        vertexFormat.attributes.emplace_back(attr);
-        
-        attr = {
-            4,
-            AttributeTypeFloat,
-            false,
-            sizeof(UntexturedVertex),
-            offsetof(UntexturedVertex, color)
         };
         vertexFormat.attributes.emplace_back(attr);
     }
@@ -169,6 +160,7 @@ RenderableStaticWireframeMesh World::createCursorMesh(const std::shared_ptr<Grap
     cubeMesh.vertexBuffer = vertexBuffer;
     cubeMesh.uniforms = uniformBuffer;
     cubeMesh.shader = shader;
+    cubeMesh.color = glm::vec4(1.0f);
     
     return cubeMesh;
 }

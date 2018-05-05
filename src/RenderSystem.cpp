@@ -85,7 +85,8 @@ void RenderSystem::update(entityx::EntityManager &es,
                                                           Transform &transform) {
         UntexturedUniforms uniforms = {
             cameraTransform * transform.value,
-            adjust * _proj
+            adjust * _proj,
+            mesh.color
         };
         mesh.uniforms->replace(sizeof(uniforms), &uniforms);
     });

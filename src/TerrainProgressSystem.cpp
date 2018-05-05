@@ -24,33 +24,33 @@ createWireframeBox(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
         3, 2, 6, 7, 4, 2, 0, 3, 1, 6, 5, 4, 1, 0
     }};
     
-    const std::array<glm::vec4, 8> vertices = {{
-        glm::vec4(-L,  L, -L, 1),
-        glm::vec4( L,  L, -L, 1),
-        glm::vec4(-L,  L,  L, 1),
-        glm::vec4( L,  L,  L, 1),
-        glm::vec4(-L, -L, -L, 1),
-        glm::vec4( L, -L, -L, 1),
-        glm::vec4( L, -L,  L, 1),
-        glm::vec4(-L, -L,  L, 1)
+    const std::array<UntexturedVertex, 8> vertices = {{
+        UntexturedVertex(glm::vec4(-L,  L, -L, 1)),
+        UntexturedVertex(glm::vec4( L,  L, -L, 1)),
+        UntexturedVertex(glm::vec4(-L,  L,  L, 1)),
+        UntexturedVertex(glm::vec4( L,  L,  L, 1)),
+        UntexturedVertex(glm::vec4(-L, -L, -L, 1)),
+        UntexturedVertex(glm::vec4( L, -L, -L, 1)),
+        UntexturedVertex(glm::vec4( L, -L,  L, 1)),
+        UntexturedVertex(glm::vec4(-L, -L,  L, 1))
     }};
     
     // TODO: Pass the index buffer to the GPU and use indexed drawing instead.
     const std::array<UntexturedVertex, 14> unpackedVertices = {{
-        {vertices[indices[0]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[1]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[2]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[3]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[4]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[5]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[6]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[7]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[8]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[9]],  glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[10]], glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[11]], glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[12]], glm::vec4(1.f, 1.f, 1.f, 1.f)},
-        {vertices[indices[13]], glm::vec4(1.f, 1.f, 1.f, 1.f)}
+        vertices[indices[0]],
+        vertices[indices[1]],
+        vertices[indices[2]],
+        vertices[indices[3]],
+        vertices[indices[4]],
+        vertices[indices[5]],
+        vertices[indices[6]],
+        vertices[indices[7]],
+        vertices[indices[8]],
+        vertices[indices[9]],
+        vertices[indices[10]],
+        vertices[indices[11]],
+        vertices[indices[12]],
+        vertices[indices[13]]
     }};
     
     const size_t bufferSize = unpackedVertices.size() * sizeof(UntexturedVertex);
@@ -69,15 +69,6 @@ createWireframeBox(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
             false,
             sizeof(UntexturedVertex),
             offsetof(UntexturedVertex, position)
-        };
-        vertexFormat.attributes.emplace_back(attr);
-        
-        attr = {
-            4,
-            AttributeTypeFloat,
-            false,
-            sizeof(UntexturedVertex),
-            offsetof(UntexturedVertex, color)
         };
         vertexFormat.attributes.emplace_back(attr);
     }
@@ -101,13 +92,19 @@ createWireframeBox(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
     cubeMesh.vertexBuffer = vertexBuffer;
     cubeMesh.uniforms = uniformBuffer;
     cubeMesh.shader = shader;
+    cubeMesh.color = glm::vec4(1.0f);
     
     return cubeMesh;
 }
 
 TerrainProgressSystem::TerrainProgressSystem(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
  : _graphicsDevice(graphicsDevice)
-{}
+{
+    _mapStateToColor[TerrainProgressEvent::Queued] = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    _mapStateToColor[TerrainProgressEvent::WaitingOnVoxels] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    _mapStateToColor[TerrainProgressEvent::ExtractingSurface] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    _mapStateToColor[TerrainProgressEvent::Complete] = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+}
 
 void TerrainProgressSystem::configure(entityx::EventManager &eventManager)
 {
@@ -154,10 +151,13 @@ void TerrainProgressSystem::handleEvent(entityx::EntityManager &es,
             _mapCellToEntity[event.cellCoords] = std::move(entity);
         }
     } else {
+        entityx::Entity entity = iter->second;
+        
+        entity.component<RenderableStaticWireframeMesh>()->color = _mapStateToColor[event.state];
+        
         // If the chunk is "complete" then remove the entity.
         // We no longer need the wireframe box.
         if (event.state == TerrainProgressEvent::Complete) {
-            entityx::Entity entity = iter->second;
             entity.destroy();
             
             auto iter = _mapCellToEntity.find(event.cellCoords);

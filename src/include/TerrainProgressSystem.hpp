@@ -32,6 +32,7 @@ public:
 private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::unordered_map<Morton3, entityx::Entity> _mapCellToEntity;
+    std::unordered_map<TerrainProgressEvent::State, glm::vec4> _mapStateToColor;
     std::deque<TerrainProgressEvent> _pendingEvents;
     
     void handleEvent(entityx::EntityManager &es,

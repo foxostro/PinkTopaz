@@ -67,7 +67,6 @@ fragment float4 frag(TerrainProjectedVertex vert [[stage_in]],
 struct UntexturedVertex
 {
     float4 vp [[attribute(0)]];
-    float4 vc [[attribute(1)]];
 };
 
 struct UntexturedProjectedVertex
@@ -79,6 +78,7 @@ struct UntexturedProjectedVertex
 struct UntexturedUniforms
 {
     float4x4 view, proj;
+    float4 color;
 };
 
 vertex UntexturedProjectedVertex untextured_vert(UntexturedVertex inVert [[stage_in]],
@@ -86,7 +86,7 @@ vertex UntexturedProjectedVertex untextured_vert(UntexturedVertex inVert [[stage
 {
     UntexturedProjectedVertex outVert;
     outVert.position = u.proj * u.view * inVert.vp;
-    outVert.color = inVert.vc;
+    outVert.color = u.color;
     return outVert;
 }
 

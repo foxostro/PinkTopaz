@@ -16,6 +16,7 @@
 #include "Renderer/TextureSampler.hpp"
 
 #include <memory>
+#include <glm/vec4.hpp>
 
 // Gives the entity a static mesh which is rendered to represent the entity in the world.
 struct RenderableStaticMesh
@@ -38,6 +39,7 @@ struct RenderableStaticWireframeMesh
     // TODO: need an index buffer here to accompany the vertex buffer.
     std::shared_ptr<Buffer> uniforms;
     std::shared_ptr<Shader> shader;
+    glm::vec4 color;
 };
 
 #endif /* RenderableStaticMesh_hpp */
