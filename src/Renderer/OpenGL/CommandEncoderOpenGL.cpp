@@ -145,6 +145,31 @@ void CommandEncoderOpenGL::drawPrimitives(PrimitiveType type, size_t first, size
     });
 }
 
+void CommandEncoderOpenGL::setTriangleFillMode(TriangleFillMode fillMode)
+{
+    GLenum glTriangleFillMode;
+    
+    switch (fillMode)
+    {
+        case Fill:
+            glTriangleFillMode = GL_FILL;
+            break;
+            
+        case Lines:
+            glTriangleFillMode = GL_LINE;
+            break;
+            
+        default:
+            throw Exception("Unsupported triangle fill mode in setTriangleFillMode().");
+    }
+    
+    _encoderCommandQueue.enqueue(_id, __FUNCTION__, [glTriangleFillMode]{
+        CHECK_GL_ERROR();
+        glPolygonMode(GL_FRONT_AND_BACK, glTriangleFillMode);
+        CHECK_GL_ERROR();
+    });
+}
+
 void CommandEncoderOpenGL::setupVertexAttributes(const VertexFormat &format)
 {
     // Buffers are already bound coming into this method.

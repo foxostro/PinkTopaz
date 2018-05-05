@@ -103,6 +103,7 @@ void RenderSystem::update(entityx::EntityManager &es,
     });
     
     // TODO: Draw terrain cursors.
+    encoder->setTriangleFillMode(Lines);
     es.each<TerrainCursor>([&](entityx::Entity terrainEntity,
                                TerrainCursor &cursor) {
         if (cursor.active) {
@@ -113,6 +114,7 @@ void RenderSystem::update(entityx::EntityManager &es,
     });
     
     // Draw text strings on the screen last because they blend.
+    encoder->setTriangleFillMode(Fill);
     encoder->setDepthTest(false);
     _textRenderer.draw(encoder, _viewport);
     

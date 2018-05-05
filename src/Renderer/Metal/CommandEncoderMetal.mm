@@ -126,6 +126,27 @@ void CommandEncoderMetal::drawPrimitives(PrimitiveType type, size_t first,
                 baseInstance:0];
 }
 
+void CommandEncoderMetal::setTriangleFillMode(TriangleFillMode fillMode)
+{
+    MTLTriangleFillMode metalFillMode;
+    
+    switch (fillMode)
+    {
+        case Fill:
+            metalFillMode = MTLTriangleFillModeFill;
+            break;
+            
+        case Lines:
+            metalFillMode = MTLTriangleFillModeLines;
+            break;
+            
+        default:
+            throw Exception("Unsupported triangle fill mode in setTriangleFillMode().");
+    }
+    
+    [_encoder setTriangleFillMode:metalFillMode];
+}
+
 void CommandEncoderMetal::commit()
 {
     [_encoder endEncoding];

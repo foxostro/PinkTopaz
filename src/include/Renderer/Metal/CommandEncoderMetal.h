@@ -41,6 +41,7 @@ public:
     void setVertexBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) override;
     void setFragmentBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) override;
     void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) override;
+    void setTriangleFillMode(TriangleFillMode fillMode) override;
     void commit() override;
     void setDepthTest(bool enable) override;
     

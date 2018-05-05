@@ -23,6 +23,12 @@ enum PrimitiveType
     Triangles
 };
 
+enum TriangleFillMode
+{
+    Fill,
+    Lines
+};
+
 class CommandEncoder
 {
 public:
@@ -50,6 +56,9 @@ public:
     
     // Draw triangle primitives using the bound buffers and other resources.
     virtual void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) = 0;
+    
+    // Sets how to rasterize triangle and triangle strip primitives.
+    virtual void setTriangleFillMode(TriangleFillMode fillMode) = 0;
     
     // Call when finished encoding to submit to the GPU.
     virtual void commit() = 0;
