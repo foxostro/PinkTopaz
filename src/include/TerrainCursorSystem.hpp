@@ -34,16 +34,12 @@ private:
     static constexpr size_t maxPlaceDistance = 16;
     
     // Request asynchronous update of the terrain cursor.
-    // cursor -- The cursor to update.
-    // cursorTransform -- The transform of the cursor, also to be updated.
-    // cursorMesh -- The wireframe mesh to use for the cursor.
     // cameraTerrainTransform -- The combined camera-terrain transformation.
     // terrain -- The terrain on which the cursor operates.
-    void requestCursorUpdate(TerrainCursor &cursor,
-                             Transform &cursorTransform,
-                             RenderableStaticWireframeMesh &cursorMesh,
-                             const glm::mat4 &cameraTerrainTransform,
-                             const std::shared_ptr<Terrain> &terrain);
+    // cursorEntity -- The entity which represents the terrain cursor.
+    void requestCursorUpdate(const glm::mat4 &cameraTerrainTransform,
+                             const std::shared_ptr<Terrain> &terrain,
+                             entityx::Entity cursorEntity);
     
     std::shared_ptr<TaskDispatcher> _dispatcher;
     std::shared_ptr<TaskDispatcher> _mainThreadDispatcher;

@@ -44,27 +44,24 @@ void TerrainCursorSystem::update(entityx::EntityManager &es,
         
         const auto &cameraTransform = _activeCamera.component<Transform>()->value;
         
-        es.each<TerrainCursor,
-                RenderableStaticWireframeMesh,
-                Transform>([&](entityx::Entity cursorEntity,
-                               TerrainCursor &cursor,
-                               RenderableStaticWireframeMesh &cursorMesh,
-                               Transform &cursorTransform) {
+        es.each<TerrainCursor, RenderableStaticWireframeMesh, Transform>([&](entityx::Entity cursorEntity, TerrainCursor &cursor, RenderableStaticWireframeMesh &cursorMesh, Transform &cursorTransform) {
             
+            // The terrain entity, or its components, may be invalid. Check.
             entityx::Entity terrainEntity = cursor.terrainEntity;
-            
-            const Transform *terrainTransformPtr = terrainEntity.component<Transform>().get();
-            const Transform &terrainTransform = *terrainTransformPtr;
-            
-            const TerrainComponent *terrainPtr = terrainEntity.component<TerrainComponent>().get();
-            const TerrainComponent &terrain = *terrainPtr;
-            
-            const glm::mat4 cameraTerrainTransform = cameraTransform * terrainTransform.value;
-            requestCursorUpdate(cursor,
-                                cursorTransform,
-                                cursorMesh,
-                                cameraTerrainTransform,
-                                terrain.terrain);
+            if (terrainEntity.valid()) {
+                auto handleTransform = terrainEntity.component<Transform>();
+                auto handleTerrain = terrainEntity.component<TerrainComponent>();
+                
+                if (handleTransform.valid() && handleTerrain.valid()) {
+                    const Transform &terrainTransform = *handleTransform.get();
+                    const TerrainComponent &terrain = *handleTerrain.get();
+                    
+                    const glm::mat4 cameraTerrainTransform = cameraTransform * terrainTransform.value;
+                    requestCursorUpdate(cameraTerrainTransform,
+                                        terrain.terrain,
+                                        cursorEntity);
+                }
+            }
         });
     }
 }
@@ -88,13 +85,15 @@ void TerrainCursorSystem::receive(const CameraMovedEvent &event)
     _needsUpdate = true;
 }
 
-void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
-                                              Transform &cursorTransform,
-                                              RenderableStaticWireframeMesh &cursorMesh,
-                                              const glm::mat4 &cameraTerrainTransform,
-                                              const std::shared_ptr<Terrain> &t)
+void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTransform,
+                                              const std::shared_ptr<Terrain> &terrain,
+                                              entityx::Entity cursorEntity)
 {
     using namespace glm;
+    
+    // `cursor' must not be captured in the lambdas below, as the component
+    // could be removed or destroyed in the interim.
+    TerrainCursor &cursor = *cursorEntity.component<TerrainCursor>().get();
     
     // Cancel a pending cursor update, if there is one.
     if (cursor.cancellationToken) {
@@ -107,7 +106,7 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
     // Schedule a task to asynchronously compute the updated cursor position.
     _dispatcher->async([startTime=std::chrono::steady_clock::now(),
                         cameraTerrainTransform,
-                        terrain=t,
+                        terrain=terrain,
                         cancellationToken=cursor.cancellationToken]{
 
         if (cancellationToken && cancellationToken->load()) {
@@ -143,31 +142,45 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
         return std::make_tuple(active, cursorPos, placePos, startTime);
 
     }).then(_mainThreadDispatcher, [cancellationToken=cursor.cancellationToken,
-                                    &cursor,
-                                    &cursorTransform,
-                                    &cursorMesh](auto tuple){
+                                    cursorEntity=std::move(cursorEntity)](auto tuple) mutable{
 
         // This task executes on the main thread because we'll be using it to
         // update our entity's components.
-        //
-        // TODO: If the entity is destroyed before this task is executed then
-        //       the references we captured will be invalid. We should instead
-        //       capture a handle to the entity itself.
 
-        const auto& [active, cursorPos, placePos, startTime] = tuple;
-
-        cursor.active = active;
-        cursor.pos = cursorPos;
-        cursor.placePos = placePos;
-
-        cursorTransform.value = glm::translate(mat4(1), placePos + vec3(0.5f));
+        if (cancellationToken && cancellationToken->load()) {
+            throw BrokenPromiseException();
+        }
         
-        cursorMesh.hidden = !active;
+        const auto& [active, cursorPos, placePos, startTime] = tuple;
+        
+        // The entity or these components may have been destroyed in the
+        // interim. Check first.
+        if (cursorEntity.valid()) {
+            auto handleTerrainCursor = cursorEntity.component<TerrainCursor>();
+            auto handleTransform = cursorEntity.component<Transform>();
+            auto handleMesh = cursorEntity.component<RenderableStaticWireframeMesh>();
+            
+            if (handleTerrainCursor.valid() &&
+                handleTransform.valid() &&
+                handleMesh.valid()) {
+                
+                TerrainCursor &cursor = *handleTerrainCursor.get();
+                cursor.active = active;
+                cursor.pos = cursorPos;
+                cursor.placePos = placePos;
+                
+                Transform &cursorTransform = *handleTransform.get();
+                cursorTransform.value = glm::translate(mat4(1), placePos + vec3(0.5f));
+                
+                RenderableStaticWireframeMesh &cursorMesh = *handleMesh.get();
+                cursorMesh.hidden = !active;
+            }
+        }
 
-//        const auto currentTime = std::chrono::steady_clock::now();
-//        const auto duration = currentTime - startTime;
-//        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-//        const std::string msStr = std::to_string(ms.count());
-//        SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
+        const auto currentTime = std::chrono::steady_clock::now();
+        const auto duration = currentTime - startTime;
+        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+        const std::string msStr = std::to_string(ms.count());
+        SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
     });
 }
