@@ -12,6 +12,7 @@
 #include "RenderSystem.hpp"
 #include "CameraMovementSystem.hpp"
 #include "TerrainCursorSystem.hpp"
+#include "TerrainProgressSystem.hpp"
 #include "TerrainComponent.hpp"
 #include "TerrainCursor.hpp"
 #include "Profiler.hpp"
@@ -19,17 +20,18 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-World::World(const std::shared_ptr<GraphicsDevice> &device,
+World::World(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
              const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
              const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
              const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
 {
     PROFILER(InitWorld);
     
-    systems.add<RenderSystem>(device);
+    systems.add<RenderSystem>(graphicsDevice);
     systems.add<CameraMovementSystem>();
     systems.add<TerrainCursorSystem>(dispatcherHighPriority,
                                      mainThreadDispatcher);
+    systems.add<TerrainProgressSystem>(graphicsDevice);
     systems.configure();
     
     // Setup the position and orientation of the camera.
@@ -48,7 +50,7 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
     
     // Create an entity to represent the terrain.
     TerrainComponent terrainComponent;
-    terrainComponent.terrain = std::make_shared<Terrain>(device,
+    terrainComponent.terrain = std::make_shared<Terrain>(graphicsDevice,
                                                          dispatcherHighPriority,
                                                          dispatcherVoxelData,
                                                          mainThreadDispatcher,
@@ -62,12 +64,12 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
     terrainCursor.assign<Transform>();
     terrainCursor.assign<TerrainCursor>();
     terrainCursor.component<TerrainCursor>()->terrainEntity = terrainEntity;
-    terrainCursor.assign<RenderableStaticWireframeMesh>(createCursorMesh(device));
+    terrainCursor.assign<RenderableStaticWireframeMesh>(createCursorMesh(graphicsDevice));
     
     entityx::Entity testBox = entities.create();
     testBox.assign<Transform>();
     testBox.component<Transform>()->value = glm::translate(glm::mat4(1), glm::vec3(80.1, 20.1, 140.1));
-    auto testBoxMesh = createCursorMesh(device);
+    auto testBoxMesh = createCursorMesh(graphicsDevice);
     testBoxMesh.hidden = false;
     testBox.assign<RenderableStaticWireframeMesh>(testBoxMesh);
 }
@@ -76,6 +78,7 @@ void World::update(entityx::TimeDelta dt)
 {
     systems.update<CameraMovementSystem>(dt);
     systems.update<TerrainCursorSystem>(dt);
+    systems.update<TerrainProgressSystem>(dt);
     systems.update<RenderSystem>(dt);
 }
 

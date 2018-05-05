@@ -43,18 +43,21 @@ TerrainRebuildActor::TerrainRebuildActor(unsigned numThreads,
     }
 }
 
-void TerrainRebuildActor::push(const std::vector<AABB> &cells)
+void TerrainRebuildActor::push(const std::vector<std::pair<Morton3, AABB>> &cells)
 {
     std::lock_guard<std::mutex> lock(_lock);
     
     int numberAdded = 0;
     
-    for (const AABB &cellBox : cells) {
-        const auto pair = _set.insert(cellBox);
-        if (pair.second) {
+    for (const auto &cellPair : cells) {
+        const Morton3 cellCoords = cellPair.first;
+        const AABB &boundingBox = cellPair.second;
+        const auto insertResult = _set.insert(boundingBox);
+        if (insertResult.second) {
             numberAdded++;
-            _cells.emplace_back(Cell(cellBox,
-                                     pair.first,
+            _cells.emplace_back(Cell(cellCoords,
+                                     boundingBox,
+                                     insertResult.first,
                                      _mainThreadDispatcher,
                                      _events));
         }
@@ -63,7 +66,11 @@ void TerrainRebuildActor::push(const std::vector<AABB> &cells)
 //    SDL_Log("Added %d chunks in push()", numberAdded);
     if (numberAdded > 0) {
         sort();
-        _cvar.notify_all();
+        if (numberAdded == 1) {
+            _cvar.notify_one();
+        } else {
+            _cvar.notify_all();
+        }
     }
 }
 
@@ -87,7 +94,7 @@ void TerrainRebuildActor::worker()
             Cell &cell = *maybeCell;
             _processCell(cell.box, cell.progress);
             cell.progress.setState(TerrainProgressEvent::Complete);
-            cell.progress.dump();
+//            cell.progress.dump();
         }
     }
 }

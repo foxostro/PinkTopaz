@@ -10,6 +10,7 @@
 #define TerrainProgressEvent_hpp
 
 #include "AABB.hpp"
+#include "Morton.hpp"
 
 struct TerrainProgressEvent
 {
@@ -20,12 +21,17 @@ struct TerrainProgressEvent
         Complete
     };
     
+    Morton3 cellCoords;
     AABB boundingBox;
     State state;
     
     TerrainProgressEvent() : state(Queued) {}
     
-    TerrainProgressEvent(AABB b, State s) : boundingBox(b), state(s) {}
+    TerrainProgressEvent(Morton3 c, AABB b, State s)
+     : cellCoords(c),
+       boundingBox(b),
+       state(s)
+    {}
     
     TerrainProgressEvent(const TerrainProgressEvent &other) = default;
 };

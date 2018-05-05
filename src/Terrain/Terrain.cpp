@@ -157,13 +157,13 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     }
     
     // Figure out which meshes in the active region are missing.
-    static std::vector<AABB> missingMeshes;
+    static std::vector<std::pair<Morton3, AABB>> missingMeshes;
     missingMeshes.clear();
     for (const glm::ivec3 cellCoords : slice(meshes, activeRegion)) {
         const Morton3 index = meshes.indexAtCellCoords(cellCoords);
         const auto maybeTerrainMeshPtr = meshes.getIfExists(index);
         if (!maybeTerrainMeshPtr) {
-            missingMeshes.push_back(meshes.cellAtCellCoords(cellCoords));
+            missingMeshes.emplace_back(std::make_pair(index, meshes.cellAtCellCoords(cellCoords)));
         }
     }
     
@@ -207,10 +207,11 @@ void Terrain::rebuildMeshInResponseToChanges(const ChangeLog &changeLog)
     // Kick off a task to rebuild each affected mesh.
     for (const auto &change : changeLog) {
         const AABB &region = change.affectedRegion;
-        std::vector<AABB> meshCells;
+        std::vector<std::pair<Morton3, AABB>> meshCells;
         for (const auto cellCoords : slice(*_meshes, region)) {
+            const Morton3 index = _meshes->indexAtCellCoords(cellCoords);
             const AABB cell = _meshes->cellAtCellCoords(cellCoords);
-            meshCells.push_back(cell);
+            meshCells.push_back(std::make_pair(index, cell));
         }
         _meshRebuildActor->push(meshCells);
     }

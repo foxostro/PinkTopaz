@@ -13,6 +13,7 @@
 #include "TaskDispatcher.hpp"
 #include "TerrainProgressEvent.hpp"
 #include "AABB.hpp"
+#include "Morton.hpp"
 #include <chrono>
 #include <mutex>
 #include <unordered_map>
@@ -24,7 +25,8 @@ public:
     TerrainProgressTracker() = delete;
     
     // Immediately starts in the Queued state.
-    TerrainProgressTracker(AABB boundingBox,
+    TerrainProgressTracker(Morton3 cellCoords,
+                           AABB boundingBox,
                            std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
                            entityx::EventManager &events);
     
@@ -42,6 +44,7 @@ public:
     void dump();
     
 private:
+    Morton3 _cellCoords;
     AABB _boundingBox;
     TerrainProgressEvent::State _state;
     entityx::EventManager *_events;

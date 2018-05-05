@@ -139,6 +139,7 @@ set(SOURCE_FILES_SYSTEMS
     "src/RenderSystem.cpp" "src/include/RenderSystem.hpp"
     "src/CameraMovementSystem.cpp" "src/include/CameraMovementSystem.hpp"
     "src/TerrainCursorSystem.cpp" "src/include/TerrainCursorSystem.hpp"
+    "src/TerrainProgressSystem.cpp" "src/include/TerrainProgressSystem.hpp"
     )
 
 set(SOURCE_FILES_COMPONENTS

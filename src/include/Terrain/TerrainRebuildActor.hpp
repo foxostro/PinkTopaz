@@ -9,7 +9,6 @@
 #ifndef TerrainRebuildActor_hpp
 #define TerrainRebuildActor_hpp
 
-#include "AABB.hpp"
 #include <mutex>
 #include <deque>
 #include <unordered_set>
@@ -31,8 +30,8 @@ public:
                         entityx::EventManager &events,
                         std::function<void(AABB, TerrainProgressTracker&)> processCell);
     
-    // Add cells to the queue.
-    void push(const std::vector<AABB> &cells);
+    // Add a cell to the queue.
+    void push(const std::vector<std::pair<Morton3, AABB>> &cells);
     
     // Set the search point.
     void setSearchPoint(glm::vec3 searchPoint);
@@ -47,13 +46,14 @@ private:
         
         Cell() = delete;
         
-        Cell(AABB cellBox,
+        Cell(Morton3 cellCoords,
+             AABB cellBox,
              std::unordered_set<AABB>::iterator iter,
              std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
              entityx::EventManager &events)
          : box(cellBox),
            setIterator(iter),
-           progress(cellBox, mainThreadDispatcher, events)
+           progress(cellCoords, cellBox, mainThreadDispatcher, events)
         {}
     };
     

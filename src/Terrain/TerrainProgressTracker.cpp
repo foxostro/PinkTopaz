@@ -9,10 +9,12 @@
 #include "Terrain/TerrainProgressTracker.hpp"
 #include "SDL.h" // for SDL_Log
 
-TerrainProgressTracker::TerrainProgressTracker(AABB boundingBox,
+TerrainProgressTracker::TerrainProgressTracker(Morton3 cellCoords,
+                                               AABB boundingBox,
                                                std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
                                                entityx::EventManager &events)
-: _boundingBox(boundingBox),
+: _cellCoords(cellCoords),
+  _boundingBox(boundingBox),
   _state(TerrainProgressEvent::Queued),
   _events(&events),
   _mainThreadDispatcher(mainThreadDispatcher)
@@ -24,8 +26,11 @@ void TerrainProgressTracker::setState(TerrainProgressEvent::State state)
 {
     _state = state;
     _timeEnteringEachState[state] = std::chrono::steady_clock::now();
-    _mainThreadDispatcher->async([events=_events, box=_boundingBox, state=_state]{
-        events->emit(TerrainProgressEvent(box, state));
+    _mainThreadDispatcher->async([events=_events,
+                                  cellCoords=_cellCoords,
+                                  box=_boundingBox,
+                                  state=_state]{
+        events->emit(TerrainProgressEvent(cellCoords, box, state));
     });
 }
 
