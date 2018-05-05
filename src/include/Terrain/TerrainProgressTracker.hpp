@@ -9,39 +9,44 @@
 #ifndef TerrainProgressTracker_hpp
 #define TerrainProgressTracker_hpp
 
+#include <entityx/entityx.h>
+#include "TaskDispatcher.hpp"
+#include "TerrainProgressEvent.hpp"
 #include "AABB.hpp"
 #include <chrono>
 #include <mutex>
-#include <map>
-#include <vector>
+#include <unordered_map>
 
-// Tracks the progress of inflight terrain meshes.
+// Tracks the progress of a terrain chunk that is being loaded/generated.
 class TerrainProgressTracker
 {
 public:
-    struct Cell
+    TerrainProgressTracker() = delete;
+    
+    // Immediately starts in the Queued state.
+    TerrainProgressTracker(AABB boundingBox,
+                           std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
+                           entityx::EventManager &events);
+    
+    // Gets the cell bounding box.
+    inline const AABB& getBoundingBox() const
     {
-        enum { Uninitialized, Inflight, Complete, Cancelled } state;
-        std::chrono::steady_clock::time_point startTime;
-        
-        Cell() : state(Uninitialized), startTime() {}
-    };
+        return _boundingBox;
+    }
     
-    // For each cell in the list, if the cell is not infloght then mark is as
-    // being inflight. Returns the list of cells for which this was done.
-    std::vector<AABB> beginCellsNotInflight(const std::vector<AABB> &cells);
+    // Set the state for the specified cell.
+    void setState(TerrainProgressEvent::State state);
     
-    // Marks the cell as being complete. Returns the total elapsed time since
-    // the cell went in flight. From now on, the cell will be marked as being
-    // Complete.
-    std::chrono::duration<double> finish(const AABB &cell);
-    
-    // Marks the cells as being cancelled.
-    void cancel(const AABB &cell);
+    // Prints to the log information about how long the chunk stayed in each
+    // state.
+    void dump();
     
 private:
-    mutable std::mutex _mutex;
-    std::map<AABB, Cell> _cells;
+    AABB _boundingBox;
+    TerrainProgressEvent::State _state;
+    entityx::EventManager *_events;
+    std::shared_ptr<TaskDispatcher> _mainThreadDispatcher;
+    std::unordered_map<TerrainProgressEvent::State, std::chrono::steady_clock::time_point> _timeEnteringEachState;
 };
 
 #endif /* TerrainProgressTracker_hpp */

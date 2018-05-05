@@ -62,7 +62,7 @@ RenderableStaticMesh TerrainMesh::getMesh() const
     return _mesh;
 }
 
-void TerrainMesh::rebuild()
+void TerrainMesh::rebuild(TerrainProgressTracker &progress)
 {
     std::lock_guard<std::mutex> lock(_lockMeshInFlight);
     
@@ -70,7 +70,10 @@ void TerrainMesh::rebuild()
     // perform surface extraction.
     const AABB voxelBox = _meshBox.inset(-_voxels->cellDimensions());
     
+    progress.setState(TerrainProgressEvent::WaitingOnVoxels);
     _voxels->readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
+        progress.setState(TerrainProgressEvent::ExtractingSurface);
+        
         // The voxel file uses a binary SOLID/EMPTY flag for voxels.
         // So, we get values that are either 0.0 or 1.0.
         constexpr float isosurface = 0.5f;

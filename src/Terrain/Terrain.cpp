@@ -25,6 +25,8 @@ Terrain::~Terrain()
 Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                  const std::shared_ptr<TaskDispatcher> &dispatcher,
                  const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+                 const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher,
+                 entityx::EventManager &events,
                  glm::vec3 initialCameraPosition)
  : _graphicsDevice(graphicsDevice),
    _dispatcher(dispatcher),
@@ -86,11 +88,13 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     _meshes->setCountLimit(2*workingSetCount);
     
     // Setup an actor to rebuild chunks.
-    const unsigned numMeshRebuildThreads = std::max(1u, std::thread::hardware_concurrency());
+    const unsigned numMeshRebuildThreads = 2*std::max(1u, std::thread::hardware_concurrency());
     _meshRebuildActor = std::make_unique<TerrainRebuildActor>(numMeshRebuildThreads,
                                                               _cameraPosition,
-                                                              [=](const AABB &cell){
-                                                                  rebuildNextMesh(cell);
+                                                              mainThreadDispatcher,
+                                                              events,
+                                                              [=](const AABB &cell, TerrainProgressTracker &progress){
+                                                                  rebuildNextMesh(cell, progress);
                                                               });
     
     // When voxels change, we need to extract a polygonal mesh representation
@@ -212,11 +216,11 @@ void Terrain::rebuildMeshInResponseToChanges(const ChangeLog &changeLog)
     }
 }
 
-void Terrain::rebuildNextMesh(const AABB &cell)
+void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress)
 {
     // Rebuild the mesh and then stick it in the grid.
     PROFILER(TerrainRebuildNextMesh);
     auto terrainMesh = std::make_shared<TerrainMesh>(cell, _defaultMesh, _graphicsDevice, _mesher, _voxels);
-    terrainMesh->rebuild();
+    terrainMesh->rebuild(progress);
     _meshes->set(cell.center, terrainMesh);
 }

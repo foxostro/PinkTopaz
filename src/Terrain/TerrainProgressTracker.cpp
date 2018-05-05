@@ -7,39 +7,60 @@
 //
 
 #include "Terrain/TerrainProgressTracker.hpp"
+#include "SDL.h" // for SDL_Log
 
-std::vector<AABB> TerrainProgressTracker::beginCellsNotInflight(const std::vector<AABB> &cells)
+TerrainProgressTracker::TerrainProgressTracker(AABB boundingBox,
+                                               std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
+                                               entityx::EventManager &events)
+: _boundingBox(boundingBox),
+  _state(TerrainProgressEvent::Queued),
+  _events(&events),
+  _mainThreadDispatcher(mainThreadDispatcher)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
-    const auto currentTime = std::chrono::steady_clock::now();
-    std::vector<AABB> result;
-    
-    for (const AABB &box : cells) {
-        Cell &cell = _cells[box];
-        
-        if (cell.state != Cell::Inflight) {
-            cell.state = Cell::Inflight;
-            cell.startTime = currentTime;
-            result.push_back(box);
-        }
-    }
-    
-    return result;
+    setState(TerrainProgressEvent::Queued);
 }
 
-std::chrono::duration<double> TerrainProgressTracker::finish(const AABB &box)
+void TerrainProgressTracker::setState(TerrainProgressEvent::State state)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
-    Cell &cell = _cells[box];
-    cell.state = Cell::Complete;
-    auto currentTime = std::chrono::steady_clock::now();
-    std::chrono::duration<double> duration = currentTime - cell.startTime;
-    return duration;
+    _state = state;
+    _timeEnteringEachState[state] = std::chrono::steady_clock::now();
+    _mainThreadDispatcher->async([events=_events, box=_boundingBox, state=_state]{
+        events->emit(TerrainProgressEvent(box, state));
+    });
 }
 
-void TerrainProgressTracker::cancel(const AABB &box)
+void TerrainProgressTracker::dump()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
-    Cell &cell = _cells[box];
-    cell.state = Cell::Cancelled;
+    assert(_state == TerrainProgressEvent::Complete);
+    
+    std::string boxStr = _boundingBox.to_string();
+    
+    auto timeElapsed = [&](TerrainProgressEvent::State endState, TerrainProgressEvent::State beginState){
+        const auto beginTime = _timeEnteringEachState[beginState];
+        const auto endTime = _timeEnteringEachState[endState];
+        const auto duration = endTime - beginTime;
+        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+        std::string msStr = std::to_string(ms.count());
+        return msStr;
+    };
+    
+    std::string timeQueuedStr = timeElapsed(TerrainProgressEvent::WaitingOnVoxels,
+                                            TerrainProgressEvent::Queued);
+    std::string timeWaitingForVoxelsStr = timeElapsed(TerrainProgressEvent::ExtractingSurface,
+                                                      TerrainProgressEvent::WaitingOnVoxels);
+    std::string timeExtractingSurfaceStr = timeElapsed(TerrainProgressEvent::Complete,
+                                                       TerrainProgressEvent::ExtractingSurface);
+    std::string timeTotalElapsedStr = timeElapsed(TerrainProgressEvent::Complete,
+                                                  TerrainProgressEvent::Queued);
+    
+    SDL_Log("Cell %s:\n"
+            "\tQueued             -- %s ms\n"
+            "\tWaitingOnVoxels    -- %s ms\n"
+            "\tExtractingSurface  -- %s ms\n"
+            "\tTotal Elapsed Time -- %s ms",
+            boxStr.c_str(),
+            timeQueuedStr.c_str(),
+            timeWaitingForVoxelsStr.c_str(),
+            timeExtractingSurfaceStr.c_str(),
+            timeTotalElapsedStr.c_str());
 }

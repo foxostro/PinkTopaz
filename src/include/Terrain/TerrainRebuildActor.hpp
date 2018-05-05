@@ -15,6 +15,7 @@
 #include <unordered_set>
 #include <boost/optional.hpp>
 #include <thread>
+#include "TerrainProgressTracker.hpp"
 
 // Maintains an ordered list of meshes that need to be generated.
 class TerrainRebuildActor
@@ -26,7 +27,9 @@ public:
     
     TerrainRebuildActor(unsigned numThreads,
                         glm::vec3 initialSearchPoint,
-                        std::function<void(AABB)> processCell);
+                        std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
+                        entityx::EventManager &events,
+                        std::function<void(AABB, TerrainProgressTracker&)> processCell);
     
     // Add cells to the queue.
     void push(const std::vector<AABB> &cells);
@@ -35,21 +38,42 @@ public:
     void setSearchPoint(glm::vec3 searchPoint);
     
 private:
+    class Cell
+    {
+    public:
+        AABB box;
+        std::unordered_set<AABB>::iterator setIterator;
+        TerrainProgressTracker progress;
+        
+        Cell() = delete;
+        
+        Cell(AABB cellBox,
+             std::unordered_set<AABB>::iterator iter,
+             std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
+             entityx::EventManager &events)
+         : box(cellBox),
+           setIterator(iter),
+           progress(cellBox, mainThreadDispatcher, events)
+        {}
+    };
+    
     std::mutex _lock;
     std::condition_variable _cvar;
     std::atomic<bool> _threadShouldExit;
-    std::function<void(AABB)> _processCell;
-    std::deque<std::pair<AABB, std::unordered_set<AABB>::iterator>> _cells;
+    std::function<void(AABB, TerrainProgressTracker&)> _processCell;
+    std::deque<Cell> _cells;
     std::unordered_set<AABB> _set;
     glm::vec3 _searchPoint;
     std::vector<std::thread> _threads;
+    std::shared_ptr<TaskDispatcher> _mainThreadDispatcher;
+    entityx::EventManager &_events;
     
     // Runs the worker thread.
     void worker();
     
     // Get the cell for the next mesh to generate. Waits for an item to be added
     // to the queue.
-    boost::optional<AABB> pop();
+    boost::optional<Cell> pop();
     
     // Immediately sort the list. (unlocked)
     void sort();

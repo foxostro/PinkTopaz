@@ -26,10 +26,14 @@ TerrainRebuildActor::~TerrainRebuildActor()
 
 TerrainRebuildActor::TerrainRebuildActor(unsigned numThreads,
                                          glm::vec3 initialSearchPoint,
-                                         std::function<void(AABB)> processCell)
+                                         std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
+                                         entityx::EventManager &events,
+                                         std::function<void(AABB, TerrainProgressTracker&)> processCell)
 : _threadShouldExit(false),
   _processCell(processCell),
-  _searchPoint(initialSearchPoint)
+  _searchPoint(initialSearchPoint),
+  _mainThreadDispatcher(mainThreadDispatcher),
+  _events(events)
 {
     for (size_t i = 0; i < numThreads; ++i) {
         _threads.emplace_back([this]{
@@ -45,11 +49,14 @@ void TerrainRebuildActor::push(const std::vector<AABB> &cells)
     
     int numberAdded = 0;
     
-    for (const AABB &cell : cells) {
-        const auto pair = _set.insert(cell);
+    for (const AABB &cellBox : cells) {
+        const auto pair = _set.insert(cellBox);
         if (pair.second) {
             numberAdded++;
-            _cells.push_back(std::make_pair(cell, pair.first));
+            _cells.emplace_back(Cell(cellBox,
+                                     pair.first,
+                                     _mainThreadDispatcher,
+                                     _events));
         }
     }
     
@@ -75,24 +82,28 @@ void TerrainRebuildActor::setSearchPoint(glm::vec3 searchPoint)
 void TerrainRebuildActor::worker()
 {
     while (!_threadShouldExit) {
-        const auto maybeCell = pop();
+        boost::optional<Cell> maybeCell = pop();
         if (maybeCell) {
-            _processCell(*maybeCell);
+            Cell &cell = *maybeCell;
+            _processCell(cell.box, cell.progress);
+            cell.progress.setState(TerrainProgressEvent::Complete);
+            cell.progress.dump();
         }
     }
 }
 
-boost::optional<AABB> TerrainRebuildActor::pop()
+boost::optional<TerrainRebuildActor::Cell> TerrainRebuildActor::pop()
 {
     std::unique_lock<std::mutex> lock(_lock);
     _cvar.wait(lock, [this]{
         return _threadShouldExit || !_cells.empty();
     });
-    boost::optional<AABB> result;
+    boost::optional<Cell> result;
     if (!(_threadShouldExit || _cells.empty())) {
-        const auto [cell, setIter] = _cells.front();
+        Cell cell = std::move(_cells.front());
         _cells.pop_front();
-        _set.erase(setIter);
+        _set.erase(cell.setIterator);
+        cell.setIterator = _set.end();
         result = boost::make_optional(cell);
     }
     return result;
@@ -101,9 +112,9 @@ boost::optional<AABB> TerrainRebuildActor::pop()
 void TerrainRebuildActor::sort()
 {
     std::sort(_cells.begin(), _cells.end(),
-              [searchPoint=_searchPoint](const auto& pair1, const auto& pair2){
-                  const AABB &a = pair1.first;
-                  const AABB &b = pair2.first;
+              [searchPoint=_searchPoint](const Cell& cell1, const Cell& cell2){
+                  const AABB &a = cell1.box;
+                  const AABB &b = cell2.box;
                   const auto distA = glm::distance(a.center, searchPoint);
                   const auto distB = glm::distance(b.center, searchPoint);
                   return distA < distB;

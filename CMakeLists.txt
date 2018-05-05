@@ -154,6 +154,7 @@ set(SOURCE_FILES_EVENTS
     "src/include/KeypressEvent.hpp"
     "src/include/MouseMoveEvent.hpp"
     "src/include/CameraMovedEvent.hpp"
+    "src/include/TerrainProgressEvent.hpp"
     )
 
 set(SOURCE_FILES_OTHER_ECS

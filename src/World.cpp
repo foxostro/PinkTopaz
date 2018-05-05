@@ -51,6 +51,8 @@ World::World(const std::shared_ptr<GraphicsDevice> &device,
     terrainComponent.terrain = std::make_shared<Terrain>(device,
                                                          dispatcherHighPriority,
                                                          dispatcherVoxelData,
+                                                         mainThreadDispatcher,
+                                                         events,
                                                          cameraPosition);
     entityx::Entity terrainEntity = entities.create();
     terrainEntity.assign<TerrainComponent>(terrainComponent);

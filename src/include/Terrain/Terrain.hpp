@@ -9,6 +9,7 @@
 #ifndef Terrain_hpp
 #define Terrain_hpp
 
+#include <entityx/entityx.h>
 #include "Renderer/GraphicsDevice.hpp"
 #include "TaskDispatcher.hpp"
 #include "Terrain/Mesher.hpp"
@@ -30,6 +31,8 @@ public:
     Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             const std::shared_ptr<TaskDispatcher> &dispatcher,
             const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+            const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher,
+            entityx::EventManager &events,
             glm::vec3 initialCameraPosition);
     
     // No default constructor.
@@ -87,7 +90,7 @@ private:
     void rebuildMeshInResponseToChanges(const ChangeLog &changeLog);
     
     // Rebuilds the next pending mesh in the queue.
-    void rebuildNextMesh(const AABB &cell);
+    void rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress);
     
     // Update the terrain cursor position based on the current camera facing.
     void updateCursorPosition();

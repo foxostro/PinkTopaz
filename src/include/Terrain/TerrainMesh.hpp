@@ -12,6 +12,7 @@
 #include "RenderableStaticMesh.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 #include "Terrain/TransactedVoxelData.hpp"
+#include "Terrain/TerrainProgressTracker.hpp"
 #include "Terrain/Mesher.hpp"
 #include <boost/optional.hpp>
 
@@ -51,7 +52,7 @@ public:
     RenderableStaticMesh getMesh() const;
     
     // Causes the mesh to be rebuilt using the voxel data store.
-    void rebuild();
+    void rebuild(TerrainProgressTracker &progress);
     
     inline const AABB& boundingBox() const
     {
