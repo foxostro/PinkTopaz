@@ -135,6 +135,10 @@ void CommandEncoderOpenGL::drawPrimitives(PrimitiveType type, size_t first, size
                 mode = GL_TRIANGLES;
                 break;
                 
+            case TriangleStrip:
+                mode = GL_TRIANGLE_STRIP;
+                break;
+                
             default:
                 throw Exception("Invalid primitive type %d in call to drawPrimitives.\n", (int)type);
         }

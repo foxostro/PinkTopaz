@@ -44,9 +44,12 @@ void TerrainCursorSystem::update(entityx::EntityManager &es,
         
         const auto &cameraTransform = _activeCamera.component<Transform>()->value;
         
-        es.each<TerrainCursor, Transform>([&](entityx::Entity cursorEntity,
-                                              TerrainCursor &cursor,
-                                              Transform &cursorTransform) {
+        es.each<TerrainCursor,
+                RenderableStaticWireframeMesh,
+                Transform>([&](entityx::Entity cursorEntity,
+                               TerrainCursor &cursor,
+                               RenderableStaticWireframeMesh &cursorMesh,
+                               Transform &cursorTransform) {
             
             entityx::Entity terrainEntity = cursor.terrainEntity;
             
@@ -59,6 +62,7 @@ void TerrainCursorSystem::update(entityx::EntityManager &es,
             const glm::mat4 cameraTerrainTransform = cameraTransform * terrainTransform.value;
             requestCursorUpdate(cursor,
                                 cursorTransform,
+                                cursorMesh,
                                 cameraTerrainTransform,
                                 terrain.terrain);
         });
@@ -86,9 +90,12 @@ void TerrainCursorSystem::receive(const CameraMovedEvent &event)
 
 void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
                                               Transform &cursorTransform,
+                                              RenderableStaticWireframeMesh &cursorMesh,
                                               const glm::mat4 &cameraTerrainTransform,
                                               const std::shared_ptr<Terrain> &t)
 {
+    using namespace glm;
+    
     // Cancel a pending cursor update, if there is one.
     if (cursor.cancellationToken) {
         cursor.cancellationToken->store(true);
@@ -106,8 +113,6 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
         if (cancellationToken && cancellationToken->load()) {
             throw BrokenPromiseException();
         }
-
-        using namespace glm;
         
         const vec3 cameraEye(inverse(cameraTerrainTransform)[3]);
         const quat cameraOrientation = toQuat(transpose(cameraTerrainTransform));
@@ -139,13 +144,15 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
 
     }).then(_mainThreadDispatcher, [cancellationToken=cursor.cancellationToken,
                                     &cursor,
-                                    &cursorTransform](auto tuple){
+                                    &cursorTransform,
+                                    &cursorMesh](auto tuple){
 
         // This task executes on the main thread because we'll be using it to
         // update our entity's components.
         //
-        // TODO: Is it possible that one of these tasks will ever outlive the
-        //       components that are referenced here?
+        // TODO: If the entity is destroyed before this task is executed then
+        //       the references we captured will be invalid. We should instead
+        //       capture a handle to the entity itself.
 
         const auto& [active, cursorPos, placePos, startTime] = tuple;
 
@@ -153,12 +160,14 @@ void TerrainCursorSystem::requestCursorUpdate(TerrainCursor &cursor,
         cursor.pos = cursorPos;
         cursor.placePos = placePos;
 
-        cursorTransform.value = glm::translate(glm::mat4(1), -cursorPos);
+        cursorTransform.value = glm::translate(mat4(1), placePos + vec3(0.5f));
+        
+        cursorMesh.hidden = !active;
 
-        const auto currentTime = std::chrono::steady_clock::now();
-        const auto duration = currentTime - startTime;
-        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-        const std::string msStr = std::to_string(ms.count());
-        SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
+//        const auto currentTime = std::chrono::steady_clock::now();
+//        const auto duration = currentTime - startTime;
+//        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+//        const std::string msStr = std::to_string(ms.count());
+//        SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
     });
 }

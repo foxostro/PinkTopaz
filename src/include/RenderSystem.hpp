@@ -39,6 +39,7 @@ private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     TextRenderer _textRenderer;
     FrameTimer _frameTimer;
+    std::shared_ptr<RenderableStaticWireframeMesh> _cubeMesh;
 };
 
 #endif /* RenderSystem_hpp */

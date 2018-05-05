@@ -10,6 +10,7 @@
 #include "Renderer/Shader.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/RenderPassDescriptor.hpp"
+#include "Renderer/UntexturedVertex.hpp"
 #include "Fonts/TextAttributes.hpp"
 #include "Transform.hpp"
 #include "RenderableStaticMesh.hpp"
@@ -79,6 +80,16 @@ void RenderSystem::update(entityx::EntityManager &es,
         mesh.uniforms->replace(sizeof(uniforms), &uniforms);
     });
     
+    es.each<RenderableStaticWireframeMesh, Transform>([&](entityx::Entity entity,
+                                                          RenderableStaticWireframeMesh &mesh,
+                                                          Transform &transform) {
+        UntexturedUniforms uniforms = {
+            cameraTransform * transform.value,
+            adjust * _proj
+        };
+        mesh.uniforms->replace(sizeof(uniforms), &uniforms);
+    });
+    
     // Render all meshes.
     RenderPassDescriptor desc = {
         /* clear = */ true,
@@ -102,14 +113,15 @@ void RenderSystem::update(entityx::EntityManager &es,
         encoder->drawPrimitives(Triangles, 0, mesh.vertexCount, 1);
     });
     
-    // TODO: Draw terrain cursors.
+    // Draw wireframe boxes for things like the terrain cursor.
     encoder->setTriangleFillMode(Lines);
-    es.each<TerrainCursor>([&](entityx::Entity terrainEntity,
-                               TerrainCursor &cursor) {
-        if (cursor.active) {
-            SDL_Log("RenderSystem: active: %s", cursor.active ? "true" : "false");
-            SDL_Log("RenderSystem: pos: (%.2f, %.2f, %.2f)", cursor.pos.x, cursor.pos.y, cursor.pos.z);
-            SDL_Log("RenderSystem: placePos: (%.2f, %.2f, %.2f)", cursor.placePos.x, cursor.placePos.y, cursor.placePos.z);
+    es.each<RenderableStaticWireframeMesh>([&](entityx::Entity entity,
+                                               RenderableStaticWireframeMesh &mesh){
+        if (!mesh.hidden) {
+            encoder->setShader(mesh.shader);
+            encoder->setVertexBuffer(mesh.vertexBuffer, 0);
+            encoder->setVertexBuffer(mesh.uniforms, 1);
+            encoder->drawPrimitives(TriangleStrip, 0, mesh.vertexCount, 1);
         }
     });
     

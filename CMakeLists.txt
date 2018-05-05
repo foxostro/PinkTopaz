@@ -119,6 +119,8 @@ set(SOURCE_FILES_RENDERER
     "src/include/Renderer/Texture.hpp"
     "src/include/Renderer/TextureSampler.hpp"
     "src/Renderer/TextureArrayLoader.cpp" "src/include/Renderer/TextureArrayLoader.hpp"
+    "src/include/Renderer/TerrainVertex.hpp"
+    "src/include/Renderer/UntexturedVertex.hpp"
     )
 
 set(SOURCE_FILES_FONTS

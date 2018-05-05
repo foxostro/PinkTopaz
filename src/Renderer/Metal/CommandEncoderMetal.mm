@@ -112,14 +112,26 @@ void CommandEncoderMetal::setFragmentBuffer(const std::shared_ptr<Buffer> &abstr
                         atIndex:index];
 }
 
-void CommandEncoderMetal::drawPrimitives(PrimitiveType type, size_t first,
-                                         size_t count, size_t numInstances)
+void CommandEncoderMetal::drawPrimitives(PrimitiveType primitiveType,
+                                         size_t first, size_t count,
+                                         size_t numInstances)
 {
-    if (type != Triangles) {
-        throw Exception("Unsupported primitive type in drawPrimitives().");
+    MTLPrimitiveType metalPrimitiveType;
+    
+    switch (primitiveType) {
+        case Triangles:
+            metalPrimitiveType = MTLPrimitiveTypeTriangle;
+            break;
+        
+        case TriangleStrip:
+            metalPrimitiveType = MTLPrimitiveTypeTriangleStrip;
+            break;
+            
+        default:
+            throw Exception("Unsupported primitive type in drawPrimitives().");
     }
     
-    [_encoder drawPrimitives:MTLPrimitiveTypeTriangle
+    [_encoder drawPrimitives:metalPrimitiveType
                  vertexStart:first
                  vertexCount:count
                instanceCount:numInstances

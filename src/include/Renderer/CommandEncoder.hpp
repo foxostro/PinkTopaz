@@ -20,7 +20,8 @@
 
 enum PrimitiveType
 {
-    Triangles
+    Triangles,
+    TriangleStrip
 };
 
 enum TriangleFillMode
