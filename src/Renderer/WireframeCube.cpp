@@ -12,9 +12,25 @@
 
 WireframeCube::WireframeCube(std::shared_ptr<GraphicsDevice> graphicsDevice)
  : _graphicsDevice(graphicsDevice)
-{}
+{
+    _prototype = createPrototypeMesh();
+}
 
 WireframeCube::Renderable WireframeCube::createMesh()
+{
+    Uniforms uniforms;
+    auto uniformBuffer = _graphicsDevice->makeBuffer(sizeof(uniforms),
+                                                     &uniforms,
+                                                     DynamicDraw,
+                                                     UniformBuffer);
+    uniformBuffer->addDebugMarker("Wireframe Cube Uniforms", 0, sizeof(uniforms));
+    
+    Renderable mesh = _prototype;
+    mesh.uniforms = uniformBuffer;
+    return mesh;
+}
+
+WireframeCube::Renderable WireframeCube::createPrototypeMesh()
 {
     static const float L = 0.5f;
     
@@ -74,19 +90,12 @@ WireframeCube::Renderable WireframeCube::createMesh()
                                               "wireframe_cube_frag",
                                               /* blending = */ false);
     
-    Uniforms uniforms;
-    auto uniformBuffer = _graphicsDevice->makeBuffer(sizeof(uniforms),
-                                                     &uniforms,
-                                                     DynamicDraw,
-                                                     UniformBuffer);
-    uniformBuffer->addDebugMarker("Wireframe Cube Uniforms", 0, sizeof(uniforms));
-    
     Renderable cubeMesh;
     
     cubeMesh.hidden = false;
     cubeMesh.vertexCount = unpackedVertices.size();
     cubeMesh.vertexBuffer = vertexBuffer;
-    cubeMesh.uniforms = uniformBuffer;
+    cubeMesh.uniforms = nullptr; // We'll set this later.
     cubeMesh.shader = shader;
     cubeMesh.color = glm::vec4(1.0f);
     

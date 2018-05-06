@@ -59,6 +59,9 @@ public:
     
 private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
+    Renderable _prototype;
+    
+    Renderable createPrototypeMesh();
 };
 
 #endif /* WireframeCube_hpp */
