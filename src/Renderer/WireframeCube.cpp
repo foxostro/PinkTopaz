@@ -74,10 +74,12 @@ WireframeCube::Renderable WireframeCube::createPrototypeMesh()
     std::vector<uint8_t> vertexBufferData(bufferSize);
     memcpy(&vertexBufferData[0], &unpackedVertices[0], bufferSize);
     
-    auto vertexBuffer = _graphicsDevice->makeBuffer(vertexBufferData,
-                                                    StaticDraw,
-                                                    ArrayBuffer);
-    vertexBuffer->addDebugMarker("Wireframe Sube Vertices", 0, bufferSize);
+    _vertexBuffer = _graphicsDevice->makeBuffer(vertexBufferData,
+                                                StaticDraw,
+                                                ArrayBuffer);
+    _vertexBuffer->addDebugMarker("Wireframe Cube Vertices", 0, bufferSize);
+    
+    _vertexCount = unpackedVertices.size();
     
     VertexFormat vertexFormat;
     vertexFormat.attributes.emplace_back(AttributeFormat{
@@ -88,20 +90,14 @@ WireframeCube::Renderable WireframeCube::createPrototypeMesh()
         /* .offset = */ offsetof(Vertex, position)
     });
     
-    auto shader = _graphicsDevice->makeShader(vertexFormat,
-                                              "wireframe_cube_vert",
-                                              "wireframe_cube_frag",
-                                              /* blending = */ false);
+    _shader = _graphicsDevice->makeShader(vertexFormat,
+                                          "wireframe_cube_vert",
+                                          "wireframe_cube_frag",
+                                          /* blending = */ false);
     
     Renderable cubeMesh;
-    
     cubeMesh.hidden = false;
-    cubeMesh.vertexCount = unpackedVertices.size();
-    cubeMesh.vertexBuffer = vertexBuffer;
-    cubeMesh.uniforms = nullptr; // We'll set this later.
-    cubeMesh.shader = shader;
     cubeMesh.color = glm::vec4(1.0f);
-    
     return cubeMesh;
 }
 
@@ -122,13 +118,13 @@ void WireframeCube::draw(entityx::EntityManager &es,
     });
     
     encoder->setTriangleFillMode(Lines);
+    encoder->setShader(_shader);
+    encoder->setVertexBuffer(_vertexBuffer, 0);
     
     es.each<Renderable>([&](entityx::Entity entity, Renderable &mesh){
         if (!mesh.hidden) {
-            encoder->setShader(mesh.shader);
-            encoder->setVertexBuffer(mesh.vertexBuffer, 0);
             encoder->setVertexBuffer(mesh.uniforms, 1);
-            encoder->drawPrimitives(TriangleStrip, 0, mesh.vertexCount, 1);
+            encoder->drawPrimitives(TriangleStrip, 0, _vertexCount, 1);
         }
     });
     

@@ -46,11 +46,7 @@ public:
     struct Renderable
     {
         bool hidden;
-        size_t vertexCount;
-        std::shared_ptr<Buffer> vertexBuffer;
-        // TODO: need an index buffer here to accompany the vertex buffer.
         std::shared_ptr<Buffer> uniforms;
-        std::shared_ptr<Shader> shader;
         glm::vec4 color;
     };
     
@@ -67,6 +63,10 @@ public:
 private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     Renderable _prototype;
+    size_t _vertexCount;
+    std::shared_ptr<Buffer> _vertexBuffer;
+    // TODO: need an index buffer here to accompany the vertex buffer.
+    std::shared_ptr<Shader> _shader;
     
     Renderable createPrototypeMesh();
 };
