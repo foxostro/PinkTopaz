@@ -13,6 +13,26 @@
 #import "Renderer/Metal/TextureSamplerMetal.h"
 #import "Exception.hpp"
 
+static MTLPrimitiveType getMetalPrimitiveType(PrimitiveType primitiveType)
+{
+    MTLPrimitiveType metalPrimitiveType;
+    
+    switch (primitiveType) {
+        case Triangles:
+            metalPrimitiveType = MTLPrimitiveTypeTriangle;
+            break;
+            
+        case TriangleStrip:
+            metalPrimitiveType = MTLPrimitiveTypeTriangleStrip;
+            break;
+            
+        default:
+            throw Exception("Unsupported primitive type in getMetalPrimitiveType().");
+    }
+    
+    return metalPrimitiveType;
+}
+
 CommandEncoderMetal::CommandEncoderMetal(const RenderPassDescriptor &desc,
                                          id <MTLDevice> device,
                                          id <MTLCommandQueue> commandQueue,
@@ -115,26 +135,33 @@ void CommandEncoderMetal::drawPrimitives(PrimitiveType primitiveType,
                                          size_t first, size_t count,
                                          size_t numInstances)
 {
-    MTLPrimitiveType metalPrimitiveType;
-    
-    switch (primitiveType) {
-        case Triangles:
-            metalPrimitiveType = MTLPrimitiveTypeTriangle;
-            break;
-        
-        case TriangleStrip:
-            metalPrimitiveType = MTLPrimitiveTypeTriangleStrip;
-            break;
-            
-        default:
-            throw Exception("Unsupported primitive type in drawPrimitives().");
-    }
+    MTLPrimitiveType metalPrimitiveType = getMetalPrimitiveType(primitiveType);
     
     [_encoder drawPrimitives:metalPrimitiveType
                  vertexStart:first
                  vertexCount:count
                instanceCount:numInstances
                 baseInstance:0];
+}
+
+void CommandEncoderMetal::drawIndexedPrimitives(PrimitiveType primitiveType,
+                                                size_t indexCount,
+                                                const std::shared_ptr<Buffer> &indexBuffer,
+                                                size_t instanceCount)
+{
+    MTLPrimitiveType metalPrimitiveType = getMetalPrimitiveType(primitiveType);
+    
+    auto concreteIndexBuffer = std::dynamic_pointer_cast<BufferMetal>(indexBuffer);
+    id <MTLBuffer> metalIndexBuffer = concreteIndexBuffer->getMetalBuffer();
+    
+    [_encoder drawIndexedPrimitives:metalPrimitiveType
+                         indexCount:indexCount
+                          indexType:MTLIndexTypeUInt32
+                        indexBuffer:metalIndexBuffer
+                  indexBufferOffset:0
+                      instanceCount:instanceCount
+                         baseVertex:0
+                       baseInstance:0];
 }
 
 void CommandEncoderMetal::setTriangleFillMode(TriangleFillMode fillMode)

@@ -62,10 +62,9 @@ public:
     
 private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
-    Renderable _prototype;
-    size_t _vertexCount;
+    size_t _indexCount;
+    std::shared_ptr<Buffer> _indexBuffer;
     std::shared_ptr<Buffer> _vertexBuffer;
-    // TODO: need an index buffer here to accompany the vertex buffer.
     std::shared_ptr<Shader> _shader;
     
     Renderable createPrototypeMesh();

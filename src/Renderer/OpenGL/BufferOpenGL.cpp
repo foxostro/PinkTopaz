@@ -29,6 +29,7 @@ GLenum getBufferTypeEnum(BufferType type)
     {
         case ArrayBuffer:   return GL_ARRAY_BUFFER;
         case UniformBuffer: return GL_UNIFORM_BUFFER;
+        case IndexBuffer:   return GL_ELEMENT_ARRAY_BUFFER;
             
         default:
             throw Exception("Unsupported buffer type %x\n", (int)type);
@@ -96,7 +97,7 @@ void BufferOpenGL::internalCreate(size_t bufferSize, const void *bufferData)
     GLuint vao = 0, vbo = 0;
     GLenum target = getTargetEnum();
     
-    if (_bufferType == ArrayBuffer) {
+    if (_bufferType != UniformBuffer) {
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
         CHECK_GL_ERROR();
@@ -111,7 +112,7 @@ void BufferOpenGL::internalCreate(size_t bufferSize, const void *bufferData)
     glBindBuffer(target, 0);
     CHECK_GL_ERROR();
     
-    if (_bufferType == ArrayBuffer) {
+    if (_bufferType != UniformBuffer) {
         glBindVertexArray(0);
         CHECK_GL_ERROR();
     }

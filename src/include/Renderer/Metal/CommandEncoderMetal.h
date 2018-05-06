@@ -40,7 +40,8 @@ public:
     void setFragmentSampler(const std::shared_ptr<TextureSampler> &sampler, size_t index) override;
     void setVertexBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) override;
     void setFragmentBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) override;
-    void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) override;
+    void drawPrimitives(PrimitiveType primitiveType, size_t first, size_t count, size_t numInstances) override;
+    void drawIndexedPrimitives(PrimitiveType primitiveType, size_t indexCount, const std::shared_ptr<Buffer> &indexBuffer, size_t instanceCount) override;
     void setTriangleFillMode(TriangleFillMode fillMode) override;
     void commit() override;
     void setDepthTest(bool enable) override;

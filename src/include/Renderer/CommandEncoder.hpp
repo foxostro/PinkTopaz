@@ -55,8 +55,15 @@ public:
     // Binds the specified buffer for use in the fragment program at the specified index.
     virtual void setFragmentBuffer(const std::shared_ptr<Buffer> &buffer, size_t index) = 0;
     
-    // Draw triangle primitives using the bound buffers and other resources.
+    // Draw primitives using the bound buffers and other resources.
     virtual void drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances) = 0;
+    
+    // Draw indexed primitives using the bound buffers and other resources.
+    virtual void
+    drawIndexedPrimitives(PrimitiveType primitiveType,
+                          size_t indexCount,
+                          const std::shared_ptr<Buffer> &indexBuffer,
+                          size_t instanceCount) = 0;
     
     // Sets how to rasterize triangle and triangle strip primitives.
     virtual void setTriangleFillMode(TriangleFillMode fillMode) = 0;

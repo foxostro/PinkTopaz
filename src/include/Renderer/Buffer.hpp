@@ -22,7 +22,8 @@ enum BufferUsage
 enum BufferType
 {
     ArrayBuffer,
-    UniformBuffer
+    UniformBuffer,
+    IndexBuffer
 };
 
 // Encapsulates a GPU buffer resource in a platform-agnostic manner.

@@ -15,6 +15,26 @@
 #include "Exception.hpp"
 #include "SDL.h"
 
+static GLenum getOpenGLPrimitiveType(PrimitiveType type)
+{
+    GLenum mode;
+    
+    switch (type) {
+        case Triangles:
+            mode = GL_TRIANGLES;
+            break;
+            
+        case TriangleStrip:
+            mode = GL_TRIANGLE_STRIP;
+            break;
+            
+        default:
+            throw Exception("Invalid primitive type %d in call to getOpenGLPrimitiveType.\n", (int)type);
+    }
+    
+    return mode;
+}
+
 CommandEncoderOpenGL::CommandEncoderOpenGL(unsigned id,
                                            const std::shared_ptr<CommandQueue> &commandQueue,
                                            const RenderPassDescriptor &desc)
@@ -128,23 +148,44 @@ void CommandEncoderOpenGL::setFragmentBuffer(const std::shared_ptr<Buffer> &abst
 void CommandEncoderOpenGL::drawPrimitives(PrimitiveType type, size_t first, size_t count, size_t numInstances)
 {
     _encoderCommandQueue.enqueue(_id, __FUNCTION__, [=]{
-        GLenum mode;
-        
-        switch (type) {
-            case Triangles:
-                mode = GL_TRIANGLES;
-                break;
-                
-            case TriangleStrip:
-                mode = GL_TRIANGLE_STRIP;
-                break;
-                
-            default:
-                throw Exception("Invalid primitive type %d in call to drawPrimitives.\n", (int)type);
-        }
-        
+        GLenum mode = getOpenGLPrimitiveType(type);
         CHECK_GL_ERROR();
         glDrawArrays(mode, (GLint)first, (GLsizei)count);
+        CHECK_GL_ERROR();
+    });
+}
+
+void CommandEncoderOpenGL::drawIndexedPrimitives(PrimitiveType type,
+                                                 size_t indexCount,
+                                                 const std::shared_ptr<Buffer> &indexBuffer,
+                                                 size_t instanceCount)
+{
+    GLenum mode = getOpenGLPrimitiveType(type);
+    
+    _encoderCommandQueue.enqueue(_id, __FUNCTION__, [=]{
+        CHECK_GL_ERROR();
+        
+        // Bind the index buffer to the current vertex array object.
+        {
+            auto concreteIndexBuffer = std::dynamic_pointer_cast<BufferOpenGL>(indexBuffer);
+            const GLuint ibo = concreteIndexBuffer->getHandleVBO();
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+        }
+        
+        // Actually draw it. Passing NULL for `indices' specifies that OpenGL
+        // should use the index buffer that's currently bound.
+        glDrawElementsInstanced(mode,
+                                (GLsizei)indexCount,
+                                /* type = */ GL_UNSIGNED_INT,
+                                /* indices = */ NULL,
+                                (GLsizei)instanceCount);
+        
+        // Unbind the index buffer now that we're done with it.
+        // This isn't strictly necessary, but could be helpful for debugging
+        // since it prevents state changes from being visible outside this
+        // method.
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        
         CHECK_GL_ERROR();
     });
 }
