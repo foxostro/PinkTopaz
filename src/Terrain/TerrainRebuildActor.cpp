@@ -91,31 +91,34 @@ void TerrainRebuildActor::worker()
 {
     while (!_threadShouldExit) {
         AutoreleasePool pool;
-        boost::optional<Cell> maybeCell = pop();
+        
+        // Wait for a cell to work on.
+        boost::optional<Cell> maybeCell;
+        {
+            std::unique_lock<std::mutex> lock(_lock);
+            _cvar.wait(lock, [this]{
+                return _threadShouldExit || !_cells.empty();
+            });
+            if (!(_threadShouldExit || _cells.empty())) {
+                Cell cell = std::move(_cells.front());
+                _cells.pop_front();
+                maybeCell = boost::make_optional(cell);
+            }
+        }
+        
         if (maybeCell) {
             Cell &cell = *maybeCell;
             _processCell(cell.box, cell.progress);
-            cell.progress.setState(TerrainProgressEvent::Complete);
-//            cell.progress.dump();
+         
+            // Remove from the set only at the very end.
+            {
+                std::unique_lock<std::mutex> lock(_lock);
+                cell.progress.setState(TerrainProgressEvent::Complete);
+//                cell.progress.dump();
+                _set.erase(cell.setIterator);
+            }
         }
     }
-}
-
-boost::optional<TerrainRebuildActor::Cell> TerrainRebuildActor::pop()
-{
-    std::unique_lock<std::mutex> lock(_lock);
-    _cvar.wait(lock, [this]{
-        return _threadShouldExit || !_cells.empty();
-    });
-    boost::optional<Cell> result;
-    if (!(_threadShouldExit || _cells.empty())) {
-        Cell cell = std::move(_cells.front());
-        _cells.pop_front();
-        _set.erase(cell.setIterator);
-        cell.setIterator = _set.end();
-        result = boost::make_optional(cell);
-    }
-    return result;
 }
 
 void TerrainRebuildActor::sort()
