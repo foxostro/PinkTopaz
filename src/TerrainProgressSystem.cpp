@@ -11,8 +11,8 @@
 #include "Exception.hpp"
 #include <glm/gtx/transform.hpp>
 
-TerrainProgressSystem::TerrainProgressSystem(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
- : _wireframeCube(graphicsDevice)
+TerrainProgressSystem::TerrainProgressSystem(const std::shared_ptr<WireframeCube> &wireframeCube)
+ : _wireframeCube(wireframeCube)
 {
     _mapStateToColor[TerrainProgressEvent::Queued] = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     _mapStateToColor[TerrainProgressEvent::WaitingOnVoxels] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
@@ -58,8 +58,7 @@ void TerrainProgressSystem::handleEvent(entityx::EntityManager &es,
             transform.value = glm::scale(glm::translate(glm::mat4(1), event.boundingBox.center), event.boundingBox.extent*2.f);
             entity.assign<Transform>(transform);
             
-            // TODO: Render an instanced wireframe box for each chunk. If we do this then each box only consumes one vec4 for the position and one vec4 for the color.
-            auto mesh = _wireframeCube.createMesh();
+            auto mesh = _wireframeCube->createMesh();
             entity.assign<WireframeCube::Renderable>(mesh);
             
             _mapCellToEntity[event.cellCoords] = std::move(entity);

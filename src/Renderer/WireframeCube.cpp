@@ -7,6 +7,7 @@
 //
 
 #include "WireframeCube.hpp"
+#include "Transform.hpp"
 #include <array>
 #include <vector>
 
@@ -18,6 +19,8 @@ WireframeCube::WireframeCube(std::shared_ptr<GraphicsDevice> graphicsDevice)
 
 WireframeCube::Renderable WireframeCube::createMesh()
 {
+    // TODO: Render an instanced wireframe box for each chunk. If we do this then each box only consumes one vec4 for the position and one vec4 for the color.
+    
     Uniforms uniforms;
     auto uniformBuffer = _graphicsDevice->makeBuffer(sizeof(uniforms),
                                                      &uniforms,
@@ -100,4 +103,34 @@ WireframeCube::Renderable WireframeCube::createPrototypeMesh()
     cubeMesh.color = glm::vec4(1.0f);
     
     return cubeMesh;
+}
+
+void WireframeCube::draw(entityx::EntityManager &es,
+                         const std::shared_ptr<CommandEncoder> &encoder,
+                         const glm::mat4 &projectionMatrix,
+                         const glm::mat4 &cameraTransform)
+{
+    es.each<Renderable, Transform>([&](entityx::Entity entity,
+                                       Renderable &mesh,
+                                       Transform &transform) {
+        WireframeCube::Uniforms uniforms = {
+            cameraTransform * transform.value,
+            projectionMatrix,
+            mesh.color
+        };
+        mesh.uniforms->replace(sizeof(uniforms), &uniforms);
+    });
+    
+    encoder->setTriangleFillMode(Lines);
+    
+    es.each<Renderable>([&](entityx::Entity entity, Renderable &mesh){
+        if (!mesh.hidden) {
+            encoder->setShader(mesh.shader);
+            encoder->setVertexBuffer(mesh.vertexBuffer, 0);
+            encoder->setVertexBuffer(mesh.uniforms, 1);
+            encoder->drawPrimitives(TriangleStrip, 0, mesh.vertexCount, 1);
+        }
+    });
+    
+    encoder->setTriangleFillMode(Fill); // restore
 }

@@ -10,6 +10,7 @@
 #define WireframeCube_hpp
 
 #include <glm/glm.hpp>
+#include <entityx/entityx.h>
 #include <memory>
 #include "Renderer/GraphicsDevice.hpp"
 #include "RenderableStaticMesh.hpp"
@@ -56,6 +57,12 @@ public:
     WireframeCube(std::shared_ptr<GraphicsDevice> graphicsDevice);
     
     Renderable createMesh();
+    
+    // Draws all wireframe cubes. Call this from the RenderSystem.
+    void draw(entityx::EntityManager &entityManager,
+              const std::shared_ptr<CommandEncoder> &encoder,
+              const glm::mat4 &projectionMatrix,
+              const glm::mat4 &cameraTransform);
     
 private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;

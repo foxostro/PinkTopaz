@@ -27,11 +27,13 @@ World::World(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
 {
     PROFILER(InitWorld);
     
-    systems.add<RenderSystem>(graphicsDevice);
+    auto wireframeCube = std::make_shared<WireframeCube>(graphicsDevice);
+    
+    systems.add<RenderSystem>(graphicsDevice, wireframeCube);
     systems.add<CameraMovementSystem>();
     systems.add<TerrainCursorSystem>(dispatcherHighPriority,
                                      mainThreadDispatcher);
-    systems.add<TerrainProgressSystem>(graphicsDevice);
+    systems.add<TerrainProgressSystem>(wireframeCube);
     systems.configure();
     
     // Setup the position and orientation of the camera.
@@ -57,19 +59,17 @@ World::World(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                                                          events,
                                                          cameraPosition);
     entityx::Entity terrainEntity = entities.create();
-    terrainEntity.assign<TerrainComponent>(terrainComponent);
-    terrainEntity.assign<Transform>();
+    {
+        terrainEntity.assign<TerrainComponent>(terrainComponent);
+        terrainEntity.assign<Transform>();
+    }
     
     entityx::Entity terrainCursor = entities.create();
-    terrainCursor.assign<Transform>();
-    terrainCursor.assign<TerrainCursor>();
-    terrainCursor.component<TerrainCursor>()->terrainEntity = terrainEntity;
-    
     {
-        WireframeCube wireframeCube(graphicsDevice);
-        auto mesh = wireframeCube.createMesh();
-        mesh.hidden = false;
-        terrainCursor.assign<WireframeCube::Renderable>(mesh);
+        terrainCursor.assign<Transform>();
+        terrainCursor.assign<TerrainCursor>();
+        terrainCursor.component<TerrainCursor>()->terrainEntity = terrainEntity;
+        terrainCursor.assign<WireframeCube::Renderable>(wireframeCube->createMesh());
     }
 }
 

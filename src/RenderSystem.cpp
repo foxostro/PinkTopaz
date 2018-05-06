@@ -22,9 +22,11 @@
 #include "SDL.h"
 #include <glm/gtc/matrix_transform.hpp> // for perspective()
 
-RenderSystem::RenderSystem(const std::shared_ptr<GraphicsDevice> &dev)
- : _graphicsDevice(dev),
-   _textRenderer(dev, TextAttributes(
+RenderSystem::RenderSystem(const std::shared_ptr<GraphicsDevice> &device,
+                           const std::shared_ptr<WireframeCube> &wireframeCube)
+ : _graphicsDevice(device),
+   _wireframeCube(wireframeCube),
+   _textRenderer(device, TextAttributes(
        /*fontName=*/    "Vegur",
        /*fontSize=*/    24,
        /*border=*/      1,
@@ -53,6 +55,7 @@ void RenderSystem::update(entityx::EntityManager &es,
     
     // Update the uniform buffers so they include the most recent matrices.
     const glm::mat4 adjust = _graphicsDevice->getProjectionAdjustMatrix();
+    const glm::mat4 projectionMatrix = adjust * _proj;
     
     float fogDensity = 0.0f;
     es.each<TerrainComponent, Transform>([&](entityx::Entity entity,
@@ -63,7 +66,7 @@ void RenderSystem::update(entityx::EntityManager &es,
         
         TerrainUniforms uniforms = {
             cameraTransform * transform.value,
-            adjust * _proj,
+            projectionMatrix,
             fogDensity
         };
         terrain.terrain->setTerrainUniforms(uniforms);
@@ -74,19 +77,8 @@ void RenderSystem::update(entityx::EntityManager &es,
                                                  Transform &transform) {
         TerrainUniforms uniforms = {
             cameraTransform * transform.value,
-            adjust * _proj,
+            projectionMatrix,
             fogDensity
-        };
-        mesh.uniforms->replace(sizeof(uniforms), &uniforms);
-    });
-    
-    es.each<WireframeCube::Renderable, Transform>([&](entityx::Entity entity,
-                                                      WireframeCube::Renderable &mesh,
-                                                      Transform &transform) {
-        WireframeCube::Uniforms uniforms = {
-            cameraTransform * transform.value,
-            adjust * _proj,
-            mesh.color
         };
         mesh.uniforms->replace(sizeof(uniforms), &uniforms);
     });
@@ -114,19 +106,11 @@ void RenderSystem::update(entityx::EntityManager &es,
         encoder->drawPrimitives(Triangles, 0, mesh.vertexCount, 1);
     });
     
-    // Draw wireframe boxes for things like the terrain cursor.
-    encoder->setTriangleFillMode(Lines);
-    es.each<WireframeCube::Renderable>([&](entityx::Entity entity, WireframeCube::Renderable &mesh){
-        if (!mesh.hidden) {
-            encoder->setShader(mesh.shader);
-            encoder->setVertexBuffer(mesh.vertexBuffer, 0);
-            encoder->setVertexBuffer(mesh.uniforms, 1);
-            encoder->drawPrimitives(TriangleStrip, 0, mesh.vertexCount, 1);
-        }
-    });
+    // Draw wireframe cubes. We use these to highlight things for debugging
+    // purposes, and to draw the terrain cursor.
+    _wireframeCube->draw(es, encoder, projectionMatrix, cameraTransform);
     
     // Draw text strings on the screen last because they blend.
-    encoder->setTriangleFillMode(Fill);
     encoder->setDepthTest(false);
     _textRenderer.draw(encoder, _viewport);
     

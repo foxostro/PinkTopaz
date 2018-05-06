@@ -19,12 +19,14 @@
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/TextRenderer.hpp"
 #include "FrameTimer.hpp"
+#include "WireframeCube.hpp"
 
 // System for rendering game objects in the world.
 class RenderSystem : public entityx::System<RenderSystem>, public entityx::Receiver<RenderSystem>
 {
 public:
-    RenderSystem(const std::shared_ptr<GraphicsDevice> &graphicsDevice);
+    RenderSystem(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+                 const std::shared_ptr<WireframeCube> &wireframeCube);
     void configure(entityx::EventManager &em) override;
     void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
     void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
@@ -37,6 +39,7 @@ private:
     entityx::Entity _terrainEntity;
     entityx::Entity _activeCamera;
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
+    std::shared_ptr<WireframeCube> _wireframeCube;
     TextRenderer _textRenderer;
     FrameTimer _frameTimer;
 };

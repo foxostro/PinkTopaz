@@ -22,7 +22,7 @@
 class TerrainProgressSystem : public entityx::System<TerrainProgressSystem>, public entityx::Receiver<TerrainProgressSystem>
 {
 public:
-    TerrainProgressSystem(const std::shared_ptr<GraphicsDevice> &device);
+    TerrainProgressSystem(const std::shared_ptr<WireframeCube> &wireframeCube);
     void configure(entityx::EventManager &em) override;
     void update(entityx::EntityManager &es,
                 entityx::EventManager &events,
@@ -33,7 +33,7 @@ private:
     std::unordered_map<Morton3, entityx::Entity> _mapCellToEntity;
     std::unordered_map<TerrainProgressEvent::State, glm::vec4> _mapStateToColor;
     std::deque<TerrainProgressEvent> _pendingEvents;
-    WireframeCube _wireframeCube;
+    std::shared_ptr<WireframeCube> _wireframeCube;
     
     void handleEvent(entityx::EntityManager &es,
                      const TerrainProgressEvent &event);
