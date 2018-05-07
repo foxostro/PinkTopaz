@@ -51,6 +51,25 @@ WireframeCube::WireframeCube(std::shared_ptr<GraphicsDevice> graphicsDevice)
         _vertexBuffer->addDebugMarker("Wireframe Cube Vertices", 0, bufferSize);
     }
     
+    // Create the buffer for uniforms shared between instances.
+    {
+        Uniforms uniforms;
+        _uniformBuffer = _graphicsDevice->makeBuffer(sizeof(uniforms),
+                                                     &uniforms,
+                                                     DynamicDraw,
+                                                     UniformBuffer);
+        _uniformBuffer->addDebugMarker("Wireframe Cube Shared Uniforms", 0, sizeof(uniforms));
+    }
+    
+    // Create the buffer for per-instance uniforms.
+    {
+        UniformsPerInstance uniforms;
+        _uniformsPerInstanceBuffer = _graphicsDevice->makeBuffer(sizeof(uniforms),
+                                                                 &uniforms,
+                                                                 DynamicDraw,
+                                                                 UniformBuffer);
+    }
+    
     // Create the shader.
     {
         VertexFormat vertexFormat;
@@ -71,24 +90,11 @@ WireframeCube::WireframeCube(std::shared_ptr<GraphicsDevice> graphicsDevice)
 
 WireframeCube::Renderable WireframeCube::createMesh()
 {
-    // TODO: Render an instanced wireframe box for each chunk. If we do this then each box only consumes one vec4 for the position and one vec4 for the color. Also, we can use this as an opportunity to stop creating and destroying uniforms buffers every time a cube component is created and destroyed. (Admittedly, we could do this without also doing instancing if we pooled and reused the uniforms buffers.)
-    
     const glm::vec4 defaultColor(1.0f);
-    
-    Uniforms uniforms;
-    uniforms.color = defaultColor;
-    auto uniformBuffer = _graphicsDevice->makeBuffer(sizeof(uniforms),
-                                                     &uniforms,
-                                                     DynamicDraw,
-                                                     UniformBuffer);
-    uniformBuffer->addDebugMarker("Wireframe Cube Uniforms", 0, sizeof(uniforms));
-    
     Renderable mesh;
-    
     mesh.hidden = false;
-    mesh.uniforms = uniformBuffer;
-    mesh.color = glm::vec4(1.f);
-    
+    mesh.modelView = glm::mat4(1.f); // identity
+    mesh.color = defaultColor;
     return mesh;
 }
 
@@ -97,30 +103,41 @@ void WireframeCube::draw(entityx::EntityManager &es,
                          const glm::mat4 &projectionMatrix,
                          const glm::mat4 &cameraTransform)
 {
+    // Build per-instance uniform data and then submit to the GPU.
+    std::vector<UniformsPerInstance> uniformsPerInstance;
+    
     es.each<Renderable, Transform>([&](entityx::Entity entity,
                                        Renderable &mesh,
                                        Transform &transform) {
-        WireframeCube::Uniforms uniforms = {
-            cameraTransform * transform.value,
-            projectionMatrix,
-            mesh.color
-        };
-        mesh.uniforms->replace(sizeof(uniforms), &uniforms);
+        if (!mesh.hidden) {
+            UniformsPerInstance uniforms;
+            uniforms.modelView = cameraTransform * transform.value;
+            uniforms.color = mesh.color;
+            uniformsPerInstance.push_back(uniforms);
+        }
     });
+    
+    const size_t instanceCount = uniformsPerInstance.size();
+    
+    if (instanceCount == 0) {
+        return; // nothing to do
+    }
+    
+    _uniformsPerInstanceBuffer->replace(instanceCount * sizeof(UniformsPerInstance),
+                                        uniformsPerInstance.data());
+    
+    // The uniforms shared between all instances.
+    WireframeCube::Uniforms uniforms = {
+        projectionMatrix
+    };
+    _uniformBuffer->replace(sizeof(uniforms), &uniforms);
     
     encoder->setTriangleFillMode(Lines);
     encoder->setShader(_shader);
     encoder->setVertexBuffer(_vertexBuffer, 0);
-    
-    es.each<Renderable>([&](entityx::Entity entity, Renderable &mesh){
-        if (!mesh.hidden) {
-            encoder->setVertexBuffer(mesh.uniforms, 1);
-            encoder->drawIndexedPrimitives(/* primitiveType= */ TriangleStrip,
-                                           /* indexCount= */ _indexCount,
-                                           /* indexBuffer= */ _indexBuffer,
-                                           /* instanceCount= */ 1);
-        }
-    });
-    
+    encoder->setVertexBuffer(_uniformBuffer, 1);
+    encoder->setVertexBuffer(_uniformsPerInstanceBuffer, 2);
+    encoder->drawIndexedPrimitives(TriangleStrip, _indexCount,
+                                   _indexBuffer, instanceCount);
     encoder->setTriangleFillMode(Fill); // restore
 }

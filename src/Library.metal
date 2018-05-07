@@ -77,17 +77,24 @@ struct WireframeCubeProjectedVertex
 
 struct WireframeCubeUniforms
 {
-    float4x4 view, proj;
+    float4x4 projection;
+};
+
+struct WireframeCubeUniformsPerInstance
+{
+    float4x4 modelView;
     float4 color;
 };
 
 vertex WireframeCubeProjectedVertex
 wireframe_cube_vert(WireframeCubeVertex inVert [[stage_in]],
-                    constant WireframeCubeUniforms &u [[buffer(1)]])
+                    constant WireframeCubeUniforms &uniforms [[buffer(1)]],
+                    constant WireframeCubeUniformsPerInstance *perInstanceUniforms [[buffer(2)]],
+                    ushort instance [[instance_id]])
 {
     WireframeCubeProjectedVertex outVert;
-    outVert.position = u.proj * u.view * inVert.vp;
-    outVert.color = u.color;
+    outVert.position = uniforms.projection * perInstanceUniforms[instance].modelView * inVert.vp;
+    outVert.color = perInstanceUniforms[instance].color;
     return outVert;
 }
 

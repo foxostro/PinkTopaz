@@ -37,7 +37,12 @@ public:
     
     struct alignas(16) Uniforms
     {
-        glm::mat4 view, proj;
+        glm::mat4 projection;
+    };
+    
+    struct alignas(16) UniformsPerInstance
+    {
+        glm::mat4 modelView;
         glm::vec4 color;
     };
     
@@ -46,7 +51,7 @@ public:
     struct Renderable
     {
         bool hidden;
-        std::shared_ptr<Buffer> uniforms;
+        glm::mat4 modelView;
         glm::vec4 color;
     };
     
@@ -65,6 +70,8 @@ private:
     size_t _indexCount;
     std::shared_ptr<Buffer> _indexBuffer;
     std::shared_ptr<Buffer> _vertexBuffer;
+    std::shared_ptr<Buffer> _uniformBuffer;
+    std::shared_ptr<Buffer> _uniformsPerInstanceBuffer;
     std::shared_ptr<Shader> _shader;
     
     Renderable createPrototypeMesh();
