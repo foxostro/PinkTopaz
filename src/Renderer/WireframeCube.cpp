@@ -9,6 +9,7 @@
 #include "WireframeCube.hpp"
 #include "Transform.hpp"
 #include <array>
+#include <deque>
 #include <vector>
 
 WireframeCube::WireframeCube(std::shared_ptr<GraphicsDevice> graphicsDevice)
@@ -61,13 +62,10 @@ WireframeCube::WireframeCube(std::shared_ptr<GraphicsDevice> graphicsDevice)
         _uniformBuffer->addDebugMarker("Wireframe Cube Shared Uniforms", 0, sizeof(uniforms));
     }
     
-    // Create the buffer for per-instance uniforms.
+    // How many UniformsPerInstance can we pack into a single uniform buffer?
     {
-        UniformsPerInstance uniforms;
-        _uniformsPerInstanceBuffer = _graphicsDevice->makeBuffer(sizeof(uniforms),
-                                                                 &uniforms,
-                                                                 DynamicDraw,
-                                                                 UniformBuffer);
+        size_t maxUniformBufferSize = _graphicsDevice->getMaxBufferSize(UniformBuffer);
+        _maxNumberOfUniformsPerInstancePerUniformBuffer = maxUniformBufferSize / sizeof(UniformsPerInstance);
     }
     
     // Create the shader.
@@ -103,8 +101,8 @@ void WireframeCube::draw(entityx::EntityManager &es,
                          const glm::mat4 &projectionMatrix,
                          const glm::mat4 &cameraTransform)
 {
-    // Build per-instance uniform data and then submit to the GPU.
-    std::vector<UniformsPerInstance> uniformsPerInstance;
+    // Build per-instance uniform data.
+    std::deque<UniformsPerInstance> uniformsPerInstance;
     
     es.each<Renderable, Transform>([&](entityx::Entity entity,
                                        Renderable &mesh,
@@ -117,14 +115,9 @@ void WireframeCube::draw(entityx::EntityManager &es,
         }
     });
     
-    const size_t instanceCount = uniformsPerInstance.size();
-    
-    if (instanceCount == 0) {
+    if (uniformsPerInstance.size() == 0) {
         return; // nothing to do
     }
-    
-    _uniformsPerInstanceBuffer->replace(instanceCount * sizeof(UniformsPerInstance),
-                                        uniformsPerInstance.data());
     
     // The uniforms shared between all instances.
     WireframeCube::Uniforms uniforms = {
@@ -132,12 +125,50 @@ void WireframeCube::draw(entityx::EntityManager &es,
     };
     _uniformBuffer->replace(sizeof(uniforms), &uniforms);
     
+    // Setup to draw the batches.
     encoder->setTriangleFillMode(Lines);
     encoder->setShader(_shader);
     encoder->setVertexBuffer(_vertexBuffer, 0);
     encoder->setVertexBuffer(_uniformBuffer, 1);
-    encoder->setVertexBuffer(_uniformsPerInstanceBuffer, 2);
-    encoder->drawIndexedPrimitives(TriangleStrip, _indexCount,
-                                   _indexBuffer, instanceCount);
-    encoder->setTriangleFillMode(Fill); // restore
+    
+    // We'll need to break the per-instance data up into multiple buffers as it
+    // may not fit into a single buffer. (This really only happens when using
+    // the OpenGL renderer since we can't use Shader Storage Buffer Objects.)
+    
+    std::vector<std::shared_ptr<Buffer>> pool = _uniformsPerInstanceBufferPool;
+    
+    while (uniformsPerInstance.size() > 0) {
+        std::vector<UniformsPerInstance> uniformsPerInstanceBatch;
+        uniformsPerInstanceBatch.reserve(_maxNumberOfUniformsPerInstancePerUniformBuffer);
+        for (size_t i = 0, n = std::min(_maxNumberOfUniformsPerInstancePerUniformBuffer, uniformsPerInstance.size()); i < n; ++i) {
+            UniformsPerInstance perInstanceData = uniformsPerInstance.front();
+            uniformsPerInstance.pop_front();
+            uniformsPerInstanceBatch.push_back(perInstanceData);
+        }
+        
+        // Grab and update a uniform buffer from the pool, or create a new one.
+        std::shared_ptr<Buffer> buffer;
+        if (pool.size() == 0) {
+            buffer = _graphicsDevice->makeBuffer(uniformsPerInstanceBatch.size() * sizeof(UniformsPerInstance),
+                                                 uniformsPerInstanceBatch.data(),
+                                                 DynamicDraw,
+                                                 UniformBuffer);
+            _uniformsPerInstanceBufferPool.push_back(buffer);
+        } else {
+            buffer = pool.back();
+            pool.pop_back();
+            buffer->replace(uniformsPerInstanceBatch.size() * sizeof(UniformsPerInstance),
+                            uniformsPerInstanceBatch.data());
+        }
+        
+        // Bind the per-instance uniform buffer and draw.
+        encoder->setVertexBuffer(buffer, 2);
+        encoder->drawIndexedPrimitives(TriangleStrip,
+                                       _indexCount,
+                                       _indexBuffer,
+                                       uniformsPerInstanceBatch.size());
+    }
+    
+    // Reset
+    encoder->setTriangleFillMode(Fill);
 }

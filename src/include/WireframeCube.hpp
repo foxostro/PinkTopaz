@@ -68,10 +68,11 @@ public:
 private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     size_t _indexCount;
+    size_t _maxNumberOfUniformsPerInstancePerUniformBuffer;
     std::shared_ptr<Buffer> _indexBuffer;
     std::shared_ptr<Buffer> _vertexBuffer;
     std::shared_ptr<Buffer> _uniformBuffer;
-    std::shared_ptr<Buffer> _uniformsPerInstanceBuffer;
+    std::vector<std::shared_ptr<Buffer>> _uniformsPerInstanceBufferPool;
     std::shared_ptr<Shader> _shader;
     
     Renderable createPrototypeMesh();

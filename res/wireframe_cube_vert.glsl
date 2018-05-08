@@ -6,12 +6,19 @@ out vec4 color;
 
 layout (std140) uniform WireframeCubeUniforms
 {
-    mat4 view, proj;
-    vec4 colorParameter;
+    mat4 proj;
+};
+
+layout (std140) uniform WireframeCubeUniformsPerInstance
+{
+        struct Data {
+        mat4 view;
+        vec4 colorParameter;
+    } perInstanceUniforms[819];
 };
 
 void main()
 {
-    color = colorParameter;
-    gl_Position = proj * view * vp;
+    color = perInstanceUniforms[gl_InstanceID].colorParameter;
+    gl_Position = proj * perInstanceUniforms[gl_InstanceID].view * vp;
 }

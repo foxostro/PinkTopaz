@@ -119,54 +119,34 @@ void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstra
         }
         
         auto buffer = std::dynamic_pointer_cast<BufferOpenGL>(abstractBuffer);
-        const GLuint vbo = buffer->getHandleVBO();
+        const GLuint bufferObject = buffer->getHandleVBO();
         const GLenum target = buffer->getTargetEnum();
         
         if (UniformBuffer == buffer->getType()) {
-            glBindBufferBase(target, 0, vbo);
-            
-            // TODO: The Mac is stuck with OpenGL 4.1 without access to Shader
-            // Storage Buffer Objects. So, the API for per-instance uniforms is
-            // different between OpenGL and Metal. To get around this, the
-            // OpenGL renderer can go one of the following three routes:
-            //
-            // 1. Make use of a fixed size array in one uniform block layout.
-            //
-            //    OpenGL will impose a limitation on the max size as determined
-            //    by GL_MAX_UNIFORM_BLOCK_SIZE. The limit is 65536 bytes on my
-            //    machine. So, we can assume this will always be uncomfortable.
-            //
-            //    Make changes to CommandEncoderOpenGL to permit multiple
-            //    uniform buffer objects to be bound via glUniformBlockBinding()
-            //    and glBindBufferBase(). Currently, we always bind to binding
-            //    location zero.
-            //
-            //    Then, provide GraphicsDevice API to query the maximum buffer
-            //    size for a uniform buffer. Clients, such as WireframeCube, may
-            //    determine at run time to adapt their rendering strategy based
-            //    on capabilities. For example, the client chooses to either
-            //    pack all per-instance data into a single buffer, or use a pool
-            //    of uniform buffers and avoid instanced rendering altogether.
-            //
-            // 2. Annotate the Buffer to note that it is for per-instance
-            //    uniform data. Have the client provide a VertexFormat to
-            //    describe the uniform data. Then, use this to feed uniform data
-            //    to the shader through vertex attribute.
-            //
-            // 3. Drop support for OpenGL on the Mac and rewrite to work well
-            //    with OpenGL 4.3 on Linux and Windows where we can use Shader
-            //    Storage Buffer Objects.
+            // We subtract one from the index here to correct for a difference
+            // in the way OpenGL represents Uniform Buffer Objects and how Metal
+            // represents bound buffers in the vertex shader.
+            // Specifically, OpenGL's Uniform Buffer Objects are indexed from
+            // zero in a namespace specifically reserved for Uniform Buffer
+            // Objects. Metal's Buffers are indexed from zero in a namespace
+            // shared between all buffer types. We'll assume index zero is for
+            // the vertex buffer.
+            GLuint program = _currentShader->getProgram();
+            glBindBuffer(target, bufferObject);
+            glUniformBlockBinding(program, index-1, index-1);
+            glBindBufferBase(target, index-1, bufferObject);
+            CHECK_GL_ERROR();
         } else {
             GLuint vao = buffer->getHandleVAO();
             glBindVertexArray(vao);
-            glBindBuffer(target, vbo);
+            glBindBuffer(target, bufferObject);
             
             const VertexFormat &format = _currentShader->getVertexFormat();
             setupVertexAttributes(format);
             
             glBindBuffer(target, 0);
+            CHECK_GL_ERROR();
         }
-        CHECK_GL_ERROR();
     });
 }
 
