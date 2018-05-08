@@ -80,6 +80,16 @@ GraphicsDeviceMetal::GraphicsDeviceMetal(SDL_Window &window)
         }
     }
     
+    size_t maxBufferSize;
+    if ([device supportsFeatureSet:MTLFeatureSet_macOS_GPUFamily1_v3]) {
+        maxBufferSize = 1024 * 1024 * 1024; // 1GiB
+    } else {
+        maxBufferSize = 256 * 1024 * 1024; // 256MiB
+    }
+    _maxBufferSizes[UniformBuffer] = maxBufferSize;
+    _maxBufferSizes[ArrayBuffer] = maxBufferSize;
+    _maxBufferSizes[IndexBuffer] = maxBufferSize;
+    
     [device release];
 }
 
@@ -176,6 +186,11 @@ GraphicsDeviceMetal::makeBuffer(size_t size,
     auto buffer = std::make_shared<BufferMetal>(_metalLayer.device, size,
                                                 usage, bufferType);
     return std::dynamic_pointer_cast<Buffer>(buffer);
+}
+
+size_t GraphicsDeviceMetal::getMaxBufferSize(BufferType bufferType)
+{
+    return _maxBufferSizes[bufferType];
 }
 
 void GraphicsDeviceMetal::windowSizeChanged()

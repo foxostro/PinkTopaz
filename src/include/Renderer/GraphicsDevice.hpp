@@ -80,6 +80,9 @@ public:
                BufferUsage usage,
                BufferType bufferType) = 0;
     
+    // Gets the maximum size (in bytes) of a buffer of the specified type.
+    virtual size_t getMaxBufferSize(BufferType bufferType) = 0;
+    
     // Call this when the window size changes. This provides the opportunity
     // to update the underlying context or layers as needed.
     virtual void windowSizeChanged() = 0;

@@ -67,6 +67,13 @@ GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(SDL_Window &window)
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CCW);
     
+    // Determine the maximum sizes of buffers.
+    int maxUniformBufferSize = 0;
+    glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxUniformBufferSize);
+    _maxBufferSizes[UniformBuffer] = (size_t)maxUniformBufferSize;
+    _maxBufferSizes[ArrayBuffer] = std::numeric_limits<std::size_t>::max();
+    _maxBufferSizes[IndexBuffer] = std::numeric_limits<std::size_t>::max();
+    
     CHECK_GL_ERROR();
 }
 
@@ -157,6 +164,11 @@ GraphicsDeviceOpenGL::makeBuffer(size_t bufferSize,
     auto buffer = std::make_shared<BufferOpenGL>(nextId(), _commandQueue,
                                                  bufferSize, usage, bufferType);
     return std::dynamic_pointer_cast<Buffer>(buffer);
+}
+
+size_t GraphicsDeviceOpenGL::getMaxBufferSize(BufferType bufferType)
+{
+    return _maxBufferSizes[bufferType];
 }
 
 void GraphicsDeviceOpenGL::windowSizeChanged() {}

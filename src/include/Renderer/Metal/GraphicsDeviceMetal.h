@@ -18,6 +18,7 @@
 
 #import <queue>
 #import <memory>
+#import <map>
 
 #import "SDL.h"
 #import <Cocoa/Cocoa.h>
@@ -81,6 +82,9 @@ public:
                BufferUsage usage,
                BufferType bufferType) override;
     
+    // Gets the maximum size (in bytes) of a buffer of the specified type.
+    size_t getMaxBufferSize(BufferType bufferType) override;
+    
     // Call this when the window size changes. This provides the opportunity
     // to update the underlying context or layers as needed.
     void windowSizeChanged() override;
@@ -111,6 +115,7 @@ private:
     id <MTLLibrary> _library;
     id <MTLTexture> _depthTexture;
     id <MTLDepthStencilState> _depthTestOn, _depthTestOff;
+    std::map<BufferType, size_t> _maxBufferSizes;
 };
 
 #endif /* GraphicsDeviceMetal_h */

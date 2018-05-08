@@ -12,6 +12,7 @@
 #include <queue>
 #include <memory>
 #include <atomic>
+#include <map>
 
 #include "SDL.h"
 #include "Renderer/GraphicsDevice.hpp"
@@ -74,6 +75,9 @@ public:
                BufferUsage usage,
                BufferType bufferType) override;
     
+    // Gets the maximum size (in bytes) of a buffer of the specified type.
+    size_t getMaxBufferSize(BufferType bufferType) override;
+    
     // Call this when the window size changes. This provides the opportunity
     // to update the underlying context or layers as needed.
     void windowSizeChanged() override;
@@ -103,6 +107,7 @@ private:
     SDL_Window &_window;
     SDL_GLContext _glContext;
     std::shared_ptr<CommandQueue> _commandQueue;
+    std::map<BufferType, size_t> _maxBufferSizes;
 };
 
 #endif /* GraphicsDeviceOpenGL_hpp */
