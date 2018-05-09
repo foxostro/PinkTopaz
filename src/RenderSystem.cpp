@@ -35,7 +35,12 @@ RenderSystem::RenderSystem(const std::shared_ptr<GraphicsDevice> &device,
        /*weight=*/      Bold
    )),
    _frameTimer(_textRenderer)
-{}
+{
+    // Setup a cross-hair cursor in the center of the window.
+    // (Guess the window size since we haven't received it yet.)
+    const glm::vec2 windowSize(800.0f, 600.0f);
+    _crosshairs = createCrosshairs(windowSize);
+}
 
 void RenderSystem::configure(entityx::EventManager &em)
 {
@@ -142,4 +147,16 @@ void RenderSystem::receive(const WindowSizeChangedEvent &event)
     _proj = glm::perspective(glm::pi<float>() * 0.25f, (float)event.width / event.height, znear, zfar);
     _textRenderer.setWindowScaleFactor(event.windowScaleFactor);
     _graphicsDevice->windowSizeChanged();
+    
+    // Update the position of the cross hairs.
+    _textRenderer.remove(_crosshairs);
+    _crosshairs = createCrosshairs(glm::vec2(event.width, event.height));
+}
+
+TextRenderer::StringHandle RenderSystem::createCrosshairs(const glm::vec2 &windowSize)
+{
+    const glm::vec4 color(0.5f, 0.5f, 0.5f, 1.0f);
+    const glm::vec2 glyphSize(14.f, 14.f);
+    const glm::vec2 position = windowSize/2.f - glyphSize/2.f;
+    return _textRenderer.add("+", position, color);
 }

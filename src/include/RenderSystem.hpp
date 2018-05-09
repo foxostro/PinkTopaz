@@ -41,7 +41,10 @@ private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<WireframeCube> _wireframeCube;
     TextRenderer _textRenderer;
+    TextRenderer::StringHandle _crosshairs;
     FrameTimer _frameTimer;
+    
+    TextRenderer::StringHandle createCrosshairs(const glm::vec2 &windowSize);
 };
 
 #endif /* RenderSystem_hpp */

@@ -147,9 +147,8 @@ TextRenderer::StringHandle TextRenderer::add(const std::string &str,
         nullptr,
         nullptr
     };
-    _strings.push_back(s);
-    auto handle = _strings.end();
-    --handle;
+    _strings.push_front(s);
+    auto handle = _strings.begin();
     
     const std::string &text = handle->contents;
     const size_t glyphCount = text.size();
