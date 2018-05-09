@@ -15,10 +15,11 @@
 #include "Transform.hpp"
 #include "ActiveCamera.hpp"
 #include "CameraMovedEvent.hpp"
-#include "TerrainCursorInvalidatedEvent.hpp"
+#include "MouseButtonEvent.hpp"
 
 #include <entityx/entityx.h>
 #include <glm/mat4x4.hpp>
+#include <queue>
 
 // System for updating terrain cursors.
 // Entities which have a TerrainCursor component are terrain cursors. These
@@ -35,7 +36,7 @@ public:
     void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
     void receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event);
     void receive(const CameraMovedEvent &event);
-    void receive(const TerrainCursorInvalidatedEvent &event);
+    void receive(const MouseButtonEvent &event);
     
 private:
     static constexpr size_t maxPlaceDistance = 16;
@@ -48,10 +49,17 @@ private:
                              const std::shared_ptr<Terrain> &terrain,
                              entityx::Entity cursorEntity);
     
+    void setBlockUnderCursor(TerrainCursor &cursor,
+                             entityx::EventManager &events,
+                             float value,
+                             bool usePlacePos);
+    
     std::shared_ptr<TaskDispatcher> _dispatcher;
     std::shared_ptr<TaskDispatcher> _mainThreadDispatcher;
     entityx::Entity _activeCamera;
     bool _needsUpdate;
+    int _mouseDownCounter;
+    std::queue<MouseButtonEvent> _pendingEvents;
 };
 
 #endif /* TerrainCursorSystem_hpp */

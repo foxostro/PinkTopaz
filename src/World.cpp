@@ -12,7 +12,6 @@
 #include "RenderSystem.hpp"
 #include "CameraMovementSystem.hpp"
 #include "TerrainCursorSystem.hpp"
-#include "TerrainEditSystem.hpp"
 #include "TerrainProgressSystem.hpp"
 #include "TerrainComponent.hpp"
 #include "TerrainCursor.hpp"
@@ -34,7 +33,6 @@ World::World(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     systems.add<CameraMovementSystem>();
     systems.add<TerrainCursorSystem>(dispatcherHighPriority,
                                      mainThreadDispatcher);
-    systems.add<TerrainEditSystem>();
     systems.add<TerrainProgressSystem>(wireframeCube);
     systems.configure();
     
@@ -80,6 +78,5 @@ void World::update(entityx::TimeDelta dt)
     systems.update<CameraMovementSystem>(dt);
     systems.update<TerrainCursorSystem>(dt);
     systems.update<TerrainProgressSystem>(dt);
-    systems.update<TerrainEditSystem>(dt);
     systems.update<RenderSystem>(dt);
 }

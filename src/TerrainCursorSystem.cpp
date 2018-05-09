@@ -13,6 +13,7 @@
 #include "TerrainComponent.hpp"
 #include "Grid/GridRaycast.hpp"
 #include "WireframeCube.hpp"
+#include "Terrain/TerrainOperationEditPoint.hpp"
 
 #include "SDL.h"
 #include <glm/gtx/quaternion.hpp>
@@ -23,7 +24,8 @@ TerrainCursorSystem::TerrainCursorSystem(const std::shared_ptr<TaskDispatcher> &
                                          const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
  : _dispatcher(dispatcher),
    _mainThreadDispatcher(mainThreadDispatcher),
-   _needsUpdate(false)
+   _needsUpdate(false),
+   _mouseDownCounter(0)
 {}
 
 void TerrainCursorSystem::configure(entityx::EventManager &em)
@@ -31,7 +33,7 @@ void TerrainCursorSystem::configure(entityx::EventManager &em)
     em.subscribe<entityx::ComponentAddedEvent<ActiveCamera>>(*this);
     em.subscribe<entityx::ComponentRemovedEvent<ActiveCamera>>(*this);
     em.subscribe<CameraMovedEvent>(*this);
-    em.subscribe<TerrainCursorInvalidatedEvent>(*this);
+    em.subscribe<MouseButtonEvent>(*this);
 }
 
 void TerrainCursorSystem::update(entityx::EntityManager &es,
@@ -40,7 +42,7 @@ void TerrainCursorSystem::update(entityx::EntityManager &es,
 {
     bool validActiveCamera = _activeCamera.valid();
     
-    // If the camera has moved then we need to request a new terrain cursor.
+    // If the camera has moved then we need to update the terrain cursor.
     if (validActiveCamera && _needsUpdate) {
         _needsUpdate = false;
         
@@ -66,6 +68,34 @@ void TerrainCursorSystem::update(entityx::EntityManager &es,
             }
         });
     }
+    
+    // Process mouse button events which may affect the terrain cursor.
+    while (!_pendingEvents.empty()) {
+        MouseButtonEvent event = _pendingEvents.front();
+        _pendingEvents.pop();
+        
+        // Change the terrain cursor color when the mouse button is depressed.
+        _mouseDownCounter += (event.down ? 1 : -1);
+        es.each<TerrainCursor, WireframeCube::Renderable>([&](entityx::Entity cursorEntity, TerrainCursor &cursor, WireframeCube::Renderable &cursorMesh) {
+            if (_mouseDownCounter != 0) {
+                cursorMesh.color = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
+            } else {
+                cursorMesh.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            }
+        });
+        
+        if (event.button == SDL_BUTTON_LEFT && !event.down) {
+            es.each<TerrainCursor>([&](entityx::Entity cursorEntity, TerrainCursor &cursor) {
+                setBlockUnderCursor(cursor, events, /* value = */ 1.f, /* usePlacePos = */ true);
+            });
+        }
+        
+        if (event.button == SDL_BUTTON_RIGHT && !event.down) {
+            es.each<TerrainCursor>([&](entityx::Entity cursorEntity, TerrainCursor &cursor) {
+                setBlockUnderCursor(cursor, events, /* value = */ 0.f, /* usePlacePos = */ false);
+            });
+        }
+    } // while there are pending events
 }
 
 void TerrainCursorSystem::receive(const entityx::ComponentAddedEvent<ActiveCamera> &event)
@@ -87,9 +117,9 @@ void TerrainCursorSystem::receive(const CameraMovedEvent &event)
     _needsUpdate = true;
 }
 
-void TerrainCursorSystem::receive(const TerrainCursorInvalidatedEvent &event)
+void TerrainCursorSystem::receive(const MouseButtonEvent &event)
 {
-    _needsUpdate = true;
+    _pendingEvents.push(event);
 }
 
 void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTransform,
@@ -189,4 +219,31 @@ void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTran
 //        const std::string msStr = std::to_string(ms.count());
 //        SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
     });
+}
+
+void TerrainCursorSystem::setBlockUnderCursor(TerrainCursor &cursor,
+                                              entityx::EventManager &events,
+                                              float value,
+                                              bool usePlacePos)
+{
+    if (!cursor.active) {
+        return;
+    }
+    
+    glm::vec3 location = usePlacePos ? cursor.placePos : cursor.pos;
+    Voxel voxel{value};
+    entityx::Entity terrainEntity = cursor.terrainEntity;
+    
+    if (!terrainEntity.valid()) {
+        return;
+    }
+    
+    auto handleTerrain = terrainEntity.component<TerrainComponent>();
+    
+    if (handleTerrain.valid()) {
+        TerrainOperationEditPoint operation{location, voxel};
+        auto terrain = handleTerrain.get()->terrain;
+        terrain->writerTransaction(operation);
+        _needsUpdate = true;
+    }
 }
