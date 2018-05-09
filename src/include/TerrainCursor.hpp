@@ -13,6 +13,7 @@
 #include <mutex>
 #include <functional>
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 #include <boost/optional.hpp>
 #include "TaskDispatcher.hpp"
 
@@ -36,7 +37,7 @@ struct TerrainCursor
     // this cancellation token can be used to cancel it.
     std::shared_ptr<std::atomic<bool>> cancellationToken;
     
-    TerrainCursor() = default;
+    TerrainCursor() : active(false), pos(0.f), placePos(0.f) {}
 };
 
 #endif /* TerrainCursor_hpp */

@@ -11,8 +11,11 @@
 #include "TerrainCursor.hpp"
 #include "TerrainComponent.hpp"
 #include "Terrain/TerrainOperationEditPoint.hpp"
+#include "WireframeCube.hpp"
 
-TerrainEditSystem::TerrainEditSystem() = default;
+TerrainEditSystem::TerrainEditSystem()
+ : _mouseDownCounter(0)
+{}
 
 void TerrainEditSystem::configure(entityx::EventManager &eventManager)
 {
@@ -55,6 +58,16 @@ void TerrainEditSystem::update(entityx::EntityManager &es,
     while (!_pendingEvents.empty()) {
         MouseButtonEvent event = _pendingEvents.front();
         _pendingEvents.pop();
+        
+        // Change the terrain cursor color when the mouse button is depressed.
+        _mouseDownCounter += (event.down ? 1 : -1);
+        es.each<TerrainCursor, WireframeCube::Renderable>([&](entityx::Entity cursorEntity, TerrainCursor &cursor, WireframeCube::Renderable &cursorMesh) {
+            if (_mouseDownCounter != 0) {
+                cursorMesh.color = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
+            } else {
+                cursorMesh.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            }
+        });
         
         if (event.button == SDL_BUTTON_LEFT && !event.down) {
             es.each<TerrainCursor>([&](entityx::Entity cursorEntity, TerrainCursor &cursor) {

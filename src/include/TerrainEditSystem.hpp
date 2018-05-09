@@ -26,6 +26,7 @@ public:
     void receive(const MouseButtonEvent &event);
     
 private:
+    int _mouseDownCounter;
     std::queue<MouseButtonEvent> _pendingEvents;
     
     void setBlockUnderCursor(TerrainCursor &cursor,
