@@ -11,9 +11,18 @@
 
 #include <cereal/archives/binary.hpp>
 #include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 namespace glm
 {
+    template<typename Archive>
+    void serialize(Archive &archive, glm::vec3 &v)
+    {
+        archive(cereal::make_nvp("x", v.x),
+                cereal::make_nvp("y", v.y),
+                cereal::make_nvp("z", v.z));
+    }
+    
     template<typename Archive>
     void serialize(Archive &archive, glm::vec2 &v)
     {

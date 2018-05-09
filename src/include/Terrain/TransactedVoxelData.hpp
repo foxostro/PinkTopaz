@@ -13,7 +13,6 @@
 #include <functional>
 
 #include "Grid/RegionMutualExclusionArbitrator.hpp"
-#include "ChangeLog.hpp"
 #include "VoxelData.hpp"
 
 // Provides an interface for concurrent manipulation of a VoxelData object.

@@ -15,6 +15,7 @@
 #include <sstream>
 #include <array>
 #include <boost/functional/hash.hpp>
+#include "CerealGLM.hpp"
 
 // An axis-aligned bounding box.
 template<typename TYPE>
@@ -100,6 +101,12 @@ struct _AABB
            << ") x (" << extent.x*2 << ", " << extent.y*2 << ", " << extent.z*2
            << ")}";
         return ss.str();
+    }
+    
+    template<typename Archive>
+    void serialize(Archive &archive)
+    {
+        archive(CEREAL_NVP(center), CEREAL_NVP(extent));
     }
 };
 

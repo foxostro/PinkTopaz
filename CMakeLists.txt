@@ -35,7 +35,7 @@ elseif(APPLE)
     endif(USE_METAL)
     
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
     set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror ${APPLE_FLAGS}")
 else()
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
@@ -78,6 +78,8 @@ set(SOURCE_FILES_TERRAIN
     "src/Terrain/MapRegionStore.cpp" "src/include/Terrain/MapRegionStore.hpp"
     "src/Terrain/MapRegion.cpp" "src/include/Terrain/MapRegion.hpp"
     "src/Terrain/TerrainRebuildActor.cpp" "src/include/Terrain/TerrainRebuildActor.hpp"
+    "src/include/Terrain/TerrainOperation.hpp"
+    "src/Terrain/TerrainOperationEditPoint.cpp" "src/include/Terrain/TerrainOperationEditPoint.hpp"
     )
 
 set(SOURCE_FILES_OPENGL

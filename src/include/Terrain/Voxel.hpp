@@ -9,6 +9,8 @@
 #ifndef Voxel_hpp
 #define Voxel_hpp
 
+#include <cereal/archives/binary.hpp>
+
 struct Voxel
 {
     float value;
@@ -19,6 +21,12 @@ struct Voxel
     bool operator==(const Voxel &other) const
     {
         return other.value == value;
+    }
+    
+    template<typename Archive>
+    void serialize(Archive &archive)
+    {
+        archive(CEREAL_NVP(value));
     }
 };
 

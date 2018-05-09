@@ -131,7 +131,7 @@ void RenderSystem::receive(const entityx::ComponentRemovedEvent<ActiveCamera> &e
         _activeCamera.invalidate();
     }
 }
-    
+
 void RenderSystem::receive(const WindowSizeChangedEvent &event)
 {
     // When the window size changes, recalculate the projection matrix.
