@@ -141,6 +141,7 @@ set(SOURCE_FILES_SYSTEMS
     "src/CameraMovementSystem.cpp" "src/include/CameraMovementSystem.hpp"
     "src/TerrainCursorSystem.cpp" "src/include/TerrainCursorSystem.hpp"
     "src/TerrainProgressSystem.cpp" "src/include/TerrainProgressSystem.hpp"
+    "src/TerrainEditSystem.cpp" "src/include/TerrainEditSystem.hpp"
     )
 
 set(SOURCE_FILES_COMPONENTS
@@ -154,6 +155,7 @@ set(SOURCE_FILES_COMPONENTS
 set(SOURCE_FILES_EVENTS
     "src/include/WindowSizeChangedEvent.hpp"
     "src/include/KeypressEvent.hpp"
+    "src/include/MouseButtonEvent.hpp"
     "src/include/MouseMoveEvent.hpp"
     "src/include/CameraMovedEvent.hpp"
     "src/include/TerrainProgressEvent.hpp"

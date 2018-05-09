@@ -12,6 +12,7 @@
 #include "World.hpp"
 #include "WindowSizeChangedEvent.hpp"
 #include "KeypressEvent.hpp"
+#include "MouseButtonEvent.hpp"
 #include "MouseMoveEvent.hpp"
 #include "Exception.hpp"
 #include "Profiler.hpp"
@@ -86,7 +87,7 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                     
                 case SDL_KEYDOWN:
                     gameWorld.events.emit(KeypressEvent(e.key.keysym.sym,
-                                                        true));
+                                                        /* down= */ true));
 
 					// Quit on Control+Q too.
 					if (e.key.keysym.sym == SDLK_q && (SDL_GetModState() & KMOD_CTRL)) {
@@ -98,12 +99,22 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                     
                 case SDL_KEYUP:
                     gameWorld.events.emit(KeypressEvent(e.key.keysym.sym,
-                                                        false));
+                                                        /* down= */ false));
                     break;
                         
                 case SDL_MOUSEMOTION:
                     gameWorld.events.emit(MouseMoveEvent(e.motion.xrel,
                                                          e.motion.yrel));
+                    break;
+                    
+                case SDL_MOUSEBUTTONDOWN:
+                    gameWorld.events.emit(MouseButtonEvent(e.button.button,
+                                                           /* down= */ true));
+                    break;
+                    
+                case SDL_MOUSEBUTTONUP:
+                    gameWorld.events.emit(MouseButtonEvent(e.button.button,
+                                                           /* down= */ false));
                     break;
             }
         }
