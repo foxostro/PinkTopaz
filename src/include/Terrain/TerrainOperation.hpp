@@ -20,10 +20,16 @@ public:
     // Default destructor.
     virtual ~TerrainOperation() = default;
     
-    // Gets the bounding box of the region affected by this operation.
-    const AABB& getAffectedRegion() const
+    // Gets the bounding box of the region to be locked for writing.
+    const AABB& getVoxelWriteRegion() const
     {
-        return _affectedRegion;
+        return _voxelWriteRegion;
+    }
+    
+    // Gets the region where meshes are affected by this operation.
+    const AABB& getMeshEffectRegion() const
+    {
+        return _meshEffectRegion;
     }
     
     // Performs the operation.
@@ -33,21 +39,30 @@ public:
     template<typename Archive>
     void serialize(Archive &archive)
     {
-        archive(_affectedRegion);
+        archive(_voxelWriteRegion, _meshEffectRegion);
     }
     
 protected:
-    // Sets the bounding box of the region affected by this operation.
-    // Subclasses must ensure that the affected region is set prior to the
-    // perform() method being called. This is used to determine the region of
-    // the voxel data that must be locked for writing.
-    void setAffectedRegion(AABB region)
+    // Sets the bounding box of the region in the voxel grid to be locked for
+    // writing in perform(). Subclasses must ensure that this is set prior to
+    // the perform() method being called.
+    void setVoxelWriteRegion(AABB region)
     {
-        _affectedRegion = region;
+        _voxelWriteRegion = region;
+    }
+    
+    // Sets the bounding box of the region where meshes are affected by this
+    // change.
+    // Unlike the voxel write region, this may be set at any point before the
+    // operation is entered into the journal.
+    void setMeshEffectRegion(AABB region)
+    {
+        _meshEffectRegion = region;
     }
     
 private:
-    AABB _affectedRegion;
+    AABB _voxelWriteRegion;
+    AABB _meshEffectRegion;
 };
 
 // Subclasses should make sure to declare the following to ensure Cereal knows

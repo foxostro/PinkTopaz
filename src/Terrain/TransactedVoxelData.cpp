@@ -23,7 +23,7 @@ void TransactedVoxelData::readerTransaction(const AABB &region, const Reader &fn
 
 void TransactedVoxelData::writerTransaction(TerrainOperation &operation)
 {
-    const AABB region = operation.getAffectedRegion();
+    const AABB region = operation.getVoxelWriteRegion();
     
     {
         auto mutex = _lockArbitrator.writerMutex(region);
@@ -33,5 +33,5 @@ void TransactedVoxelData::writerTransaction(TerrainOperation &operation)
         _array->store(data);
     }
     
-    onWriterTransaction(region);
+    onWriterTransaction(operation.getMeshEffectRegion());
 }
