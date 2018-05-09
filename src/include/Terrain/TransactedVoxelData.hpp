@@ -14,13 +14,13 @@
 
 #include "Grid/RegionMutualExclusionArbitrator.hpp"
 #include "VoxelData.hpp"
+#include "TerrainOperation.hpp"
 
 // Provides an interface for concurrent manipulation of a VoxelData object.
 class TransactedVoxelData : public GridIndexer
 {
 public:
     using Reader = std::function<void(const Array3D<Voxel> &data)>;
-    using Writer = std::function<ChangeLog(Array3D<Voxel> &data)>;
     
     // Default destructor.
     ~TransactedVoxelData() = default;
@@ -38,17 +38,14 @@ public:
     void readerTransaction(const AABB &region, const Reader &fn) const;
     
     // Perform an atomic transaction as a "writer" with read-write access to
-    // the underlying voxel data in the specified region. It is the
-    // responsibility of the caller to provide a closure which will update the
-    // change log accordingly.
-    // region -- The region we will be writing to.
-    // fn -- Closure which will be doing the writing.
-    void writerTransaction(const AABB &region, const Writer &fn);
+    // the underlying voxel data in the specified region.
+    // operation -- Describes the edits to be made.
+    void writerTransaction(TerrainOperation &operation);
     
     // This signal fires when a "writer" transaction finishes. This provides the
     // opportunity to respond to changes to data. For example, by rebuilding
     // meshes associated with underlying voxel data.
-    boost::signals2::signal<void (const ChangeLog &changeLog)> onWriterTransaction;
+    boost::signals2::signal<void (const AABB &affectedRegion)> onWriterTransaction;
     
     // We may evict chunks to keep the total chunk count under this limit.
     // Pass in at least the expected number of chunks in the working set.

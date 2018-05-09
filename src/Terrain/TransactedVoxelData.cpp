@@ -21,15 +21,17 @@ void TransactedVoxelData::readerTransaction(const AABB &region, const Reader &fn
     fn(data);
 }
 
-void TransactedVoxelData::writerTransaction(const AABB &region, const Writer &fn)
+void TransactedVoxelData::writerTransaction(TerrainOperation &operation)
 {
-    ChangeLog changeLog;
+    const AABB region = operation.getAffectedRegion();
+    
     {
         auto mutex = _lockArbitrator.writerMutex(region);
         std::lock_guard<decltype(mutex)> lock(mutex);
         Array3D<Voxel> data = _array->load(region);
-        changeLog = fn(data);
+        operation.perform(data);
         _array->store(data);
     }
-    onWriterTransaction(changeLog);
+    
+    onWriterTransaction(region);
 }

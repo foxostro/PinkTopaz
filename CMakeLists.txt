@@ -73,7 +73,6 @@ set(SOURCE_FILES_TERRAIN
     "src/Terrain/Terrain.cpp" "src/include/Terrain/Terrain.hpp"
     "src/Terrain/TerrainMesh.cpp" "src/include/Terrain/TerrainMesh.hpp"
     "src/Terrain/TerrainProgressTracker.cpp" "src/include/Terrain/TerrainProgressTracker.hpp"
-    "src/Terrain/ChangeLog.cpp" "src/include/Terrain/ChangeLog.hpp"
     "src/Terrain/VoxelDataSerializer.cpp" "src/include/Terrain/VoxelDataSerializer.hpp"
     "src/Terrain/MapRegionStore.cpp" "src/include/Terrain/MapRegionStore.hpp"
     "src/Terrain/MapRegion.cpp" "src/include/Terrain/MapRegion.hpp"

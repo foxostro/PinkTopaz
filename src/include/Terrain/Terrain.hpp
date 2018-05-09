@@ -85,9 +85,9 @@ private:
     void rebuildMeshForChunkOuter(const size_t index,
                                   const AABB &meshBox);
     
-    // Kicks off asynchronous tasks to rebuild any meshes that are affected by
-    // the specified changes.
-    void rebuildMeshInResponseToChanges(const ChangeLog &changeLog);
+    // Kicks off asynchronous tasks to rebuild any meshes in a region affected
+    // by a change.
+    void rebuildMeshInResponseToChanges(const AABB &affectedRegion);
     
     // Rebuilds the next pending mesh in the queue.
     void rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress);

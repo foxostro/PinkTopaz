@@ -100,8 +100,8 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     // When voxels change, we need to extract a polygonal mesh representation
     // of the isosurface. This mesh is what we actually draw.
     // For now, we extract the entire isosurface in one step.
-    _voxels->onWriterTransaction.connect([&](const ChangeLog &changeLog){
-        rebuildMeshInResponseToChanges(changeLog);
+    _voxels->onWriterTransaction.connect([&](const AABB &affectedRegion){
+        rebuildMeshInResponseToChanges(affectedRegion);
     });
 }
 
@@ -200,21 +200,18 @@ float Terrain::getFogDensity() const
     return fogDensity;
 }
 
-void Terrain::rebuildMeshInResponseToChanges(const ChangeLog &changeLog)
+void Terrain::rebuildMeshInResponseToChanges(const AABB &affectedRegion)
 {
     PROFILER(TerrainRebuildMeshInResponseToChanges);
     
     // Kick off a task to rebuild each affected mesh.
-    for (const auto &change : changeLog) {
-        const AABB &region = change.affectedRegion;
-        std::vector<std::pair<Morton3, AABB>> meshCells;
-        for (const auto cellCoords : slice(*_meshes, region)) {
-            const Morton3 index = _meshes->indexAtCellCoords(cellCoords);
-            const AABB cell = _meshes->cellAtCellCoords(cellCoords);
-            meshCells.push_back(std::make_pair(index, cell));
-        }
-        _meshRebuildActor->push(meshCells);
+    std::vector<std::pair<Morton3, AABB>> meshCells;
+    for (const auto cellCoords : slice(*_meshes, affectedRegion)) {
+        const Morton3 index = _meshes->indexAtCellCoords(cellCoords);
+        const AABB cell = _meshes->cellAtCellCoords(cellCoords);
+        meshCells.push_back(std::make_pair(index, cell));
     }
+    _meshRebuildActor->push(meshCells);
 }
 
 void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress)
