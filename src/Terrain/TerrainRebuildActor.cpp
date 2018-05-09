@@ -9,7 +9,7 @@
 #include "Terrain/TerrainRebuildActor.hpp"
 #include "ThreadName.hpp"
 #include "AutoreleasePool.hpp"
-//#include "SDL.h"
+#include "SDL.h" // for SDL_Log()
 
 // The threshold below which changes in the search point are ignored.
 // This prevents re-sorting uneccessarily as all cells fall on a regular grid,
@@ -44,7 +44,7 @@ TerrainRebuildActor::TerrainRebuildActor(unsigned numThreads,
     }
 }
 
-void TerrainRebuildActor::push(const std::vector<std::pair<Morton3, AABB>> &cells)
+void TerrainRebuildActor::push(const std::vector<std::pair<Morton3, AABB>> &cells, bool insertBack)
 {
     std::lock_guard<std::mutex> lock(_lock);
     
@@ -56,11 +56,16 @@ void TerrainRebuildActor::push(const std::vector<std::pair<Morton3, AABB>> &cell
         const auto insertResult = _set.insert(boundingBox);
         if (insertResult.second) {
             numberAdded++;
-            _cells.emplace_back(Cell(cellCoords,
-                                     boundingBox,
-                                     insertResult.first,
-                                     _mainThreadDispatcher,
-                                     _events));
+            Cell cell(cellCoords,
+                      boundingBox,
+                      insertResult.first,
+                      _mainThreadDispatcher,
+                      _events);
+            if (insertBack) {
+                _cells.emplace_back(std::move(cell));
+            } else {
+                _cells.emplace_front(std::move(cell));
+            }
         }
     }
     

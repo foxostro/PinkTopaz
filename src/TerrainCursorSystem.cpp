@@ -31,6 +31,7 @@ void TerrainCursorSystem::configure(entityx::EventManager &em)
     em.subscribe<entityx::ComponentAddedEvent<ActiveCamera>>(*this);
     em.subscribe<entityx::ComponentRemovedEvent<ActiveCamera>>(*this);
     em.subscribe<CameraMovedEvent>(*this);
+    em.subscribe<TerrainCursorInvalidatedEvent>(*this);
 }
 
 void TerrainCursorSystem::update(entityx::EntityManager &es,
@@ -82,6 +83,11 @@ void TerrainCursorSystem::receive(const entityx::ComponentRemovedEvent<ActiveCam
 }
 
 void TerrainCursorSystem::receive(const CameraMovedEvent &event)
+{
+    _needsUpdate = true;
+}
+
+void TerrainCursorSystem::receive(const TerrainCursorInvalidatedEvent &event)
 {
     _needsUpdate = true;
 }
@@ -177,10 +183,10 @@ void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTran
             }
         }
 
-        const auto currentTime = std::chrono::steady_clock::now();
-        const auto duration = currentTime - startTime;
-        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-        const std::string msStr = std::to_string(ms.count());
-        SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
+//        const auto currentTime = std::chrono::steady_clock::now();
+//        const auto duration = currentTime - startTime;
+//        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+//        const std::string msStr = std::to_string(ms.count());
+//        SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
     });
 }

@@ -30,8 +30,11 @@ public:
                         entityx::EventManager &events,
                         std::function<void(AABB, TerrainProgressTracker&)> processCell);
     
-    // Add a cell to the queue.
-    void push(const std::vector<std::pair<Morton3, AABB>> &cells);
+    // Add cells to the queue.
+    // `insertBack' indicates whether the cells should be inserted at the back
+    // of the queue, or the front of the queue.
+    void push(const std::vector<std::pair<Morton3, AABB>> &cells,
+              bool insertBack = true);
     
     // Set the search point.
     void setSearchPoint(glm::vec3 searchPoint);

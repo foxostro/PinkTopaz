@@ -158,6 +158,7 @@ set(SOURCE_FILES_EVENTS
     "src/include/MouseButtonEvent.hpp"
     "src/include/MouseMoveEvent.hpp"
     "src/include/CameraMovedEvent.hpp"
+    "src/include/TerrainCursorInvalidatedEvent.hpp"
     "src/include/TerrainProgressEvent.hpp"
     )
 

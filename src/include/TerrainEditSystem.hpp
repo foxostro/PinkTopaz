@@ -12,6 +12,7 @@
 #include <entityx/entityx.h>
 #include <queue>
 #include "MouseButtonEvent.hpp"
+#include "TerrainCursor.hpp"
 
 // System for performing edits on Terrain at the cursor position.
 class TerrainEditSystem : public entityx::System<TerrainEditSystem>, public entityx::Receiver<TerrainEditSystem>
@@ -26,6 +27,11 @@ public:
     
 private:
     std::queue<MouseButtonEvent> _pendingEvents;
+    
+    void setBlockUnderCursor(TerrainCursor &cursor,
+                             entityx::EventManager &events,
+                             float value,
+                             bool usePlacePos);
 };
 
 #endif /* TerrainEditSystem_hpp */

@@ -38,6 +38,9 @@ public:
     
 protected:
     // Sets the bounding box of the region affected by this operation.
+    // Subclasses must ensure that the affected region is set prior to the
+    // perform() method being called. This is used to determine the region of
+    // the voxel data that must be locked for writing.
     void setAffectedRegion(AABB region)
     {
         _affectedRegion = region;

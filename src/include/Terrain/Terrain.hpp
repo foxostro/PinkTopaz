@@ -20,6 +20,7 @@
 #include "Terrain/TerrainMeshGrid.hpp"
 #include "Terrain/TerrainHorizonDistance.hpp"
 #include "Terrain/TerrainConfig.hpp"
+#include "Terrain/TerrainOperation.hpp"
 #include "RenderableStaticMesh.hpp"
 
 // Object represents the voxel terrain of the world.
@@ -56,6 +57,11 @@ public:
         return *_voxels;
     }
     
+    // Perform an atomic transaction as a "writer" with read-write access to
+    // the underlying voxel data in the specified region.
+    // operation -- Describes the edits to be made.
+    void writerTransaction(TerrainOperation &operation);
+    
 private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<TaskDispatcher> _dispatcher;
@@ -91,9 +97,6 @@ private:
     
     // Rebuilds the next pending mesh in the queue.
     void rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress);
-    
-    // Update the terrain cursor position based on the current camera facing.
-    void updateCursorPosition();
 };
 
 #endif /* Terrain_hpp */

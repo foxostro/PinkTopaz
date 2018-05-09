@@ -68,8 +68,8 @@ void VoxelData::store(const Array3D<Voxel> &voxels)
     const AABB region = voxels.boundingBox();
     
     for (const auto chunkCellCoords : slice(_chunks, region)) {
-        const AABB chunkBoundingBox = cellAtCellCoords(chunkCellCoords);
-        const Morton3 chunkIndex = indexAtCellCoords(chunkCellCoords);
+        const AABB chunkBoundingBox = _chunks.cellAtCellCoords(chunkCellCoords);
+        const Morton3 chunkIndex = _chunks.indexAtCellCoords(chunkCellCoords);
         ChunkPtr chunk = get(chunkBoundingBox, chunkIndex);
         
         // It is entirely possible that the sub-region is not the full size of

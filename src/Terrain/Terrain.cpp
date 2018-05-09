@@ -200,18 +200,24 @@ float Terrain::getFogDensity() const
     return fogDensity;
 }
 
+void Terrain::writerTransaction(TerrainOperation &operation)
+{
+    _voxels->writerTransaction(operation);
+}
+
 void Terrain::rebuildMeshInResponseToChanges(const AABB &affectedRegion)
 {
     PROFILER(TerrainRebuildMeshInResponseToChanges);
     
-    // Kick off a task to rebuild each affected mesh.
+    // Kick off a task to rebuild each affected mesh. Insert at the front of
+    // the queue so these changes appear quickly.
     std::vector<std::pair<Morton3, AABB>> meshCells;
     for (const auto cellCoords : slice(*_meshes, affectedRegion)) {
         const Morton3 index = _meshes->indexAtCellCoords(cellCoords);
         const AABB cell = _meshes->cellAtCellCoords(cellCoords);
         meshCells.push_back(std::make_pair(index, cell));
     }
-    _meshRebuildActor->push(meshCells);
+    _meshRebuildActor->push(meshCells, /* insertBack = */ false);
 }
 
 void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress)

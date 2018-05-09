@@ -15,6 +15,7 @@
 #include "Transform.hpp"
 #include "ActiveCamera.hpp"
 #include "CameraMovedEvent.hpp"
+#include "TerrainCursorInvalidatedEvent.hpp"
 
 #include <entityx/entityx.h>
 #include <glm/mat4x4.hpp>
@@ -34,6 +35,7 @@ public:
     void receive(const entityx::ComponentAddedEvent<ActiveCamera> &event);
     void receive(const entityx::ComponentRemovedEvent<ActiveCamera> &event);
     void receive(const CameraMovedEvent &event);
+    void receive(const TerrainCursorInvalidatedEvent &event);
     
 private:
     static constexpr size_t maxPlaceDistance = 16;
