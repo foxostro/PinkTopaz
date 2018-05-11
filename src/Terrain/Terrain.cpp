@@ -98,7 +98,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
     const auto mapRegionBox = _voxelDataGenerator->boundingBox();
     const auto mapRegionRes = _voxelDataGenerator->countCellsInRegion(mapRegionBox) / (int)MAP_REGION_SIZE;
-    auto mapRegionStore = std::make_unique<MapRegionStore>(mapRegionBox, mapRegionRes);
+    auto mapRegionStore = std::make_unique<MapRegionStore>(mapDirectory, mapRegionBox, mapRegionRes);
     auto voxelData = std::make_unique<VoxelData>(_voxelDataGenerator,
                                                  TERRAIN_CHUNK_SIZE,
                                                  std::move(mapRegionStore),

@@ -15,6 +15,7 @@
 #include "Grid/RegionMutualExclusionArbitrator.hpp"
 #include "Grid/SparseGrid.hpp"
 #include <boost/optional.hpp>
+#include <boost/filesystem.hpp>
 
 // Stores/Loads voxel chunks on the file system.
 class MapRegionStore
@@ -23,9 +24,13 @@ public:
     ~MapRegionStore() = default;
     
     // Constructor.
+    // mapDirectory -- Directory where map region files should be stored.
     // boundingBox -- The bounding box is the bounds of the world and should
     //                match the voxel generator's bounds.
-    MapRegionStore(const AABB &boundingBox, const glm::ivec3 &gridResolution);
+    // gridResolution --  The number of voxels in a chunk.
+    MapRegionStore(boost::filesystem::path mapDirectory,
+                   const AABB &boundingBox,
+                   const glm::ivec3 &gridResolution);
     
     // Loads a voxel chunk from file, if available.
     // The key uniquely identifies the chunk in the voxel chunk in space.
@@ -36,6 +41,7 @@ public:
     void store(const AABB &boundingBox, Morton3 key, const Array3D<Voxel> &voxels);
     
 private:
+    boost::filesystem::path _mapDirectory;
     SparseGrid<std::shared_ptr<MapRegion>> _regions;
     
     std::shared_ptr<MapRegion> get(const glm::vec3 &p);
