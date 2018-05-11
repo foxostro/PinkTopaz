@@ -17,6 +17,11 @@
 #include "FileUtilities.hpp"
 #include <sstream>
 
+
+// Random seed to use for a new journal.
+constexpr unsigned InitialVoxelDataSeed = 52;
+
+
 Terrain::~Terrain()
 {
     _meshRebuildActor.reset();
@@ -67,7 +72,17 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     _defaultMesh->texture = texture;
     _defaultMesh->textureSampler = sampler;
     
-    _journal = std::make_unique<TerrainJournal>(getPrefPath() / "journal.xml");
+    const boost::filesystem::path prefPath = getPrefPath();
+    const boost::filesystem::path journalFileName = prefPath / "journal.xml";
+    const boost::filesystem::path mapDirectory = prefPath / "Map";
+    
+    // If the journal already exists then use the seed that it provides.
+    // Else, set an initial seed value ourselves.
+    bool mustSetSeed = !boost::filesystem::exists(journalFileName);
+    _journal = std::make_unique<TerrainJournal>(journalFileName);
+    if (mustSetSeed) {
+        _journal->setVoxelDataSeed(InitialVoxelDataSeed);
+    }
     
     const unsigned voxelDataSeed = _journal->getVoxelDataSeed();
     _voxelDataGenerator = std::make_shared<VoxelDataGenerator>(voxelDataSeed);
@@ -76,12 +91,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     // the journal. This will allow us to avoid shipping large map region files
     // with the game. We can ship only the journal instead.
     bool mustRegenerateMap = false;
-    boost::filesystem::path mapDirectory(getPrefPath() / "Map");
-    if (boost::filesystem::exists(mapDirectory)) {
-        if (!boost::filesystem::is_directory(mapDirectory)) {
-            throw Exception("A file already exists where we want to place the map directory: %s", mapDirectory.c_str());
-        }
-    } else {
+    if (!boost::filesystem::exists(mapDirectory)) {
         mustRegenerateMap = true;
         boost::filesystem::create_directory(mapDirectory);
     }

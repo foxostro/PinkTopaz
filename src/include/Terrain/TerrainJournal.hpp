@@ -66,6 +66,12 @@ public:
         return _voxelDataSeed;
     }
     
+    // Sets a pseudorandom seed for procedurally generated voxels.
+    inline void setVoxelDataSeed(unsigned seed)
+    {
+        _voxelDataSeed = seed;
+    }
+    
     template<typename Archive>
     void serialize(Archive &archive)
     {

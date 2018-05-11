@@ -9,9 +9,6 @@
 #include "Terrain/TerrainJournal.hpp"
 #include "SDL.h" // for SDL_Log
 
-// Random seed to use for a new journal.
-constexpr unsigned InitialVoxelDataSeed = 52;
-
 // Must include all types of terrain operations here in order for serialization
 // to work correctly.
 #include "Terrain/TerrainOperationEditPoint.hpp"
@@ -21,7 +18,7 @@ constexpr unsigned InitialVoxelDataSeed = 52;
 
 TerrainJournal::TerrainJournal(boost::filesystem::path fileName)
  : _fileName(fileName),
-   _voxelDataSeed(InitialVoxelDataSeed),
+   _voxelDataSeed(0),
    _journalFormatVersion(journalFormatVersion)
 {
     std::ifstream inputStream(_fileName.c_str());
