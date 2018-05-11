@@ -241,8 +241,8 @@ void TerrainCursorSystem::setBlockUnderCursor(TerrainCursor &cursor,
     auto handleTerrain = terrainEntity.component<TerrainComponent>();
     
     if (handleTerrain.valid()) {
-        TerrainOperationEditPoint operation{location, voxel};
-        auto terrain = handleTerrain.get()->terrain;
+        auto operation = std::make_shared<TerrainOperationEditPoint>(location, voxel);
+        auto &terrain = handleTerrain.get()->terrain;
         terrain->writerTransaction(operation);
         _needsUpdate = true;
     }

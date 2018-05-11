@@ -32,7 +32,7 @@ std::shared_ptr<MapRegion> MapRegionStore::get(const glm::vec3 &p)
     const Morton3 index = _regions.indexAtPoint(p);
     return _regions.get(index, [=]{
         boost::filesystem::path name("MapRegion_" + std::to_string((size_t)index) + ".bin");
-        boost::filesystem::path path(getPrefPath() / name);
+        boost::filesystem::path path(getPrefPath() / "Map" / name); // TODO: this path should be provided in the constructor
         return std::make_shared<MapRegion>(path);
     });
 }

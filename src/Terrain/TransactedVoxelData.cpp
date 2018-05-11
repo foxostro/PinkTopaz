@@ -21,17 +21,17 @@ void TransactedVoxelData::readerTransaction(const AABB &region, const Reader &fn
     fn(data);
 }
 
-void TransactedVoxelData::writerTransaction(TerrainOperation &operation)
+void TransactedVoxelData::writerTransaction(std::shared_ptr<TerrainOperation> operation)
 {
-    const AABB region = operation.getVoxelWriteRegion();
+    const AABB region = operation->getVoxelWriteRegion();
     
     {
         auto mutex = _lockArbitrator.writerMutex(region);
         std::lock_guard<decltype(mutex)> lock(mutex);
         Array3D<Voxel> data = _array->load(region);
-        operation.perform(data);
+        operation->perform(data);
         _array->store(data);
     }
     
-    onWriterTransaction(operation.getMeshEffectRegion());
+    onWriterTransaction(operation->getMeshEffectRegion());
 }

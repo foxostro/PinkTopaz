@@ -14,6 +14,7 @@
 #include "Grid/FrustumRange.hpp"
 #include "Grid/Array3D.hpp"
 #include "Renderer/TextureArrayLoader.hpp"
+#include "FileUtilities.hpp"
 #include <sstream>
 
 Terrain::~Terrain()
@@ -31,7 +32,6 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
  : _graphicsDevice(graphicsDevice),
    _dispatcher(dispatcher),
    _mesher(std::make_shared<MesherNaiveSurfaceNets>()),
-   _voxelDataGenerator(std::make_shared<VoxelDataGenerator>(/* random seed = */ 52)),
    _cameraPosition(initialCameraPosition)
 {
     // Load terrain texture array from a single image.
@@ -66,6 +66,25 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     _defaultMesh->shader = shader;
     _defaultMesh->texture = texture;
     _defaultMesh->textureSampler = sampler;
+    
+    _journal = std::make_unique<TerrainJournal>(getPrefPath() / "journal.xml");
+    
+    const unsigned voxelDataSeed = _journal->getVoxelDataSeed();
+    _voxelDataGenerator = std::make_shared<VoxelDataGenerator>(voxelDataSeed);
+    
+    // Create the map directory. If it does not exist then build the map from
+    // the journal. This will allow us to avoid shipping large map region files
+    // with the game. We can ship only the journal instead.
+    bool mustRegenerateMap = false;
+    boost::filesystem::path mapDirectory(getPrefPath() / "Map");
+    if (boost::filesystem::exists(mapDirectory)) {
+        if (!boost::filesystem::is_directory(mapDirectory)) {
+            throw Exception("A file already exists where we want to place the map directory: %s", mapDirectory.c_str());
+        }
+    } else {
+        mustRegenerateMap = true;
+        boost::filesystem::create_directory(mapDirectory);
+    }
     
     const auto mapRegionBox = _voxelDataGenerator->boundingBox();
     const auto mapRegionRes = _voxelDataGenerator->countCellsInRegion(mapRegionBox) / (int)MAP_REGION_SIZE;
@@ -103,6 +122,13 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     _voxels->onWriterTransaction.connect([&](const AABB &affectedRegion){
         rebuildMeshInResponseToChanges(affectedRegion);
     });
+    
+    // Build the map from the journal, if necessary.
+    if (mustRegenerateMap) {
+        _journal->replay([&](std::shared_ptr<TerrainOperation> operation){
+            _voxels->writerTransaction(operation);
+        });
+    }
 }
 
 void Terrain::update(entityx::TimeDelta dt)
@@ -200,8 +226,10 @@ float Terrain::getFogDensity() const
     return fogDensity;
 }
 
-void Terrain::writerTransaction(TerrainOperation &operation)
+void Terrain::writerTransaction(std::shared_ptr<TerrainOperation> operation)
 {
+    assert(operation);
+    _journal->add(operation);
     _voxels->writerTransaction(operation);
 }
 

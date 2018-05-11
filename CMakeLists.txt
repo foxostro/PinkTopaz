@@ -79,6 +79,7 @@ set(SOURCE_FILES_TERRAIN
     "src/Terrain/TerrainRebuildActor.cpp" "src/include/Terrain/TerrainRebuildActor.hpp"
     "src/include/Terrain/TerrainOperation.hpp"
     "src/Terrain/TerrainOperationEditPoint.cpp" "src/include/Terrain/TerrainOperationEditPoint.hpp"
+    "src/Terrain/TerrainJournal.cpp" "src/include/Terrain/TerrainJournal.hpp"
     )
 
 set(SOURCE_FILES_OPENGL

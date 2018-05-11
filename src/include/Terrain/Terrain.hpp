@@ -20,7 +20,7 @@
 #include "Terrain/TerrainMeshGrid.hpp"
 #include "Terrain/TerrainHorizonDistance.hpp"
 #include "Terrain/TerrainConfig.hpp"
-#include "Terrain/TerrainOperation.hpp"
+#include "Terrain/TerrainJournal.hpp"
 #include "RenderableStaticMesh.hpp"
 
 // Object represents the voxel terrain of the world.
@@ -60,7 +60,7 @@ public:
     // Perform an atomic transaction as a "writer" with read-write access to
     // the underlying voxel data in the specified region.
     // operation -- Describes the edits to be made.
-    void writerTransaction(TerrainOperation &operation);
+    void writerTransaction(std::shared_ptr<TerrainOperation> operation);
     
 private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
@@ -71,6 +71,7 @@ private:
     std::unique_ptr<TerrainMeshGrid> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     std::unique_ptr<TerrainRebuildActor> _meshRebuildActor;
+    std::unique_ptr<TerrainJournal> _journal;
     glm::mat4x4 _modelViewProjection;
     std::atomic<glm::vec3> _cameraPosition;
     TerrainHorizonDistance _horizonDistance;

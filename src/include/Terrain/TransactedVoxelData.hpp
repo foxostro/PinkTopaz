@@ -40,7 +40,7 @@ public:
     // Perform an atomic transaction as a "writer" with read-write access to
     // the underlying voxel data in the specified region.
     // operation -- Describes the edits to be made.
-    void writerTransaction(TerrainOperation &operation);
+    void writerTransaction(std::shared_ptr<TerrainOperation> operation);
     
     // This signal fires when a "writer" transaction finishes. This provides the
     // opportunity to respond to changes to data. For example, by rebuilding
