@@ -60,10 +60,7 @@ void CommandQueue::enqueue(unsigned id, const std::string &label, std::function<
 
 void CommandQueue::enqueue(CommandQueue &other)
 {
-    // TODO: When C++17 support is better, use scoped_lock here.
-    std::unique_lock<std::mutex> lock1(_queueLock, std::defer_lock);
-    std::unique_lock<std::mutex> lock2(other._queueLock, std::defer_lock);
-    std::lock(lock1, lock2);
+    std::scoped_lock lock(_queueLock, other._queueLock);
     _queue.insert(_queue.end(),
                   std::make_move_iterator(other._queue.begin()),
                   std::make_move_iterator(other._queue.end()));
