@@ -135,6 +135,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
     // Build the map from the journal, if necessary.
     if (mustRegenerateMap) {
+        SDL_Log("Rebuilding the map from the terrain journal.");
         _journal->replay([&](std::shared_ptr<TerrainOperation> operation){
             _voxels->writerTransaction(operation);
         });
