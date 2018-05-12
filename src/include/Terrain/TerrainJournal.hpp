@@ -16,23 +16,33 @@
 #include <mutex>
 #include <spdlog/spdlog.h>
 
+// Exception thrown when an error occurs involving the journal.
+class TerrainJournalException : public Exception
+{
+public:
+    template<typename... Args>
+    TerrainJournalException(Args&&... args)
+    : Exception(std::forward<Args>(args)...)
+    {}
+};
+
 // Exception thrown when trying to load an incompatible journal version.
-class TerrainJournalVersionException : public Exception
+class TerrainJournalVersionException : public TerrainJournalException
 {
 public:
     template<typename... Args>
     TerrainJournalVersionException(Args&&... args)
-     : Exception(std::forward<Args>(args)...)
+     : TerrainJournalException(std::forward<Args>(args)...)
     {}
 };
 
 // Exception thrown when an error occurs while serializing the journal.
-class TerrainJournalSerializationException : public Exception
+class TerrainJournalSerializationException : public TerrainJournalException
 {
 public:
     template<typename... Args>
     TerrainJournalSerializationException(Args&&... args)
-     : Exception(std::forward<Args>(args)...)
+     : TerrainJournalException(std::forward<Args>(args)...)
     {}
 };
 

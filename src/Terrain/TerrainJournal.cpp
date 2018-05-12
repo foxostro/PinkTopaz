@@ -28,7 +28,7 @@ TerrainJournal::TerrainJournal(std::shared_ptr<spdlog::logger> log,
         try {
             serialize(archive);
         } catch(const cereal::Exception &exception) {
-            throw TerrainJournalSerializationException("Failed to load the journal \"%s\" due to serialization error: %s", _fileName.c_str(), exception.what());
+            throw TerrainJournalSerializationException("Failed to load the journal \"{}\" due to serialization error: {}", _fileName.string(), exception.what());
         }
     } else {
         log->info("Creating new terrain journal \"{}\" with random seed {}",
@@ -37,8 +37,8 @@ TerrainJournal::TerrainJournal(std::shared_ptr<spdlog::logger> log,
     }
     
     if (_journalFormatVersion != journalFormatVersion) {
-        throw TerrainJournalVersionException("Incompatible journal version %u. "
-                                             "Current version is %u.",
+        throw TerrainJournalVersionException("Incompatible journal version {}. "
+                                             "Current version is {}.",
                                              _journalFormatVersion,
                                              journalFormatVersion);
     }
@@ -66,6 +66,6 @@ void TerrainJournal::save()
     try {
         serialize(archive);
     } catch(const cereal::Exception &exception) {
-        throw TerrainJournalSerializationException("Failed to save the journal due to serialization error: %s", exception.what());
+        throw TerrainJournalSerializationException("Failed to save the journal due to serialization error: {}", exception.what());
     }
 }

@@ -7,7 +7,7 @@
 //
 
 #include "Renderer/Metal/ShaderMetal.h"
-#include "Exception.hpp"
+#include "Renderer/Metal/MetalException.hpp"
 
 static MTLVertexFormat getVertexFormatEnum(const AttributeFormat &attr)
 {
@@ -23,7 +23,7 @@ static MTLVertexFormat getVertexFormatEnum(const AttributeFormat &attr)
         return MTLVertexFormatUChar4;
     }
     
-    throw Exception("Unsupported buffer attribute type\n");
+    throw UnsupportedBufferAttributeTypeException(attr.type);
 }
 
 static MTLVertexDescriptor*
@@ -90,7 +90,8 @@ ShaderMetal::ShaderMetal(const VertexFormat &vertexFormat,
     _pipelineState = [device newRenderPipelineStateWithDescriptor:desc error:&error];
     if (!_pipelineState) {
         NSString *errorDesc = [error localizedDescription];
-        throw Exception("Failed to create Metal pipeline state object: %s", errorDesc.UTF8String);
+        throw MetalException("Failed to create Metal pipeline state object: {}",
+                             errorDesc.UTF8String);
     }
     
     [desc release];

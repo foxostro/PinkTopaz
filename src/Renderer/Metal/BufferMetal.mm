@@ -17,7 +17,7 @@ static MTLResourceOptions getUsageOption(BufferUsage usage)
         case DynamicDraw:   return MTLResourceStorageModeManaged;
             
         default:
-            throw Exception("Unsupported buffer usage %d\n", (int)usage);
+            throw UnsupportedBufferUsageException(usage);
     }
 }
 

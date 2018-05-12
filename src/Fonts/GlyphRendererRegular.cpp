@@ -7,7 +7,8 @@
 //
 
 #include "Fonts/GlyphRendererRegular.hpp"
-#include "Exception.hpp"
+#include "FreeTypeException.hpp"
+#include "SDLException.hpp"
 
 #include "SDL.h"
 
@@ -17,7 +18,7 @@ GlyphRendererRegular::GlyphRendererRegular(FT_Library &library,
  : GlyphRenderer(library, face, attributes)
 {
     if(attributes.border == 0) {
-        throw Exception("Text border must be zero for GlyphRendererRegular.");
+        throw Exception("Text border must be zero for GlyphRendererRegular."); // TODO: [Exceptions] Throw a new exception class for fonts.
     }
 }
 
@@ -26,8 +27,8 @@ GlyphRendererRegular::render(FT_ULong charcode)
 {
     FT_Face &face = getFace();
     
-    if (FT_Load_Char(face, charcode, FT_LOAD_RENDER)) {
-        throw Exception("Failed to load the glyph \"%c\"", (char)charcode);
+    if (FT_Error err = FT_Load_Char(face, charcode, FT_LOAD_RENDER)) {
+        throw FreeTypeException(err, "Failed to load the glyph \"{}\"", (char)charcode);
     }
     
     FT_Bitmap &bitmap = face->glyph->bitmap;
@@ -43,7 +44,7 @@ GlyphRendererRegular::render(FT_ULong charcode)
                                                 0xff000000);
     
     if (!surface) {
-        throw Exception("Failed to create surface for glyph: \"%c\"", charcode);
+        throw SDLException("Failed to create surface for glyph with charcode=\"{}\"", (char)charcode);
     }
     
     blitGlyph(surface, bitmap, getAttributes().color);

@@ -13,7 +13,9 @@
 #include "Renderer/OpenGL/opengl.hpp"
 #include "Renderer/OpenGL/CommandQueue.hpp"
 
+
 GLenum getBufferTypeEnum(BufferType type);
+
 
 // Encapsulates a GPU buffer resource in a platform-agnostic manner.
 class BufferOpenGL : public Buffer

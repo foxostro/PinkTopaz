@@ -18,7 +18,7 @@ class VoxelDataException : public Exception
 public:
     template<typename... Args>
     VoxelDataException(Args&&... args)
-     : Exception(std::forward<Args>(args)...)
+    : Exception(std::forward<Args>(args)...)
     {}
 };
 
@@ -26,7 +26,8 @@ class VoxelDataMagicNumberException : public VoxelDataException
 {
 public:
     VoxelDataMagicNumberException(unsigned expected, unsigned actual)
-     : VoxelDataException("Voxel Data magic number is incorrect. Expected %u, Got %u", expected, actual)
+    : VoxelDataException("Voxel Data magic number is incorrect. "
+                         "Expected {}, Got {}", expected, actual)
     {}
 };
 
@@ -34,24 +35,26 @@ class VoxelDataChecksumException : public VoxelDataException
 {
 public:
     VoxelDataChecksumException(unsigned expected, unsigned actual)
-     : VoxelDataException("Voxel Data checksums do not match. Expected %u, Got %u", expected, actual)
+    : VoxelDataException("Voxel Data checksums do not match. "
+                         "Expected {}, Got {}", expected, actual)
     {}
 };
 
-class VoxelDataIncompatibleVersionException : public Exception
+class VoxelDataIncompatibleVersionException : public VoxelDataException
 {
 public:
     VoxelDataIncompatibleVersionException(unsigned expected, unsigned actual)
-     : Exception("Voxel Data versions do not match. Expected %u, Got %u",
-                 expected, actual)
+    : VoxelDataException("Voxel Data versions do not match. "
+                         "Expected {}, Got {}", expected, actual)
     {}
 };
 
-class VoxelDataInvalidSizeException : public Exception
+class VoxelDataInvalidSizeException : public VoxelDataException
 {
 public:
     VoxelDataInvalidSizeException(unsigned w, unsigned h, unsigned d)
-     : Exception("Voxel Data dimensions are invalid: %u x %u x %u", w, h, d)
+    : VoxelDataException("Voxel Data dimensions are invalid: "
+                         "{} x {} x {}", w, h, d)
     {}
 };
 

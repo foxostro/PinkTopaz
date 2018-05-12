@@ -7,7 +7,6 @@
 //
 
 #include "Renderer/TextureArrayLoader.hpp"
-#include "Exception.hpp"
 #include "SDL_image.h"
 
 TextureArrayLoader::TextureArrayLoader(const std::shared_ptr<GraphicsDevice> &graphicsDevice)
@@ -19,7 +18,9 @@ std::shared_ptr<Texture> TextureArrayLoader::load(const boost::filesystem::path 
     SDL_Surface *surface = IMG_Load(imageFileName.c_str());
     
     if (!surface) {
-        throw Exception("Failed to load texture array from file: %s", imageFileName.c_str());
+        throw TextureArrayLoaderFailedException("Failed to load texture array "
+                                                "from file: {}",
+                                                imageFileName.string());
     }
     
     TextureDescriptor texDesc = {

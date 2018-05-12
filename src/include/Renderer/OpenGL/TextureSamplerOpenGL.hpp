@@ -13,11 +13,13 @@
 #include "Renderer/OpenGL/opengl.hpp"
 #include "Renderer/OpenGL/CommandQueue.hpp"
 
+
 // The OpenGL address mode to use when sampling, as implied by `mode'.
 GLint texturSamplerAddressModeEnum(TextureSamplerAddressMode mode);
 
 // The OpenGL texture filter to use when sampling, as implied by `filter'.
 GLint textureSamplerFilterEnum(TextureSamplerFilter filter);
+
 
 // Encapsulates a single OpenGL texture sampler object.
 class TextureSamplerOpenGL : public TextureSampler

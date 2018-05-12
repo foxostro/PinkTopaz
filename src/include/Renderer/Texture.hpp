@@ -10,6 +10,7 @@
 #define Texture_hpp
 
 #include <cstddef>
+#include "Renderer/RendererException.hpp"
 
 enum TextureType
 {
@@ -31,6 +32,24 @@ struct TextureDescriptor
     size_t width, height, depth;
     int unpackAlignment;
     bool generateMipMaps;
+};
+
+// Exception thrown when an unsupported texture type is selected.
+class UnsupportedTextureTypeException : public RendererException
+{
+public:
+    UnsupportedTextureTypeException(TextureType type)
+    : RendererException("Unsupported texture type {}", (int)type)
+    {}
+};
+
+// Exception thrown when an unsupported texture format is selected.
+class UnsupportedTextureFormatException : public RendererException
+{
+public:
+    UnsupportedTextureFormatException(TextureFormat format)
+    : RendererException("Unsupported texture format {}", (int)format)
+    {}
 };
 
 // Encapsulates a Texture resource in a platform-agnostic manner.

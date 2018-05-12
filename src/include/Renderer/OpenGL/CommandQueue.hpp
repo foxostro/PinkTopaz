@@ -9,6 +9,8 @@
 #ifndef CommandQueue_hpp
 #define CommandQueue_hpp
 
+#include "Renderer/OpenGL/OpenGLException.hpp"
+
 #include <vector>
 #include <mutex>
 #include <thread>
@@ -16,6 +18,23 @@
 #include <functional>
 #include <spdlog/spdlog.h>
 
+
+// Exception for when the command queue attempts to execute on the wrong thread.
+class CommandQueueInappropriateThreadOpenGLException : public OpenGLException
+{
+public:
+    CommandQueueInappropriateThreadOpenGLException()
+    : OpenGLException("This command queue can only be executed on the " \
+                      "thread on which it was constructed. This is " \
+                      "expected to be the OpenGL thread.")
+    {}
+};
+
+
+// Queues OpenGL API calls to be made at a later time on the proper thread.
+// The OpenGL API must only be accessed from a blessed render thread. To fit
+// this into the modern world of multithreaded applications, we use the
+// CommandQueue to queue up commands to be run on that thread later.
 class CommandQueue
 {
 public:

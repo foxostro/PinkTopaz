@@ -94,7 +94,7 @@ void TextRenderer::rebuildVertexBuffer(String &string)
         auto maybeGlyph = _fontTextureAtlas->getGlyph(*c);
         if (!maybeGlyph) {
             // TODO: Consider drawing a placeholder glyph instead of throwing.
-            throw Exception("Unknown character \"%c\"", *c);
+            throw Exception("Unknown character \"{}\"", *c); // TODO: [Exceptions] Throw new exception type for text renderer errors
         }
         
         const auto &glyph = *maybeGlyph;
@@ -202,6 +202,10 @@ void TextRenderer::regenerateFontTextureAtlas()
     _fontTextureAtlas = std::make_unique<FontTextureAtlas>(_log, getPrefPath(), attributes);
     
     SDL_Surface *surface = _fontTextureAtlas->getSurface();
+    
+    if (!surface) {
+        throw Exception("Failed to get the surface for the font texture atlas");
+    }
     
     // Turn the SDL surface into a texture.
     TextureDescriptor texDesc = {

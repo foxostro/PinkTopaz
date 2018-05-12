@@ -12,8 +12,21 @@
 #include "Renderer/Texture.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
 #include "Renderer/OpenGL/CommandQueue.hpp"
+#include "Renderer/OpenGL/OpenGLException.hpp"
 
 #include <vector>
+
+
+// Exception thrown when invalid texture data is provided by the client.
+class InvalidTextureDataOpenGLException : public OpenGLException
+{
+public:
+    template<typename... Args>
+    InvalidTextureDataOpenGLException(Args&&... args)
+    : OpenGLException(std::forward<Args>(args)...)
+    {}
+};
+
 
 // The OpenGL texture target implied by the texture type in `type'.
 GLenum textureTargetEnum(TextureType type);

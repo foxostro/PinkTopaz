@@ -8,8 +8,6 @@
 
 #include "Renderer/OpenGL/BufferOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
-#include "Exception.hpp"
-#include "SDL.h"
 
 static GLenum getUsageEnum(BufferUsage usage)
 {
@@ -19,7 +17,7 @@ static GLenum getUsageEnum(BufferUsage usage)
         case DynamicDraw:   return GL_DYNAMIC_DRAW;
             
         default:
-            throw Exception("Unsupported buffer usage %d\n", (int)usage);
+            throw UnsupportedBufferUsageException(usage);
     }
 }
 
@@ -32,7 +30,7 @@ GLenum getBufferTypeEnum(BufferType type)
         case IndexBuffer:   return GL_ELEMENT_ARRAY_BUFFER;
             
         default:
-            throw Exception("Unsupported buffer type %x\n", (int)type);
+            throw UnsupportedBufferTypeException(type);
     }
 }
 

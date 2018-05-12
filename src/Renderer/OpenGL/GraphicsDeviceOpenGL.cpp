@@ -14,7 +14,7 @@
 #include "Renderer/OpenGL/BufferOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Renderer/OpenGL/opengl.hpp"
-#include "Exception.hpp"
+#include "SDLException.hpp"
 #include "FileUtilities.hpp"
 
 #include <vector>
@@ -32,12 +32,26 @@ GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(std::shared_ptr<spdlog::logger> log,
     constexpr int desiredMajor = 3;
     constexpr int desiredMinor = 3;
     
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, desiredMajor);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, desiredMinor);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1);
+    if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, desiredMajor) != 0) {
+        throw SDLException("SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, desiredMajor={})", desiredMajor);
+    }
+    if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, desiredMinor) != 0) {
+        throw SDLException("SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, desiredMinor={})", desiredMinor);
+    }
+    if (SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) != 0) {
+        throw SDLException("SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, SDL_GL_CONTEXT_PROFILE_CORE)");
+    }
+    if (SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1) != 0) {
+        throw SDLException("SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1)");
+    }
+    if (SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1) != 0) {
+        throw SDLException("SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1)");
+    }
+        
     _glContext = SDL_GL_CreateContext(&_window);
+    if (!_glContext) {
+        throw SDLException("SDL_GL_CreateContext failed");
+    }
     
     // Check the OpenGL version and log an error if it's not supported.
     // But we'll try to run anyway.
@@ -56,10 +70,12 @@ GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(std::shared_ptr<spdlog::logger> log,
     
     GLenum err = glewInit();
     if (GLEW_OK != err) {
-        throw Exception("glewInit failed: %s\n", glewGetErrorString(err));
+        throw GraphicsDeviceInitFailureOpenGLException("glewInit failed: {}", glewGetErrorString(err));
     }
     
-    SDL_GL_SetSwapInterval(1);
+    if (SDL_GL_SetSwapInterval(1) != 0) {
+        throw SDLException("SDL_GL_SetSwapInterval failed");
+    }
     
     glEnable(GL_FRAMEBUFFER_SRGB);
     

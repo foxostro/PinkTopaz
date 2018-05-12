@@ -9,6 +9,8 @@
 #ifndef TextureSampler_hpp
 #define TextureSampler_hpp
 
+#include "Renderer/RendererException.hpp"
+
 enum TextureSamplerAddressMode
 {
     Repeat,
@@ -28,6 +30,24 @@ struct TextureSamplerDescriptor
 {
     TextureSamplerAddressMode addressS, addressT;
     TextureSamplerFilter minFilter, maxFilter;
+};
+
+// Exception thrown when an unsupported texture sampler address mode is used.
+class UnsupportedTextureSamplerAddressModeException : public RendererException
+{
+public:
+    UnsupportedTextureSamplerAddressModeException(TextureSamplerAddressMode mode)
+    : RendererException("Unsupported texture sampler address mode {}", (int)mode)
+    {}
+};
+
+// Exception thrown when an unsupported texture sampler filter is used.
+class UnsupportedTextureSamplerFilterException : public RendererException
+{
+public:
+    UnsupportedTextureSamplerFilterException(TextureSamplerFilter filter)
+    : RendererException("Unsupported texture sampler filter {}", (int)filter)
+    {}
 };
 
 // Encapsulates a texture sampler resource in a platform-agnostic manner.

@@ -19,9 +19,7 @@ CommandQueue::CommandQueue(std::shared_ptr<spdlog::logger> log)
 void CommandQueue::execute()
 {
     if (std::this_thread::get_id() != _mainThreadId) {
-        throw Exception("This command queue can only be executed on the " \
-                        "thread on which it was constructed. This is " \
-                        "expected to be the OpenGL thread.");
+        throw CommandQueueInappropriateThreadOpenGLException();
     }
     
     // Under lock, move `_queue' to `queue'. This will let us execute commands

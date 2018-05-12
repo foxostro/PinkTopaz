@@ -11,7 +11,7 @@
 #include <limits>
 #include <ApplicationServices/ApplicationServices.h>
 
-double getVideoRefreshRate()
+boost::optional<double> getVideoRefreshRate()
 {
     // Get the lowest refresh rate across all displays. It's safe to refresh at
     // this rate even if the window moves between displays.
@@ -23,8 +23,9 @@ double getVideoRefreshRate()
     CGDisplayCount count;
     CGDisplayErr displayErr = CGGetOnlineDisplayList(MAX_DISPLAYS, displays, &count);
     
-    if(displayErr != 0) {
-        throw Exception("Failed to get the online displays.");
+    if(displayErr == 0) {
+        // Failed to get the online displays.
+        return boost::none;
     }
     
     for (CGDisplayCount i = 0; i < count; ++i) {

@@ -7,7 +7,7 @@
 //
 
 #include "Renderer/Metal/TextureMetal.h"
-#include "Exception.hpp"
+
 
 static MTLPixelFormat getPixelFormat(TextureFormat format)
 {
@@ -18,7 +18,7 @@ static MTLPixelFormat getPixelFormat(TextureFormat format)
         case BGRA8: return MTLPixelFormatBGRA8Unorm_sRGB;
             
         default:
-            throw Exception("Unsupported pixel format.");
+            throw UnsupportedTextureFormatException(format);
     }
 }
 
@@ -30,7 +30,7 @@ static NSUInteger textureDataTypeSize(TextureFormat format)
         case RGBA8: return 4;
         case BGRA8: return 4;
         default:
-            throw Exception("Unsupported texture format.");
+            throw UnsupportedTextureFormatException(format);
     }
 }
 
@@ -101,7 +101,8 @@ TextureMetal::TextureMetal(id <MTLDevice> device,
         {
             case Texture2D: initTexture2D(device, desc, data); break;
             case Texture2DArray: initTexture2DArray(device, desc, data); break;
-            default: throw Exception("Unsupported texture type.");
+            default:
+                throw UnsupportedTextureTypeException(desc.type);
         }
     }
 }

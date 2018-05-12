@@ -29,7 +29,7 @@ static GLenum getOpenGLPrimitiveType(PrimitiveType type)
             break;
             
         default:
-            throw Exception("Invalid primitive type %d in call to getOpenGLPrimitiveType.\n", (int)type);
+            throw UnsupportedPrimitiveTypeException(type);
     }
     
     return mode;
@@ -117,7 +117,7 @@ void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstra
     
     _encoderCommandQueue.enqueue(_id, __FUNCTION__, [=]{
         if (!_currentShader) {
-            throw Exception("Must bind a shader before calling setVertexBuffer().");
+            throw ShaderNotBoundOpenGLException();
         }
         
         auto buffer = std::dynamic_pointer_cast<BufferOpenGL>(abstractBuffer);
@@ -219,7 +219,7 @@ void CommandEncoderOpenGL::setTriangleFillMode(TriangleFillMode fillMode)
             break;
             
         default:
-            throw Exception("Unsupported triangle fill mode in setTriangleFillMode().");
+            throw UnsupportedTriangleFillModeException(fillMode);
     }
     
     _encoderCommandQueue.enqueue(_id, __FUNCTION__, [glTriangleFillMode]{
@@ -249,7 +249,7 @@ void CommandEncoderOpenGL::setupVertexAttributes(const VertexFormat &format)
                 break;
                 
             default:
-                throw Exception("Unsupported buffer attribute type %d in BufferOpenGL\n", (int)attr.type);
+                throw UnsupportedBufferAttributeTypeException(attr.type);
         }
         
         glVertexAttribPointer((GLuint)i,

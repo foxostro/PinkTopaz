@@ -12,7 +12,8 @@
 #import "Renderer/Metal/TextureMetal.h"
 #import "Renderer/Metal/TextureSamplerMetal.h"
 #import "Renderer/Metal/BufferMetal.h"
-#import "Exception.hpp"
+#import "Renderer/Metal/MetalException.hpp"
+#import "SDLException.hpp"
 
 #import "SDL_syswm.h"
 
@@ -25,7 +26,9 @@ GraphicsDeviceMetal::GraphicsDeviceMetal(std::shared_ptr<spdlog::logger> log,
     {
         SDL_SysWMinfo windowManagerInfo;
         SDL_VERSION(&windowManagerInfo.version);
-        SDL_GetWindowWMInfo(&window, &windowManagerInfo);
+        if (!SDL_GetWindowWMInfo(&window, &windowManagerInfo)) {
+            throw SDLException("SDL_GetWindowWMInfo failed");
+        }
         
         // Create a metal layer and add it to the view that SDL created.
         NSView *sdlView = windowManagerInfo.info.cocoa.window.contentView;
@@ -76,8 +79,10 @@ GraphicsDeviceMetal::GraphicsDeviceMetal(std::shared_ptr<spdlog::logger> log,
         _library = [device newLibraryWithFile:libraryName error:&error];
         if (!_library) {
             NSString *errorDesc = [error localizedDescription];
-            throw Exception("Failed to create Metal shader library \"%s\": %s",
-                            libraryName.UTF8String, errorDesc.UTF8String);
+            throw MetalException("Failed to create Metal shader "
+                                 "library \"{}\": {}",
+                                 libraryName.UTF8String,
+                                 errorDesc.UTF8String);
         }
     }
     

@@ -78,7 +78,7 @@ void TerrainProgressSystem::handleEvent(entityx::EntityManager &es,
             if (iter != _mapCellToEntity.end()) {
                 _mapCellToEntity.erase(iter);
             } else {
-                throw Exception("How did we get an invalid iterator here?");
+                assert(!"How did we get an invalid iterator here?");
             }
         }
     }

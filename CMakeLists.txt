@@ -84,6 +84,7 @@ set(SOURCE_FILES_TERRAIN
 
 set(SOURCE_FILES_OPENGL
     "src/include/Renderer/OpenGL/opengl.hpp"
+    "src/include/Renderer/OpenGL/OpenGLException.hpp"
     "src/Renderer/OpenGL/glUtilities.cpp" "src/include/Renderer/OpenGL/glUtilities.hpp"
     "src/Renderer/OpenGL/GraphicsDeviceOpenGL.cpp" "src/include/Renderer/OpenGL/GraphicsDeviceOpenGL.hpp"
     "src/Renderer/OpenGL/CommandEncoderOpenGL.cpp" "src/include/Renderer/OpenGL/CommandEncoderOpenGL.hpp"
@@ -102,6 +103,7 @@ if(APPLE)
         "src/Renderer/Metal/TextureMetal.mm" "src/include/Renderer/Metal/TextureMetal.h"
         "src/Renderer/Metal/TextureSamplerMetal.mm" "src/include/Renderer/Metal/TextureSamplerMetal.h"
         "src/Renderer/Metal/BufferMetal.mm" "src/include/Renderer/Metal/BufferMetal.h"
+        "src/include/Renderer/Metal/MetalException.hpp"
         "src/Library.metal"
         )
 else(APPLE)
@@ -109,6 +111,7 @@ else(APPLE)
 endif(APPLE)
 
 set(SOURCE_FILES_RENDERER
+    "src/include/Renderer/RendererException.hpp"
     "src/Renderer/TextRenderer.cpp" "src/include/Renderer/TextRenderer.hpp"
     "src/Renderer/StaticMesh.cpp" "src/include/Renderer/StaticMesh.hpp"
     "src/Renderer/StaticMeshSerializer.cpp" "src/include/Renderer/StaticMeshSerializer.hpp"
@@ -168,7 +171,10 @@ set(SOURCE_FILES_OTHER_ECS
 set(SOURCE_FILES_MISC
     "src/include/UniqueName.hpp"
     "src/include/CerealGLM.hpp"
-    "src/include/Exception.hpp" "src/Exception.cpp" 
+    "src/include/Exception.hpp"
+    "src/include/PosixException.hpp"
+    "src/include/SDLException.hpp"
+    "src/include/FreeTypeException.hpp"
     "src/include/FileUtilities.hpp" "src/FileUtilities.cpp"
     "src/include/FrameTimer.hpp" "src/FrameTimer.cpp"
     "src/include/TaskDispatcher.hpp" "src/TaskDispatcher.cpp"

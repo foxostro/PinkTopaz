@@ -17,6 +17,7 @@
 #include "Renderer/Texture.hpp"
 #include "Renderer/TextureSampler.hpp"
 #include "Renderer/Buffer.hpp"
+#include "Renderer/RendererException.hpp"
 
 enum PrimitiveType
 {
@@ -29,6 +30,25 @@ enum TriangleFillMode
     Fill,
     Lines
 };
+
+// Exception thrown when an unsupported primitive type is used.
+class UnsupportedPrimitiveTypeException : public RendererException
+{
+public:
+    UnsupportedPrimitiveTypeException(PrimitiveType type)
+    : RendererException("Invalid primitive type {}", (int)type)
+    {}
+};
+
+// Exception thrown when an unsupported triangle fill mode is selected.
+class UnsupportedTriangleFillModeException : public RendererException
+{
+public:
+    UnsupportedTriangleFillModeException(TriangleFillMode fillMode)
+    : RendererException("Unsupported triangle fill mode {}", (int)fillMode)
+    {}
+};
+
 
 class CommandEncoder
 {

@@ -13,6 +13,7 @@
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/CommandEncoder.hpp"
 #include "Renderer/OpenGL/CommandQueue.hpp"
+#include "Renderer/OpenGL/OpenGLException.hpp"
 
 #include <queue>
 #include <memory>
@@ -20,6 +21,17 @@
 #include <map>
 #include "SDL.h"
 #include <spdlog/spdlog.h>
+
+
+// Exception for when the graphics device fails to initialize.
+class GraphicsDeviceInitFailureOpenGLException : public OpenGLException
+{
+public:
+    template<typename... Args>
+    GraphicsDeviceInitFailureOpenGLException(Args&&... args)
+    : OpenGLException(std::forward<Args>(args)...)
+    {}
+};
 
 
 class GraphicsDeviceOpenGL : public GraphicsDevice

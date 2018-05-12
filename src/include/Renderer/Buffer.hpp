@@ -9,10 +9,12 @@
 #ifndef Buffer_hpp
 #define Buffer_hpp
 
+#include "RendererException.hpp"
+
 #include <cstdint>
 #include <vector>
 #include <string>
-    
+
 enum BufferUsage
 {
     StaticDraw,
@@ -25,6 +27,26 @@ enum BufferType
     UniformBuffer,
     IndexBuffer
 };
+
+
+// Exception thrown when an unsupported buffer usage mode is selected.
+class UnsupportedBufferUsageException : public RendererException
+{
+public:
+    UnsupportedBufferUsageException(BufferUsage bufferUsage)
+    : RendererException("Unsupported buffer usage {}", (int)bufferUsage)
+    {}
+};
+
+// Exception thrown when an unsupported buffer type is selected.
+class UnsupportedBufferTypeException : public RendererException
+{
+public:
+    UnsupportedBufferTypeException(BufferType bufferType)
+    : RendererException("Unsupported buffer type {}", (int)bufferType)
+    {}
+};
+
 
 // Encapsulates a GPU buffer resource in a platform-agnostic manner.
 class Buffer

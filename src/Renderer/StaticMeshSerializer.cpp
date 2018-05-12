@@ -20,15 +20,17 @@ StaticMesh StaticMeshSerializer::load(const std::vector<uint8_t> &bytes)
     const Header &header = *((Header *)bytes.data());
     
     if (header.magic != GEO_MAGIC) {
-        throw Exception("Unexpected magic number in geometry data file: found %d but expected %d", header.magic, GEO_MAGIC);
+        throw StaticMeshSerializerMagicNumberException(header.magic, GEO_MAGIC);
     }
     
     if (header.version != GEO_VERSION) {
-        throw Exception("Unexpected version number in geometry data file: found %d but expected %d", header.version, GEO_VERSION);
+        throw StaticMeshSerializerVersionNumberException(header.version, GEO_VERSION);
     }
     
     if (header.len != (header.numVerts * sizeof(FileVertex))) {
-        throw Exception("Unexpected number of bytes used in geometry data file.");
+        const auto actual = header.len;
+        const auto expected = header.numVerts * sizeof(FileVertex);
+        throw StaticMeshSerializerBadLengthException(actual, expected);
     }
     
     std::vector<TerrainVertex> vertices(header.numVerts);

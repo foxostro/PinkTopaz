@@ -27,7 +27,7 @@ static void checkShaderCompileStatus(GLuint shader)
         
         std::vector<GLchar> infoLog(length);
         glGetShaderInfoLog(shader, length, &length, &infoLog[0]);
-        throw Exception("Failed to compile shader: %s\n", infoLog.data());
+        throw ShaderCompileErrorOpenGLException(shader, infoLog);
     }
 }
 
@@ -45,7 +45,7 @@ static void checkProgramLinkStatus(GLuint program)
         
         std::vector<GLchar> infoLog(length);
         glGetProgramInfoLog(program, length, &length, &infoLog[0]);
-        throw Exception("Failed to link shader program: %s\n", infoLog.data());
+        throw ProgramLinkErrorOpenGLException(program, infoLog);
     }
 }
 

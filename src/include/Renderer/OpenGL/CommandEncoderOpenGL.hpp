@@ -11,8 +11,21 @@
 
 #include "Renderer/CommandEncoder.hpp"
 #include "Renderer/RenderPassDescriptor.hpp"
+#include "Renderer/OpenGL/OpenGLException.hpp"
 #include "Renderer/OpenGL/ShaderOpenGL.hpp"
 #include "Renderer/OpenGL/CommandQueue.hpp"
+
+
+// Exception thrown a shader is not bound, but is expected to be.
+// At certain points, a shader is expected to be bound for proper execution.
+class ShaderNotBoundOpenGLException : public OpenGLException
+{
+public:
+    ShaderNotBoundOpenGLException()
+    : OpenGLException("A shader must be bound at this time.")
+    {}
+};
+
 
 class CommandEncoderOpenGL : public CommandEncoder
 {

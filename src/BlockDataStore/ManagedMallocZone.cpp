@@ -71,11 +71,11 @@ void ManagedMallocZone::mapFile(size_t minimumFileSize)
         _zone.reset(header()->zoneData, header()->zoneSize);
     } else {
         if (header()->magic != _magic) {
-            throw Exception("Unexpected magic number in managed file: found %d but expected %d", header()->magic, _magic);
+            throw ManagedMallocZoneMagicNumberException(header()->magic, _magic);
         }
         
         if (header()->version != _version) {
-            throw Exception("Unexpected version number in managed file: found %d but expected %d", header()->version, _version);
+            throw ManagedMallocZoneVersionNumberException(header()->version, _version);
         }
         
         _zone.grow(header()->zoneData, newZoneSize);

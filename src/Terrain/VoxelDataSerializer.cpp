@@ -57,11 +57,11 @@ static std::vector<uint8_t> compress(const std::vector<uint8_t> &input)
                 break;
                 
             case Z_MEM_ERROR:
-                throw Exception("Z_MEM_ERROR");
+                throw VoxelDataException("Z_MEM_ERROR");
                 
             default:
                 assert(!"not reachable");
-                throw Exception("Unknown result from zlib compress: %d", r);
+                throw VoxelDataException("Unknown result from zlib compress: {}", r);
         };
     }
     
@@ -97,14 +97,14 @@ static std::vector<uint8_t> decompress(const std::vector<uint8_t> &input)
                 break;
                 
             case Z_MEM_ERROR:
-                throw Exception("Z_MEM_ERROR");
+                throw VoxelDataException("Z_MEM_ERROR");
                 
             case Z_DATA_ERROR:
-                throw Exception("Z_DATA_ERROR");
+                throw VoxelDataException("Z_DATA_ERROR");
                 
             default:
                 assert(!"not reachable");
-                throw Exception("Unknown result from zlib uncompress: %d", r);
+                throw VoxelDataException("Unknown result from zlib uncompress: {}", r);
         };
     }
     

@@ -13,6 +13,17 @@
 #include <boost/filesystem.hpp>
 #include "Renderer/Texture.hpp"
 #include "Renderer/GraphicsDevice.hpp"
+#include "Renderer/RendererException.hpp"
+
+// Exception thrown when the texture fails to load from file.
+class TextureArrayLoaderFailedException : public RendererException
+{
+public:
+    template<typename... Args>
+    TextureArrayLoaderFailedException(Args&&... args)
+    : RendererException(std::forward<Args>(args)...)
+    {}
+};
 
 // Load array textures from file.
 class TextureArrayLoader

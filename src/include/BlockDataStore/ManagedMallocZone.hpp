@@ -11,7 +11,40 @@
 
 #include "BlockDataStore/BoxedMallocZone.hpp"
 #include "MemoryMappedFile.hpp"
+#include "Exception.hpp"
 #include <boost/filesystem.hpp>
+
+
+class ManagedMallocZoneException : public Exception
+{
+public:
+    template<typename... Args>
+    ManagedMallocZoneException(Args&&... args)
+    : Exception(std::forward<Args>(args)...)
+    {}
+};
+
+class ManagedMallocZoneMagicNumberException : public ManagedMallocZoneException
+{
+public:
+    ManagedMallocZoneMagicNumberException(unsigned expected, unsigned actual)
+    : ManagedMallocZoneException("Unexpected magic number in "
+                                 "managed file: found {} but "
+                                 "expected {}",
+                                 expected, actual)
+    {}
+};
+
+class ManagedMallocZoneVersionNumberException : public ManagedMallocZoneException
+{
+public:
+    ManagedMallocZoneVersionNumberException(unsigned expected, unsigned actual)
+    : ManagedMallocZoneException("Unexpected version number in "
+                                 "managed file: found {} but "
+                                 "expected {}",
+                                 expected, actual)
+    {}
+};
 
 class ManagedMallocZone
 {

@@ -14,7 +14,7 @@
 #include "KeypressEvent.hpp"
 #include "MouseButtonEvent.hpp"
 #include "MouseMoveEvent.hpp"
-#include "Exception.hpp"
+#include "SDLException.hpp"
 #include "Profiler.hpp"
 #include "VideoRefreshRate.hpp"
 #include "AutoreleasePool.hpp"
@@ -26,6 +26,27 @@
 
 #include "Application.hpp"
 
+// Exception thrown when the system does not meet minimum requirements.
+class ApplicationRequirementsException : public Exception
+{
+public:
+    template<typename... Args>
+    ApplicationRequirementsException(Args&&... args)
+    : Exception(std::forward<Args>(args)...)
+    {}
+};
+
+// Exception thrown when required AVX support is not available on this system.
+class AVXUnsupportedException : public ApplicationRequirementsException
+{
+public:
+    AVXUnsupportedException()
+    : ApplicationRequirementsException("This application requires the AVX2 "
+                                       "instruction set found on Intel Haswell "
+                                       "chips, or newer.")
+    {}
+};
+
 void Application::inner(std::shared_ptr<spdlog::logger> log,
                         const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                         const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
@@ -33,7 +54,7 @@ void Application::inner(std::shared_ptr<spdlog::logger> log,
                         const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
 {
     // Get the display refresh rate. This is usually 60 Hz.
-    const double refreshRate = getVideoRefreshRate();
+    const double refreshRate = getVideoRefreshRate().value_or(60.0);
 	const auto videoRefreshPeriod = std::chrono::duration<double>(1 / refreshRate);
     
     World gameWorld(log,
@@ -96,7 +117,9 @@ void Application::inner(std::shared_ptr<spdlog::logger> log,
 					if (e.key.keysym.sym == SDLK_q && (SDL_GetModState() & KMOD_CTRL)) {
 						SDL_Event event;
 						event.type = SDL_QUIT;
-						SDL_PushEvent(&event);
+                        if (SDL_PushEvent(&event) < 0) {
+                            throw SDLException("SDL_PushEvent failed");
+                        }
 					}
                     break;
                     
@@ -144,26 +167,34 @@ void Application::run()
     auto log = spdlog::stdout_color_mt("console");
     
     if (!SDL_HasAVX()) {
-        throw Exception("This application requires the AVX2 instruction set found on Intel Haswell chips, or newer.");
+        throw AVXUnsupportedException();
     }
     
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        log->error("SDL_Init failed: {}\n", SDL_GetError());
+        throw SDLException("SDL_Init failed");
     }
 
     // Set the current working directory to the SDL data path.
     // On Mac OS, this is the bundle "Resources" directory.
     {
         char *pathStr = SDL_GetBasePath();
+        if (!pathStr) {
+            throw SDLException("SDL_GetBasePath failed");
+        }
         boost::filesystem::path cwd(pathStr);
         boost::filesystem::current_path(cwd);
         SDL_free(pathStr);
     }
         
     _window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600,
-                                SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
+                                SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
+    if (!_window) {
+        throw SDLException("SDL_CreateWindow failed");
+    }
         
-    SDL_SetRelativeMouseMode(SDL_TRUE);
+    if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0) {
+        throw SDLException("SDL_SetRelativeMouseMode failed");
+    }
     
     const unsigned h = std::max(1u, std::thread::hardware_concurrency());
     

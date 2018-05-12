@@ -7,7 +7,8 @@
 //
 
 #include "Fonts/GlyphRendererOutline.hpp"
-#include "Exception.hpp"
+#include "FreeTypeException.hpp"
+#include "SDLException.hpp"
 
 #include "SDL.h"
 
@@ -22,11 +23,12 @@ GlyphRendererOutline::GlyphRendererOutline(FT_Library &library,
  : GlyphRenderer(library, face, attributes)
 {
     if(attributes.border <= 0 || attributes.border > 12) {
-        throw Exception("Text border failed sanity check: %d", attributes.border);
+        throw Exception("Text border failed sanity check: {}",
+                        attributes.border); // TODO: [Exceptions] Throw a new exception class for fonts.
     }
     
-    if (FT_Stroker_New(library, &_stroker)) {
-        throw Exception("Failed to create the font stroker.");
+    if (FT_Error err = FT_Stroker_New(library, &_stroker)) {
+        throw FreeTypeException(err, "Failed to create the font stroker");
     }
     
     FT_Stroker_Set(_stroker,
@@ -61,11 +63,11 @@ GlyphRendererOutline::render(FT_ULong charcode)
                                                           0xff000000);
     
     if (!finalGlyphSurface) {
-        throw Exception("Failed to create surface for glyph: \"%c\"", charcode);
+        throw SDLException("Failed to create surface for glyph with charcode=\"{}\"", charcode);
     }
     
     if (SDL_SetSurfaceBlendMode(finalGlyphSurface, SDL_BLENDMODE_BLEND)) {
-        throw Exception("Failed to set blend mode for glyph surface: \"%c\"", charcode);
+        throw SDLException("Failed to set blend mode for glyph with charcode=\"{}\"", charcode);
     }
     
     // To achieve the outline, we render the interior first and render the
@@ -189,11 +191,11 @@ void GlyphRendererOutline::blitGlyph(SDL_Surface *dstSurface,
                                                          0xff000000);
     
     if (!glyphSurface) {
-        throw Exception("Failed to create SDL surface for glyph");
+        throw SDLException("Failed to create SDL surface for glyph");
     }
     
     if (SDL_SetSurfaceBlendMode(glyphSurface, SDL_BLENDMODE_BLEND)) {
-        throw Exception("Failed to set font texture atlas blend mode.");
+        throw SDLException("Failed to set font texture atlas blend mode");
     }
     
     // Blit the glyph into the texture atlas at the cursor position.
@@ -208,7 +210,7 @@ void GlyphRendererOutline::blitGlyph(SDL_Surface *dstSurface,
     };
     
     if (SDL_BlitSurface(glyphSurface, &srcRect, dstSurface, &dstRect)) {
-        throw Exception("Failed to blit glpyh into font texture atlas surface.");
+        throw SDLException("Failed to blit glpyh into font texture atlas surface");
     }
     
     SDL_FreeSurface(glyphSurface);
@@ -219,27 +221,27 @@ FT_Glyph GlyphRendererOutline::getGlyph(FT_ULong charcode, GlyphStyle style)
     FT_Face &face = getFace();
     
     FT_UInt glyphIndex = FT_Get_Char_Index(face, charcode);
-    if (FT_Load_Glyph(face, glyphIndex, FT_LOAD_DEFAULT)) {
-        throw Exception("Failed to load the glyph \"%c\"", (char)charcode);
+    if (FT_Error err = FT_Load_Glyph(face, glyphIndex, FT_LOAD_DEFAULT)) {
+        throw FreeTypeException(err, "Failed to load the glyph \"{}\"", (char)charcode);
     }
     
     FT_Glyph glyph;
-    if (FT_Get_Glyph(face->glyph, &glyph)) {
-        throw Exception("Failed to get the glyph \"%c\"", (char)charcode);
+    if (FT_Error err = FT_Get_Glyph(face->glyph, &glyph)) {
+        throw FreeTypeException(err, "Failed to get the glyph \"{}\"", (char)charcode);
     }
     
     switch (style) {
         case INTERIOR:
-            if (FT_Glyph_StrokeBorder(&glyph, _stroker, true, true)) {
+            if (FT_Error err = FT_Glyph_StrokeBorder(&glyph, _stroker, true, true)) {
                 FT_Done_Glyph(glyph);
-                throw Exception("Failed to stroke the inside of the glyph \"%c\"", (char)charcode);
+                throw FreeTypeException(err, "Failed to stroke the inside of the glyph \"{}\"", (char)charcode);
             }
             break;
             
         case BORDER:
-            if (FT_Glyph_Stroke(&glyph, _stroker, true)) {
+            if (FT_Error err = FT_Glyph_Stroke(&glyph, _stroker, true)) {
                 FT_Done_Glyph(glyph);
-                throw Exception("Failed to stroke the border of the glyph \"%c\"", (char)charcode);
+                throw FreeTypeException(err, "Failed to stroke the border of the glyph \"{}\"", (char)charcode);
             }
             break;
             

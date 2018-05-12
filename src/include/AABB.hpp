@@ -17,6 +17,7 @@
 #include <array>
 #include <boost/functional/hash.hpp>
 #include "CerealGLM.hpp"
+#include <spdlog/fmt/ostr.h>
 
 // An axis-aligned bounding box.
 template<typename TYPE>
@@ -95,13 +96,30 @@ struct _AABB
         return {center, extent};
     }
     
+    // Return the string representation of this bounding box.
     std::string to_string() const
     {
         std::ostringstream ss;
-        ss << "{" << glm::to_string(center) << " x " << glm::to_string(extent*2.f) << "}";
+        ss << "{"
+           << glm::to_string(center)
+           << " x "
+           << glm::to_string(extent*2.f)
+           << "}";
         return ss.str();
     }
     
+    // Permits logging with spdlog.
+    template<typename OStream>
+    friend OStream& operator<<(OStream &os, const _AABB<TYPE> &box)
+    {
+        return os << "{"
+                  << glm::to_string(box.center)
+                  << " x "
+                  << glm::to_string(box.extent*2.f)
+                  << "}";
+    }
+    
+    // Permits serialization with cereal.
     template<typename Archive>
     void serialize(Archive &archive)
     {

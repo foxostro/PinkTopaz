@@ -219,7 +219,7 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
         }
     } else {
         _log->trace("There are {} missing meshes in active region {}.",
-                    missingMeshes.size(), activeRegion.to_string());
+                    missingMeshes.size(), activeRegion);
         _meshRebuildActor->push(missingMeshes);
     }
 }

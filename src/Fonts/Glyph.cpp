@@ -9,6 +9,7 @@
 #include "Fonts/Glyph.hpp"
 #include "Exception.hpp"
 #include "SDL.h"
+#include "SDLException.hpp"
 
 Glyph::~Glyph()
 {
@@ -40,7 +41,7 @@ void Glyph::blit(SDL_Surface *dstSurface, const glm::ivec2 &cursor)
         getSize().x, getSize().y
     };
     
-    if (SDL_BlitSurface(getSurface(), &src, dstSurface, &dst)) {
-        throw Exception("Failed to blit glpyh into destination surface.");
+    if (SDL_BlitSurface(getSurface(), &src, dstSurface, &dst) != 0) {
+        throw SDLException("Failed to blit glpyh into destination surface");
     }
 }

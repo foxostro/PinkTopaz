@@ -7,7 +7,6 @@
 //
 
 #include "Renderer/Metal/TextureSamplerMetal.h"
-#include "Exception.hpp"
 
 static MTLSamplerMinMagFilter getMinMagFilter(TextureSamplerFilter filter)
 {
@@ -20,7 +19,7 @@ static MTLSamplerMinMagFilter getMinMagFilter(TextureSamplerFilter filter)
         case LinearMipMapLinear:    return MTLSamplerMinMagFilterLinear;
             
         default:
-            throw Exception("Unsupported texture min/mag filter.");
+            throw UnsupportedTextureSamplerFilterException(filter);
     }
 }
 
@@ -35,7 +34,7 @@ static MTLSamplerMipFilter getMipFilter(TextureSamplerFilter filter)
         case LinearMipMapLinear:    return MTLSamplerMipFilterNotMipmapped; //MTLSamplerMipFilterLinear;
             
         default:
-            throw Exception("Unsupported texture mip filter.");
+            throw UnsupportedTextureSamplerFilterException(filter);
     }
 }
 
@@ -47,7 +46,7 @@ static MTLSamplerAddressMode getAddressMode(TextureSamplerAddressMode mode)
         case Repeat:        return MTLSamplerAddressModeRepeat;
             
         default:
-            throw Exception("Unsupported texture address mode.");
+            throw UnsupportedTextureSamplerAddressModeException(mode);
     }
 }
 

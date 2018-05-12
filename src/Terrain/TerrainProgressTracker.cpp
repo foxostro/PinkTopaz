@@ -62,7 +62,7 @@ void TerrainProgressTracker::dump()
                 "\tWaitingOnVoxels    -- {} ms\n"
                 "\tExtractingSurface  -- {} ms\n"
                 "\tTotal Elapsed Time -- {} ms",
-                _boundingBox.to_string(),
+                _boundingBox,
                 timeQueuedStr,
                 timeWaitingForVoxelsStr,
                 timeExtractingSurfaceStr,

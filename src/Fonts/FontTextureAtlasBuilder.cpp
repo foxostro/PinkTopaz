@@ -10,7 +10,8 @@
 #include "Fonts/FontTextureAtlasPacker.hpp"
 #include "Fonts/GlyphRendererOutline.hpp"
 #include "Fonts/GlyphRendererRegular.hpp"
-#include "Exception.hpp"
+#include "FreeTypeException.hpp"
+#include "SDLException.hpp"
 #include "FileUtilities.hpp"
 
 #include "SDL.h"
@@ -33,29 +34,29 @@ FontTextureAtlasBuilder::FontTextureAtlasBuilder(std::shared_ptr<spdlog::logger>
 {
     auto maybeFontPath = getFontPath(attr);
     if (!maybeFontPath) {
-        throw Exception("Failed to find font file for \"%s\"",
-                        attr.fontName.c_str());
+        throw Exception("Failed to find font file for \"{}\"",
+                        attr.fontName); // TODO: [Exceptions] Throw new exception type for font related errors.
     }
     
     FT_Library library;
-    if (FT_Init_FreeType(&library)) {
-        throw Exception("Failed to initialize Freetype.");
+    if (FT_Error err = FT_Init_FreeType(&library)) {
+        throw FreeTypeException(err, "Failed to initialize Freetype");
     }
     
     FT_Face face;
-    if (FT_New_Face(library, maybeFontPath->string().c_str(), 0, &face)) {
-        throw Exception("Failed to load the font: %s", attr.fontName.c_str());
+    if (FT_Error err = FT_New_Face(library, maybeFontPath->string().c_str(), 0, &face)) {
+        throw FreeTypeException(err, "Failed to load the font: {}", attr.fontName);
     }
     
-    if (FT_Set_Pixel_Sizes(face, 0, attr.fontSize)) {
-        throw Exception("Failed to set the font size.");
+    if (FT_Error err = FT_Set_Pixel_Sizes(face, 0, attr.fontSize)) {
+        throw FreeTypeException(err, "Failed to set the font size to {}", attr.fontSize);
     }
     
     {
         std::shared_ptr<GlyphRenderer> glyphRenderer = makeGlyphRenderer(library, face, attr);
         _atlasSurface = atlasSearch(*glyphRenderer);
         if (!_atlasSurface) {
-            throw Exception("Failed to generate font texture atlas.");
+            throw Exception("Failed to generate font texture atlas."); // TODO: [Exceptions] Throw new exception type for font related errors.
         }
     }
     
@@ -65,9 +66,13 @@ FontTextureAtlasBuilder::FontTextureAtlasBuilder(std::shared_ptr<spdlog::logger>
 
 SDL_Surface* FontTextureAtlasBuilder::copySurface()
 {
-    return SDL_ConvertSurface(_atlasSurface,
-                              _atlasSurface->format,
-                              SDL_SWSURFACE);
+    SDL_Surface *surface = SDL_ConvertSurface(_atlasSurface,
+                                              _atlasSurface->format,
+                                              SDL_SWSURFACE);
+    if (!surface) {
+        throw SDLException("Failed to copy surface");
+    }
+    return surface;
 }
 
 std::shared_ptr<GlyphRenderer>
@@ -133,18 +138,18 @@ FontTextureAtlasBuilder::createTextureAtlas(const std::vector<std::shared_ptr<Gl
                                                      0xff000000);
     
     if (!atlasSurface) {
-        throw Exception("Failed to create SDL surface for font texture atlas");
+        throw SDLException("Failed to create SDL surface for font texture atlas");
     }
     
     if (SDL_SetSurfaceBlendMode(atlasSurface, SDL_BLENDMODE_BLEND)) {
-        throw Exception("Failed to set font texture atlas blend mode.");
+        throw SDLException("Failed to set font texture atlas blend mode");
     }
     
     for (const auto &glyph : glyphs) {
         const char charcode = glyph->getCharCode();
         auto iter = packedGlyphs.find(charcode);
         if (iter == packedGlyphs.end()) {
-            throw Exception("Packed glyphs is missing charcode %c", charcode);
+            throw Exception("Packed glyphs is missing charcode {}", (char)charcode); // TODO: [Exceptions] Throw new exception type for font related errors.
         }
         
         const glm::ivec2 cursor(iter->second.uvOrigin.x * atlasSurface->w,

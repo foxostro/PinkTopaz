@@ -18,7 +18,7 @@ GLint textureSamplerAddressModeEnum(TextureSamplerAddressMode mode)
         case Repeat: return GL_REPEAT;
         case ClampToEdge: return GL_CLAMP_TO_EDGE;
         default:
-            throw Exception("Unsupported texture format.");
+            throw UnsupportedTextureSamplerAddressModeException(mode);
     }
 }
 
@@ -32,7 +32,7 @@ GLint textureSamplerFilterEnum(TextureSamplerFilter filter)
         case LinearMipMapNearest: return GL_LINEAR_MIPMAP_NEAREST;
         case LinearMipMapLinear: return GL_LINEAR_MIPMAP_LINEAR;
         default:
-            throw Exception("Unsupported texture format.");
+            throw UnsupportedTextureSamplerFilterException(filter);
     }
 }
 

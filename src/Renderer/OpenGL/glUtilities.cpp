@@ -7,8 +7,7 @@
 //
 
 #include "Renderer/OpenGL/glUtilities.hpp"
-#include "Exception.hpp"
-#include "SDL.h"
+#include "Renderer/OpenGL/OpenGLException.hpp"
 
 const char * stringForOpenGLError(GLenum error)
 {
@@ -41,6 +40,7 @@ void checkGLError()
 {
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
-        throw Exception("glGetError: %s (%d)\n", stringForOpenGLError(error), error);
+        throw OpenGLException("glGetError: {} ({})",
+                              stringForOpenGLError(error), error);
     }
 }

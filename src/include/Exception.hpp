@@ -11,20 +11,21 @@
 
 #include <exception>
 #include <string>
+#include <fmt/format.h>
     
 class Exception : public std::exception
 {
 private:
     std::string _reason;
     
-protected:
-    static std::string formatVarArgs(const std::string fmt_str, va_list ap) noexcept;
-    
-    void init(const std::string fmt_str, va_list ap) noexcept;
-        
 public:
     Exception() = default;
-    Exception(const std::string format, ...);
+    Exception(const std::string &reason) : _reason(reason) {}
+    
+    template<typename... Args>
+    Exception(Args&&... args)
+    : _reason(fmt::format(std::forward<Args>(args)...))
+    {}
     
     virtual const char *what() const noexcept override
     {

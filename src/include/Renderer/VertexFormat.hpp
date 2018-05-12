@@ -12,6 +12,8 @@
 #include <vector>
 #include <cstddef>
 
+#include "Renderer/RendererException.hpp"
+
 enum AttributeType
 {
     AttributeTypeFloat,
@@ -30,6 +32,15 @@ struct AttributeFormat
 struct VertexFormat
 {
     std::vector<AttributeFormat> attributes;
+};
+
+// Exception thrown when an unsupported buffer attribute type is specified.
+class UnsupportedBufferAttributeTypeException : public RendererException
+{
+public:
+    UnsupportedBufferAttributeTypeException(AttributeType type)
+    : RendererException("Unsupported buffer attribute type {}", (int)type)
+    {}
 };
 
 #endif /* VertexFormat_hpp */

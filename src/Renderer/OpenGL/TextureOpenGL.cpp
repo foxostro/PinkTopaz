@@ -8,8 +8,6 @@
 
 #include "Renderer/OpenGL/TextureOpenGL.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
-#include "Exception.hpp"
-#include "SDL.h"
 
 GLenum textureTargetEnum(TextureType type)
 {
@@ -18,7 +16,7 @@ GLenum textureTargetEnum(TextureType type)
         case Texture2D: return GL_TEXTURE_2D;
         case Texture2DArray: return GL_TEXTURE_2D_ARRAY;
         default:
-            throw Exception("Unsupported texture type.");
+            throw UnsupportedTextureTypeException(type);
     }
 }
 
@@ -30,7 +28,7 @@ GLint textureExternalFormat(TextureFormat format)
         case RGBA8: return GL_RGBA;
         case BGRA8: return GL_BGRA;
         default:
-            throw Exception("Unsupported texture type.");
+            throw UnsupportedTextureFormatException(format);
     }
 }
 
@@ -42,7 +40,7 @@ GLint textureInternalFormat(TextureFormat format)
         case RGBA8: return GL_SRGB_ALPHA;
         case BGRA8: return GL_SRGB_ALPHA;
         default:
-            throw Exception("Unsupported texture type.");
+            throw UnsupportedTextureFormatException(format);
     }
 }
 
@@ -54,7 +52,7 @@ GLint textureDataType(TextureFormat format)
         case RGBA8: return GL_UNSIGNED_BYTE;
         case BGRA8: return GL_UNSIGNED_BYTE;
         default:
-            throw Exception("Unsupported texture format.");
+            throw UnsupportedTextureFormatException(format);
     }
 }
 
@@ -66,7 +64,7 @@ size_t textureDataTypeSize(TextureFormat format)
         case RGBA8: return 4;
         case BGRA8: return 4;
         default:
-            throw Exception("Unsupported texture format.");
+            throw UnsupportedTextureFormatException(format);
     }
 }
 
@@ -98,7 +96,7 @@ TextureOpenGL::TextureOpenGL(unsigned id,
     const size_t expectedLen = desc.width * desc.height * desc.depth * textureDataTypeSize(desc.format);
     const size_t dataLen = data.size();
     if (expectedLen != dataLen) {
-        throw Exception("`data' is not the right size");
+        throw InvalidTextureDataOpenGLException("`data' is not the right size");
     }
     
     commonInit(desc, data);

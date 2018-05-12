@@ -21,8 +21,17 @@
 #include <atomic>
 #include <future>
 
-// Exception thrown when a Task promise is broken.
-class BrokenPromiseException : public Exception {};
+// Exception thrown when a promise is broken.
+class BrokenPromiseException : public Exception
+{
+public:
+    BrokenPromiseException() : Exception("BrokenPromiseException") {}
+    
+    template<typename... Args>
+    BrokenPromiseException(Args&&... args)
+    : Exception(std::forward<Args>(args)...)
+    {}
+};
 
 class AbstractTask : public std::enable_shared_from_this<AbstractTask>
 {

@@ -14,6 +14,30 @@
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 
+#include "Exception.hpp"
+
+// Exception thrown on unexpected failure to write a file.
+class FileWriteErrorException : public Exception
+{
+public:
+    FileWriteErrorException(boost::filesystem::path path, int errorNumber)
+    : Exception("Failed to open file for writing: {}, "
+                "filePath=\"{}\"",
+                strerror(errorNumber), path.string())
+    {}
+};
+
+// Exception thrown on unexpected failure to read a file.
+class FileReadErrorException : public Exception
+{
+public:
+    FileReadErrorException(boost::filesystem::path path, int errorNumber)
+    : Exception("Failed to open file for reading: {}, "
+                "filePath=\"{}\"",
+                strerror(errorNumber), path.string())
+    {}
+};
+
 // Gets the contents of the file from disk. Throws on file error.
 std::string stringFromFileContents(const boost::filesystem::path &path);
 

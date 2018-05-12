@@ -27,7 +27,7 @@ static MTLPrimitiveType getMetalPrimitiveType(PrimitiveType primitiveType)
             break;
             
         default:
-            throw Exception("Unsupported primitive type in getMetalPrimitiveType().");
+            throw UnsupportedPrimitiveTypeException(primitiveType);
     }
     
     return metalPrimitiveType;
@@ -179,7 +179,7 @@ void CommandEncoderMetal::setTriangleFillMode(TriangleFillMode fillMode)
             break;
             
         default:
-            throw Exception("Unsupported triangle fill mode in setTriangleFillMode().");
+            throw UnsupportedTriangleFillModeException(fillMode);
     }
     
     [_encoder setTriangleFillMode:metalFillMode];

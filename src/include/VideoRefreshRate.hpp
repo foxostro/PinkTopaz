@@ -9,6 +9,8 @@
 #ifndef VideoRefreshRate_hpp
 #define VideoRefreshRate_hpp
 
-double getVideoRefreshRate();
+#include <boost/optional.hpp>
+
+boost::optional<double> getVideoRefreshRate();
 
 #endif /* VideoRefreshRate_hpp */
