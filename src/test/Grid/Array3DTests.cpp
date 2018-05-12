@@ -6,12 +6,11 @@
 //
 //
 
+#include <fmt/format.h>
 #include "catch.hpp"
 #include "Grid/Array3D.hpp"
 #include "Grid/GridIndexerRange.hpp"
 #include "Grid/GridPoints.hpp"
-#include "Exception.hpp"
-#include "SDL.h"
 
 using glm::vec3;
 using glm::ivec3;

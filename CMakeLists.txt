@@ -406,6 +406,7 @@ add_executable(${TEST_PROG_NAME}
                ${SOURCE_FILES_FONTS}
                ${SOURCE_FILES_BLOCK_DATA_STORE}
                )
+set_target_properties(${TEST_PROG_NAME} PROPERTIES COMPILE_FLAGS "-DTESTING")
 target_link_libraries(${TEST_PROG_NAME}
                       ${CONAN_LIBS}
                       ${OPENGL_LIBRARIES}

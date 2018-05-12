@@ -16,7 +16,11 @@
 
 // Set `EnableVerboseBoundsChecking' to true to enable very verbose bounds
 // checking for grids. There is a severe performance penalty for doing this.
+#ifdef TESTING
+constexpr bool EnableVerboseBoundsChecking = true;
+#else
 constexpr bool EnableVerboseBoundsChecking = false;
+#endif
 
 
 inline bool
@@ -35,10 +39,17 @@ class OutOfBoundsException : public Exception
 public:
     OutOfBoundsException() : Exception("out of bounds") {}
     
+    OutOfBoundsException(const std::string &reason)
+    : Exception(reason)
+    {}
+    
+#ifndef TESTING
+    // For some reason, Catch's REQUIRE_THROWS_AS doesn't like this.
     template<typename... Args>
     OutOfBoundsException(Args&&... args)
     : Exception(std::forward<Args>(args)...)
     {}
+#endif
 };
 
 

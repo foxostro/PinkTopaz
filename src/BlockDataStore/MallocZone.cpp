@@ -28,6 +28,10 @@ inline size_t roundUpBlockSize(size_t size)
     return newSize;
 }
 
+MallocZone::MallocZone()
+ : MallocZone(spdlog::get("console"))
+{}
+
 MallocZone::MallocZone(std::shared_ptr<spdlog::logger> log)
  : _header(nullptr),
    _log(log)

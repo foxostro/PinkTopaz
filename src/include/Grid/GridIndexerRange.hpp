@@ -189,9 +189,9 @@ inline auto slice(const GridIndexer &grid, const AABB &region)
 {
     if constexpr (EnableVerboseBoundsChecking) {
         if (!grid.inbounds(region)) {
-            throw OutOfBoundsException("grid.boundingBox={} ; "
-                                       "region={}",
-                                       grid.boundingBox(), region);
+            throw OutOfBoundsException(fmt::format("grid.boundingBox={} ; "
+                                                   "region={}",
+                                                   grid.boundingBox(), region));
         }
     }
     

@@ -142,8 +142,11 @@ public:
     // Default destructor.
     ~MallocZone() = default;
     
-    // No default constructor.
-    MallocZone() = delete;
+    // Default constructor.
+    // Uses the global logger.
+    // The zone begins with no backing memory buffer.
+    // A call to grow() is necessary before any allocations may be made.
+    MallocZone();
     
     // Constructor.
     // The zone begins with no backing memory buffer.

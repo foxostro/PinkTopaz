@@ -112,11 +112,12 @@ struct _AABB
     template<typename OStream>
     friend OStream& operator<<(OStream &os, const _AABB<TYPE> &box)
     {
-        return os << "{"
-                  << glm::to_string(box.center)
-                  << " x "
-                  << glm::to_string(box.extent*2.f)
-                  << "}";
+        os << "{"
+           << glm::to_string(box.center)
+           << " x "
+           << glm::to_string(box.extent*2.f)
+           << "}";
+        return os;
     }
     
     // Permits serialization with cereal.
