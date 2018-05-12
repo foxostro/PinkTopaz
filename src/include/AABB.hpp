@@ -157,8 +157,7 @@ namespace std {
     };
 }
 
-template<typename PointType>
-static inline bool
+template<typename PointType> inline bool
 isPointInsideBox(const PointType &point,
                  const PointType &mins,
                  const PointType &maxs)
@@ -168,15 +167,13 @@ isPointInsideBox(const PointType &point,
 }
 
 
-static inline bool
-isPointInsideBox(const glm::vec3 &point, const AABB &box)
+inline bool isPointInsideBox(const glm::vec3 &point, const AABB &box)
 {
     return isPointInsideBox(point, box.mins(), box.maxs());
 }
 
 
-static inline bool
-doBoxesIntersect(const AABB &a, const AABB &b)
+inline bool doBoxesIntersect(const AABB &a, const AABB &b)
 {
     const glm::vec3 a_max = a.maxs();
     const glm::vec3 b_max = b.maxs();

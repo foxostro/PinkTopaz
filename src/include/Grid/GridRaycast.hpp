@@ -18,7 +18,7 @@
 namespace GridRaycastRange {
 
 // Iterate over cells which fall within the specified frustum.
-static inline void
+inline void
 raycast(boost::coroutines2::coroutine<glm::vec3>::push_type &sink,
         const Ray &ray,
         size_t maxDepth)
@@ -103,8 +103,7 @@ raycast(boost::coroutines2::coroutine<glm::vec3>::push_type &sink,
 
 // Return a range to iterate over grid cells which fall on the specified ray.
 // The ray is specified in world space coordinates.
-static inline
-boost::coroutines2::coroutine<glm::vec3>::pull_type
+inline boost::coroutines2::coroutine<glm::vec3>::pull_type
 slice(const GridIndexer &grid,
       const Ray &ray,
       size_t maxDepth)

@@ -19,7 +19,7 @@
 #endif
 
 
-static inline bool
+inline bool
 isPointInsideBox(Morton3 index,
                  const glm::ivec3 &mins,
                  const glm::ivec3 &maxs)

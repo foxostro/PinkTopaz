@@ -14,7 +14,7 @@
 // Represents a plane through the coefficients of the plane equation.
 typedef glm::vec4 Plane;
 
-static inline float signedDistance(const Plane &plane, const glm::vec3 &point)
+inline float signedDistance(const Plane &plane, const glm::vec3 &point)
 {
     const glm::vec3 normal(plane.x, plane.y, plane.z);
     const float d = glm::dot(normal, point) + plane.w;

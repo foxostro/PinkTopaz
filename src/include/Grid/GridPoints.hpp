@@ -14,7 +14,7 @@
 // Return a Range object which can iterate over evenly spaced points in the
 // specified region of the grid.
 // Throws an exception if the region is not within this grid.
-static inline auto points(const GridIndexer &grid, const AABB &region)
+inline auto points(const GridIndexer &grid, const AABB &region)
 {
 #ifdef EnableVerboseBoundsChecking
     if (!grid.inbounds(region)) {

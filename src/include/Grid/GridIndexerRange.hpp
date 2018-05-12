@@ -185,7 +185,7 @@ private:
 };
 
 // Return a Range object which can iterate over a sub-region of the grid.
-static inline auto slice(const GridIndexer &grid, const AABB &region)
+inline auto slice(const GridIndexer &grid, const AABB &region)
 {
 #ifdef EnableVerboseBoundsChecking
     if (!grid.inbounds(region)) {

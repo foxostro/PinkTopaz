@@ -267,8 +267,8 @@ private:
 };
 
 // Wait for all futures in the range to complete.
-template<typename FutureCollectionType>
-static inline void waitForAll(FutureCollectionType &futures)
+template<typename FutureCollectionType> inline
+void waitForAll(FutureCollectionType &futures)
 {
     for (auto &future : futures) {
         future.wait();

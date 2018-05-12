@@ -17,13 +17,13 @@
 namespace FrustumRange {
 
 // Iterate over cells which fall within the specified frustum.
-static inline void forEachCell(boost::coroutines2::coroutine<glm::ivec3>::push_type &sink,
-                               size_t depth,
-                               size_t depthOfLeaves,
-                               const AABB &box,
-                               const Frustum &frustum,
-                               const AABB &sliceBoundingBox,
-                               const GridIndexer &grid)
+inline void forEachCell(boost::coroutines2::coroutine<glm::ivec3>::push_type &sink,
+                        size_t depth,
+                        size_t depthOfLeaves,
+                        const AABB &box,
+                        const Frustum &frustum,
+                        const AABB &sliceBoundingBox,
+                        const GridIndexer &grid)
 {
     if (frustum.boxIsInside(box) &&
         frustum.boxIsInside(sliceBoundingBox)) {
@@ -43,8 +43,7 @@ static inline void forEachCell(boost::coroutines2::coroutine<glm::ivec3>::push_t
 } // namespace FrustumRange
 
 // Return a range object which can iterate over a frustum within the grid.
-static inline
-boost::coroutines2::coroutine<glm::ivec3>::pull_type
+inline boost::coroutines2::coroutine<glm::ivec3>::pull_type
 slice(const GridIndexer &grid,
       const Frustum &frustum,
       const AABB &sliceBoundingBox)

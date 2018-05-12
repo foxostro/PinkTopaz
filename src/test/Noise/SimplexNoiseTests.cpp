@@ -14,8 +14,8 @@
 
 using namespace glm;
 
-template<typename RandomGenerator>
-static inline vec3 randomPoint(const vec3 &min, const vec3 &max, RandomGenerator &generator)
+template<typename RandomGenerator> inline
+vec3 randomPoint(const vec3 &min, const vec3 &max, RandomGenerator &generator)
 {
     std::uniform_real_distribution<decltype(min.x)> distx(min.x, max.x);
     std::uniform_real_distribution<decltype(min.y)> disty(min.y, max.y);

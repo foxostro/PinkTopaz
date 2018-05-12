@@ -20,7 +20,7 @@ static constexpr int res = (size + border) * 2;
 
 // Return a value between -1 and +1 so that a line through the y-axis maps to a
 // smooth gradient of values from -1 to +1.
-static inline float groundGradient(float terrainHeight, const vec3 &p)
+inline float groundGradient(float terrainHeight, const vec3 &p)
 {
     if(p.y < 0.0f) {
         return -1.f;
