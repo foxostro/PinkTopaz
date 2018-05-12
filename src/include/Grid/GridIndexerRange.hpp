@@ -15,6 +15,12 @@ template<typename PointType>
 class ExclusiveIterator
 {
 public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = PointType;
+    using difference_type = PointType;
+    using pointer = PointType*;
+    using reference = PointType&;
+    
     ExclusiveIterator() = delete;
     
     ExclusiveIterator(PointType min, PointType max, PointType pos)
@@ -81,6 +87,12 @@ template<typename PointType>
 class InclusiveIterator
 {
 public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = PointType;
+    using difference_type = PointType;
+    using pointer = PointType*;
+    using reference = PointType&;
+    
     InclusiveIterator() = delete;
     
     InclusiveIterator(PointType min, PointType max,
