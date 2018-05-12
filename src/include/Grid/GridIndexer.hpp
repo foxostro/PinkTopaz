@@ -14,9 +14,9 @@
 #include "Morton.hpp"
 
 
-#ifndef NDEBUG
-#define EnableVerboseBoundsChecking
-#endif
+// Set `EnableVerboseBoundsChecking' to true to enable very verbose bounds
+// checking for grids. There is a severe performance penalty for doing this.
+constexpr bool EnableVerboseBoundsChecking = false;
 
 
 inline bool
@@ -84,11 +84,11 @@ public:
     // Gets a morton code to identify the cell for the specified point in space.
     inline Morton3 indexAtPoint(const glm::vec3 &point) const
     {
-#ifdef EnableVerboseBoundsChecking
+        if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(point)) {
                 throw OutOfBoundsException();
             }
-#endif
+        }
         
         const glm::ivec3 a = cellCoordsAtPoint(point);
         const Morton3 index = indexAtCellCoords(a);

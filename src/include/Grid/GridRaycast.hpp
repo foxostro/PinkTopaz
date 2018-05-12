@@ -108,11 +108,11 @@ slice(const GridIndexer &grid,
       const Ray &ray,
       size_t maxDepth)
 {
-#ifdef EnableVerboseBoundsChecking
-    if (!grid.inbounds(ray.origin)) {
-        throw OutOfBoundsException();
+    if constexpr (EnableVerboseBoundsChecking) {
+        if (!grid.inbounds(ray.origin)) {
+            throw OutOfBoundsException();
+        }
     }
-#endif
     
 #if 0
     // TODO: Fix the conversion from world-space ray to cell-space direction.

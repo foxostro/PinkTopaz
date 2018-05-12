@@ -16,11 +16,11 @@
 // Throws an exception if the region is not within this grid.
 inline auto points(const GridIndexer &grid, const AABB &region)
 {
-#ifdef EnableVerboseBoundsChecking
-    if (!grid.inbounds(region)) {
-        throw OutOfBoundsException();
+    if constexpr (EnableVerboseBoundsChecking) {
+        if (!grid.inbounds(region)) {
+            throw OutOfBoundsException();
+        }
     }
-#endif
     
     const auto dim = grid.cellDimensions();
     const auto min = region.mins();

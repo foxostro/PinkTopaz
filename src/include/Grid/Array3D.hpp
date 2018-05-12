@@ -83,11 +83,11 @@ public:
     // Each point in space corresponds to exactly one cell. Get the object.
     inline const CellType& reference(const glm::vec3 &p) const
     {
-#ifdef EnableVerboseBoundsChecking
+        if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(p)) {
                 throw OutOfBoundsException();
             }
-#endif
+        }
         return reference(indexAtPoint(p));
     }
     
@@ -100,22 +100,22 @@ public:
     // Gets the object for the specified index, produced by `indexAtPoint'.
     inline const CellType& reference(Morton3 index) const
     {
-#ifdef EnableVerboseBoundsChecking
-        if (!isValidIndex(index)) {
-            throw OutOfBoundsException();
+        if constexpr (EnableVerboseBoundsChecking) {
+            if (!isValidIndex(index)) {
+                throw OutOfBoundsException();
+            }
         }
-#endif
         return _cells[(size_t)index];
     }
     
     // Each point in space corresponds to exactly one cell. Get the (mutable) object.
     inline CellType& mutableReference(const glm::vec3 &p)
     {
-#ifdef EnableVerboseBoundsChecking
+        if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(p)) {
                 throw OutOfBoundsException();
             }
-#endif
+        }
         return mutableReference(indexAtPoint(p));
     }
     
@@ -124,22 +124,22 @@ public:
     {
         const Morton3 index = indexAtCellCoords(cellCoords);
         
-#ifdef EnableVerboseBoundsChecking
-        if (!isValidIndex(index)) {
-            throw OutOfBoundsException();
+        if constexpr (EnableVerboseBoundsChecking) {
+            if (!isValidIndex(index)) {
+                throw OutOfBoundsException();
+            }
         }
-#endif
         return mutableReference(index);
     }
     
     // Gets the (mutable) object for the specified index, produced by `indexAtPoint'.
     inline CellType& mutableReference(Morton3 index)
     {
-#ifdef EnableVerboseBoundsChecking
-        if (!isValidIndex(index)) {
-            throw OutOfBoundsException();
+        if constexpr (EnableVerboseBoundsChecking) {
+            if (!isValidIndex(index)) {
+                throw OutOfBoundsException();
+            }
         }
-#endif
         return _cells[(size_t)index];
     }
     

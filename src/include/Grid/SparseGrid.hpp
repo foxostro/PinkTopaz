@@ -69,11 +69,11 @@ public:
     
     boost::optional<ElementType> getIfExists(const glm::vec3 &p)
     {
-#ifdef EnableVerboseBoundsChecking
-        if (!inbounds(p)) {
-            throw OutOfBoundsException();
+        if constexpr (EnableVerboseBoundsChecking) {
+            if (!inbounds(p)) {
+                throw OutOfBoundsException();
+            }
         }
-#endif
         return getIfExists(indexAtPoint(p));
     }
     
@@ -121,21 +121,21 @@ public:
     
     ElementType get(const glm::vec3 &p)
     {
-#ifdef EnableVerboseBoundsChecking
-        if (!inbounds(p)) {
-            throw OutOfBoundsException();
+        if constexpr (EnableVerboseBoundsChecking) {
+            if (!inbounds(p)) {
+                throw OutOfBoundsException();
+            }
         }
-#endif
         return get(indexAtPoint(p));
     }
     
     void set(const glm::vec3 &p, const ElementType &el)
     {
-#ifdef EnableVerboseBoundsChecking
-        if (!inbounds(p)) {
-            throw OutOfBoundsException();
+        if constexpr (EnableVerboseBoundsChecking) {
+            if (!inbounds(p)) {
+                throw OutOfBoundsException();
+            }
         }
-#endif
         return set(indexAtPoint(p), el);
     }
     

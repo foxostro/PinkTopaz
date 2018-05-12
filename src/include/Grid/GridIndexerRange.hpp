@@ -187,13 +187,13 @@ private:
 // Return a Range object which can iterate over a sub-region of the grid.
 inline auto slice(const GridIndexer &grid, const AABB &region)
 {
-#ifdef EnableVerboseBoundsChecking
-    if (!grid.inbounds(region)) {
-        throw OutOfBoundsException("grid.boundingBox={} ; "
-                                   "region={}",
-                                   grid.boundingBox(), region);
+    if constexpr (EnableVerboseBoundsChecking) {
+        if (!grid.inbounds(region)) {
+            throw OutOfBoundsException("grid.boundingBox={} ; "
+                                       "region={}",
+                                       grid.boundingBox(), region);
+        }
     }
-#endif
     
     const auto minCellCoords = grid.cellCoordsAtPoint(region.mins());
     const auto maxCellCoords = grid.cellCoordsAtPointRoundUp(region.maxs());
