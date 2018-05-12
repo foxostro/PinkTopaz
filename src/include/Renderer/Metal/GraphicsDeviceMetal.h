@@ -21,14 +21,18 @@
 #import <map>
 
 #import "SDL.h"
+#import <spdlog/spdlog.h>
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
 #import <Metal/Metal.h>
 
+
 class GraphicsDeviceMetal : public GraphicsDevice
 {
 public:
-    GraphicsDeviceMetal(SDL_Window &window);
+    GraphicsDeviceMetal(std::shared_ptr<spdlog::logger> log,
+                        SDL_Window &window);
+    
     virtual ~GraphicsDeviceMetal();
     
     // Call this to begin a frame. It returns a command encoder which can be
@@ -104,7 +108,7 @@ public:
     // Mostly useful for debugging.
     std::string getName() const override
     {
-        return std::string("Metal");
+        return "Metal";
     }
     
 private:

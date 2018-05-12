@@ -16,6 +16,7 @@
 #include "Grid/SparseGrid.hpp"
 #include <boost/optional.hpp>
 #include <boost/filesystem.hpp>
+#include <spdlog/spdlog.h>
 
 // Stores/Loads voxel chunks on the file system.
 class MapRegionStore
@@ -24,11 +25,13 @@ public:
     ~MapRegionStore() = default;
     
     // Constructor.
+    // log -- Which log are we logging to?
     // mapDirectory -- Directory where map region files should be stored.
     // boundingBox -- The bounding box is the bounds of the world and should
     //                match the voxel generator's bounds.
     // gridResolution --  The number of voxels in a chunk.
-    MapRegionStore(boost::filesystem::path mapDirectory,
+    MapRegionStore(std::shared_ptr<spdlog::logger> log,
+                   boost::filesystem::path mapDirectory,
                    const AABB &boundingBox,
                    const glm::ivec3 &gridResolution);
     
@@ -43,6 +46,7 @@ public:
 private:
     boost::filesystem::path _mapDirectory;
     SparseGrid<std::shared_ptr<MapRegion>> _regions;
+    std::shared_ptr<spdlog::logger> _log;
     
     std::shared_ptr<MapRegion> get(const glm::vec3 &p);
 };

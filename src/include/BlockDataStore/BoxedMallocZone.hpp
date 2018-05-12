@@ -101,9 +101,13 @@ public:
     // Destructor.
     ~BoxedMallocZone();
     
-    // Default constructor. The zone begins with no backing memory buffer.
+    // No default constructor.
+    BoxedMallocZone() = delete;
+    
+    // Constructor.
+    // The zone begins with no backing memory buffer.
     // A call to grow() is necessary before any allocations may be made.
-    BoxedMallocZone();
+    BoxedMallocZone(std::shared_ptr<spdlog::logger> log);
     
     // No copy constructor.
     BoxedMallocZone(const BoxedMallocZone &) = delete;

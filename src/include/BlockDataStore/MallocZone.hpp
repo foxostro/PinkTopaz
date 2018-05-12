@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <cassert>
+#include <spdlog/spdlog.h>
 
 // Malloc-like allocator. This allocates and deallocates blocks of memory in a
 // provided memory buffer. The heap tracking information contains no raw
@@ -141,9 +142,13 @@ public:
     // Default destructor.
     ~MallocZone() = default;
     
-    // Default constructor. The zone begins with no backing memory buffer.
+    // No default constructor.
+    MallocZone() = delete;
+    
+    // Constructor.
+    // The zone begins with no backing memory buffer.
     // A call to grow() is necessary before any allocations may be made.
-    MallocZone();
+    MallocZone(std::shared_ptr<spdlog::logger> log);
     
     // No copy constructor.
     MallocZone(const MallocZone &) = delete;
@@ -383,6 +388,7 @@ public:
     
 private:
     Header *_header;
+    std::shared_ptr<spdlog::logger> _log;
     
     void internalSetBackingMemory(uint8_t *start, size_t size);
     void considerSplittingBlock(MallocZone::Block *block, size_t size);

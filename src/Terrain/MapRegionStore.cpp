@@ -8,11 +8,13 @@
 
 #include "Terrain/MapRegionStore.hpp"
 
-MapRegionStore::MapRegionStore(boost::filesystem::path mapDirectory,
+MapRegionStore::MapRegionStore(std::shared_ptr<spdlog::logger> log,
+                               boost::filesystem::path mapDirectory,
                                const AABB &bbox,
                                const glm::ivec3 &res)
  : _mapDirectory(mapDirectory),
-   _regions(bbox, res)
+   _regions(bbox, res),
+   _log(log)
 {}
 
 boost::optional<Array3D<Voxel>>
@@ -35,6 +37,6 @@ std::shared_ptr<MapRegion> MapRegionStore::get(const glm::vec3 &p)
     return _regions.get(index, [=]{
         boost::filesystem::path name("MapRegion_" + std::to_string((size_t)index) + ".bin");
         boost::filesystem::path path(_mapDirectory / name);
-        return std::make_shared<MapRegion>(path);
+        return std::make_shared<MapRegion>(_log, path);
     });
 }

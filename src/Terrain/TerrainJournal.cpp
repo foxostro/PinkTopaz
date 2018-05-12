@@ -7,7 +7,6 @@
 //
 
 #include "Terrain/TerrainJournal.hpp"
-#include "SDL.h" // for SDL_Log
 
 // Must include all types of terrain operations here in order for serialization
 // to work correctly.
@@ -16,7 +15,8 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/archives/xml.hpp>
 
-TerrainJournal::TerrainJournal(boost::filesystem::path fileName)
+TerrainJournal::TerrainJournal(std::shared_ptr<spdlog::logger> log,
+                               boost::filesystem::path fileName)
  : _fileName(fileName),
    _voxelDataSeed(0),
    _journalFormatVersion(journalFormatVersion)
@@ -31,8 +31,8 @@ TerrainJournal::TerrainJournal(boost::filesystem::path fileName)
             throw TerrainJournalSerializationException("Failed to load the journal \"%s\" due to serialization error: %s", _fileName.c_str(), exception.what());
         }
     } else {
-        SDL_Log("Creating new terrain journal \"%s\" with random seed %u",
-                _fileName.c_str(), _voxelDataSeed);
+        log->info("Creating new terrain journal \"{}\" with random seed {}",
+                  _fileName.string(), _voxelDataSeed);
         save();
     }
     

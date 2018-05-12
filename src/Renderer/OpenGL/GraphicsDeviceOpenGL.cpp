@@ -21,10 +21,11 @@
 
 static constexpr unsigned FIRST_ID = 2;
 
-GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(SDL_Window &window)
+GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(std::shared_ptr<spdlog::logger> log,
+                                           SDL_Window &window)
  : _nextId(FIRST_ID),
    _window(window),
-   _commandQueue(std::make_shared<CommandQueue>())
+   _commandQueue(std::make_shared<CommandQueue>(log))
 {
     // VMWare provides OpenGL 3.3. So, this is our minimum OpenGL version.
     // The next lowest is macOS, which provides 4.1.
@@ -45,10 +46,11 @@ GraphicsDeviceOpenGL::GraphicsDeviceOpenGL(SDL_Window &window)
         int minor = 0;
         glGetIntegerv(GL_MAJOR_VERSION, &major);
         glGetIntegerv(GL_MINOR_VERSION, &minor);
-        SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "OpenGL version is %d.%d\n", major, minor);
+        _log->info("OpenGL version is {}.{}", major, minor);
         
         if ((major < desiredMajor) || ((major == desiredMajor) && (minor < desiredMinor))) {
-            SDL_LogError(SDL_LOG_CATEGORY_RENDER, "This application requires at least OpenGL %d.%d to run.", desiredMajor, desiredMinor);
+            _log->error("This application requires at least "
+                        "OpenGL {}.{} to run.", desiredMajor, desiredMinor);
         }
     }
     
@@ -84,7 +86,7 @@ GraphicsDeviceOpenGL::~GraphicsDeviceOpenGL()
 
 std::shared_ptr<CommandEncoder> GraphicsDeviceOpenGL::encoder(const RenderPassDescriptor &desc)
 {
-    auto encoder = std::make_shared<CommandEncoderOpenGL>(nextId(), _commandQueue, desc);
+    auto encoder = std::make_shared<CommandEncoderOpenGL>(_log, nextId(), _commandQueue, desc);
     return std::dynamic_pointer_cast<CommandEncoder>(encoder);
 }
 

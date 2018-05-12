@@ -20,12 +20,14 @@
 #include "AutoreleasePool.hpp"
 
 #include "SDL.h"
+#include <spdlog/spdlog.h>
 #include <map>
 #include <chrono>
 
 #include "Application.hpp"
 
-void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+void Application::inner(std::shared_ptr<spdlog::logger> log,
+                        const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                         const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
                         const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
                         const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
@@ -34,7 +36,8 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     const double refreshRate = getVideoRefreshRate();
 	const auto videoRefreshPeriod = std::chrono::duration<double>(1 / refreshRate);
     
-    World gameWorld(graphicsDevice,
+    World gameWorld(log,
+                    graphicsDevice,
                     dispatcherHighPriority,
                     dispatcherVoxelData,
                     mainThreadDispatcher);
@@ -65,7 +68,7 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             {
                 case SDL_QUIT:
                     PROFILER_SIGNPOST(Quit);
-                    SDL_Log("Received SDL_QUIT.");
+                    log->info("Received SDL_QUIT.");
                     return;
                     
                 case SDL_WINDOWEVENT:
@@ -138,12 +141,14 @@ void Application::run()
 {
     AutoreleasePool pool;
     
+    auto log = spdlog::stdout_color_mt("console");
+    
     if (!SDL_HasAVX()) {
         throw Exception("This application requires the AVX2 instruction set found on Intel Haswell chips, or newer.");
     }
     
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        SDL_LogError(SDL_LOG_CATEGORY_ERROR, "SDL_Init failed: %s\n", SDL_GetError());
+        log->error("SDL_Init failed: {}\n", SDL_GetError());
     }
 
     // Set the current working directory to the SDL data path.
@@ -154,9 +159,6 @@ void Application::run()
         boost::filesystem::current_path(cwd);
         SDL_free(pathStr);
     }
-
-    SDL_LogSetPriority(SDL_LOG_CATEGORY_RENDER, SDL_LOG_PRIORITY_INFO);
-    SDL_LogSetPriority(SDL_LOG_CATEGORY_ERROR, SDL_LOG_PRIORITY_ERROR);
         
     _window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600,
                                 SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
@@ -165,7 +167,8 @@ void Application::run()
     
     const unsigned h = std::max(1u, std::thread::hardware_concurrency());
     
-    inner(createDefaultGraphicsDevice(*_window),
+    inner(log,
+          createDefaultGraphicsDevice(log, *_window),
           std::make_shared<TaskDispatcher>("High Priority TaskDispatcher", 1),
           std::make_shared<TaskDispatcher>("Voxel Data TaskDispatcher", h),
           std::make_shared<TaskDispatcher>("Main Thread Dispatcher", 0));

@@ -9,20 +9,25 @@
 #ifndef GraphicsDeviceOpenGL_hpp
 #define GraphicsDeviceOpenGL_hpp
 
-#include <queue>
-#include <memory>
-#include <atomic>
-#include <map>
 
-#include "SDL.h"
 #include "Renderer/GraphicsDevice.hpp"
 #include "Renderer/CommandEncoder.hpp"
 #include "Renderer/OpenGL/CommandQueue.hpp"
 
+#include <queue>
+#include <memory>
+#include <atomic>
+#include <map>
+#include "SDL.h"
+#include <spdlog/spdlog.h>
+
+
 class GraphicsDeviceOpenGL : public GraphicsDevice
 {
 public:
-    GraphicsDeviceOpenGL(SDL_Window &window);
+    GraphicsDeviceOpenGL(std::shared_ptr<spdlog::logger> log,
+                         SDL_Window &window);
+    
     virtual ~GraphicsDeviceOpenGL();
     
     // Call this to begin a frame. It returns a command encoder which can be
@@ -97,7 +102,7 @@ public:
     // Mostly useful for debugging.
     std::string getName() const override
     {
-        return std::string("OpenGL");
+        return "OpenGL";
     }
     
 private:
@@ -108,6 +113,7 @@ private:
     SDL_GLContext _glContext;
     std::shared_ptr<CommandQueue> _commandQueue;
     std::map<BufferType, size_t> _maxBufferSizes;
+    std::shared_ptr<spdlog::logger> _log;
 };
 
 #endif /* GraphicsDeviceOpenGL_hpp */

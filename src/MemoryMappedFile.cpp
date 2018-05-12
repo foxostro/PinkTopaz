@@ -8,7 +8,6 @@
 
 #include "MemoryMappedFile.hpp"
 #include "Exception.hpp"
-#include "SDL.h" // for SDL_Log
 
 MemoryMappedFile::~MemoryMappedFile()
 {

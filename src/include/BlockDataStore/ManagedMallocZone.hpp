@@ -25,7 +25,8 @@ public:
         uint8_t zoneData[0];
     };
     
-    ManagedMallocZone(const boost::filesystem::path &regionFileName,
+    ManagedMallocZone(std::shared_ptr<spdlog::logger> log,
+                      const boost::filesystem::path &regionFileName,
                       size_t initialFileSize,
                       uint32_t magic, uint32_t version);
     

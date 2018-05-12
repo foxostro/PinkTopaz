@@ -11,6 +11,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtx/component_wise.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <vector>
 #include <sstream>
 #include <array>
@@ -97,9 +98,7 @@ struct _AABB
     std::string to_string() const
     {
         std::ostringstream ss;
-        ss << "{("    << center.x << ", " << center.y << ", " << center.z
-           << ") x (" << extent.x*2 << ", " << extent.y*2 << ", " << extent.z*2
-           << ")}";
+        ss << "{" << glm::to_string(center) << " x " << glm::to_string(extent*2.f) << "}";
         return ss.str();
     }
     

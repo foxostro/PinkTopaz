@@ -7,9 +7,9 @@
 //
 
 #include "Terrain/TerrainProgressTracker.hpp"
-#include "SDL.h" // for SDL_Log
 
-TerrainProgressTracker::TerrainProgressTracker(Morton3 cellCoords,
+TerrainProgressTracker::TerrainProgressTracker(std::shared_ptr<spdlog::logger> log,
+                                               Morton3 cellCoords,
                                                AABB boundingBox,
                                                std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
                                                entityx::EventManager &events)
@@ -17,7 +17,8 @@ TerrainProgressTracker::TerrainProgressTracker(Morton3 cellCoords,
   _boundingBox(boundingBox),
   _state(TerrainProgressEvent::Queued),
   _events(&events),
-  _mainThreadDispatcher(mainThreadDispatcher)
+  _mainThreadDispatcher(mainThreadDispatcher),
+  _log(log)
 {
     setState(TerrainProgressEvent::Queued);
 }
@@ -38,8 +39,6 @@ void TerrainProgressTracker::dump()
 {
     assert(_state == TerrainProgressEvent::Complete);
     
-    std::string boxStr = _boundingBox.to_string();
-    
     auto timeElapsed = [&](TerrainProgressEvent::State endState, TerrainProgressEvent::State beginState){
         const auto beginTime = _timeEnteringEachState[beginState];
         const auto endTime = _timeEnteringEachState[endState];
@@ -58,14 +57,14 @@ void TerrainProgressTracker::dump()
     std::string timeTotalElapsedStr = timeElapsed(TerrainProgressEvent::Complete,
                                                   TerrainProgressEvent::Queued);
     
-    SDL_Log("Cell %s:\n"
-            "\tQueued             -- %s ms\n"
-            "\tWaitingOnVoxels    -- %s ms\n"
-            "\tExtractingSurface  -- %s ms\n"
-            "\tTotal Elapsed Time -- %s ms",
-            boxStr.c_str(),
-            timeQueuedStr.c_str(),
-            timeWaitingForVoxelsStr.c_str(),
-            timeExtractingSurfaceStr.c_str(),
-            timeTotalElapsedStr.c_str());
+    _log->trace("Cell {}:\n"
+                "\tQueued             -- {} ms\n"
+                "\tWaitingOnVoxels    -- {} ms\n"
+                "\tExtractingSurface  -- {} ms\n"
+                "\tTotal Elapsed Time -- {} ms",
+                _boundingBox.to_string(),
+                timeQueuedStr,
+                timeWaitingForVoxelsStr,
+                timeExtractingSurfaceStr,
+                timeTotalElapsedStr);
 }

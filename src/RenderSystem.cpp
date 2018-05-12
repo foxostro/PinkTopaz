@@ -22,11 +22,12 @@
 #include "SDL.h"
 #include <glm/gtc/matrix_transform.hpp> // for perspective()
 
-RenderSystem::RenderSystem(const std::shared_ptr<GraphicsDevice> &device,
+RenderSystem::RenderSystem(std::shared_ptr<spdlog::logger> log,
+                           const std::shared_ptr<GraphicsDevice> &device,
                            const std::shared_ptr<WireframeCube> &wireframeCube)
  : _graphicsDevice(device),
    _wireframeCube(wireframeCube),
-   _textRenderer(device, TextAttributes(
+   _textRenderer(log, device, TextAttributes(
        /*fontName=*/    "Vegur",
        /*fontSize=*/    24,
        /*border=*/      1,

@@ -21,7 +21,8 @@
 #include <memory>
 #include <string>
 
-#include "SDL.h"
+#include "SDL.h" // for SDL_Window
+#include <spdlog/spdlog.h>
 
 // This is a thin abstraction layer over the graphics API. Instantiate a
 // concrete GraphicsDevice sub-class that implements an API such as OpenGL.
@@ -104,6 +105,7 @@ public:
 };
 
 // Create a default graphics device for the system.
-std::shared_ptr<GraphicsDevice> createDefaultGraphicsDevice(SDL_Window &w);
+std::shared_ptr<GraphicsDevice> createDefaultGraphicsDevice(std::shared_ptr<spdlog::logger> log,
+                                                            SDL_Window &w);
 
 #endif /* GraphicsDevice_hpp */

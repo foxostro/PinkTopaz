@@ -17,6 +17,7 @@
 #include <glm/vec4.hpp>
 #include <glm/vec2.hpp>
 #include <memory>
+#include <spdlog/spdlog.h>
 
 // Draws strings on screen.
 // All strings must be in one font face and one font size.
@@ -42,7 +43,8 @@ public:
     
     using StringHandle = std::list<String>::iterator;
     
-    TextRenderer(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+    TextRenderer(std::shared_ptr<spdlog::logger> log,
+                 const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                  const TextAttributes &attributes);
     
     ~TextRenderer() = default;
@@ -90,6 +92,7 @@ private:
     std::list<String> _strings;
     unsigned _windowScaleFactor;
     TextAttributes _attributes;
+    std::shared_ptr<spdlog::logger> _log;
 };
 
 #endif /* TextRenderer_hpp */

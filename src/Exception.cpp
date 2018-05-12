@@ -12,6 +12,7 @@
 #include <cstdarg>
 #include <memory>
 #include <vector>
+#include <spdlog/spdlog.h>
 
 std::string Exception::formatVarArgs(const std::string fmt_str, va_list arglist) noexcept
 {
@@ -38,7 +39,7 @@ std::string Exception::formatVarArgs(const std::string fmt_str, va_list arglist)
 void Exception::init(const std::string fmt_str, va_list arglist) noexcept
 {
     _reason = formatVarArgs(fmt_str, arglist);
-    SDL_LogError(SDL_LOG_CATEGORY_ERROR, "%s", _reason.c_str());
+    spdlog::get("console")->error(_reason);
 }
     
 Exception::Exception(const std::string fmt_str, ...)

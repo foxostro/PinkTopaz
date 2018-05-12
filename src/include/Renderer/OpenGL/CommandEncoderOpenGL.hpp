@@ -17,7 +17,8 @@
 class CommandEncoderOpenGL : public CommandEncoder
 {
 public:
-    CommandEncoderOpenGL(unsigned id,
+    CommandEncoderOpenGL(std::shared_ptr<spdlog::logger> log,
+                         unsigned id,
                          const std::shared_ptr<CommandQueue> &commandQueue,
                          const RenderPassDescriptor &desc);
     

@@ -22,8 +22,10 @@ FontTextureAtlas::~FontTextureAtlas()
     SDL_FreeSurface(_atlasSurface);
 }
 
-FontTextureAtlas::FontTextureAtlas(const boost::filesystem::path &cacheDir,
+FontTextureAtlas::FontTextureAtlas(std::shared_ptr<spdlog::logger> log,
+                                   const boost::filesystem::path &cacheDir,
                                    const TextAttributes &attributes)
+ : _log(log)
 {
     std::hash<TextAttributes> hasher;
     const std::string baseName = "font" + std::to_string(attributes.fontSize)
@@ -42,9 +44,9 @@ FontTextureAtlas::FontTextureAtlas(const boost::filesystem::path &cacheDir,
         boost::filesystem::exists(atlasImageFilename) &&
         boost::filesystem::exists(atlasDictionaryFilename)) {
         
-        SDL_Log("Loading font texture atlas from files: \"%s\" and \"%s\"",
-                atlasImageFilename.string().c_str(),
-                atlasDictionaryFilename.string().c_str());
+        _log->info("Loading font texture atlas from files: \"{}\" and \"{}\"",
+                   atlasImageFilename.string(),
+                   atlasDictionaryFilename.string());
         
         _atlasSurface = IMG_Load(atlasImageFilename.string().c_str());
         
@@ -52,13 +54,13 @@ FontTextureAtlas::FontTextureAtlas(const boost::filesystem::path &cacheDir,
         cereal::BinaryInputArchive archive(is);
         archive(_glyphs);
     } else {
-        FontTextureAtlasBuilder builder(attributes);
+        FontTextureAtlasBuilder builder(_log, attributes);
         _atlasSurface = builder.copySurface();
         _glyphs = builder.getGlyphs();
         
-        SDL_Log("Saving font texture atlas to files: \"%s\" and \"%s\"",
-                atlasImageFilename.string().c_str(),
-                atlasDictionaryFilename.string().c_str());
+        _log->info("Saving font texture atlas to files: \"{}\" and \"{}\"",
+                   atlasImageFilename.string(),
+                   atlasDictionaryFilename.string());
         
         IMG_SavePNG(_atlasSurface, atlasImageFilename.string().c_str());
         

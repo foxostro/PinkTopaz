@@ -10,7 +10,9 @@
 
 BoxedMallocZone::~BoxedMallocZone() = default;
 
-BoxedMallocZone::BoxedMallocZone() = default;
+BoxedMallocZone::BoxedMallocZone(std::shared_ptr<spdlog::logger> log)
+: _zone(log)
+{}
 
 void BoxedMallocZone::reset(uint8_t *start, size_t size)
 {

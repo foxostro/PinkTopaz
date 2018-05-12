@@ -14,11 +14,12 @@
 #include <thread>
 #include <string>
 #include <functional>
-    
+#include <spdlog/spdlog.h>
+
 class CommandQueue
 {
 public:
-    CommandQueue();
+    CommandQueue(std::shared_ptr<spdlog::logger> log);
     ~CommandQueue() = default;
     
     // Cancel all tasks with the specified ID. Cancelled tasks are simply never
@@ -48,6 +49,8 @@ private:
 	};
     typedef std::vector<Task> Queue;
     Queue _queue;
+    
+    std::shared_ptr<spdlog::logger> _log;
 };
 
 #endif /* CommandQueue_hpp */

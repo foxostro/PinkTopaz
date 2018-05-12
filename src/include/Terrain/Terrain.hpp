@@ -22,6 +22,7 @@
 #include "Terrain/TerrainConfig.hpp"
 #include "Terrain/TerrainJournal.hpp"
 #include "RenderableStaticMesh.hpp"
+#include <spdlog/spdlog.h>
 
 // Object represents the voxel terrain of the world.
 class Terrain
@@ -29,7 +30,8 @@ class Terrain
 public:
     ~Terrain();
     
-    Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+    Terrain(std::shared_ptr<spdlog::logger> log,
+            const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             const std::shared_ptr<TaskDispatcher> &dispatcher,
             const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
             const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher,
@@ -75,6 +77,7 @@ private:
     glm::mat4x4 _modelViewProjection;
     std::atomic<glm::vec3> _cameraPosition;
     TerrainHorizonDistance _horizonDistance;
+    std::shared_ptr<spdlog::logger> _log;
     
     inline AABB getActiveRegion() const
     {

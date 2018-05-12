@@ -20,7 +20,8 @@ class BlockDataStore
 public:
     using Key = uint64_t;
     
-    BlockDataStore(const boost::filesystem::path &regionFileName,
+    BlockDataStore(std::shared_ptr<spdlog::logger> log,
+                   const boost::filesystem::path &regionFileName,
                    uint32_t magic,
                    uint32_t version);
     

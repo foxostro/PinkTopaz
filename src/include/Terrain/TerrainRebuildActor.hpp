@@ -14,6 +14,8 @@
 #include <unordered_set>
 #include <boost/optional.hpp>
 #include <thread>
+#include <spdlog/spdlog.h>
+
 #include "TerrainProgressTracker.hpp"
 
 // Maintains an ordered list of meshes that need to be generated.
@@ -24,7 +26,8 @@ public:
     
     TerrainRebuildActor() = delete;
     
-    TerrainRebuildActor(unsigned numThreads,
+    TerrainRebuildActor(std::shared_ptr<spdlog::logger> log,
+                        unsigned numThreads,
                         glm::vec3 initialSearchPoint,
                         std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
                         entityx::EventManager &events,
@@ -49,14 +52,15 @@ private:
         
         Cell() = delete;
         
-        Cell(Morton3 cellCoords,
+        Cell(std::shared_ptr<spdlog::logger> log,
+             Morton3 cellCoords,
              AABB cellBox,
              std::unordered_set<AABB>::iterator iter,
              std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
              entityx::EventManager &events)
          : box(cellBox),
            setIterator(iter),
-           progress(cellCoords, cellBox, mainThreadDispatcher, events)
+           progress(log, cellCoords, cellBox, mainThreadDispatcher, events)
         {}
     };
     
@@ -70,6 +74,7 @@ private:
     std::vector<std::thread> _threads;
     std::shared_ptr<TaskDispatcher> _mainThreadDispatcher;
     entityx::EventManager &_events;
+    std::shared_ptr<spdlog::logger> _log;
     
     // Runs the worker thread.
     void worker();

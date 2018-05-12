@@ -8,6 +8,7 @@ glew/2.0.0@coding3d/stable
 Boost/1.66.0@conan/stable
 Catch/1.9.3@uilianries/stable
 cereal/1.2.2@foxostro/stable
+spdlog/0.16.3@bincrafters/stable
 
 [options]
 SDL2:shared=False

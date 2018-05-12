@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <boost/optional.hpp>
 #include <boost/filesystem.hpp>
+#include <spdlog/spdlog.h>
 
 struct SDL_Surface;
 
@@ -26,7 +27,8 @@ class FontTextureAtlas
 public:
     ~FontTextureAtlas();
     
-    FontTextureAtlas(const boost::filesystem::path &cacheDir,
+    FontTextureAtlas(std::shared_ptr<spdlog::logger> log,
+                     const boost::filesystem::path &cacheDir,
                      const TextAttributes &attributes);
     
     // Get the glyph for the specified character code.
@@ -41,6 +43,7 @@ public:
 private:
     SDL_Surface *_atlasSurface;
     std::unordered_map<char, PackedGlyph> _glyphs;
+    std::shared_ptr<spdlog::logger> _log;
 };
 
 #endif /* FontTextureAtlas_hpp */

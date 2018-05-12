@@ -7,12 +7,13 @@
 //
 
 #include "BlockDataStore/BlockDataStore.hpp"
-#include "SDL.h" // for SDL_Log
 
-BlockDataStore::BlockDataStore(const boost::filesystem::path &regionFileName,
+BlockDataStore::BlockDataStore(std::shared_ptr<spdlog::logger> log,
+                               const boost::filesystem::path &regionFileName,
                                uint32_t magic,
                                uint32_t version)
- : _zone(regionFileName,
+ : _zone(log,
+         regionFileName,
          InitialBackingBufferSize,
          magic,
          version)

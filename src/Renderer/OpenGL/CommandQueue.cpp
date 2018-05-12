@@ -9,11 +9,11 @@
 #include "Renderer/OpenGL/CommandQueue.hpp"
 #include "Renderer/OpenGL/glUtilities.hpp"
 #include "Exception.hpp"
-#include "SDL.h"
 #include <algorithm> // for remove_if
 
-CommandQueue::CommandQueue()
- : _mainThreadId(std::this_thread::get_id())
+CommandQueue::CommandQueue(std::shared_ptr<spdlog::logger> log)
+ : _mainThreadId(std::this_thread::get_id()),
+   _log(log)
 {}
 
 void CommandQueue::execute()
@@ -35,7 +35,7 @@ void CommandQueue::execute()
     }
     
     for (Task &task : queue) {
-        //SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "Executing command \"%s\" with id=%u.", task.label.c_str(), task.id);
+        _log->trace("Executing command \"{}\" with id={}.", task.label, task.id);
         task.fn();
     }
 }
@@ -46,7 +46,7 @@ void CommandQueue::cancel(unsigned id)
         return task.id == id;
     };
     std::lock_guard<std::mutex> lock(_queueLock);
-    //SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "Cancelling command with id=%u.", id);
+    _log->trace("Cancelling command with id={}.", id);
     _queue.erase(std::remove_if(_queue.begin(), _queue.end(), pred), _queue.end());
 }
 
@@ -54,7 +54,7 @@ void CommandQueue::enqueue(unsigned id, const std::string &label, std::function<
 {
     std::lock_guard<std::mutex> lock(_queueLock);
     Task task = { id, label, std::move(fn) };
-    //SDL_LogInfo(SDL_LOG_CATEGORY_RENDER, "Enqueueing command \"%s\" with id=%u.", task.label.c_str(), task.id);
+    _log->trace("Enqueueing command \"{}\" with id={}.", task.label, task.id);
     _queue.emplace_back(std::move(task));
 }
 

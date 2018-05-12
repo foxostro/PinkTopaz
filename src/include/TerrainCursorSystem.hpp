@@ -20,6 +20,7 @@
 #include <entityx/entityx.h>
 #include <glm/mat4x4.hpp>
 #include <queue>
+#include <spdlog/spdlog.h>
 
 // System for updating terrain cursors.
 // Entities which have a TerrainCursor component are terrain cursors. These
@@ -29,7 +30,8 @@
 class TerrainCursorSystem : public entityx::System<TerrainCursorSystem>, public entityx::Receiver<TerrainCursorSystem>
 {
 public:
-    TerrainCursorSystem(const std::shared_ptr<TaskDispatcher> &dispatcher,
+    TerrainCursorSystem(std::shared_ptr<spdlog::logger> log,
+                        const std::shared_ptr<TaskDispatcher> &dispatcher,
                         const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher);
     void configure(entityx::EventManager &em) override;
     void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
@@ -60,6 +62,7 @@ private:
     bool _needsUpdate;
     int _mouseDownCounter;
     std::queue<MouseButtonEvent> _pendingEvents;
+    std::shared_ptr<spdlog::logger> _log;
 };
 
 #endif /* TerrainCursorSystem_hpp */

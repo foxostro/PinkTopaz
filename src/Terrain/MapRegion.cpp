@@ -7,10 +7,11 @@
 //
 
 #include "Terrain/MapRegion.hpp"
-#include "SDL.h" // for SDL_Log
 
-MapRegion::MapRegion(const boost::filesystem::path &regionFileName)
- : _dataStore(regionFileName, 'rpam', 0)
+MapRegion::MapRegion(std::shared_ptr<spdlog::logger> log,
+                     const boost::filesystem::path &regionFileName)
+ : _dataStore(log, regionFileName, 'rpam', 0),
+   _log(log)
 {}
 
 boost::optional<Array3D<Voxel>> MapRegion::load(const AABB &bbox, Morton3 key)
@@ -23,9 +24,8 @@ boost::optional<Array3D<Voxel>> MapRegion::load(const AABB &bbox, Morton3 key)
             const auto chunk = _serializer.load(bbox, bytes);
             return boost::make_optional(chunk);
         } catch(const VoxelDataException &exception) {
-            SDL_LogError(SDL_LOG_CATEGORY_ERROR,
-                         "MapRegion failed to deserialize voxels."\
-                         "Treating as-if it is not cached.");
+            _log->error("MapRegion failed to deserialize voxels."\
+                        "Treating as-if it is not cached.");
         }
     }
     

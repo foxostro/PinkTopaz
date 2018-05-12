@@ -12,11 +12,13 @@
 
 #include <glm/gtc/matrix_transform.hpp> // for glm::ortho
 
-TextRenderer::TextRenderer(const std::shared_ptr<GraphicsDevice> &dev,
+TextRenderer::TextRenderer(std::shared_ptr<spdlog::logger> log,
+                           const std::shared_ptr<GraphicsDevice> &dev,
                            const TextAttributes &attributes)
  : _graphicsDevice(dev),
    _windowScaleFactor(1),
-   _attributes(attributes)
+   _attributes(attributes),
+   _log(log)
 {
     _renderPassDescriptor.clear = false;
     
@@ -197,7 +199,7 @@ void TextRenderer::regenerateFontTextureAtlas()
 {
     TextAttributes attributes = _attributes;
     attributes.fontSize = _attributes.fontSize * _windowScaleFactor;
-    _fontTextureAtlas = std::make_unique<FontTextureAtlas>(getPrefPath(), attributes);
+    _fontTextureAtlas = std::make_unique<FontTextureAtlas>(_log, getPrefPath(), attributes);
     
     SDL_Surface *surface = _fontTextureAtlas->getSurface();
     

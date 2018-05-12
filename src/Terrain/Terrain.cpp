@@ -28,7 +28,8 @@ Terrain::~Terrain()
     _dispatcher->shutdown();
 }
 
-Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
+                 const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                  const std::shared_ptr<TaskDispatcher> &dispatcher,
                  const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
                  const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher,
@@ -37,7 +38,8 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
  : _graphicsDevice(graphicsDevice),
    _dispatcher(dispatcher),
    _mesher(std::make_shared<MesherNaiveSurfaceNets>()),
-   _cameraPosition(initialCameraPosition)
+   _cameraPosition(initialCameraPosition),
+   _log(log)
 {
     // Load terrain texture array from a single image.
     TextureArrayLoader textureArrayLoader(graphicsDevice);
@@ -79,7 +81,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     // If the journal already exists then use the seed that it provides.
     // Else, set an initial seed value ourselves.
     bool mustSetSeed = !boost::filesystem::exists(journalFileName);
-    _journal = std::make_unique<TerrainJournal>(journalFileName);
+    _journal = std::make_unique<TerrainJournal>(_log, journalFileName);
     if (mustSetSeed) {
         _journal->setVoxelDataSeed(InitialVoxelDataSeed);
     }
@@ -98,7 +100,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
     const auto mapRegionBox = _voxelDataGenerator->boundingBox();
     const auto mapRegionRes = _voxelDataGenerator->countCellsInRegion(mapRegionBox) / (int)MAP_REGION_SIZE;
-    auto mapRegionStore = std::make_unique<MapRegionStore>(mapDirectory, mapRegionBox, mapRegionRes);
+    auto mapRegionStore = std::make_unique<MapRegionStore>(_log, mapDirectory, mapRegionBox, mapRegionRes);
     auto voxelData = std::make_unique<VoxelData>(_voxelDataGenerator,
                                                  TERRAIN_CHUNK_SIZE,
                                                  std::move(mapRegionStore),
@@ -118,7 +120,8 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
     // Setup an actor to rebuild chunks.
     const unsigned numMeshRebuildThreads = 2*std::max(1u, std::thread::hardware_concurrency());
-    _meshRebuildActor = std::make_unique<TerrainRebuildActor>(numMeshRebuildThreads,
+    _meshRebuildActor = std::make_unique<TerrainRebuildActor>(_log,
+                                                              numMeshRebuildThreads,
                                                               _cameraPosition,
                                                               mainThreadDispatcher,
                                                               events,
@@ -135,7 +138,7 @@ Terrain::Terrain(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
     // Build the map from the journal, if necessary.
     if (mustRegenerateMap) {
-        SDL_Log("Rebuilding the map from the terrain journal.");
+        _log->info("Rebuilding the map from the terrain journal.");
         _journal->replay([&](std::shared_ptr<TerrainOperation> operation){
             _voxels->writerTransaction(operation);
         });
@@ -212,12 +215,11 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     if (0 == missingMeshes.size()) {
         auto [distance, didChange] = _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
         if (didChange) {
-            SDL_Log("Increasing horizon distance to %.2f", distance);
+            _log->info("Increasing horizon distance to {}", distance);
         }
     } else {
-//        std::string activeRegionStr = activeRegion.to_string();
-//        SDL_Log("There are %zu missing meshes in active region %s.",
-//                missingMeshes.size(), activeRegionStr.c_str());
+        _log->trace("There are {} missing meshes in active region {}.",
+                    missingMeshes.size(), activeRegion.to_string());
         _meshRebuildActor->push(missingMeshes);
     }
 }

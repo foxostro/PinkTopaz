@@ -27,7 +27,9 @@ FontTextureAtlasBuilder::~FontTextureAtlasBuilder()
     SDL_FreeSurface(_atlasSurface);
 }
 
-FontTextureAtlasBuilder::FontTextureAtlasBuilder(const TextAttributes &attr)
+FontTextureAtlasBuilder::FontTextureAtlasBuilder(std::shared_ptr<spdlog::logger> log,
+                                                 const TextAttributes &attr)
+: _log(log)
 {
     auto maybeFontPath = getFontPath(attr);
     if (!maybeFontPath) {
@@ -101,7 +103,7 @@ FontTextureAtlasBuilder::atlasSearch(GlyphRenderer &glyphRenderer)
         !atlasSurface && atlasSize < maxAtlasSize;
         atlasSize += 4) {
         
-        SDL_Log("Trying to create texture atlas of size %d", (int)atlasSize);
+        _log->info("Trying to create texture atlas of size {}.", atlasSize);
         
         auto maybePackedGlyphs = packer.packGlyphs(glyphs, atlasSize);
         if (maybePackedGlyphs) {

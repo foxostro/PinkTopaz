@@ -9,7 +9,7 @@
 #include "Terrain/TerrainRebuildActor.hpp"
 #include "ThreadName.hpp"
 #include "AutoreleasePool.hpp"
-#include "SDL.h" // for SDL_Log()
+#include <glm/gtx/string_cast.hpp>
 
 // The threshold below which changes in the search point are ignored.
 // This prevents re-sorting uneccessarily as all cells fall on a regular grid,
@@ -25,7 +25,8 @@ TerrainRebuildActor::~TerrainRebuildActor()
     }
 }
 
-TerrainRebuildActor::TerrainRebuildActor(unsigned numThreads,
+TerrainRebuildActor::TerrainRebuildActor(std::shared_ptr<spdlog::logger> log,
+                                         unsigned numThreads,
                                          glm::vec3 initialSearchPoint,
                                          std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
                                          entityx::EventManager &events,
@@ -34,7 +35,8 @@ TerrainRebuildActor::TerrainRebuildActor(unsigned numThreads,
   _processCell(processCell),
   _searchPoint(initialSearchPoint),
   _mainThreadDispatcher(mainThreadDispatcher),
-  _events(events)
+  _events(events),
+  _log(log)
 {
     for (size_t i = 0; i < numThreads; ++i) {
         _threads.emplace_back([this]{
@@ -56,7 +58,8 @@ void TerrainRebuildActor::push(const std::vector<std::pair<Morton3, AABB>> &cell
         const auto insertResult = _set.insert(boundingBox);
         if (insertResult.second) {
             numberAdded++;
-            Cell cell(cellCoords,
+            Cell cell(_log,
+                      cellCoords,
                       boundingBox,
                       insertResult.first,
                       _mainThreadDispatcher,
@@ -69,7 +72,7 @@ void TerrainRebuildActor::push(const std::vector<std::pair<Morton3, AABB>> &cell
         }
     }
     
-//    SDL_Log("Added %d chunks in push()", numberAdded);
+    _log->trace("Added {} chunks in push()", numberAdded);
     if (numberAdded > 0) {
         sort();
         if (numberAdded == 1) {
@@ -84,9 +87,8 @@ void TerrainRebuildActor::setSearchPoint(glm::vec3 searchPoint)
 {
     std::lock_guard<std::mutex> lock(_lock);
     if (glm::distance(_searchPoint, searchPoint) > searchPointThreshold) {
-//        SDL_Log("Updating search point from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f)",
-//                _searchPoint.x, _searchPoint.y, _searchPoint.z,
-//                searchPoint.x, searchPoint.y, searchPoint.z);
+        _log->trace("Updating search point from {} to {}",
+                    glm::to_string(_searchPoint), glm::to_string(searchPoint));
         _searchPoint = searchPoint;
         sort();
     }
@@ -119,7 +121,7 @@ void TerrainRebuildActor::worker()
             {
                 std::unique_lock<std::mutex> lock(_lock);
                 cell.progress.setState(TerrainProgressEvent::Complete);
-//                cell.progress.dump();
+                cell.progress.dump();
                 _set.erase(cell.setIterator);
             }
         }

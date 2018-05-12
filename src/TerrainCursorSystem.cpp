@@ -15,17 +15,18 @@
 #include "WireframeCube.hpp"
 #include "Terrain/TerrainOperationEditPoint.hpp"
 
-#include "SDL.h"
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp> // for glm::translate()
 #include <mutex>
 
-TerrainCursorSystem::TerrainCursorSystem(const std::shared_ptr<TaskDispatcher> &dispatcher,
+TerrainCursorSystem::TerrainCursorSystem(std::shared_ptr<spdlog::logger> log,
+                                         const std::shared_ptr<TaskDispatcher> &dispatcher,
                                          const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
  : _dispatcher(dispatcher),
    _mainThreadDispatcher(mainThreadDispatcher),
    _needsUpdate(false),
-   _mouseDownCounter(0)
+   _mouseDownCounter(0),
+   _log(log)
 {}
 
 void TerrainCursorSystem::configure(entityx::EventManager &em)
@@ -177,7 +178,8 @@ void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTran
         // of the computation.
         return std::make_tuple(active, cursorPos, placePos, startTime);
 
-    }).then(_mainThreadDispatcher, [cancellationToken=cursor.cancellationToken,
+    }).then(_mainThreadDispatcher, [log=_log,
+                                    cancellationToken=cursor.cancellationToken,
                                     cursorEntity=std::move(cursorEntity)](auto tuple) mutable{
 
         // This task executes on the main thread because we'll be using it to
@@ -213,11 +215,13 @@ void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTran
             }
         }
 
-//        const auto currentTime = std::chrono::steady_clock::now();
-//        const auto duration = currentTime - startTime;
-//        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-//        const std::string msStr = std::to_string(ms.count());
-//        SDL_Log("Got new cursor value in %s milliseconds", msStr.c_str());
+#ifdef SPDLOG_TRACE_ON
+        const auto currentTime = std::chrono::steady_clock::now();
+        const auto duration = currentTime - startTime;
+        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+        const std::string msStr = std::to_string(ms.count());
+        log->trace("Got new cursor value in {} ms.", msStr);
+#endif
     });
 }
 

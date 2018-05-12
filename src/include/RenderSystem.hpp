@@ -12,6 +12,7 @@
 #include <glm/mat4x4.hpp>
 #include <entityx/entityx.h>
 #include <boost/filesystem.hpp>
+#include <spdlog/spdlog.h>
 
 #include "ActiveCamera.hpp"
 #include "TerrainComponent.hpp"
@@ -25,7 +26,8 @@
 class RenderSystem : public entityx::System<RenderSystem>, public entityx::Receiver<RenderSystem>
 {
 public:
-    RenderSystem(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+    RenderSystem(std::shared_ptr<spdlog::logger> log,
+                 const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                  const std::shared_ptr<WireframeCube> &wireframeCube);
     void configure(entityx::EventManager &em) override;
     void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;

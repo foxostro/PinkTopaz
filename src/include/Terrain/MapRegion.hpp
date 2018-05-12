@@ -13,12 +13,14 @@
 #include "Terrain/VoxelDataSerializer.hpp"
 #include "Grid/Array3D.hpp"
 #include "BlockDataStore/BlockDataStore.hpp"
+#include <spdlog/spdlog.h>
 
 // Stores/Loads voxel chunks on the file system.
 class MapRegion
 {
 public:
-    MapRegion(const boost::filesystem::path &regionFileName);
+    MapRegion(std::shared_ptr<spdlog::logger> log,
+              const boost::filesystem::path &regionFileName);
     
     // Loads a voxel chunk from file, if available.
     // The key uniquely identifies the chunk in the voxel chunk in space.
@@ -31,6 +33,7 @@ public:
 private:
     VoxelDataSerializer _serializer;
     BlockDataStore _dataStore;
+    std::shared_ptr<spdlog::logger> _log;
 };
 
 #endif /* MapRegion_hpp */

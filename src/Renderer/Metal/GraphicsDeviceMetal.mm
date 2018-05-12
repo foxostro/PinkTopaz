@@ -16,7 +16,8 @@
 
 #import "SDL_syswm.h"
 
-GraphicsDeviceMetal::GraphicsDeviceMetal(SDL_Window &window)
+GraphicsDeviceMetal::GraphicsDeviceMetal(std::shared_ptr<spdlog::logger> log,
+                                         SDL_Window &window)
 {
     id <MTLDevice> device = MTLCreateSystemDefaultDevice();
     

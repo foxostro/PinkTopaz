@@ -11,8 +11,10 @@
 
 #include "Terrain/TerrainOperation.hpp"
 #include "Exception.hpp"
+
 #include <boost/filesystem.hpp>
 #include <mutex>
+#include <spdlog/spdlog.h>
 
 // Exception thrown when trying to load an incompatible journal version.
 class TerrainJournalVersionException : public Exception
@@ -50,8 +52,10 @@ public:
     TerrainJournal() = delete;
     
     // Constructor.
+    // log -- Which log are we logging to?
     // fileName -- The path to the journal file.
-    TerrainJournal(boost::filesystem::path fileName);
+    TerrainJournal(std::shared_ptr<spdlog::logger> log,
+                   boost::filesystem::path fileName);
     
     // Add an edit to the journal.
     void add(Change change);

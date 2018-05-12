@@ -35,11 +35,13 @@ static GLenum getOpenGLPrimitiveType(PrimitiveType type)
     return mode;
 }
 
-CommandEncoderOpenGL::CommandEncoderOpenGL(unsigned id,
+CommandEncoderOpenGL::CommandEncoderOpenGL(std::shared_ptr<spdlog::logger> log,
+                                           unsigned id,
                                            const std::shared_ptr<CommandQueue> &commandQueue,
                                            const RenderPassDescriptor &desc)
  : _id(id),
-   _mainCommandQueue(commandQueue)
+   _mainCommandQueue(commandQueue),
+   _encoderCommandQueue(log)
 {
     _encoderCommandQueue.enqueue(_id, __FUNCTION__, [=]{
         if (desc.clear) {

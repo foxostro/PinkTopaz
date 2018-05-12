@@ -24,6 +24,7 @@ struct SDL_Surface;
 
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
+#include <spdlog/spdlog.h>
 
 // Creates a texture atlas which contains packed font glyphs for string drawing.
 // Besides generating the image itself, this class also records metadata on how
@@ -35,7 +36,8 @@ public:
     ~FontTextureAtlasBuilder();
     
     // Build a texture atlas to accomodate text with the specified attributes.
-    FontTextureAtlasBuilder(const TextAttributes &attributes);
+    FontTextureAtlasBuilder(std::shared_ptr<spdlog::logger> log,
+                            const TextAttributes &attributes);
     
     // Copy the texture atlas to a new SDL surface.
     SDL_Surface* copySurface();
@@ -69,6 +71,7 @@ private:
     
     SDL_Surface *_atlasSurface;
     std::unordered_map<char, PackedGlyph> _glyphs;
+    std::shared_ptr<spdlog::logger> _log;
 };
 
 #endif /* FontTextureAtlasBuilder_hpp */

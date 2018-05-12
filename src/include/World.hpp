@@ -10,6 +10,7 @@
 #define World_hpp
 
 #include <entityx/entityx.h>
+#include <spdlog/spdlog.h>
 #include "Renderer/GraphicsDevice.hpp"
 #include "TaskDispatcher.hpp"
 
@@ -22,12 +23,16 @@ class World : public entityx::EntityX
 public:
     World() = delete;
     
-    World(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+    World(std::shared_ptr<spdlog::logger> log,
+          const std::shared_ptr<GraphicsDevice> &graphicsDevice,
           const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
           const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
           const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher);
         
     void update(entityx::TimeDelta dt);
+    
+private:
+    std::shared_ptr<spdlog::logger> _log;
 };
 
 #endif /* World_hpp */

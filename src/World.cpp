@@ -20,18 +20,21 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-World::World(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+World::World(std::shared_ptr<spdlog::logger> log,
+             const std::shared_ptr<GraphicsDevice> &graphicsDevice,
              const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
              const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
              const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
+ : _log(log)
 {
     PROFILER(InitWorld);
     
     auto wireframeCube = std::make_shared<WireframeCube>(graphicsDevice);
     
-    systems.add<RenderSystem>(graphicsDevice, wireframeCube);
+    systems.add<RenderSystem>(_log, graphicsDevice, wireframeCube);
     systems.add<CameraMovementSystem>();
-    systems.add<TerrainCursorSystem>(dispatcherHighPriority,
+    systems.add<TerrainCursorSystem>(_log,
+                                     dispatcherHighPriority,
                                      mainThreadDispatcher);
     systems.add<TerrainProgressSystem>(wireframeCube);
     systems.configure();
@@ -52,7 +55,8 @@ World::World(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
     
     // Create an entity to represent the terrain.
     TerrainComponent terrainComponent;
-    terrainComponent.terrain = std::make_shared<Terrain>(graphicsDevice,
+    terrainComponent.terrain = std::make_shared<Terrain>(_log,
+                                                         graphicsDevice,
                                                          dispatcherHighPriority,
                                                          dispatcherVoxelData,
                                                          mainThreadDispatcher,

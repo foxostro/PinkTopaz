@@ -9,11 +9,13 @@
 #ifndef TerrainProgressTracker_hpp
 #define TerrainProgressTracker_hpp
 
-#include <entityx/entityx.h>
 #include "TaskDispatcher.hpp"
 #include "TerrainProgressEvent.hpp"
 #include "AABB.hpp"
 #include "Morton.hpp"
+
+#include <entityx/entityx.h>
+#include <spdlog/spdlog.h>
 #include <chrono>
 #include <mutex>
 #include <unordered_map>
@@ -25,7 +27,8 @@ public:
     TerrainProgressTracker() = delete;
     
     // Immediately starts in the Queued state.
-    TerrainProgressTracker(Morton3 cellCoords,
+    TerrainProgressTracker(std::shared_ptr<spdlog::logger> log,
+                           Morton3 cellCoords,
                            AABB boundingBox,
                            std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
                            entityx::EventManager &events);
@@ -50,6 +53,7 @@ private:
     entityx::EventManager *_events;
     std::shared_ptr<TaskDispatcher> _mainThreadDispatcher;
     std::unordered_map<TerrainProgressEvent::State, std::chrono::steady_clock::time_point> _timeEnteringEachState;
+    std::shared_ptr<spdlog::logger> _log;
 };
 
 #endif /* TerrainProgressTracker_hpp */
