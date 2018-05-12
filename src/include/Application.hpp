@@ -15,6 +15,8 @@
 
 #include "Renderer/GraphicsDevice.hpp"
 #include "TaskDispatcher.hpp"
+#include "Preferences.hpp"
+
 
 // The central game loop, basically.
 class Application
@@ -27,13 +29,14 @@ public:
     void run();
         
 private:
-    void inner(std::shared_ptr<spdlog::logger> log,
-               const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+    void inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
                const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
                const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher);
     
     SDL_Window *_window;
+    std::shared_ptr<spdlog::logger> _log;
+    Preferences _preferences;
 };
 
 #endif /* Application_hpp */

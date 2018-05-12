@@ -47,8 +47,7 @@ public:
     {}
 };
 
-void Application::inner(std::shared_ptr<spdlog::logger> log,
-                        const std::shared_ptr<GraphicsDevice> &graphicsDevice,
+void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                         const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
                         const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
                         const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
@@ -57,7 +56,8 @@ void Application::inner(std::shared_ptr<spdlog::logger> log,
     const double refreshRate = getVideoRefreshRate().value_or(60.0);
 	const auto videoRefreshPeriod = std::chrono::duration<double>(1 / refreshRate);
     
-    World gameWorld(log,
+    World gameWorld(_log,
+                    _preferences,
                     graphicsDevice,
                     dispatcherHighPriority,
                     dispatcherVoxelData,
@@ -89,7 +89,7 @@ void Application::inner(std::shared_ptr<spdlog::logger> log,
             {
                 case SDL_QUIT:
                     PROFILER_SIGNPOST(Quit);
-                    log->info("Received SDL_QUIT.");
+                    _log->info("Received SDL_QUIT.");
                     return;
                     
                 case SDL_WINDOWEVENT:
@@ -152,7 +152,7 @@ void Application::inner(std::shared_ptr<spdlog::logger> log,
         // For example, a background task needs to update an entity component.
         mainThreadDispatcher->flush();
         
-		std::this_thread::sleep_until(nextTime);
+        std::this_thread::sleep_until(nextTime);
     }
     
     // Some futures may be waiting on tasks in main thread dispatch queue.
@@ -164,7 +164,30 @@ void Application::run()
 {
     AutoreleasePool pool;
     
-    auto log = spdlog::stdout_color_mt("console");
+    _log = spdlog::stdout_color_mt("console");
+    
+    // Load user preferences from file.
+    {
+        boost::filesystem::path prefsFileName = getPrefPath()/"preferences.xml";
+        if (boost::filesystem::exists(prefsFileName)) {
+            std::ifstream inputStream(prefsFileName.c_str());
+            cereal::XMLInputArchive archive(inputStream);
+            archive(cereal::make_nvp("preferences", _preferences));
+            _log->info("Loaded user preferences from file \"{}\": {}",
+                      prefsFileName.string(),
+                      _preferences);
+        } else {
+            // Save the default preferences to file.
+            std::ofstream outputStream(prefsFileName.c_str());
+            cereal::XMLOutputArchive archive(outputStream);
+            archive(cereal::make_nvp("preferences", _preferences));
+            _log->info("Saved default user preferences to file \"{}\": {}",
+                      prefsFileName.string(),
+                      _preferences);
+        }
+    }
+    
+    _log->set_level(_preferences.logLevel);
     
     if (!SDL_HasAVX()) {
         throw AVXUnsupportedException();
@@ -198,8 +221,7 @@ void Application::run()
     
     const unsigned h = std::max(1u, std::thread::hardware_concurrency());
     
-    inner(log,
-          createDefaultGraphicsDevice(log, *_window),
+    inner(createDefaultGraphicsDevice(_log, *_window),
           std::make_shared<TaskDispatcher>("High Priority TaskDispatcher", 1),
           std::make_shared<TaskDispatcher>("Voxel Data TaskDispatcher", h),
           std::make_shared<TaskDispatcher>("Main Thread Dispatcher", 0));

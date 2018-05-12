@@ -21,11 +21,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 World::World(std::shared_ptr<spdlog::logger> log,
+             const Preferences &preferences,
              const std::shared_ptr<GraphicsDevice> &graphicsDevice,
              const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
              const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
              const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
- : _log(log)
+ : _log(log),
+   _preferences(preferences)
 {
     PROFILER(InitWorld);
     
@@ -36,7 +38,9 @@ World::World(std::shared_ptr<spdlog::logger> log,
     systems.add<TerrainCursorSystem>(_log,
                                      dispatcherHighPriority,
                                      mainThreadDispatcher);
-    systems.add<TerrainProgressSystem>(wireframeCube);
+    if (_preferences.showQueuedChunks) {
+        systems.add<TerrainProgressSystem>(wireframeCube);
+    }
     systems.configure();
     
     // Setup the position and orientation of the camera.
@@ -81,6 +85,8 @@ void World::update(entityx::TimeDelta dt)
 {
     systems.update<CameraMovementSystem>(dt);
     systems.update<TerrainCursorSystem>(dt);
-    systems.update<TerrainProgressSystem>(dt);
+    if (_preferences.showQueuedChunks) {
+        systems.update<TerrainProgressSystem>(dt);
+    }
     systems.update<RenderSystem>(dt);
 }

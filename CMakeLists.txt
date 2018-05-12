@@ -179,6 +179,7 @@ set(SOURCE_FILES_MISC
     "src/include/FrameTimer.hpp" "src/FrameTimer.cpp"
     "src/include/TaskDispatcher.hpp" "src/TaskDispatcher.cpp"
     "src/include/MemoryMappedFile.hpp" "src/MemoryMappedFile.cpp"
+    "src/include/Preferences.hpp"
     )
 
 set(SOURCE_FILES_NOISE

@@ -13,6 +13,7 @@
 #include <spdlog/spdlog.h>
 #include "Renderer/GraphicsDevice.hpp"
 #include "TaskDispatcher.hpp"
+#include "Preferences.hpp"
 
 // A World is the same thing as a game zone or level.
 // This is a collection of interacting entities and associated systems.
@@ -24,6 +25,7 @@ public:
     World() = delete;
     
     World(std::shared_ptr<spdlog::logger> log,
+          const Preferences &preferences,
           const std::shared_ptr<GraphicsDevice> &graphicsDevice,
           const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
           const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
@@ -33,6 +35,7 @@ public:
     
 private:
     std::shared_ptr<spdlog::logger> _log;
+    Preferences _preferences;
 };
 
 #endif /* World_hpp */
