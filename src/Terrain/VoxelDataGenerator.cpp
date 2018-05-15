@@ -92,13 +92,13 @@ static void generateTerrainVoxel(const Noise &noiseSource0,
 }
 
 VoxelDataGenerator::VoxelDataGenerator(unsigned seed)
- : GridIndexer(AABB{glm::vec3(0.f, 0.f, 0.f), glm::vec3((float)extent, (float)extent, (float)extent)},
-               glm::ivec3(res, res, res)),
-               _noiseSource0(std::make_unique<SimplexNoise>(seed)),
-               _noiseSource1(std::make_unique<SimplexNoise>(seed + 1))
+ : VoxelDataSource(AABB{glm::vec3(0.f, 0.f, 0.f), glm::vec3((float)extent, (float)extent, (float)extent)},
+                   glm::ivec3(res, res, res)),
+   _noiseSource0(std::make_unique<SimplexNoise>(seed)),
+   _noiseSource1(std::make_unique<SimplexNoise>(seed + 1))
 {}
 
-Array3D<Voxel> VoxelDataGenerator::copy(const AABB &region) const
+Array3D<Voxel> VoxelDataGenerator::load(const AABB &region)
 {
     static constexpr float terrainHeight = 20.f;
     

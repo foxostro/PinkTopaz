@@ -9,13 +9,10 @@
 #ifndef VoxelDataGenerator_hpp
 #define VoxelDataGenerator_hpp
 
-#include "Grid/GridIndexer.hpp"
-#include "Grid/Array3D.hpp"
-#include "Voxel.hpp"
+#include "VoxelDataSource.hpp"
 #include "Noise/Noise.hpp"
-#include <memory>
 
-class VoxelDataGenerator : public GridIndexer
+class VoxelDataGenerator : public VoxelDataSource
 {
 public:
     VoxelDataGenerator(unsigned seed);
@@ -23,7 +20,7 @@ public:
     ~VoxelDataGenerator() = default;
     
     // Returns an array which holds a copy of the contents of the subregion.
-    Array3D<Voxel> copy(const AABB &region) const;
+    Array3D<Voxel> load(const AABB &region) override;
     
 private:
     std::unique_ptr<Noise> _noiseSource0;

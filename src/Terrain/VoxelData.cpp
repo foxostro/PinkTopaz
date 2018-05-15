@@ -9,13 +9,13 @@
 #include "Terrain/VoxelData.hpp"
 #include "Grid/GridIndexerRange.hpp"
 
-VoxelData::VoxelData(const GeneratorPtr &gen,
+VoxelData::VoxelData(const std::shared_ptr<VoxelDataSource> &source,
                      unsigned chunkSize,
                      std::unique_ptr<MapRegionStore> &&mapRegionStore,
                      const std::shared_ptr<TaskDispatcher> &dispatcher)
- : GridIndexer(gen->boundingBox(), gen->gridResolution()),
-   _generator(gen),
-   _chunks(gen->boundingBox(), gen->gridResolution() / (int)chunkSize),
+ : VoxelDataSource(source->boundingBox(), source->gridResolution()),
+   _source(source),
+   _chunks(source->boundingBox(), source->gridResolution() / (int)chunkSize),
    _mapRegionStore(std::move(mapRegionStore)),
    _dispatcher(dispatcher)
 {}
@@ -31,15 +31,15 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
     // fall within it. For example, the region may only pass through a portion
     // of some voxels on the edge, but the adjusted region should include all
     // of those voxels.
-    const glm::vec3 cellEx = _generator->cellDimensions() * 0.5f;
-    const glm::vec3 mins = _generator->cellCenterAtPoint(region.mins()) - cellEx;
-    const glm::vec3 maxs = _generator->cellCenterAtPoint(region.maxs()) + cellEx;
+    const glm::vec3 cellEx = _source->cellDimensions() * 0.5f;
+    const glm::vec3 mins = _source->cellCenterAtPoint(region.mins()) - cellEx;
+    const glm::vec3 maxs = _source->cellCenterAtPoint(region.maxs()) + cellEx;
     const glm::vec3 center = (maxs + mins) * 0.5f;
     const glm::vec3 extent = (maxs - mins) * 0.5f;
     const AABB adjustedRegion = {center, extent};
     
     // Construct the destination array.
-    const glm::ivec3 res = _generator->countCellsInRegion(adjustedRegion);
+    const glm::ivec3 res = _source->countCellsInRegion(adjustedRegion);
     Array3D<Voxel> dst(adjustedRegion, res);
     
     // Asynchronously fetch all the chunks in the region.
@@ -97,7 +97,7 @@ VoxelData::ChunkPtr VoxelData::get(const AABB &cell, Morton3 index)
         if (maybeVoxels) {
             return std::make_shared<Chunk>(*maybeVoxels);
         } else {
-            auto voxels = _generator->copy(cell);
+            auto voxels = _source->load(cell);
             _mapRegionStore->store(cell, index, voxels); // save to disk
             return std::make_shared<Chunk>(std::move(voxels));
         }

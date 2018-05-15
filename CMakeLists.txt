@@ -67,6 +67,7 @@ set(SOURCE_FILES_TERRAIN
     "src/include/Terrain/TerrainHorizonDistance.hpp"
     "src/Terrain/MesherMarchingCubes.cpp" "src/include/Terrain/MesherMarchingCubes.hpp"
     "src/Terrain/MesherNaiveSurfaceNets.cpp" "src/include/Terrain/MesherNaiveSurfaceNets.hpp"
+    "src/include/Terrain/VoxelDataSource.hpp"
     "src/Terrain/VoxelData.cpp" "src/include/Terrain/VoxelData.hpp"
     "src/Terrain/TransactedVoxelData.cpp" "src/include/Terrain/TransactedVoxelData.hpp"
     "src/Terrain/VoxelDataGenerator.cpp" "src/include/Terrain/VoxelDataGenerator.hpp"

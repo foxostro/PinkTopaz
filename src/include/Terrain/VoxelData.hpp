@@ -10,18 +10,14 @@
 #define VoxelData_hpp
 
 #include "Grid/SparseGrid.hpp"
-#include "Terrain/Voxel.hpp"
-#include "Terrain/VoxelDataGenerator.hpp"
+#include "Terrain/VoxelDataSource.hpp"
 #include "Terrain/MapRegionStore.hpp"
 #include "TaskDispatcher.hpp"
-#include <memory>
 
 // A block of voxels in space.
-class VoxelData : public GridIndexer
+class VoxelData : public VoxelDataSource
 {
 public:
-    using GeneratorPtr = std::shared_ptr<VoxelDataGenerator>;
-    
     // Default Destructor.
     ~VoxelData() = default;
     
@@ -29,10 +25,10 @@ public:
     VoxelData() = delete;
     
     // Constructor.
-    // generator -- The generator provides initial voxel data.
+    // source -- The source provides initial voxel data.
     // chunkSize -- The size of chunk VoxelData should use internally.
     // dispatcher -- Thread pool to use for asynchronous tasks within VoxelData.
-    VoxelData(const GeneratorPtr &generator,
+    VoxelData(const std::shared_ptr<VoxelDataSource> &source,
               unsigned chunkSize,
               std::unique_ptr<MapRegionStore> &&mapRegionStore,
               const std::shared_ptr<TaskDispatcher> &dispatcher);
@@ -44,16 +40,16 @@ public:
     // Loads a copy of the contents of the specified sub-region of the grid to
     // an Array3D and returns that. May fault in missing voxels to satisfy the
     // request.
-    Array3D<Voxel> load(const AABB &region);
+    Array3D<Voxel> load(const AABB &region) override;
     
     // Stores the contents of the specified array of voxels to the grid.
-    void store(const Array3D<Voxel> &voxels);
+    virtual void store(const Array3D<Voxel> &voxels);
     
 private:
     using Chunk = Array3D<Voxel>;
     using ChunkPtr = std::shared_ptr<Chunk>;
     
-    const GeneratorPtr &_generator;
+    std::shared_ptr<VoxelDataSource> _source;
     SparseGrid<ChunkPtr> _chunks;
     std::unique_ptr<MapRegionStore> _mapRegionStore;
     std::shared_ptr<TaskDispatcher> _dispatcher;

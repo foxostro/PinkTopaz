@@ -77,6 +77,7 @@ Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
     const boost::filesystem::path prefPath = getPrefPath();
     const boost::filesystem::path journalFileName = prefPath / "journal.xml";
     const boost::filesystem::path mapDirectory = prefPath / "Map";
+    const boost::filesystem::path voxelsDirectory = mapDirectory / "Voxels";
     
     // If the journal already exists then use the seed that it provides.
     // Else, set an initial seed value ourselves.
@@ -94,13 +95,16 @@ Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
     // with the game. We can ship only the journal instead.
     bool mustRegenerateMap = false;
     if (!boost::filesystem::exists(mapDirectory)) {
-        mustRegenerateMap = true;
         boost::filesystem::create_directory(mapDirectory);
+    }
+    if (!boost::filesystem::exists(voxelsDirectory)) {
+        mustRegenerateMap = true;
+        boost::filesystem::create_directory(voxelsDirectory);
     }
     
     const auto mapRegionBox = _voxelDataGenerator->boundingBox();
     const auto mapRegionRes = _voxelDataGenerator->countCellsInRegion(mapRegionBox) / (int)MAP_REGION_SIZE;
-    auto mapRegionStore = std::make_unique<MapRegionStore>(_log, mapDirectory, mapRegionBox, mapRegionRes);
+    auto mapRegionStore = std::make_unique<MapRegionStore>(_log, voxelsDirectory, mapRegionBox, mapRegionRes);
     auto voxelData = std::make_unique<VoxelData>(_voxelDataGenerator,
                                                  TERRAIN_CHUNK_SIZE,
                                                  std::move(mapRegionStore),
