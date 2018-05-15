@@ -28,7 +28,7 @@ public:
     // source -- The source provides initial voxel data.
     // chunkSize -- The size of chunk VoxelData should use internally.
     // dispatcher -- Thread pool to use for asynchronous tasks within VoxelData.
-    VoxelData(const std::shared_ptr<VoxelDataSource> &source,
+    VoxelData(std::unique_ptr<VoxelDataSource> &&source,
               unsigned chunkSize,
               std::unique_ptr<MapRegionStore> &&mapRegionStore,
               const std::shared_ptr<TaskDispatcher> &dispatcher);
@@ -49,7 +49,7 @@ private:
     using Chunk = Array3D<Voxel>;
     using ChunkPtr = std::shared_ptr<Chunk>;
     
-    std::shared_ptr<VoxelDataSource> _source;
+    std::unique_ptr<VoxelDataSource> _source;
     SparseGrid<ChunkPtr> _chunks;
     std::unique_ptr<MapRegionStore> _mapRegionStore;
     std::shared_ptr<TaskDispatcher> _dispatcher;

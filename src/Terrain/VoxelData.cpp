@@ -9,13 +9,13 @@
 #include "Terrain/VoxelData.hpp"
 #include "Grid/GridIndexerRange.hpp"
 
-VoxelData::VoxelData(const std::shared_ptr<VoxelDataSource> &source,
+VoxelData::VoxelData(std::unique_ptr<VoxelDataSource> &&source,
                      unsigned chunkSize,
                      std::unique_ptr<MapRegionStore> &&mapRegionStore,
                      const std::shared_ptr<TaskDispatcher> &dispatcher)
  : VoxelDataSource(source->boundingBox(), source->gridResolution()),
-   _source(source),
-   _chunks(source->boundingBox(), source->gridResolution() / (int)chunkSize),
+   _source(std::move(source)),
+   _chunks(_source->boundingBox(), _source->gridResolution() / (int)chunkSize),
    _mapRegionStore(std::move(mapRegionStore)),
    _dispatcher(dispatcher)
 {}

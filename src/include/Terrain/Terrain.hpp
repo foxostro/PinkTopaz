@@ -68,7 +68,6 @@ private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<TaskDispatcher> _dispatcher;
     std::shared_ptr<Mesher> _mesher;
-    std::shared_ptr<VoxelDataGenerator> _voxelDataGenerator;
     std::shared_ptr<TransactedVoxelData> _voxels;
     std::unique_ptr<TerrainMeshGrid> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
@@ -101,6 +100,11 @@ private:
     
     // Rebuilds the next pending mesh in the queue.
     void rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress);
+    
+    std::unique_ptr<VoxelData>
+    createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+                    unsigned voxelDataSeed,
+                    const boost::filesystem::path &voxelsDirectory);
 };
 
 #endif /* Terrain_hpp */

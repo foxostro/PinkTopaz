@@ -87,33 +87,18 @@ Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
         _journal->setVoxelDataSeed(InitialVoxelDataSeed);
     }
     
-    const unsigned voxelDataSeed = _journal->getVoxelDataSeed();
-    _voxelDataGenerator = std::make_shared<VoxelDataGenerator>(voxelDataSeed);
-    
     // Create the map directory. If it does not exist then build the map from
     // the journal. This will allow us to avoid shipping large map region files
     // with the game. We can ship only the journal instead.
-    bool mustRegenerateMap = false;
-    if (!boost::filesystem::exists(mapDirectory)) {
-        boost::filesystem::create_directory(mapDirectory);
-    }
-    if (!boost::filesystem::exists(voxelsDirectory)) {
-        mustRegenerateMap = true;
-        boost::filesystem::create_directory(voxelsDirectory);
-    }
+    bool mustRegenerateMap = boost::filesystem::create_directories(voxelsDirectory);
     
-    const auto mapRegionBox = _voxelDataGenerator->boundingBox();
-    const auto mapRegionRes = _voxelDataGenerator->countCellsInRegion(mapRegionBox) / (int)MAP_REGION_SIZE;
-    auto mapRegionStore = std::make_unique<MapRegionStore>(_log, voxelsDirectory, mapRegionBox, mapRegionRes);
-    auto voxelData = std::make_unique<VoxelData>(_voxelDataGenerator,
-                                                 TERRAIN_CHUNK_SIZE,
-                                                 std::move(mapRegionStore),
-                                                 dispatcherVoxelData);
-    _voxels = std::make_unique<TransactedVoxelData>(std::move(voxelData));
+    _voxels = std::make_unique<TransactedVoxelData>(createVoxelData(dispatcherVoxelData,
+                                                                    _journal->getVoxelDataSeed(),
+                                                                    voxelsDirectory));
     
-    const AABB box = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
-    const glm::ivec3 res = _voxelDataGenerator->countCellsInRegion(box) / (int)TERRAIN_CHUNK_SIZE;
-    _meshes = std::make_unique<TerrainMeshGrid>(box, res);
+    const AABB meshGridBoundingBox = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
+    const glm::ivec3 meshGridResolution = _voxels->countCellsInRegion(meshGridBoundingBox) / (int)TERRAIN_CHUNK_SIZE;
+    _meshes = std::make_unique<TerrainMeshGrid>(meshGridBoundingBox, meshGridResolution);
 
     // Limit the sparse grids to the number of chunks in the active region.
     // Now, the active region can change size over time but it will never be
@@ -272,4 +257,20 @@ void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress
     auto terrainMesh = std::make_shared<TerrainMesh>(cell, _defaultMesh, _graphicsDevice, _mesher, _voxels);
     terrainMesh->rebuild(progress);
     _meshes->set(cell.center, terrainMesh);
+}
+
+std::unique_ptr<VoxelData>
+Terrain::createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+                         unsigned voxelDataSeed,
+                         const boost::filesystem::path &voxelsDirectory)
+{
+    auto generator = std::make_unique<VoxelDataGenerator>(voxelDataSeed);
+    const auto mapRegionBox = generator->boundingBox();
+    const auto mapRegionRes = generator->countCellsInRegion(mapRegionBox) / (int)MAP_REGION_SIZE;
+    auto mapRegionStore = std::make_unique<MapRegionStore>(_log, voxelsDirectory, mapRegionBox, mapRegionRes);
+    auto voxelData = std::make_unique<VoxelData>(std::move(generator),
+                                                 TERRAIN_CHUNK_SIZE,
+                                                 std::move(mapRegionStore),
+                                                 dispatcherVoxelData);
+    return voxelData;
 }
