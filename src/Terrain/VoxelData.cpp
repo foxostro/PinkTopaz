@@ -50,7 +50,7 @@ void VoxelData::setWorkingSet(const AABB &workingSet)
     _chunks.setCountLimit(chunkCountLimit);
 }
 
-Array3D<Voxel> VoxelData::load(const AABB &region)
+VoxelData::Chunk VoxelData::load(const AABB &region)
 {
     // Adjust the region so that it includes the full extent of all voxels that
     // fall within it. For example, the region may only pass through a portion
@@ -88,7 +88,7 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
     return dst;
 }
 
-void VoxelData::store(const Array3D<Voxel> &voxels)
+void VoxelData::store(const Chunk &voxels)
 {
     const AABB region = voxels.boundingBox();
     

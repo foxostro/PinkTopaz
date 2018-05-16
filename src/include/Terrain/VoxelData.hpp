@@ -50,10 +50,30 @@ public:
     // specified in `workingSet'.
     void setWorkingSet(const AABB &workingSet);
     
-private:
+protected:
     using Chunk = Array3D<Voxel>;
     using ChunkPtr = std::shared_ptr<Chunk>;
     
+    // Returns the voxel data source, used to populate new chunks.
+    inline VoxelDataSource& getSource()
+    {
+        return *_source;
+    }
+    
+    // Returns a new chunk for the corresponding region of space.
+    // The chunk is populated using data gathered from the underlying source.
+    // boundingBox -- The bounding box of the chunk.
+    // index -- A unique index to identify the chunk in the sparse grid.
+    virtual ChunkPtr createNewChunk(const AABB &boundingBox, Morton3 index);
+    
+    // Return the region of voxels affected by a a given operation.
+    // The region of voxels invalidated by a change made by some operation may
+    // be larger than the region directly modified by that operation.
+    // For example, an edit a single block may affect light values for blocks
+    // some distance away.
+    virtual AABB getAffectedRegionForOperation(const std::shared_ptr<TerrainOperation> &operation);
+    
+private:
     mutable RegionMutualExclusionArbitrator _lockArbitrator;
     std::unique_ptr<VoxelDataSource> _source;
     SparseGrid<ChunkPtr> _chunks;
@@ -64,30 +84,17 @@ private:
     // an Array3D and returns that. May fault in missing voxels to satisfy the
     // request.
     // Appropriate locks must be held while calling this method.
-    Array3D<Voxel> load(const AABB &region);
+    Chunk load(const AABB &region);
     
     // Stores the contents of the specified array of voxels to the grid.
     // Appropriate locks must be held while calling this method.
-    void store(const Array3D<Voxel> &voxels);
+    void store(const Chunk &voxels);
     
     // Returns the chunk, creating it if necessary, but prefering to fetch it
     // from the map region file.
     // boundingBox -- The bounding box of the chunk.
     // index -- A unique index to identify the chunk in the sparse grid.
     ChunkPtr get(const AABB &boundingBox, Morton3 index);
-    
-    // Returns a new chunk for the corresponding region of space.
-    // The chunk is populated using data gathered from the underlying source.
-    // boundingBox -- The bounding box of the chunk.
-    // index -- A unique index to identify the chunk in the sparse grid.
-    ChunkPtr createNewChunk(const AABB &boundingBox, Morton3 index);
-    
-    // Return the region of voxels affected by a a given operation.
-    // The region of voxels invalidated by a change made by some operation may
-    // be larger than the region directly modified by that operation.
-    // For example, an edit a single block may affect light values for blocks
-    // some distance away.
-    AABB getAffectedRegionForOperation(const std::shared_ptr<TerrainOperation> &operation);
 };
 
 #endif /* VoxelData_hpp */
