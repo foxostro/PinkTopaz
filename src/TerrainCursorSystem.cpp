@@ -87,13 +87,13 @@ void TerrainCursorSystem::update(entityx::EntityManager &es,
         
         if (event.button == SDL_BUTTON_LEFT && !event.down) {
             es.each<TerrainCursor>([&](entityx::Entity cursorEntity, TerrainCursor &cursor) {
-                setBlockUnderCursor(cursor, events, /* value = */ 1.f, /* usePlacePos = */ true);
+                setBlockUnderCursor(cursor, events, /* value = */ true, /* usePlacePos = */ true);
             });
         }
         
         if (event.button == SDL_BUTTON_RIGHT && !event.down) {
             es.each<TerrainCursor>([&](entityx::Entity cursorEntity, TerrainCursor &cursor) {
-                setBlockUnderCursor(cursor, events, /* value = */ 0.f, /* usePlacePos = */ false);
+                setBlockUnderCursor(cursor, events, /* value = */ false, /* usePlacePos = */ false);
             });
         }
     } // while there are pending events
@@ -226,7 +226,7 @@ void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTran
 
 void TerrainCursorSystem::setBlockUnderCursor(TerrainCursor &cursor,
                                               entityx::EventManager &events,
-                                              float value,
+                                              bool value,
                                               bool usePlacePos)
 {
     if (!cursor.active) {

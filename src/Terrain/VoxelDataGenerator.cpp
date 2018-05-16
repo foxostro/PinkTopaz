@@ -88,7 +88,7 @@ static void generateTerrainVoxel(const Noise &noiseSource0,
         }
     }
     
-    outVoxel.value = (groundLayer || floatingMountain) ? 1.0f : 0.0f;
+    outVoxel.value = (groundLayer || floatingMountain) ? true : false;
 }
 
 VoxelDataGenerator::VoxelDataGenerator(unsigned seed)

@@ -53,7 +53,7 @@ private:
     
     void setBlockUnderCursor(TerrainCursor &cursor,
                              entityx::EventManager &events,
-                             float value,
+                             bool value,
                              bool usePlacePos);
     
     std::shared_ptr<TaskDispatcher> _dispatcher;
