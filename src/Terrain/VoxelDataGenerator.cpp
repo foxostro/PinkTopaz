@@ -98,6 +98,11 @@ VoxelDataGenerator::VoxelDataGenerator(unsigned seed)
    _noiseSource1(std::make_unique<SimplexNoise>(seed + 1))
 {}
 
+void VoxelDataGenerator::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
+{
+    fn(load(region));
+}
+
 Array3D<Voxel> VoxelDataGenerator::load(const AABB &region)
 {
     static constexpr float terrainHeight = 20.f;

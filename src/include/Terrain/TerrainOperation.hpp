@@ -9,7 +9,8 @@
 #ifndef TerrainOperation_hpp
 #define TerrainOperation_hpp
 
-#include "VoxelData.hpp"
+#include "Voxel.hpp"
+#include "Grid/Array3D.hpp"
 #include <cereal/types/polymorphic.hpp>
 #include <cereal/archives/binary.hpp>
 

@@ -92,9 +92,9 @@ Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
     // with the game. We can ship only the journal instead.
     bool mustRegenerateMap = boost::filesystem::create_directories(voxelsDirectory);
     
-    _voxels = std::make_unique<TransactedVoxelData>(createVoxelData(dispatcherVoxelData,
-                                                                    _journal->getVoxelDataSeed(),
-                                                                    voxelsDirectory));
+    _voxels = createVoxelData(dispatcherVoxelData,
+                              _journal->getVoxelDataSeed(),
+                              voxelsDirectory);
     
     const AABB meshGridBoundingBox = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
     const glm::ivec3 meshGridResolution = _voxels->countCellsInRegion(meshGridBoundingBox) / (int)TERRAIN_CHUNK_SIZE;
@@ -103,8 +103,9 @@ Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
     // Limit the sparse grids to the number of chunks in the active region.
     // Now, the active region can change size over time but it will never be
     // larger than this size.
+    _voxels->setWorkingSet({glm::vec3(0.f), glm::vec3((float)ACTIVE_REGION_SIZE + TERRAIN_CHUNK_SIZE)});
+    
     const unsigned workingSetCount = std::pow(1 + 2*ACTIVE_REGION_SIZE / TERRAIN_CHUNK_SIZE, 3);
-    _voxels->setChunkCountLimit(2*workingSetCount);
     _meshes->setCountLimit(2*workingSetCount);
     
     // Setup an actor to rebuild chunks.
@@ -128,7 +129,7 @@ Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
     // Build the map from the journal, if necessary.
     if (mustRegenerateMap) {
         _log->info("Rebuilding the map from the terrain journal.");
-        _journal->replay([&](std::shared_ptr<TerrainOperation> operation){
+        _journal->replay([&](const std::shared_ptr<TerrainOperation> &operation){
             _voxels->writerTransaction(operation);
         });
     }
@@ -228,7 +229,12 @@ float Terrain::getFogDensity() const
     return fogDensity;
 }
 
-void Terrain::writerTransaction(std::shared_ptr<TerrainOperation> operation)
+void Terrain::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
+{
+    _voxels->readerTransaction(region, fn);
+}
+
+void Terrain::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
 {
     assert(operation);
     _journal->add(operation);
@@ -259,7 +265,7 @@ void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress
     _meshes->set(cell.center, terrainMesh);
 }
 
-std::unique_ptr<VoxelData>
+std::shared_ptr<VoxelData>
 Terrain::createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
                          unsigned voxelDataSeed,
                          const boost::filesystem::path &voxelsDirectory)
@@ -268,7 +274,7 @@ Terrain::createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcherVoxelD
     const auto mapRegionBox = generator->boundingBox();
     const auto mapRegionRes = generator->countCellsInRegion(mapRegionBox) / (int)MAP_REGION_SIZE;
     auto mapRegionStore = std::make_unique<MapRegionStore>(_log, voxelsDirectory, mapRegionBox, mapRegionRes);
-    auto voxelData = std::make_unique<VoxelData>(std::move(generator),
+    auto voxelData = std::make_shared<VoxelData>(std::move(generator),
                                                  TERRAIN_CHUNK_SIZE,
                                                  std::move(mapRegionStore),
                                                  dispatcherVoxelData);

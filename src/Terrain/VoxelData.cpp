@@ -20,8 +20,33 @@ VoxelData::VoxelData(std::unique_ptr<VoxelDataSource> &&source,
    _dispatcher(dispatcher)
 {}
 
-void VoxelData::setChunkCountLimit(unsigned chunkCountLimit)
+void VoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
 {
+    auto mutex = _lockArbitrator.readerMutex(region);
+    std::lock_guard<decltype(mutex)> lock(mutex);
+    const Array3D<Voxel> data = load(region);
+    fn(data);
+}
+
+void VoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
+{
+    const AABB region = operation->getVoxelWriteRegion();
+    
+    {
+        auto mutex = _lockArbitrator.writerMutex(region);
+        std::lock_guard<decltype(mutex)> lock(mutex);
+        Array3D<Voxel> data = load(region);
+        operation->perform(data);
+        store(data);
+    }
+    
+    onWriterTransaction(operation->getMeshEffectRegion());
+}
+
+void VoxelData::setWorkingSet(const AABB &workingSet)
+{
+    glm::ivec3 count = _chunks.countCellsInRegion(workingSet);
+    size_t chunkCountLimit = count.x * count.y * count.z;
     _chunks.setCountLimit(chunkCountLimit);
 }
 
@@ -97,9 +122,12 @@ VoxelData::ChunkPtr VoxelData::get(const AABB &cell, Morton3 index)
         if (maybeVoxels) {
             return std::make_shared<Chunk>(*maybeVoxels);
         } else {
-            auto voxels = _source->load(cell);
-            _mapRegionStore->store(cell, index, voxels); // save to disk
-            return std::make_shared<Chunk>(std::move(voxels));
+            ChunkPtr chunk;
+            _source->readerTransaction(cell, [&](const Array3D<Voxel> &voxels) {
+                _mapRegionStore->store(cell, index, voxels); // save to disk
+                chunk = std::make_shared<Chunk>(voxels);
+            });
+            return chunk;
         }
     });
 }

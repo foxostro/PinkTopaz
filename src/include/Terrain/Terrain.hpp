@@ -14,7 +14,7 @@
 #include "TaskDispatcher.hpp"
 #include "Terrain/Mesher.hpp"
 #include "Terrain/VoxelDataGenerator.hpp"
-#include "Terrain/TransactedVoxelData.hpp"
+#include "Terrain/VoxelData.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include "Terrain/TerrainRebuildActor.hpp"
 #include "Terrain/TerrainMeshGrid.hpp"
@@ -54,21 +54,22 @@ public:
     // terrain chunks.
     float getFogDensity() const;
     
-    const TransactedVoxelData& getVoxels() const
-    {
-        return *_voxels;
-    }
+    // Perform an atomic transaction as a "reader" with read-only access to the
+    // underlying data in the specified region.
+    // region -- The region we will be reading from.
+    // fn -- Closure which will be doing the reading.
+    void readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn);
     
     // Perform an atomic transaction as a "writer" with read-write access to
     // the underlying voxel data in the specified region.
     // operation -- Describes the edits to be made.
-    void writerTransaction(std::shared_ptr<TerrainOperation> operation);
+    void writerTransaction(const std::shared_ptr<TerrainOperation> &operation);
     
 private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<TaskDispatcher> _dispatcher;
     std::shared_ptr<Mesher> _mesher;
-    std::shared_ptr<TransactedVoxelData> _voxels;
+    std::shared_ptr<VoxelData> _voxels;
     std::unique_ptr<TerrainMeshGrid> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     std::unique_ptr<TerrainRebuildActor> _meshRebuildActor;
@@ -101,7 +102,7 @@ private:
     // Rebuilds the next pending mesh in the queue.
     void rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress);
     
-    std::unique_ptr<VoxelData>
+    std::shared_ptr<VoxelData>
     createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
                     unsigned voxelDataSeed,
                     const boost::filesystem::path &voxelsDirectory);

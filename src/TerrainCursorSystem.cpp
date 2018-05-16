@@ -155,12 +155,11 @@ void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTran
         const vec3 rayDir = cameraOrientation * vec3(0, 0, -1);
         const Ray ray(cameraEye, rayDir);
         const AABB voxelBox{cameraEye, vec3(maxPlaceDistance+1)};
-        const auto &voxels = terrain->getVoxels();
         
         bool active = false;
         glm::vec3 cursorPos, placePos;
         
-        voxels.readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
+        terrain->readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
             for (const auto &pos : slice(voxels, ray, maxPlaceDistance)) {
                 const Voxel &voxel = voxels.reference(pos);
                 
