@@ -20,7 +20,7 @@ class VoxelData : public VoxelDataSource
 {
 public:
     // Default Destructor.
-    ~VoxelData() = default;
+    virtual ~VoxelData() = default;
     
     // No default constructor.
     VoxelData() = delete;
@@ -48,7 +48,7 @@ public:
     // VoxelData may evict chunks to keep the total chunk count under a limit.
     // Set the limit to the number of chunks needed to represent the region
     // specified in `workingSet'.
-    void setWorkingSet(const AABB &workingSet);
+    void setWorkingSet(const AABB &workingSet) override;
     
 protected:
     using Chunk = Array3D<Voxel>;

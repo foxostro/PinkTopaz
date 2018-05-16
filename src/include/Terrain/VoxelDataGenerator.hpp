@@ -28,6 +28,8 @@ public:
         throw VoxelDataReadOnlyException();
     }
     
+    void setWorkingSet(const AABB &workingSet) override {}
+    
 private:
     std::unique_ptr<Noise> _noiseSource0;
     std::unique_ptr<Noise> _noiseSource1;

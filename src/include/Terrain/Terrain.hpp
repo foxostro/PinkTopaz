@@ -14,7 +14,7 @@
 #include "TaskDispatcher.hpp"
 #include "Terrain/Mesher.hpp"
 #include "Terrain/VoxelDataGenerator.hpp"
-#include "Terrain/VoxelData.hpp"
+#include "Terrain/SunlightData.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include "Terrain/TerrainRebuildActor.hpp"
 #include "Terrain/TerrainMeshGrid.hpp"
@@ -34,6 +34,7 @@ public:
             const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             const std::shared_ptr<TaskDispatcher> &dispatcher,
             const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+            const std::shared_ptr<TaskDispatcher> &dispatcherSunlightData,
             const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher,
             entityx::EventManager &events,
             glm::vec3 initialCameraPosition);
@@ -69,7 +70,7 @@ private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<TaskDispatcher> _dispatcher;
     std::shared_ptr<Mesher> _mesher;
-    std::shared_ptr<VoxelData> _voxels;
+    std::shared_ptr<VoxelDataSource> _voxels;
     std::unique_ptr<TerrainMeshGrid> _meshes;
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     std::unique_ptr<TerrainRebuildActor> _meshRebuildActor;
@@ -102,10 +103,12 @@ private:
     // Rebuilds the next pending mesh in the queue.
     void rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress);
     
-    std::shared_ptr<VoxelData>
+    std::shared_ptr<VoxelDataSource>
     createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+                    const std::shared_ptr<TaskDispatcher> &dispatcherSunlightData,
                     unsigned voxelDataSeed,
-                    const boost::filesystem::path &voxelsDirectory);
+                    const boost::filesystem::path &voxelsDirectory,
+                    const boost::filesystem::path &sunlightDirectory);
 };
 
 #endif /* Terrain_hpp */

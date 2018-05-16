@@ -45,6 +45,8 @@ void VoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &opera
 
 void VoxelData::setWorkingSet(const AABB &workingSet)
 {
+    _source->setWorkingSet(workingSet);
+    
     glm::ivec3 count = _chunks.countCellsInRegion(workingSet);
     size_t chunkCountLimit = count.x * count.y * count.z;
     _chunks.setCountLimit(chunkCountLimit);

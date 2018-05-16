@@ -63,6 +63,11 @@ public:
     // opportunity to respond to changes to data. For example, by rebuilding
     // meshes associated with underlying voxel data.
     boost::signals2::signal<void (const AABB &affectedRegion)> onWriterTransaction;
+    
+    // VoxelData may evict chunks to keep the total chunk count under a limit.
+    // Set the limit to the number of chunks needed to represent the region
+    // specified in `workingSet'.
+    virtual void setWorkingSet(const AABB &workingSet) = 0;
 };
 
 #endif /* VoxelDataSource_hpp */

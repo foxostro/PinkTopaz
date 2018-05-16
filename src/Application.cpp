@@ -50,6 +50,7 @@ public:
 void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                         const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
                         const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+                        const std::shared_ptr<TaskDispatcher> &dispatcherSunlightData,
                         const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
 {
     // Get the display refresh rate. This is usually 60 Hz.
@@ -61,6 +62,7 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                     graphicsDevice,
                     dispatcherHighPriority,
                     dispatcherVoxelData,
+                    dispatcherSunlightData,
                     mainThreadDispatcher);
     
     // Send an event containing the initial window size and scale factor.
@@ -224,6 +226,7 @@ void Application::run()
     inner(createDefaultGraphicsDevice(_log, *_window),
           std::make_shared<TaskDispatcher>("High Priority TaskDispatcher", 1),
           std::make_shared<TaskDispatcher>("Voxel Data TaskDispatcher", h),
+          std::make_shared<TaskDispatcher>("Sunlight Data TaskDispatcher", h),
           std::make_shared<TaskDispatcher>("Main Thread Dispatcher", 0));
 
     SDL_DestroyWindow(_window);

@@ -29,6 +29,7 @@ public:
           const std::shared_ptr<GraphicsDevice> &graphicsDevice,
           const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
           const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+          const std::shared_ptr<TaskDispatcher> &dispatcherSunlightData,
           const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher);
         
     void update(entityx::TimeDelta dt);

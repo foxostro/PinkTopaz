@@ -32,6 +32,7 @@ Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
                  const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                  const std::shared_ptr<TaskDispatcher> &dispatcher,
                  const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+                 const std::shared_ptr<TaskDispatcher> &dispatcherSunlightData,
                  const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher,
                  entityx::EventManager &events,
                  glm::vec3 initialCameraPosition)
@@ -78,6 +79,7 @@ Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
     const boost::filesystem::path journalFileName = prefPath / "journal.xml";
     const boost::filesystem::path mapDirectory = prefPath / "Map";
     const boost::filesystem::path voxelsDirectory = mapDirectory / "Voxels";
+    const boost::filesystem::path sunlightDirectory = mapDirectory / "Sunlight";
     
     // If the journal already exists then use the seed that it provides.
     // Else, set an initial seed value ourselves.
@@ -90,11 +92,19 @@ Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
     // Create the map directory. If it does not exist then build the map from
     // the journal. This will allow us to avoid shipping large map region files
     // with the game. We can ship only the journal instead.
-    bool mustRegenerateMap = boost::filesystem::create_directories(voxelsDirectory);
+    bool mustRegenerateMap = false;
+    if (boost::filesystem::create_directories(voxelsDirectory)) {
+        mustRegenerateMap = true;
+    }
+    if (boost::filesystem::create_directories(sunlightDirectory)) {
+        mustRegenerateMap = true;
+    }
     
     _voxels = createVoxelData(dispatcherVoxelData,
+                              dispatcherSunlightData,
                               _journal->getVoxelDataSeed(),
-                              voxelsDirectory);
+                              voxelsDirectory,
+                              sunlightDirectory);
     
     const AABB meshGridBoundingBox = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
     const glm::ivec3 meshGridResolution = _voxels->countCellsInRegion(meshGridBoundingBox) / (int)TERRAIN_CHUNK_SIZE;
@@ -270,18 +280,36 @@ void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress
     _meshes->set(cell.center, terrainMesh);
 }
 
-std::shared_ptr<VoxelData>
+std::shared_ptr<VoxelDataSource>
 Terrain::createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
+                         const std::shared_ptr<TaskDispatcher> &dispatcherSunlightData,
                          unsigned voxelDataSeed,
-                         const boost::filesystem::path &voxelsDirectory)
+                         const boost::filesystem::path &voxelsDirectory,
+                         const boost::filesystem::path &sunlightDirectory)
 {
+    // First, we need a voxel data generator to create terrain from noise.
     auto generator = std::make_unique<VoxelDataGenerator>(voxelDataSeed);
+    
+    // Next, setup a map file on disk to record the shape of the terrain.
     const auto mapRegionBox = generator->boundingBox();
     const auto mapRegionRes = generator->countCellsInRegion(mapRegionBox) / (int)MAP_REGION_SIZE;
     auto mapRegionStore = std::make_unique<MapRegionStore>(_log, voxelsDirectory, mapRegionBox, mapRegionRes);
-    auto voxelData = std::make_shared<VoxelData>(std::move(generator),
+    
+    // The voxel data object stores the shape of the terrain.
+    auto voxelData = std::make_unique<VoxelData>(std::move(generator),
                                                  TERRAIN_CHUNK_SIZE,
                                                  std::move(mapRegionStore),
                                                  dispatcherVoxelData);
-    return voxelData;
+    
+    // Setup a map file on disk to record lighting computations from sunlight.
+    auto sunlightRegionStore = std::make_unique<MapRegionStore>(_log, sunlightDirectory,
+                                                                mapRegionBox, mapRegionRes);
+    
+    // The sunlight data object stores the terrain shape plus sunlight.
+    auto sunlightData = std::make_shared<SunlightData>(std::move(voxelData),
+                                                       TERRAIN_CHUNK_SIZE,
+                                                       std::move(sunlightRegionStore),
+                                                       dispatcherSunlightData);
+    
+    return sunlightData;
 }

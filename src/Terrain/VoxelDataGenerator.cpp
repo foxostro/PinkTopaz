@@ -89,11 +89,6 @@ static void generateTerrainVoxel(const Noise &noiseSource0,
     }
     
     outVoxel.value = (groundLayer || floatingMountain) ? true : false;
-    
-    // Generate some smooth noise and stick it in the lighting channel.
-    // This is for testing and development and will be removed later.
-    int sunLight = (int)clamp(noiseSource0.noiseAtPoint(p * 0.1f) * 8.f + 4.f, 0.f, 15.f);
-    outVoxel.sunLight = sunLight;
 }
 
 VoxelDataGenerator::VoxelDataGenerator(unsigned seed)
