@@ -74,11 +74,7 @@ void TerrainMesh::rebuild(TerrainProgressTracker &progress)
     _voxels->readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
         progress.setState(TerrainProgressEvent::ExtractingSurface);
         
-        // The voxel file uses a binary SOLID/EMPTY flag for voxels.
-        // So, we get values that are either 0.0 or 1.0.
-        constexpr float isosurface = 0.5f;
-        
-        StaticMesh mesh = _mesher->extract(voxels, _meshBox, isosurface);
+        StaticMesh mesh = _mesher->extract(voxels, _meshBox);
         
         std::shared_ptr<Buffer> vertexBuffer = nullptr;
         

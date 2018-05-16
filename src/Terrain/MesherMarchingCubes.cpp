@@ -141,9 +141,9 @@ void MesherMarchingCubes::polygonizeGridCell(StaticMesh &geometry,
 }
 
 StaticMesh MesherMarchingCubes::extract(const Array3D<Voxel> &voxels,
-                                        const AABB &aabb,
-                                        float isosurface)
+                                        const AABB &aabb)
 {
+    constexpr float isosurface = 0.5f;
     StaticMesh geometry;
     
     // Offset to align with the grid cells used by marching cubes.

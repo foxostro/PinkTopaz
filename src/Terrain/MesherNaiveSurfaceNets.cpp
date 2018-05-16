@@ -16,7 +16,7 @@ using namespace glm;
 static constexpr float L = 0.5f;
 static const vec3 LLL(L, L, L);
 
-std::array<glm::vec3, 4>
+std::array<vec3, 4>
 MesherNaiveSurfaceNets::quadForFace(const AABB &cell, size_t i)
 {
     assert(i < NUM_FACES);
@@ -72,7 +72,7 @@ MesherNaiveSurfaceNets::quadForFace(const AABB &cell, size_t i)
         }}
     }};
     
-    const std::array<glm::vec3, 4> transformedQuad = {{
+    const std::array<vec3, 4> transformedQuad = {{
         cell.center + cell.extent * quad[i][0],
         cell.center + cell.extent * quad[i][1],
         cell.center + cell.extent * quad[i][2],
@@ -82,7 +82,7 @@ MesherNaiveSurfaceNets::quadForFace(const AABB &cell, size_t i)
     return transformedQuad;
 }
 
-std::array<glm::vec2, 4>
+std::array<vec2, 4>
 MesherNaiveSurfaceNets::texCoordsForFace(const AABB &cell, size_t i)
 {
     assert(i < NUM_FACES);
@@ -141,10 +141,71 @@ MesherNaiveSurfaceNets::texCoordsForFace(const AABB &cell, size_t i)
     return texCoords[i];
 }
 
-glm::vec3
-MesherNaiveSurfaceNets::smoothVertex(const Array3D<Voxel> &voxels,
-                                     float isosurface,
-                                     const glm::vec3 &input)
+vec4 MesherNaiveSurfaceNets::vertexColor(vec3 vertexPosition,
+                                         size_t face,
+                                         const Voxel &thisVoxel,
+                                         const Array3D<Voxel> &voxels)
+{
+    assert(face < NUM_FACES);
+    
+    static const std::array<vec3, NUM_FACES> normals = {{
+        vec3( 0.f,  0.f,  1.f), // FRONT
+        vec3(-1.f,  0.f,  0.f), // LEFT
+        vec3( 0.f,  0.f, -1.f), // BACK
+        vec3( 1.f,  0.f,  0.f), // RIGHT
+        vec3( 0.f,  1.f,  0.f), // TOP
+        vec3( 0.f, -1.f,  0.f), // BOTTOM
+    }};
+    
+    vec3 normal = normals[face];
+    
+    float count = 0;
+    float escaped = 0;
+    
+    // Cast rays from the vertex to neighboring cells and count what proportion
+    // of the rays escape. Modify each neighbor's contribution to the occlusion
+    // factor by the angle between the ray and the face normal.
+    for(float dx = -1; dx <= 1; dx += 1.0f) {
+        for(float dy = -1; dy <= 1; dy += 1.0f) {
+            for(float dz = -1; dz <= 1; dz += 1.0f) {
+                vec3 lightDir = {dx, dy, dz};
+                
+                float contribution = dot(normal, lightDir) / length(lightDir);
+                
+                if (contribution > 0) {
+                    // Did this ray escape the cell?
+                    const vec3 aoSamplePoint = vertexPosition + lightDir;
+                    const bool escape = voxels.reference(aoSamplePoint).value == 0;
+                    
+                    escaped += escape ? contribution : 0;
+                    count += contribution;
+                }
+            }
+        }
+    }
+    
+    const float ambientOcclusion = (float)escaped / count;
+    const float lightValue = std::max(thisVoxel.sunLight, thisVoxel.torchLight) / (float)MAX_LIGHT;
+    const float luminance = clamp(0.8f * (lightValue * ambientOcclusion) + 0.2f, 0.0f, 1.f);
+    return vec4(luminance, luminance, luminance, 1.f);
+}
+
+std::array<vec4, 4>
+MesherNaiveSurfaceNets::colorsForFace(const std::array<vec3, 4> &quad,
+                                      size_t face,
+                                      const Voxel &thisVoxel,
+                                      const Array3D<Voxel> &voxels)
+{
+    return {{
+        vertexColor(quad[0], face, thisVoxel, voxels),
+        vertexColor(quad[1], face, thisVoxel, voxels),
+        vertexColor(quad[2], face, thisVoxel, voxels),
+        vertexColor(quad[3], face, thisVoxel, voxels)
+    }};
+}
+
+vec3 MesherNaiveSurfaceNets::smoothVertex(const Array3D<Voxel> &voxels,
+                                          const vec3 &input)
 {
     // AFOX_TODO: The cube sampling stuff in this method is similar to logic
     // found in the Marching Cubes implementation. The two can probably be
@@ -193,7 +254,7 @@ MesherNaiveSurfaceNets::smoothVertex(const Array3D<Voxel> &voxels,
     // on whether the neighboring voxel is empty or not-empty.
     unsigned index = 0;
     for (size_t i = 0; i < NUM_CUBE_VERTS; ++i) {
-        if (cube[i].voxel.value > isosurface) {
+        if (cube[i].voxel.value > 0) {
             index |= (1 << i);
         }
     }
@@ -220,7 +281,7 @@ MesherNaiveSurfaceNets::smoothVertex(const Array3D<Voxel> &voxels,
     }
     
     // Get the center of gravity of all edge crossings.
-    glm::vec3 centerOfGravity;
+    vec3 centerOfGravity;
     
     {
         float accumCount = 0.0f;
@@ -234,7 +295,7 @@ MesherNaiveSurfaceNets::smoothVertex(const Array3D<Voxel> &voxels,
                 // Interpolate vertex positions to get the edge crossing.
                 const CubeVertex &v1 = cube[pair.first];
                 const CubeVertex &v2 = cube[pair.second];
-                const vec3 worldPos = glm::mix(v1.worldPos, v2.worldPos, LLL);
+                const vec3 worldPos = mix(v1.worldPos, v2.worldPos, LLL);
                 
                 accum += worldPos;
                 accumCount++;
@@ -247,42 +308,44 @@ MesherNaiveSurfaceNets::smoothVertex(const Array3D<Voxel> &voxels,
     return centerOfGravity;
 }
 
-std::array<glm::vec3, 4>
+std::array<vec3, 4>
 MesherNaiveSurfaceNets::smoothQuad(const Array3D<Voxel> &voxels,
-                                   float isosurface,
-                                   const std::array<glm::vec3, 4> &input)
+                                   const std::array<vec3, 4> &input)
 {
-    std::array<glm::vec3, 4> output;
+    std::array<vec3, 4> output;
     
     for (size_t i = 0; i < 4; ++i) {
-        output[i] = smoothVertex(voxels, isosurface, input[i]);
+        output[i] = smoothVertex(voxels, input[i]);
     }
     
     return output;
 }
 
 std::array<TerrainVertex, 6>
-MesherNaiveSurfaceNets::verticesForFace(const Array3D<Voxel> &voxels,
-                                        float isosurface,
+MesherNaiveSurfaceNets::verticesForFace(const Voxel &thisVoxel,
+                                        const Array3D<Voxel> &voxels,
                                         const AABB &cell,
                                         size_t face)
 {
-    static const vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
+    // Get the vertices for the specified face of the cell.
+    const std::array<vec2, 4> quadTexCoords = texCoordsForFace(cell, face);
     
     // Get the vertices for the specified face of the cell.
-    const std::array<glm::vec2, 4> quadTexCoords = texCoordsForFace(cell, face);
+    const std::array<vec3, 4> transformedQuad = quadForFace(cell, face);
     
-    // Get the vertices for the specified face of the cell.
-    const std::array<glm::vec3, 4> transformedQuad = quadForFace(cell, face);
+    // Get the colors for each vertex in the cell's face.
+    const std::array<vec4, 4> quadColors = colorsForFace(transformedQuad,
+                                                         face,
+                                                         thisVoxel,
+                                                         voxels);
     
     // Push the vertices toward the isosurface to smooth the surface.
-    const std::array<glm::vec3, 4> smoothedQuad = smoothQuad(voxels, isosurface,
-                                                             transformedQuad);
+    const std::array<vec3,4> smoothedQuad = smoothQuad(voxels, transformedQuad);
     
     // Stitch vertices of the quad together into two triangles.
     constexpr size_t n = 6;
     constexpr size_t indices[n] = { 0, 1, 2, 0, 2, 3 };
-    const std::array<glm::vec3, n> vertexPositions = {{
+    const std::array<vec3, n> vertexPositions = {{
         smoothedQuad[indices[0]],
         smoothedQuad[indices[1]],
         smoothedQuad[indices[2]],
@@ -292,7 +355,7 @@ MesherNaiveSurfaceNets::verticesForFace(const Array3D<Voxel> &voxels,
     }};
     
     constexpr float grass = 75.f;
-    const std::array<glm::vec3, n> texCoords = {{
+    const std::array<vec3, n> texCoords = {{
         vec3(quadTexCoords[indices[0]], grass),
         vec3(quadTexCoords[indices[1]], grass),
         vec3(quadTexCoords[indices[2]], grass),
@@ -301,40 +364,40 @@ MesherNaiveSurfaceNets::verticesForFace(const Array3D<Voxel> &voxels,
         vec3(quadTexCoords[indices[5]], grass)
     }};
     
-    // Calculate normals for the two triangles.
-    const vec3 n1 = glm::triangleNormal(vertexPositions[0], vertexPositions[1], vertexPositions[2]);
-    const vec3 n2 = glm::triangleNormal(vertexPositions[3], vertexPositions[4], vertexPositions[5]);
-    
-    // Create some colors to represent those two normal vectors.
-    const vec4 c1 = vec4(n1 * 0.5f + vec3(0.5f), 1.0f);
-    const vec4 c2 = vec4(n2 * 0.5f + vec3(0.5f), 1.0f);
+    const std::array<vec4, n> vertexColors = {{
+        quadColors[indices[0]],
+        quadColors[indices[1]],
+        quadColors[indices[2]],
+        quadColors[indices[3]],
+        quadColors[indices[4]],
+        quadColors[indices[5]]
+    }};
     
     // Pack vertex positions, colors, and texcoords together.
     std::array<TerrainVertex, n> terrainVertices = {{
-        TerrainVertex(vec4(vertexPositions[0], 1.f), c1, texCoords[0]),
-        TerrainVertex(vec4(vertexPositions[1], 1.f), c1, texCoords[1]),
-        TerrainVertex(vec4(vertexPositions[2], 1.f), c1, texCoords[2]),
-        TerrainVertex(vec4(vertexPositions[3], 1.f), c2, texCoords[3]),
-        TerrainVertex(vec4(vertexPositions[4], 1.f), c2, texCoords[4]),
-        TerrainVertex(vec4(vertexPositions[5], 1.f), c2, texCoords[5])
+        TerrainVertex(vec4(vertexPositions[0], 1.f), vertexColors[0], texCoords[0]),
+        TerrainVertex(vec4(vertexPositions[1], 1.f), vertexColors[1], texCoords[1]),
+        TerrainVertex(vec4(vertexPositions[2], 1.f), vertexColors[2], texCoords[2]),
+        TerrainVertex(vec4(vertexPositions[3], 1.f), vertexColors[3], texCoords[3]),
+        TerrainVertex(vec4(vertexPositions[4], 1.f), vertexColors[4], texCoords[4]),
+        TerrainVertex(vec4(vertexPositions[5], 1.f), vertexColors[5], texCoords[5])
     }};
     
     return terrainVertices;
 }
 
 void MesherNaiveSurfaceNets::emitFace(StaticMesh &geometry,
+                                      const Voxel &thisVoxel,
                                       const Array3D<Voxel> &voxels,
-                                      float isosurface,
                                       const AABB &cell,
                                       size_t face)
 {
-    const auto vertices = verticesForFace(voxels, isosurface, cell, face);
+    const auto vertices = verticesForFace(thisVoxel, voxels, cell, face);
     geometry.addVertices(vertices);
 }
 
 StaticMesh MesherNaiveSurfaceNets::extract(const Array3D<Voxel> &voxels,
-                                           const AABB &aabb,
-                                           float level)
+                                           const AABB &aabb)
 {
     StaticMesh geometry;
     
@@ -343,7 +406,7 @@ StaticMesh MesherNaiveSurfaceNets::extract(const Array3D<Voxel> &voxels,
         const Morton3 thisIndex = voxels.indexAtCellCoords(cellCoords);
         const Voxel &thisVoxel = voxels.reference(thisIndex);
         
-        if (thisVoxel.value < level) {
+        if (thisVoxel.value == 0) {
             for (size_t i = 0; i < NUM_FACES; ++i) {
                 Morton3 thatIndex(thisIndex);
                 switch (i) {
@@ -356,8 +419,8 @@ StaticMesh MesherNaiveSurfaceNets::extract(const Array3D<Voxel> &voxels,
                 };
                 const Voxel &thatVoxel = voxels.reference(thatIndex);
                 
-                if (thatVoxel.value >= level) {
-                    emitFace(geometry, voxels, level, cell, i);
+                if (thatVoxel.value > 0) {
+                    emitFace(geometry, thisVoxel, voxels, cell, i);
                 }
             }
         }

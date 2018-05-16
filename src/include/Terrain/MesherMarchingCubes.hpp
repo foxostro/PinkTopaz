@@ -18,10 +18,9 @@ public:
     MesherMarchingCubes() = default;
     virtual ~MesherMarchingCubes() = default;
     
-    // Returns a triangle mesh for the specified isosurface.
+    // Returns a triangle mesh for the isosurface between value=0 and value=1.
     virtual StaticMesh extract(const Array3D<Voxel> &voxels,
-                               const AABB &region,
-                               float isosurface) override;
+                               const AABB &region) override;
     
 private:
     // For marching cubes, we sample a cube where each vertex is a voxel in the

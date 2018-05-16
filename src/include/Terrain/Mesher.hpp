@@ -18,11 +18,10 @@ class Mesher
 public:
     virtual ~Mesher() = default;
     
-    // Returns a triangle mesh for the specified isosurface.
+    // Returns a triangle mesh for the isosurface between value=0 and value=1.
     virtual StaticMesh
     extract(const Array3D<Voxel> &voxels,
-            const AABB &region,
-            float isosurface) = 0;
+            const AABB &region) = 0;
     
 protected:
     Mesher() = default;
