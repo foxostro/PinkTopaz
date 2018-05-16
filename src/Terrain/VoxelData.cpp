@@ -58,12 +58,7 @@ VoxelData::Chunk VoxelData::load(const AABB &region)
     // fall within it. For example, the region may only pass through a portion
     // of some voxels on the edge, but the adjusted region should include all
     // of those voxels.
-    const glm::vec3 cellEx = _source->cellDimensions() * 0.5f;
-    const glm::vec3 mins = _source->cellCenterAtPoint(region.mins()) - cellEx;
-    const glm::vec3 maxs = _source->cellCenterAtPoint(region.maxs()) + cellEx;
-    const glm::vec3 center = (maxs + mins) * 0.5f;
-    const glm::vec3 extent = (maxs - mins) * 0.5f;
-    const AABB adjustedRegion = {center, extent};
+    const AABB adjustedRegion = _source->snapRegionToCellBoundaries(region);
     
     // Construct the destination array.
     const glm::ivec3 res = _source->countCellsInRegion(adjustedRegion);
