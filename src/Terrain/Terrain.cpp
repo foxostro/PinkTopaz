@@ -241,14 +241,19 @@ void Terrain::writerTransaction(const std::shared_ptr<TerrainOperation> &operati
     _voxels->writerTransaction(operation);
 }
 
-void Terrain::rebuildMeshInResponseToChanges(const AABB &affectedRegion)
+void Terrain::rebuildMeshInResponseToChanges(const AABB &voxelAffectedRegion)
 {
     PROFILER(TerrainRebuildMeshInResponseToChanges);
+    
+    // We have the region of voxels affected by the change. From this, compute
+    // the associated region where the change may have invalidated meshes too..
+    const glm::vec3 meshChunkSize((float)TERRAIN_CHUNK_SIZE);
+    const AABB meshAffectedRegion = voxelAffectedRegion.inset(-meshChunkSize);
     
     // Kick off a task to rebuild each affected mesh. Insert at the front of
     // the queue so these changes appear quickly.
     std::vector<std::pair<Morton3, AABB>> meshCells;
-    for (const auto cellCoords : slice(*_meshes, affectedRegion)) {
+    for (const auto cellCoords : slice(*_meshes, meshAffectedRegion)) {
         const Morton3 index = _meshes->indexAtCellCoords(cellCoords);
         const AABB cell = _meshes->cellAtCellCoords(cellCoords);
         meshCells.push_back(std::make_pair(index, cell));

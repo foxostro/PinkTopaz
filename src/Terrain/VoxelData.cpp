@@ -30,7 +30,7 @@ void VoxelData::readerTransaction(const AABB &region, std::function<void(const A
 
 void VoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
 {
-    const AABB region = operation->getVoxelWriteRegion();
+    const AABB region = getAffectedRegionForOperation(operation);
     
     {
         auto mutex = _lockArbitrator.writerMutex(region);
@@ -40,7 +40,7 @@ void VoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &opera
         store(data);
     }
     
-    onWriterTransaction(operation->getMeshEffectRegion());
+    onWriterTransaction(region);
 }
 
 void VoxelData::setWorkingSet(const AABB &workingSet)
@@ -136,4 +136,9 @@ VoxelData::ChunkPtr VoxelData::createNewChunk(const AABB &cell, Morton3 index)
         chunk = std::make_shared<Chunk>(voxels);
     });
     return chunk;
+}
+
+AABB VoxelData::getAffectedRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
+{
+    return operation->getAffectedRegion();
 }

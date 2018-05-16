@@ -81,6 +81,13 @@ private:
     // boundingBox -- The bounding box of the chunk.
     // index -- A unique index to identify the chunk in the sparse grid.
     ChunkPtr createNewChunk(const AABB &boundingBox, Morton3 index);
+    
+    // Return the region of voxels affected by a a given operation.
+    // The region of voxels invalidated by a change made by some operation may
+    // be larger than the region directly modified by that operation.
+    // For example, an edit a single block may affect light values for blocks
+    // some distance away.
+    AABB getAffectedRegionForOperation(const std::shared_ptr<TerrainOperation> &operation);
 };
 
 #endif /* VoxelData_hpp */
