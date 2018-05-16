@@ -48,18 +48,7 @@ public:
     // VoxelData may evict chunks to keep the total chunk count under a limit.
     // Set the limit to the number of chunks needed to represent the region
     // specified in `workingSet'.
-    void setWorkingSet(const AABB &workingSet) override;
-    
-protected:
-    // Loads a copy of the contents of the specified sub-region of the grid to
-    // an Array3D and returns that. May fault in missing voxels to satisfy the
-    // request.
-    // Appropriate locks must be held while calling this method.
-    Array3D<Voxel> load(const AABB &region) override;
-    
-    // Stores the contents of the specified array of voxels to the grid.
-    // Appropriate locks must be held while calling this method.
-    void store(const Array3D<Voxel> &voxels) override;
+    void setWorkingSet(const AABB &workingSet);
     
 private:
     using Chunk = Array3D<Voxel>;
@@ -71,8 +60,27 @@ private:
     std::unique_ptr<MapRegionStore> _mapRegionStore;
     std::shared_ptr<TaskDispatcher> _dispatcher;
     
-    // Gets the chunk, creating it if necessary.
-    ChunkPtr get(const AABB &bbox, Morton3 index);
+    // Loads a copy of the contents of the specified sub-region of the grid to
+    // an Array3D and returns that. May fault in missing voxels to satisfy the
+    // request.
+    // Appropriate locks must be held while calling this method.
+    Array3D<Voxel> load(const AABB &region);
+    
+    // Stores the contents of the specified array of voxels to the grid.
+    // Appropriate locks must be held while calling this method.
+    void store(const Array3D<Voxel> &voxels);
+    
+    // Returns the chunk, creating it if necessary, but prefering to fetch it
+    // from the map region file.
+    // boundingBox -- The bounding box of the chunk.
+    // index -- A unique index to identify the chunk in the sparse grid.
+    ChunkPtr get(const AABB &boundingBox, Morton3 index);
+    
+    // Returns a new chunk for the corresponding region of space.
+    // The chunk is populated using data gathered from the underlying source.
+    // boundingBox -- The bounding box of the chunk.
+    // index -- A unique index to identify the chunk in the sparse grid.
+    ChunkPtr createNewChunk(const AABB &boundingBox, Morton3 index);
 };
 
 #endif /* VoxelData_hpp */

@@ -63,22 +63,6 @@ public:
     // opportunity to respond to changes to data. For example, by rebuilding
     // meshes associated with underlying voxel data.
     boost::signals2::signal<void (const AABB &affectedRegion)> onWriterTransaction;
-    
-    // VoxelDataSource may evict chunks to keep the total chunk count under a limit.
-    // Set the limit to the number of chunks needed to represent the region
-    // specified in `workingSet'.
-    virtual void setWorkingSet(const AABB &workingSet) = 0;
-    
-protected:
-    // Loads a copy of the contents of the specified sub-region of the grid to
-    // an Array3D and returns that. May fault in missing voxels to satisfy the
-    // request.
-    // Appropriate locks must be held while calling this method.
-    virtual Array3D<Voxel> load(const AABB &region) = 0;
-    
-    // Stores the contents of the specified array of voxels to the grid.
-    // Appropriate locks must be held while calling this method.
-    virtual void store(const Array3D<Voxel> &voxels) = 0;
 };
 
 #endif /* VoxelDataSource_hpp */

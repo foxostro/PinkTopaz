@@ -122,12 +122,18 @@ VoxelData::ChunkPtr VoxelData::get(const AABB &cell, Morton3 index)
         if (maybeVoxels) {
             return std::make_shared<Chunk>(*maybeVoxels);
         } else {
-            ChunkPtr chunk;
-            _source->readerTransaction(cell, [&](const Array3D<Voxel> &voxels) {
-                _mapRegionStore->store(cell, index, voxels); // save to disk
-                chunk = std::make_shared<Chunk>(voxels);
-            });
+            ChunkPtr chunk = createNewChunk(cell, index);
+            _mapRegionStore->store(cell, index, *chunk); // save to disk
             return chunk;
         }
     });
+}
+
+VoxelData::ChunkPtr VoxelData::createNewChunk(const AABB &cell, Morton3 index)
+{
+    ChunkPtr chunk;
+    _source->readerTransaction(cell, [&](const Array3D<Voxel> &voxels) {
+        chunk = std::make_shared<Chunk>(voxels);
+    });
+    return chunk;
 }

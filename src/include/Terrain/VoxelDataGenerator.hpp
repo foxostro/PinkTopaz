@@ -28,24 +28,14 @@ public:
         throw VoxelDataReadOnlyException();
     }
     
-    // VoxelDataGenerator is uncached and this method does nothing.
-    void setWorkingSet(const AABB &workingSet) override {}
-    
-protected:
-    // Loads a copy of the contents of the specified sub-region of the grid to
-    // an Array3D and returns that. May fault in missing voxels to satisfy the
-    // request.
-    Array3D<Voxel> load(const AABB &region) override;
-    
-    // This operation is unavailable. Calling this will throw VoxelDataReadOnlyException.
-    void store(const Array3D<Voxel> &voxels) override
-    {
-        throw VoxelDataReadOnlyException();
-    }
-    
 private:
     std::unique_ptr<Noise> _noiseSource0;
     std::unique_ptr<Noise> _noiseSource1;
+    
+    // Loads a copy of the contents of the specified sub-region of the grid to
+    // an Array3D and returns that. May fault in missing voxels to satisfy the
+    // request.
+    Array3D<Voxel> load(const AABB &region);
 };
 
 #endif /* VoxelDataGenerator_hpp */
