@@ -52,7 +52,7 @@ public:
         return _vertexFormat;
     }
     
-    std::vector<uint8_t> getBufferData() const;
+    std::pair<size_t, void*> getBufferData() const;
     
     bool operator==(const StaticMesh &other) const;
     

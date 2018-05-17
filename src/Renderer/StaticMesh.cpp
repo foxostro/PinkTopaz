@@ -20,13 +20,12 @@ StaticMesh::StaticMesh(const std::vector<TerrainVertex> &vertices)
     initVertexFormat();
 }
 
-std::vector<uint8_t> StaticMesh::getBufferData() const
+std::pair<size_t, void*> StaticMesh::getBufferData() const
 {
     const std::vector<TerrainVertex> &vertices = getVertices();
-    const size_t bufferSize = vertices.size() * sizeof(TerrainVertex);
-    std::vector<uint8_t> bufferData(bufferSize);
-    memcpy(&bufferData[0], &vertices[0], bufferSize);
-    return bufferData;
+    size_t bufferSize = vertices.size() * sizeof(TerrainVertex);
+    void *data = (void *)vertices.data();
+    return std::make_pair(bufferSize, data);
 }
 
 void StaticMesh::initVertexFormat()

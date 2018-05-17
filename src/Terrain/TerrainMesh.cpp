@@ -79,11 +79,10 @@ void TerrainMesh::rebuild(TerrainProgressTracker &progress)
         std::shared_ptr<Buffer> vertexBuffer = nullptr;
         
         if (mesh.getVertexCount() > 0) {
-            auto vertexBufferData = mesh.getBufferData();
-            vertexBuffer = _graphicsDevice->makeBuffer(vertexBufferData,
-                                                       StaticDraw,
-                                                       ArrayBuffer);
-            vertexBuffer->addDebugMarker("Terrain Vertices", 0, vertexBufferData.size());
+            auto [size, data] = mesh.getBufferData();
+            vertexBuffer = _graphicsDevice->makeBuffer(size, data,
+                                                       StaticDraw, ArrayBuffer);
+            vertexBuffer->addDebugMarker("Terrain Vertices", 0, size);
         }
         
         RenderableStaticMesh renderableStaticMesh = *_defaultMesh;
