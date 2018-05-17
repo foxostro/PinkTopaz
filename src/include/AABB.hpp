@@ -101,9 +101,9 @@ struct _AABB
     {
         std::ostringstream ss;
         ss << "{"
-           << glm::to_string(center)
+           << glm::to_string(mins())
            << " x "
-           << glm::to_string(extent*2.f)
+           << glm::to_string(maxs())
            << "}";
         return ss.str();
     }
@@ -113,9 +113,9 @@ struct _AABB
     friend OStream& operator<<(OStream &os, const _AABB<TYPE> &box)
     {
         os << "{"
-           << glm::to_string(box.center)
+           << glm::to_string(box.mins())
            << " x "
-           << glm::to_string(box.extent*2.f)
+           << glm::to_string(box.maxs())
            << "}";
         return os;
     }
