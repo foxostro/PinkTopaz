@@ -117,13 +117,10 @@ void VoxelData::store(const Chunk &voxels)
 VoxelData::ChunkPtr VoxelData::get(const AABB &cell, Morton3 index)
 {
     return _chunks.get(index, [=]{
-        _log->info("{} -- attempting to load voxels for cell {}", (void*)this, cell);
         auto maybeVoxels = _mapRegionStore->load(cell, index);
         if (maybeVoxels) {
-            _log->info("{} -- did load voxels for cell {} from file", (void*)this, cell);
             return std::make_shared<Chunk>(*maybeVoxels);
         } else {
-            _log->info("{} -- creating a new chunk for cell {}", (void*)this, cell);
             ChunkPtr chunk = createNewChunk(cell, index);
             _mapRegionStore->store(cell, index, *chunk); // save to disk
             return chunk;
