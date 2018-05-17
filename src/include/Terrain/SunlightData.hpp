@@ -20,13 +20,20 @@ public:
     SunlightData() = delete;
     
     // Constructor.
+    // log -- The logger to use.
     // source -- The source provides initial, unlit voxel data.
     // chunkSize -- The size of chunk VoxelData should use internally.
     // dispatcher -- Thread pool to use for asynchronous tasks.
-    SunlightData(std::unique_ptr<VoxelDataSource> &&source,
+    SunlightData(std::shared_ptr<spdlog::logger> log,
+                 std::unique_ptr<VoxelDataSource> &&source,
                  unsigned chunkSize,
                  std::unique_ptr<MapRegionStore> &&mapRegionStore,
                  const std::shared_ptr<TaskDispatcher> &dispatcher);
+    
+    // Perform an atomic transaction as a "writer" with read-write access to
+    // the underlying voxel data in the specified region.
+    // operation -- Describes the edits to be made.
+    void writerTransaction(const std::shared_ptr<TerrainOperation> &operation) override;
     
 protected:
     // Returns a new chunk for the corresponding region of space.
@@ -34,13 +41,6 @@ protected:
     // boundingBox -- The bounding box of the chunk.
     // index -- A unique index to identify the chunk in the sparse grid.
     ChunkPtr createNewChunk(const AABB &boundingBox, Morton3 index) override;
-    
-    // Return the region of voxels affected by a a given operation.
-    // The region of voxels invalidated by a change made by some operation may
-    // be larger than the region directly modified by that operation.
-    // For example, an edit a single block may affect light values for blocks
-    // some distance away.
-    AABB getAffectedRegionForOperation(const std::shared_ptr<TerrainOperation> &operation) override;
     
 private:
     std::unique_ptr<Noise> _noiseSource;

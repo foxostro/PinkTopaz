@@ -36,3 +36,8 @@ void MapRegion::store(Morton3 key, const Array3D<Voxel> &voxels)
 {
     _dataStore.store((size_t)key, _serializer.store(voxels));
 }
+
+void MapRegion::invalidate(Morton3 key)
+{
+    _dataStore.invalidate((size_t)key);
+}

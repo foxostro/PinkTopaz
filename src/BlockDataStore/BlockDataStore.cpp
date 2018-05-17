@@ -29,6 +29,12 @@ void BlockDataStore::store(Key key, const std::vector<uint8_t> &bytes)
     memset(block->data + size, 0, block->size - size);
 }
 
+void BlockDataStore::invalidate(Key key)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    _zone.deallocate(getBlock(key));
+}
+
 boost::optional<std::vector<uint8_t>> BlockDataStore::load(Key key)
 {
     std::lock_guard<std::mutex> lock(_mutex);

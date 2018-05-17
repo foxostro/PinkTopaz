@@ -30,6 +30,10 @@ public:
     // The key uniquely identifies the chunk in the voxel chunk in space.
     void store(Morton3 key, const Array3D<Voxel> &voxels);
     
+    // Invalidates a voxel chunk, removing it from file.
+    // The key uniquely identifies the chunk in the voxel chunk in space.
+    void invalidate(Morton3 key);
+    
 private:
     VoxelDataSerializer _serializer;
     BlockDataStore _dataStore;

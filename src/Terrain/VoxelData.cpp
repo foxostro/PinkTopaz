@@ -9,11 +9,13 @@
 #include "Terrain/VoxelData.hpp"
 #include "Grid/GridIndexerRange.hpp"
 
-VoxelData::VoxelData(std::unique_ptr<VoxelDataSource> &&source,
+VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
+                     std::unique_ptr<VoxelDataSource> &&source,
                      unsigned chunkSize,
                      std::unique_ptr<MapRegionStore> &&mapRegionStore,
                      const std::shared_ptr<TaskDispatcher> &dispatcher)
  : VoxelDataSource(source->boundingBox(), source->gridResolution()),
+   _log(log),
    _source(std::move(source)),
    _chunks(_source->boundingBox(), _source->gridResolution() / (int)chunkSize),
    _mapRegionStore(std::move(mapRegionStore)),
@@ -30,17 +32,17 @@ void VoxelData::readerTransaction(const AABB &region, std::function<void(const A
 
 void VoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
 {
-    const AABB region = getAffectedRegionForOperation(operation);
+    const AABB lockedRegion = boundingBox().intersect(operation->getAffectedRegion());
     
     {
-        auto mutex = _lockArbitrator.writerMutex(region);
+        auto mutex = _lockArbitrator.writerMutex(lockedRegion);
         std::lock_guard<decltype(mutex)> lock(mutex);
-        Array3D<Voxel> data = load(region);
+        Array3D<Voxel> data = load(lockedRegion);
         operation->perform(data);
         store(data);
     }
     
-    onWriterTransaction(region);
+    onWriterTransaction(lockedRegion);
 }
 
 void VoxelData::setWorkingSet(const AABB &workingSet)
@@ -115,10 +117,13 @@ void VoxelData::store(const Chunk &voxels)
 VoxelData::ChunkPtr VoxelData::get(const AABB &cell, Morton3 index)
 {
     return _chunks.get(index, [=]{
+        _log->info("{} -- attempting to load voxels for cell {}", (void*)this, cell);
         auto maybeVoxels = _mapRegionStore->load(cell, index);
         if (maybeVoxels) {
+            _log->info("{} -- did load voxels for cell {} from file", (void*)this, cell);
             return std::make_shared<Chunk>(*maybeVoxels);
         } else {
+            _log->info("{} -- creating a new chunk for cell {}", (void*)this, cell);
             ChunkPtr chunk = createNewChunk(cell, index);
             _mapRegionStore->store(cell, index, *chunk); // save to disk
             return chunk;
@@ -133,9 +138,4 @@ VoxelData::ChunkPtr VoxelData::createNewChunk(const AABB &cell, Morton3 index)
         chunk = std::make_shared<Chunk>(voxels);
     });
     return chunk;
-}
-
-AABB VoxelData::getAffectedRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
-{
-    return operation->getAffectedRegion();
 }

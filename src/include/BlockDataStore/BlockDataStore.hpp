@@ -25,13 +25,15 @@ public:
                    uint32_t magic,
                    uint32_t version);
     
-    // Loads a voxel chunk from file, if available.
+    // Loads a block of data from file, if available.
     // The key uniquely identifies the chunk in the voxel chunk in space.
     boost::optional<std::vector<uint8_t>> load(Key key);
     
-    // Stores a voxel chunk to file.
-    // The key uniquely identifies the chunk in the voxel chunk in space.
+    // Stores a block of data to file.
     void store(Key key, const std::vector<uint8_t> &data);
+    
+    // Invalidates the block of data, removing it from file.
+    void invalidate(Key key);
     
 private:
     static constexpr size_t InitialBackingBufferSize = 128;

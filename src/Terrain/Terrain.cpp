@@ -258,7 +258,7 @@ void Terrain::rebuildMeshInResponseToChanges(const AABB &voxelAffectedRegion)
     // We have the region of voxels affected by the change. From this, compute
     // the associated region where the change may have invalidated meshes too..
     const glm::vec3 meshChunkSize((float)TERRAIN_CHUNK_SIZE);
-    const AABB meshAffectedRegion = voxelAffectedRegion.inset(-meshChunkSize);
+    const AABB meshAffectedRegion = _meshes->boundingBox().intersect(voxelAffectedRegion.inset(-meshChunkSize));
     
     // Kick off a task to rebuild each affected mesh in the active region.
     // Meshes outside the active region are invalidated instead.
@@ -301,7 +301,8 @@ Terrain::createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcherVoxelD
     auto mapRegionStore = std::make_unique<MapRegionStore>(_log, voxelsDirectory, mapRegionBox, mapRegionRes);
     
     // The voxel data object stores the shape of the terrain.
-    auto voxelData = std::make_unique<VoxelData>(std::move(generator),
+    auto voxelData = std::make_unique<VoxelData>(_log,
+                                                 std::move(generator),
                                                  TERRAIN_CHUNK_SIZE,
                                                  std::move(mapRegionStore),
                                                  dispatcherVoxelData);
@@ -311,7 +312,8 @@ Terrain::createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcherVoxelD
                                                                 mapRegionBox, mapRegionRes);
     
     // The sunlight data object stores the terrain shape plus sunlight.
-    auto sunlightData = std::make_shared<SunlightData>(std::move(voxelData),
+    auto sunlightData = std::make_shared<SunlightData>(_log,
+                                                       std::move(voxelData),
                                                        TERRAIN_CHUNK_SIZE,
                                                        std::move(sunlightRegionStore),
                                                        dispatcherSunlightData);

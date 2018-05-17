@@ -14,6 +14,7 @@
 #include "Terrain/VoxelDataSource.hpp"
 #include "Terrain/MapRegionStore.hpp"
 #include "TaskDispatcher.hpp"
+#include <spdlog/spdlog.h>
 
 // A block of voxels in space.
 class VoxelData : public VoxelDataSource
@@ -26,10 +27,12 @@ public:
     VoxelData() = delete;
     
     // Constructor.
+    // log -- The logger to use.
     // source -- The source provides initial voxel data.
     // chunkSize -- The size of chunk VoxelData should use internally.
     // dispatcher -- Thread pool to use for asynchronous tasks within VoxelData.
-    VoxelData(std::unique_ptr<VoxelDataSource> &&source,
+    VoxelData(std::shared_ptr<spdlog::logger> log,
+              std::unique_ptr<VoxelDataSource> &&source,
               unsigned chunkSize,
               std::unique_ptr<MapRegionStore> &&mapRegionStore,
               const std::shared_ptr<TaskDispatcher> &dispatcher);
@@ -54,31 +57,18 @@ protected:
     using Chunk = Array3D<Voxel>;
     using ChunkPtr = std::shared_ptr<Chunk>;
     
-    // Returns the voxel data source, used to populate new chunks.
-    inline VoxelDataSource& getSource()
-    {
-        return *_source;
-    }
+    std::shared_ptr<spdlog::logger> _log;
+    std::unique_ptr<VoxelDataSource> _source;
+    SparseGrid<ChunkPtr> _chunks;
+    mutable RegionMutualExclusionArbitrator _lockArbitrator;
+    std::unique_ptr<MapRegionStore> _mapRegionStore;
+    std::shared_ptr<TaskDispatcher> _dispatcher;
     
     // Returns a new chunk for the corresponding region of space.
     // The chunk is populated using data gathered from the underlying source.
     // boundingBox -- The bounding box of the chunk.
     // index -- A unique index to identify the chunk in the sparse grid.
     virtual ChunkPtr createNewChunk(const AABB &boundingBox, Morton3 index);
-    
-    // Return the region of voxels affected by a a given operation.
-    // The region of voxels invalidated by a change made by some operation may
-    // be larger than the region directly modified by that operation.
-    // For example, an edit a single block may affect light values for blocks
-    // some distance away.
-    virtual AABB getAffectedRegionForOperation(const std::shared_ptr<TerrainOperation> &operation);
-    
-private:
-    mutable RegionMutualExclusionArbitrator _lockArbitrator;
-    std::unique_ptr<VoxelDataSource> _source;
-    SparseGrid<ChunkPtr> _chunks;
-    std::unique_ptr<MapRegionStore> _mapRegionStore;
-    std::shared_ptr<TaskDispatcher> _dispatcher;
     
     // Loads a copy of the contents of the specified sub-region of the grid to
     // an Array3D and returns that. May fault in missing voxels to satisfy the

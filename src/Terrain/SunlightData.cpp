@@ -11,11 +11,13 @@
 #include "Noise/SimplexNoise.hpp"
 #include "math.hpp" // for clamp
 
-SunlightData::SunlightData(std::unique_ptr<VoxelDataSource> &&source,
+SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
+                           std::unique_ptr<VoxelDataSource> &&source,
                            unsigned chunkSize,
                            std::unique_ptr<MapRegionStore> &&mapRegionStore,
                            const std::shared_ptr<TaskDispatcher> &dispatcher)
-: VoxelData(std::move(source),
+: VoxelData(log,
+            std::move(source),
             chunkSize,
             std::move(mapRegionStore),
             dispatcher),
@@ -25,7 +27,7 @@ SunlightData::SunlightData(std::unique_ptr<VoxelDataSource> &&source,
 SunlightData::ChunkPtr SunlightData::createNewChunk(const AABB &cell, Morton3 index)
 {
     ChunkPtr chunk;
-    getSource().readerTransaction(cell, [&](const Array3D<Voxel> &voxels) {
+    _source->readerTransaction(cell, [&](const Array3D<Voxel> &voxels) {
         chunk = std::make_shared<Chunk>(voxels);
     });
     
@@ -43,8 +45,43 @@ SunlightData::ChunkPtr SunlightData::createNewChunk(const AABB &cell, Morton3 in
     return chunk;
 }
 
-AABB SunlightData::getAffectedRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
+void SunlightData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
 {
-    // TODO: Eventually, this should return a larger region where sunlight propagation may have occurred.
-    return operation->getAffectedRegion();
+#if 0
+    AABB sunlightRegion;
+    {
+        sunlightRegion = operation->getAffectedRegion();
+        
+        // First, account for horizontal propagation.
+        sunlightRegion = sunlightRegion.inset(-glm::vec3(MAX_LIGHT));
+        
+        // Second, account for downward, vertical propagation.
+        glm::vec3 mins = sunlightRegion.mins();
+        glm::vec3 maxs = sunlightRegion.maxs();
+        mins.y = boundingBox().mins().y;
+        glm::vec3 center = (maxs + mins) * 0.5f;
+        glm::vec3 extent = (maxs - mins) * 0.5f;
+        sunlightRegion = {center, extent};
+        
+        sunlightRegion = boundingBox().intersect(sunlightRegion);
+    }
+#else
+    AABB sunlightRegion = operation->getAffectedRegion();
+#endif
+    
+    {
+        auto mutex = _lockArbitrator.writerMutex(sunlightRegion);
+        std::lock_guard<decltype(mutex)> lock(mutex);
+        
+        for (const auto chunkCellCoords : slice(_chunks, sunlightRegion)) {
+            const glm::vec3 chunkCenter = _chunks.cellCenterAtCellCoords(chunkCellCoords);
+            const Morton3 chunkIndex = _chunks.indexAtCellCoords(chunkCellCoords);
+            _chunks.invalidate(chunkIndex);
+            _mapRegionStore->invalidate(chunkCenter, chunkIndex);
+        }
+        
+        _source->writerTransaction(operation);
+    }
+    
+    onWriterTransaction(sunlightRegion);
 }
