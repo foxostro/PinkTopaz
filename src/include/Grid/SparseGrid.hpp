@@ -71,7 +71,9 @@ public:
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(p)) {
-                throw OutOfBoundsException();
+                throw OutOfBoundsException(fmt::format("OutOfBoundsException -- boundingBox={} ; p={}",
+                                                       boundingBox(),
+                                                       glm::to_string(p)));
             }
         }
         return getIfExists(indexAtPoint(p));
@@ -123,7 +125,9 @@ public:
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(p)) {
-                throw OutOfBoundsException();
+                throw OutOfBoundsException(fmt::format("OutOfBoundsException -- boundingBox={} ; p={}",
+                                                       boundingBox(),
+                                                       glm::to_string(p)));
             }
         }
         return get(indexAtPoint(p));
@@ -133,7 +137,9 @@ public:
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(p)) {
-                throw OutOfBoundsException();
+                throw OutOfBoundsException(fmt::format("OutOfBoundsException -- boundingBox={} ; p={}",
+                                                       boundingBox(),
+                                                       glm::to_string(p)));
             }
         }
         return set(indexAtPoint(p), el);

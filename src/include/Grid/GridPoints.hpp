@@ -18,7 +18,9 @@ inline auto points(const GridIndexer &grid, const AABB &region)
 {
     if constexpr (EnableVerboseBoundsChecking) {
         if (!grid.inbounds(region)) {
-            throw OutOfBoundsException();
+            throw OutOfBoundsException(fmt::format("OutOfBoundsException -- grid.boundingBox={} ; region={}",
+                                                   grid.boundingBox(),
+                                                   region));
         }
     }
     

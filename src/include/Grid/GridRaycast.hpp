@@ -110,7 +110,9 @@ slice(const GridIndexer &grid,
 {
     if constexpr (EnableVerboseBoundsChecking) {
         if (!grid.inbounds(ray.origin)) {
-            throw OutOfBoundsException();
+            throw OutOfBoundsException(fmt::format("OutOfBoundsException -- grid.boundingBox={} ; ray.origin={}",
+                                                   grid.boundingBox(),
+                                                   glm::to_string(ray.origin)));
         }
     }
     

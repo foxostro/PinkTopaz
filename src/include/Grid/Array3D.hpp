@@ -85,7 +85,9 @@ public:
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(p)) {
-                throw OutOfBoundsException();
+                throw OutOfBoundsException(fmt::format("OutOfBoundsException -- boundingBox={} ; p={}",
+                                                       boundingBox(),
+                                                       glm::to_string(p)));
             }
         }
         return reference(indexAtPoint(p));
@@ -102,7 +104,10 @@ public:
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!isValidIndex(index)) {
-                throw OutOfBoundsException();
+                throw OutOfBoundsException(fmt::format("OutOfBoundsException -- boundingBox={} ; index={} ; maxValidIndex={}",
+                                                       boundingBox(),
+                                                       (size_t)index,
+                                                       _maxValidIndex));
             }
         }
         return _cells[(size_t)index];
@@ -113,7 +118,9 @@ public:
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!inbounds(p)) {
-                throw OutOfBoundsException();
+                throw OutOfBoundsException(fmt::format("OutOfBoundsException -- boundingBox={} ; p={}",
+                                                       boundingBox(),
+                                                       glm::to_string(p)));
             }
         }
         return mutableReference(indexAtPoint(p));
@@ -126,7 +133,11 @@ public:
         
         if constexpr (EnableVerboseBoundsChecking) {
             if (!isValidIndex(index)) {
-                throw OutOfBoundsException();
+                throw OutOfBoundsException(fmt::format("OutOfBoundsException -- boundingBox={} ; cellCoords={} ; index={} ; maxValidIndex={}",
+                                                       boundingBox(),
+                                                       glm::to_string(cellCoords),
+                                                       (size_t)index,
+                                                       _maxValidIndex));
             }
         }
         return mutableReference(index);
@@ -137,7 +148,10 @@ public:
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!isValidIndex(index)) {
-                throw OutOfBoundsException();
+                throw OutOfBoundsException(fmt::format("OutOfBoundsException -- boundingBox={} ; index={} ; maxValidIndex={}",
+                                                       boundingBox(),
+                                                       (size_t)index,
+                                                       _maxValidIndex));
             }
         }
         return _cells[(size_t)index];
