@@ -33,6 +33,35 @@ void BlockDataStore::invalidate(Key key)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     _zone.deallocate(getBlock(key));
+    
+    // Remove the key from the lookup table.
+    BlockDataStore::LookupTable &table = lookup();
+    
+    // First, find the entry that needs to be removed.
+    ssize_t indexToRemove = -1;
+    for (ssize_t i = 0, n = table.numberOfEntries; i < n; ++i) {
+        auto &entry = lookup().entries[i];
+        if (key == entry.key) {
+            indexToRemove = i;
+            break;
+        }
+    }
+    
+    // Copy subsequent entries back one slot to overwrite it.
+    assert(indexToRemove >= 0);
+    for (ssize_t i = indexToRemove, n = table.numberOfEntries-1; i < n; ++i) {
+        auto &dst = lookup().entries[i+0];
+        const auto &src = lookup().entries[i+1];
+        dst = src;
+    }
+    
+    // Decrease the number of entries.
+    table.numberOfEntries--;
+    
+    // Overwrite the now-invalid final entry so it cannot be accidentally used.
+    auto &entry = lookup().entries[table.numberOfEntries];
+    entry.key=0xdeadbeef;
+    entry.offset=0xdeadbeef;
 }
 
 boost::optional<std::vector<uint8_t>> BlockDataStore::load(Key key)
