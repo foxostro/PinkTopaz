@@ -14,13 +14,11 @@
 SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
                            std::unique_ptr<VoxelDataSource> &&source,
                            unsigned chunkSize,
-                           std::unique_ptr<MapRegionStore> &&mapRegionStore,
-                           const std::shared_ptr<TaskDispatcher> &dispatcher)
+                           std::unique_ptr<MapRegionStore> &&mapRegionStore)
 : VoxelData(log,
             std::move(source),
             chunkSize,
-            std::move(mapRegionStore),
-            dispatcher),
+            std::move(mapRegionStore)),
   _noiseSource(std::make_unique<SimplexNoise>(0))
 {}
 

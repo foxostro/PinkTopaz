@@ -12,14 +12,12 @@
 VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
                      std::unique_ptr<VoxelDataSource> &&source,
                      unsigned chunkSize,
-                     std::unique_ptr<MapRegionStore> &&mapRegionStore,
-                     const std::shared_ptr<TaskDispatcher> &dispatcher)
+                     std::unique_ptr<MapRegionStore> &&mapRegionStore)
  : VoxelDataSource(source->boundingBox(), source->gridResolution()),
    _log(log),
    _source(std::move(source)),
    _chunks(_source->boundingBox(), _source->gridResolution() / (int)chunkSize),
-   _mapRegionStore(std::move(mapRegionStore)),
-   _dispatcher(dispatcher)
+   _mapRegionStore(std::move(mapRegionStore))
 {}
 
 void VoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
@@ -66,8 +64,8 @@ VoxelData::Chunk VoxelData::load(const AABB &region)
     const glm::ivec3 res = _source->countCellsInRegion(adjustedRegion);
     Array3D<Voxel> dst(adjustedRegion, res);
     
-    // Asynchronously fetch all the chunks in the region.
-    auto futures = _dispatcher->map(slice(_chunks, adjustedRegion), [this, adjustedRegion, &dst](glm::ivec3 cellCoords){
+    // Fetch all the chunks in the region.
+    for (auto cellCoords : slice(_chunks, adjustedRegion)) {
         const Morton3 index = _chunks.indexAtCellCoords(cellCoords);
         const AABB chunkBoundingBox = _chunks.cellAtCellCoords(cellCoords);
         ChunkPtr chunk = get(chunkBoundingBox, index);
@@ -80,9 +78,7 @@ VoxelData::Chunk VoxelData::load(const AABB &region)
             const auto voxelCenter = chunk->cellCenterAtCellCoords(voxelCoords);
             dst.mutableReference(voxelCenter) = chunk->reference(voxelCoords);
         }
-    });
-    
-    waitForAll(futures);
+    }
 
     return dst;
 }

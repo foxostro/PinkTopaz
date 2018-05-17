@@ -57,7 +57,7 @@ void TerrainProgressTracker::dump()
     std::string timeTotalElapsedStr = timeElapsed(TerrainProgressEvent::Complete,
                                                   TerrainProgressEvent::Queued);
     
-    _log->trace("Cell {}:\n"
+    _log->debug("Cell {}:\n"
                 "\tQueued             -- {} ms\n"
                 "\tWaitingOnVoxels    -- {} ms\n"
                 "\tExtractingSurface  -- {} ms\n"

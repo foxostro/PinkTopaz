@@ -31,8 +31,6 @@ Terrain::~Terrain()
 Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
                  const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                  const std::shared_ptr<TaskDispatcher> &dispatcher,
-                 const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
-                 const std::shared_ptr<TaskDispatcher> &dispatcherSunlightData,
                  const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher,
                  entityx::EventManager &events,
                  glm::vec3 initialCameraPosition)
@@ -100,9 +98,7 @@ Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
         mustRegenerateMap = true;
     }
     
-    _voxels = createVoxelData(dispatcherVoxelData,
-                              dispatcherSunlightData,
-                              _journal->getVoxelDataSeed(),
+    _voxels = createVoxelData(_journal->getVoxelDataSeed(),
                               voxelsDirectory,
                               sunlightDirectory);
     
@@ -286,9 +282,7 @@ void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress
 }
 
 std::shared_ptr<VoxelDataSource>
-Terrain::createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
-                         const std::shared_ptr<TaskDispatcher> &dispatcherSunlightData,
-                         unsigned voxelDataSeed,
+Terrain::createVoxelData(unsigned voxelDataSeed,
                          const boost::filesystem::path &voxelsDirectory,
                          const boost::filesystem::path &sunlightDirectory)
 {
@@ -304,8 +298,7 @@ Terrain::createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcherVoxelD
     auto voxelData = std::make_unique<VoxelData>(_log,
                                                  std::move(generator),
                                                  TERRAIN_CHUNK_SIZE,
-                                                 std::move(mapRegionStore),
-                                                 dispatcherVoxelData);
+                                                 std::move(mapRegionStore));
     
     // Setup a map file on disk to record lighting computations from sunlight.
     auto sunlightRegionStore = std::make_unique<MapRegionStore>(_log, sunlightDirectory,
@@ -315,8 +308,7 @@ Terrain::createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcherVoxelD
     auto sunlightData = std::make_shared<SunlightData>(_log,
                                                        std::move(voxelData),
                                                        TERRAIN_CHUNK_SIZE,
-                                                       std::move(sunlightRegionStore),
-                                                       dispatcherSunlightData);
+                                                       std::move(sunlightRegionStore));
     
     return sunlightData;
 }

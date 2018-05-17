@@ -34,8 +34,7 @@ public:
     VoxelData(std::shared_ptr<spdlog::logger> log,
               std::unique_ptr<VoxelDataSource> &&source,
               unsigned chunkSize,
-              std::unique_ptr<MapRegionStore> &&mapRegionStore,
-              const std::shared_ptr<TaskDispatcher> &dispatcher);
+              std::unique_ptr<MapRegionStore> &&mapRegionStore);
     
     // Perform an atomic transaction as a "reader" with read-only access to the
     // underlying data in the specified region.
@@ -62,7 +61,6 @@ protected:
     SparseGrid<ChunkPtr> _chunks;
     mutable RegionMutualExclusionArbitrator _lockArbitrator;
     std::unique_ptr<MapRegionStore> _mapRegionStore;
-    std::shared_ptr<TaskDispatcher> _dispatcher;
     
     // Returns a new chunk for the corresponding region of space.
     // The chunk is populated using data gathered from the underlying source.

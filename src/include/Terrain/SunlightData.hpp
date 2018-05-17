@@ -27,8 +27,7 @@ public:
     SunlightData(std::shared_ptr<spdlog::logger> log,
                  std::unique_ptr<VoxelDataSource> &&source,
                  unsigned chunkSize,
-                 std::unique_ptr<MapRegionStore> &&mapRegionStore,
-                 const std::shared_ptr<TaskDispatcher> &dispatcher);
+                 std::unique_ptr<MapRegionStore> &&mapRegionStore);
     
     // Perform an atomic transaction as a "writer" with read-write access to
     // the underlying voxel data in the specified region.

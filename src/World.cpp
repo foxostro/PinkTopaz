@@ -24,8 +24,6 @@ World::World(std::shared_ptr<spdlog::logger> log,
              const Preferences &preferences,
              const std::shared_ptr<GraphicsDevice> &graphicsDevice,
              const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
-             const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
-             const std::shared_ptr<TaskDispatcher> &dispatcherSunlightData,
              const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
  : _log(log),
    _preferences(preferences)
@@ -63,8 +61,6 @@ World::World(std::shared_ptr<spdlog::logger> log,
     terrainComponent.terrain = std::make_shared<Terrain>(_log,
                                                          graphicsDevice,
                                                          dispatcherHighPriority,
-                                                         dispatcherVoxelData,
-                                                         dispatcherSunlightData,
                                                          mainThreadDispatcher,
                                                          events,
                                                          cameraPosition);
