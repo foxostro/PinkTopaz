@@ -43,7 +43,7 @@ public:
     : Exception(reason)
     {}
     
-#ifndef TESTING
+#if 0
     // For some reason, Catch's REQUIRE_THROWS_AS doesn't like this.
     template<typename... Args>
     OutOfBoundsException(Args&&... args)
