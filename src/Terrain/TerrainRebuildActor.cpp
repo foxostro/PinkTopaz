@@ -46,7 +46,7 @@ TerrainRebuildActor::TerrainRebuildActor(std::shared_ptr<spdlog::logger> log,
     }
 }
 
-void TerrainRebuildActor::push(const std::vector<std::pair<Morton3, AABB>> &cells, bool insertBack)
+void TerrainRebuildActor::push(const std::vector<std::pair<Morton3, AABB>> &cells)
 {
     std::lock_guard<std::mutex> lock(_lock);
     
@@ -64,11 +64,7 @@ void TerrainRebuildActor::push(const std::vector<std::pair<Morton3, AABB>> &cell
                       insertResult.first,
                       _mainThreadDispatcher,
                       _events);
-            if (insertBack) {
-                _cells.emplace_back(std::move(cell));
-            } else {
-                _cells.emplace_front(std::move(cell));
-            }
+            _cells.emplace_back(std::move(cell));
         }
     }
     

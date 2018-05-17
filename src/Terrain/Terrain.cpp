@@ -258,7 +258,7 @@ void Terrain::rebuildMeshInResponseToChanges(const AABB &voxelAffectedRegion)
     // We have the region of voxels affected by the change. From this, compute
     // the associated region where the change may have invalidated meshes too..
     const glm::vec3 meshChunkSize((float)TERRAIN_CHUNK_SIZE);
-    const AABB meshAffectedRegion = voxelAffectedRegion.inset(-meshChunkSize);
+    const AABB meshAffectedRegion = getActiveRegion().intersect(voxelAffectedRegion.inset(-meshChunkSize));
     
     // Kick off a task to rebuild each affected mesh. Insert at the front of
     // the queue so these changes appear quickly.
@@ -268,7 +268,7 @@ void Terrain::rebuildMeshInResponseToChanges(const AABB &voxelAffectedRegion)
         const AABB cell = _meshes->cellAtCellCoords(cellCoords);
         meshCells.push_back(std::make_pair(index, cell));
     }
-    _meshRebuildActor->push(meshCells, /* insertBack = */ false);
+    _meshRebuildActor->push(meshCells);
 }
 
 void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress)

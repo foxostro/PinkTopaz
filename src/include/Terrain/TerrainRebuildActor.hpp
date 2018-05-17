@@ -34,10 +34,9 @@ public:
                         std::function<void(AABB, TerrainProgressTracker&)> processCell);
     
     // Add cells to the queue.
-    // `insertBack' indicates whether the cells should be inserted at the back
-    // of the queue, or the front of the queue.
-    void push(const std::vector<std::pair<Morton3, AABB>> &cells,
-              bool insertBack = true);
+    // These will always be popped off the queue in order of increasing distance
+    // from the search point.
+    void push(const std::vector<std::pair<Morton3, AABB>> &cells);
     
     // Set the search point.
     void setSearchPoint(glm::vec3 searchPoint);
