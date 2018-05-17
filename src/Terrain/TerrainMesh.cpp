@@ -68,7 +68,7 @@ void TerrainMesh::rebuild(TerrainProgressTracker &progress)
     
     // We need a border of voxels around the region of the mesh in order to
     // perform surface extraction.
-    const AABB voxelBox = _meshBox.inset(-_voxels->cellDimensions());
+    const AABB voxelBox = _meshBox.inset(-2.f * _voxels->cellDimensions());
     
     progress.setState(TerrainProgressEvent::WaitingOnVoxels);
     _voxels->readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
