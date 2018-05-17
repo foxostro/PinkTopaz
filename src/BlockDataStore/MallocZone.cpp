@@ -143,6 +143,9 @@ MallocZone::Block* MallocZone::allocate(size_t size)
     }
     
     if (size > header()->size) {
+        if constexpr (VERBOSE) {
+            _log->trace("[zone={}] allocate({}) is returning NULL", (void *)this, size);
+        }
         return nullptr;
     }
     
@@ -193,7 +196,10 @@ MallocZone::Block* MallocZone::allocate(size_t size)
 #endif
 
     if constexpr (VERBOSE) {
-        _log->trace("[zone={}] state after allocate:", (void *)this);
+        _log->trace("[zone={}] allocate({}) will yield {}. state after allocate:",
+                    (void *)this,
+                    size,
+                    (void *)best);
         dump();
     }
     
@@ -325,6 +331,12 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
     if (block->size >= newSize) {
         considerSplittingBlock(block, newSize);
         validate(false);
+        if constexpr (VERBOSE) {
+            _log->trace("[zone={}] reallocate({}) will yield the same block {}",
+                        (void *)this,
+                        (void *)block,
+                        (void *)block);
+        }
         return block;
     }
 
@@ -360,8 +372,11 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         considerSplittingBlock(block, newSize);
 
         if constexpr (VERBOSE) {
-            _log->trace("[zone={}] state after reallocate: [case where we "
-                        "extend the block]", (void *)this);
+            _log->trace("[zone={}] reallocate({}) will yield {}. state after reallocate: [case where we "
+                        "extend the block]",
+                        (void *)this,
+                        (void *)block,
+                        (void *)block);
             dump();
         }
         return block;
@@ -375,8 +390,11 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         deallocate(block);
         
         if constexpr (VERBOSE) {
-            _log->trace("[zone={}] state after reallocate: [case where we "
-                        "allocate a new block]", (void *)this);
+            _log->trace("[zone={}] reallocate({}) will yield new block {}. state after reallocate: [case where we "
+                        "allocate a new block]",
+                        (void *)this,
+                        (void *)block,
+                        (void *)newAlloc);
             dump();
         }
         return newAlloc;
@@ -411,16 +429,20 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
         considerSplittingBlock(preceding, newSize);
 
         if constexpr (VERBOSE) {
-            _log->trace("[zone={}] state after reallocate: [case where we "
-                        "merge with previous block]", (void *)this);
+            _log->trace("[zone={}] reallocate({}) will yield new block {}. state after reallocate: [case where we "
+                        "merge with previous block]",
+                        (void *)this,
+                        (void *)block,
+                        (void *)newAlloc);
             dump();
         }
         return newAlloc;
     }
 
     if constexpr (VERBOSE) {
-        _log->trace("[zone={}] reallocate failed, returning NULL. state after "
-                    "reallocate:", (void *)this);
+        _log->trace("[zone={}] reallocate({}) failed and will yield NULL. state after reallocate:",
+                    (void *)this,
+                    (void *)block);
         dump();
     }
     return nullptr;
@@ -429,7 +451,7 @@ MallocZone::Block* MallocZone::reallocate(Block *block, size_t newSize)
 void MallocZone::validate(bool dump) const
 {
     if (dump) {
-        _log->trace("[zone={}] MallocZone::dump() {", (void *)this);
+        _log->trace("[zone={}] MallocZone::dump() {{", (void *)this);
     }
     
     // Check the magic number. If this is not set then the backing memory
@@ -446,7 +468,7 @@ void MallocZone::validate(bool dump) const
         
         if (dump) {
             _log->trace("[zone={}] \t"
-                        "[{}]\t{}\t{next={}, prev={}, inuse={}, size={}}",
+                        "[{}]\t{}\t{{next={}, prev={}, inuse={}, size={}}}",
                     (void *)this,
                     i,
                     (void *)block,
@@ -466,7 +488,7 @@ void MallocZone::validate(bool dump) const
     assert(tail() == blockForOffset(header()->tailOffset));
     
     if (dump) {
-        _log->trace("[zone={}] }", (void *)this);
+        _log->trace("[zone={}] }}", (void *)this);
     }
 }
 
