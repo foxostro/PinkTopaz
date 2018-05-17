@@ -165,6 +165,14 @@ public:
         }
     }
     
+    void invalidate(Morton3 morton)
+    {
+        std::unique_lock<std::mutex> tableLock(_mutex);
+        std::unique_lock<std::mutex> slotLock(_slotMutexes[morton]);
+        boost::optional<ElementType> &slot = _slots[morton];
+        slot = boost::none;
+    }
+    
 private:
     // Protects `_slots' and `_slotMutexes' from concurrent access.
     mutable std::mutex _mutex;
