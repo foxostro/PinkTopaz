@@ -11,6 +11,6 @@
 
 static constexpr unsigned TERRAIN_CHUNK_SIZE = 32;
 static constexpr unsigned MAP_REGION_SIZE = 512;
-static constexpr float ACTIVE_REGION_SIZE = 64.0f; // TODO: should this be configurable at startup?
+static constexpr float ACTIVE_REGION_SIZE = 256.0f; // TODO: should this be configurable at startup?
 
 #endif /* TerrainConfig_hpp */
