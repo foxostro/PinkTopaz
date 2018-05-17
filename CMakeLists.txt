@@ -35,7 +35,7 @@ elseif(APPLE)
     endif(USE_METAL)
     
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -Og")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
     set(CMAKE_CXX_FLAGS "-mbmi2 -mlzcnt -mavx2 -Wall -Wno-multichar -Werror ${APPLE_FLAGS}")
 else()
     set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -g -Oz")
