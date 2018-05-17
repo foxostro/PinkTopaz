@@ -38,7 +38,6 @@ bool MemoryMappedFile::mapFile(size_t minimumFileSize)
     }
     
     if (fileSize < minimumFileSize) {
-        fileSize = minimumFileSize;
         boost::filesystem::resize_file(_fileName, minimumFileSize);
     }
     
