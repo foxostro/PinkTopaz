@@ -28,7 +28,9 @@ public:
         throw VoxelDataReadOnlyException();
     }
     
-    void setWorkingSet(const AABB &workingSet) override {}
+    void setWorkingSet(const AABB &workingSet) override;
+    
+    AABB getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation) override;
     
 private:
     std::unique_ptr<Noise> _noiseSource0;

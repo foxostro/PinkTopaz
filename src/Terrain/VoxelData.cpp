@@ -127,3 +127,11 @@ VoxelData::ChunkPtr VoxelData::createNewChunk(const AABB &cell, Morton3 index)
     });
     return chunk;
 }
+
+AABB VoxelData::getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
+{
+    AABB sourceAccessRegion = _source->getAccessRegionForOperation(operation);
+    AABB ourAccessRegion = operation->getAffectedRegion();
+    AABB combinedAccessRegion = boundingBox().intersect(ourAccessRegion.unionBox(sourceAccessRegion));
+    return combinedAccessRegion;
+}

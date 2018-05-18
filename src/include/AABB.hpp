@@ -96,6 +96,23 @@ struct _AABB
         return {center, extent};
     }
     
+    inline _AABB<TYPE> unionBox(const _AABB<TYPE> &thatBox) const
+    {
+        const TYPE thisMin = mins();
+        const TYPE thatMin = thatBox.mins();
+        const TYPE thisMax = maxs();
+        const TYPE thatMax = thatBox.maxs();
+        const TYPE min = TYPE(std::min(thisMin.x, thatMin.x),
+                              std::min(thisMin.y, thatMin.y),
+                              std::min(thisMin.z, thatMin.z));
+        const TYPE max = TYPE(std::max(thisMax.x, thatMax.x),
+                              std::max(thisMax.y, thatMax.y),
+                              std::max(thisMax.z, thatMax.z));
+        const TYPE center = (max + min) * 0.5f;
+        const TYPE extent = (max - min) * 0.5f;
+        return {center, extent};
+    }
+    
     // Return the string representation of this bounding box.
     std::string to_string() const
     {

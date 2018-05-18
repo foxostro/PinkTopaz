@@ -68,6 +68,13 @@ public:
     // Set the limit to the number of chunks needed to represent the region
     // specified in `workingSet'.
     virtual void setWorkingSet(const AABB &workingSet) = 0;
+    
+    // Return the region of voxels which may be accessed during the operation.
+    // This is a worst-case estimate of the region of voxel which may be
+    // accessed while performing the operation.
+    // Knowing this region is useful when determining the region which needs to
+    // be locked during the operation.
+    virtual AABB getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation) = 0;
 };
 
 #endif /* VoxelDataSource_hpp */

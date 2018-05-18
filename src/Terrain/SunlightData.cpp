@@ -167,3 +167,11 @@ SunlightData::ChunkPtr SunlightData::createNewChunk(const AABB &cell, Morton3 in
     
     return chunk;
 }
+
+AABB SunlightData::getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
+{
+    AABB sourceAccessRegion = _source->getAccessRegionForOperation(operation);
+    AABB ourAccessRegion = operation->getAffectedRegion();
+    AABB combinedAccessRegion = boundingBox().intersect(ourAccessRegion.unionBox(sourceAccessRegion));
+    return combinedAccessRegion;
+}

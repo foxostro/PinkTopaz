@@ -123,3 +123,11 @@ Array3D<Voxel> VoxelDataGenerator::load(const AABB &region)
     
     return dst;
 }
+
+void VoxelDataGenerator::setWorkingSet(const AABB &workingSet)
+{}
+
+AABB VoxelDataGenerator::getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
+{
+    return operation->getAffectedRegion();
+}

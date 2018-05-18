@@ -48,6 +48,13 @@ public:
     // specified in `workingSet'.
     void setWorkingSet(const AABB &workingSet) override;
     
+    // Return the region of voxels which may be accessed during the operation.
+    // This is a worst-case estimate of the region of voxel which may be
+    // accessed while performing the operation.
+    // Knowing this region is useful when determining the region which needs to
+    // be locked during the operation.
+    AABB getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation) override;
+    
 private:
     using Chunk = Array3D<Voxel>;
     using ChunkPtr = std::shared_ptr<Chunk>;
