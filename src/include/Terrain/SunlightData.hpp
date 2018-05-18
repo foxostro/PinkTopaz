@@ -68,8 +68,7 @@ private:
     // Returns a new chunk for the corresponding region of space.
     // The chunk is populated using data gathered from the underlying source.
     // boundingBox -- The bounding box of the chunk.
-    // index -- A unique index to identify the chunk in the sparse grid.
-    ChunkPtr createNewChunk(const AABB &boundingBox, Morton3 index);
+    ChunkPtr createNewChunk(const AABB &boundingBox);
     
     // Loads a copy of the contents of the specified sub-region of the grid to
     // an Array3D and returns that. May fault in missing voxels to satisfy the
