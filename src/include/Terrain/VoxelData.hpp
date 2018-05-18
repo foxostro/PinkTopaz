@@ -9,11 +9,9 @@
 #ifndef VoxelData_hpp
 #define VoxelData_hpp
 
-#include "Grid/RegionMutualExclusionArbitrator.hpp"
 #include "Grid/SparseGrid.hpp"
 #include "Terrain/VoxelDataSource.hpp"
 #include "Terrain/MapRegionStore.hpp"
-#include "TaskDispatcher.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -28,7 +26,6 @@ public:
     // log -- The logger to use.
     // source -- The source provides initial voxel data.
     // chunkSize -- The size of chunk VoxelData should use internally.
-    // dispatcher -- Thread pool to use for asynchronous tasks within VoxelData.
     VoxelData(std::shared_ptr<spdlog::logger> log,
               std::unique_ptr<VoxelDataSource> &&source,
               unsigned chunkSize,
@@ -57,7 +54,6 @@ protected:
     std::shared_ptr<spdlog::logger> _log;
     std::unique_ptr<VoxelDataSource> _source;
     SparseGrid<ChunkPtr> _chunks;
-    mutable RegionMutualExclusionArbitrator _lockArbitrator;
     std::unique_ptr<MapRegionStore> _mapRegionStore;
     
     // Returns a new chunk for the corresponding region of space.

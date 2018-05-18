@@ -25,10 +25,7 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
 
 void SunlightData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
 {
-    auto mutex = _lockArbitrator.readerMutex(region);
-    std::lock_guard<decltype(mutex)> lock(mutex);
-    const Array3D<Voxel> data = load(region);
-    fn(data);
+    fn(load(region));
 }
 
 void SunlightData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
@@ -55,20 +52,13 @@ void SunlightData::writerTransaction(const std::shared_ptr<TerrainOperation> &op
     AABB sunlightRegion = operation->getAffectedRegion();
 #endif
     
-    {
-        auto mutex = _lockArbitrator.writerMutex(sunlightRegion);
-        std::lock_guard<decltype(mutex)> lock(mutex);
-        
-        for (const auto chunkCellCoords : slice(_chunks, sunlightRegion)) {
-            const glm::vec3 chunkCenter = _chunks.cellCenterAtCellCoords(chunkCellCoords);
-            const Morton3 chunkIndex = _chunks.indexAtCellCoords(chunkCellCoords);
-            _chunks.invalidate(chunkIndex);
-            _mapRegionStore->invalidate(chunkCenter, chunkIndex);
-        }
-        
-        _source->writerTransaction(operation);
+    for (const auto chunkCellCoords : slice(_chunks, sunlightRegion)) {
+        const glm::vec3 chunkCenter = _chunks.cellCenterAtCellCoords(chunkCellCoords);
+        const Morton3 chunkIndex = _chunks.indexAtCellCoords(chunkCellCoords);
+        _chunks.invalidate(chunkIndex);
+        _mapRegionStore->invalidate(chunkCenter, chunkIndex);
     }
-    
+    _source->writerTransaction(operation);
     onWriterTransaction(sunlightRegion);
 }
 
@@ -77,7 +67,7 @@ void SunlightData::setWorkingSet(const AABB &workingSet)
     _source->setWorkingSet(workingSet);
     
     glm::ivec3 count = _chunks.countCellsInRegion(workingSet);
-    size_t chunkCountLimit = count.x * count.y * count.z;
+    const size_t chunkCountLimit = count.x * count.y * count.z;
     _chunks.setCountLimit(chunkCountLimit);
 }
 

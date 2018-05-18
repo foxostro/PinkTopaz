@@ -9,11 +9,9 @@
 #ifndef SunlightData_hpp
 #define SunlightData_hpp
 
-#include "Grid/RegionMutualExclusionArbitrator.hpp"
 #include "Grid/SparseGrid.hpp"
 #include "Terrain/VoxelDataSource.hpp"
 #include "Terrain/MapRegionStore.hpp"
-#include "TaskDispatcher.hpp"
 #include "Noise/Noise.hpp"
 
 #include <spdlog/spdlog.h>
@@ -29,7 +27,6 @@ public:
     // log -- The logger to use.
     // source -- The source provides initial, unlit voxel data.
     // chunkSize -- The size of chunk VoxelData should use internally.
-    // dispatcher -- Thread pool to use for asynchronous tasks.
     SunlightData(std::shared_ptr<spdlog::logger> log,
                  std::unique_ptr<VoxelDataSource> &&source,
                  unsigned chunkSize,
@@ -58,7 +55,6 @@ private:
     std::shared_ptr<spdlog::logger> _log;
     std::unique_ptr<VoxelDataSource> _source;
     SparseGrid<ChunkPtr> _chunks;
-    mutable RegionMutualExclusionArbitrator _lockArbitrator;
     std::unique_ptr<MapRegionStore> _mapRegionStore;
     std::unique_ptr<Noise> _noiseSource;
     

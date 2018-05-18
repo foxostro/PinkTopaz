@@ -9,6 +9,9 @@
 #include "Terrain/Terrain.hpp"
 #include "Terrain/MesherNaiveSurfaceNets.hpp"
 #include "Terrain/MapRegionStore.hpp"
+#include "Terrain/VoxelData.hpp"
+#include "Terrain/SunlightData.hpp"
+#include "Terrain/TransactedVoxelData.hpp"
 #include "Profiler.hpp"
 #include "Grid/GridIndexerRange.hpp"
 #include "Grid/FrustumRange.hpp"
@@ -281,7 +284,7 @@ void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress
     _meshes->set(cell.center, terrainMesh);
 }
 
-std::shared_ptr<VoxelDataSource>
+std::unique_ptr<VoxelDataSource>
 Terrain::createVoxelData(unsigned voxelDataSeed,
                          const boost::filesystem::path &voxelsDirectory,
                          const boost::filesystem::path &sunlightDirectory)
@@ -305,10 +308,14 @@ Terrain::createVoxelData(unsigned voxelDataSeed,
                                                                 mapRegionBox, mapRegionRes);
     
     // The sunlight data object stores the terrain shape plus sunlight.
-    auto sunlightData = std::make_shared<SunlightData>(_log,
+    auto sunlightData = std::make_unique<SunlightData>(_log,
                                                        std::move(voxelData),
                                                        TERRAIN_CHUNK_SIZE,
                                                        std::move(sunlightRegionStore));
     
-    return sunlightData;
+    // The transacted voxel data object implements the locking protocol
+    // for concurrent access.
+    auto transactedVoxelData = std::make_unique<TransactedVoxelData>(_log, std::move(sunlightData));
+    
+    return transactedVoxelData;
 }

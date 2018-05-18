@@ -22,25 +22,16 @@ VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
 
 void VoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
 {
-    auto mutex = _lockArbitrator.readerMutex(region);
-    std::lock_guard<decltype(mutex)> lock(mutex);
-    const Array3D<Voxel> data = load(region);
-    fn(data);
+    fn(load(region));
 }
 
 void VoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
 {
-    const AABB lockedRegion = boundingBox().intersect(operation->getAffectedRegion());
-    
-    {
-        auto mutex = _lockArbitrator.writerMutex(lockedRegion);
-        std::lock_guard<decltype(mutex)> lock(mutex);
-        Array3D<Voxel> data = load(lockedRegion);
-        operation->perform(data);
-        store(data);
-    }
-    
-    onWriterTransaction(lockedRegion);
+    const AABB region = operation->getAffectedRegion();
+    auto data = load(region);
+    operation->perform(data);
+    store(data);
+    onWriterTransaction(region);
 }
 
 void VoxelData::setWorkingSet(const AABB &workingSet)

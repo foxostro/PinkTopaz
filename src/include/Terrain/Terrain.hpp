@@ -9,12 +9,11 @@
 #ifndef Terrain_hpp
 #define Terrain_hpp
 
-#include <entityx/entityx.h>
 #include "Renderer/GraphicsDevice.hpp"
 #include "TaskDispatcher.hpp"
 #include "Terrain/Mesher.hpp"
 #include "Terrain/VoxelDataGenerator.hpp"
-#include "Terrain/SunlightData.hpp"
+#include "Terrain/VoxelDataSource.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include "Terrain/TerrainRebuildActor.hpp"
 #include "Terrain/TerrainMeshGrid.hpp"
@@ -22,6 +21,9 @@
 #include "Terrain/TerrainConfig.hpp"
 #include "Terrain/TerrainJournal.hpp"
 #include "RenderableStaticMesh.hpp"
+
+#include <entityx/entityx.h>
+#include <memory>
 #include <spdlog/spdlog.h>
 
 // Object represents the voxel terrain of the world.
@@ -101,7 +103,7 @@ private:
     // Rebuilds the next pending mesh in the queue.
     void rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress);
     
-    std::shared_ptr<VoxelDataSource>
+    std::unique_ptr<VoxelDataSource>
     createVoxelData(unsigned voxelDataSeed,
                     const boost::filesystem::path &voxelsDirectory,
                     const boost::filesystem::path &sunlightDirectory);
