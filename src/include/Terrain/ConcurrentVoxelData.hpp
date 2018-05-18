@@ -11,7 +11,6 @@
 
 #include "Grid/RegionMutualExclusionArbitrator.hpp"
 #include "Terrain/VoxelDataSource.hpp"
-#include <spdlog/spdlog.h>
 
 // A block of voxels in space. Concurrent edits are protected by a lock.
 class ConcurrentVoxelData : public VoxelDataSource
@@ -24,10 +23,8 @@ public:
     ConcurrentVoxelData() = delete;
     
     // Constructor.
-    // log -- The logger to use.
     // source -- The source provides initial voxel data.
-    ConcurrentVoxelData(std::shared_ptr<spdlog::logger> log,
-                        std::unique_ptr<VoxelDataSource> &&source);
+    ConcurrentVoxelData(std::unique_ptr<VoxelDataSource> &&source);
     
     // Perform an atomic transaction as a "reader" with read-only access to the
     // underlying data in the specified region.
@@ -47,7 +44,6 @@ public:
     
 private:
     mutable RegionMutualExclusionArbitrator _lockArbitrator;
-    std::shared_ptr<spdlog::logger> _log;
     std::unique_ptr<VoxelDataSource> _source;
 };
 

@@ -8,10 +8,8 @@
 
 #include "Terrain/ConcurrentVoxelData.hpp"
 
-ConcurrentVoxelData::ConcurrentVoxelData(std::shared_ptr<spdlog::logger> log,
-                                         std::unique_ptr<VoxelDataSource> &&source)
+ConcurrentVoxelData::ConcurrentVoxelData(std::unique_ptr<VoxelDataSource> &&source)
  : VoxelDataSource(source->boundingBox(), source->gridResolution()),
-   _log(log),
    _source(std::move(source))
 {
     // Note that we do not have to register with _source->onWriterTransaction

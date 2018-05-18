@@ -313,6 +313,6 @@ Terrain::createVoxelData(unsigned voxelDataSeed,
                                                        TERRAIN_CHUNK_SIZE,
                                                        std::move(sunlightRegionStore));
     
-    // Wrap in another VoxelDataSource object to implement the locking policy.
-    return std::make_unique<ConcurrentVoxelData>(_log, std::move(sunlightData));
+    // Wrap in a ConcurrentVoxelData to implement the locking policy.
+    return std::make_unique<ConcurrentVoxelData>(std::move(sunlightData));
 }
