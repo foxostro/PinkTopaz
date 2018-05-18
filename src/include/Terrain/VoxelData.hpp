@@ -14,15 +14,13 @@
 #include "Terrain/VoxelDataSource.hpp"
 #include "Terrain/MapRegionStore.hpp"
 #include "TaskDispatcher.hpp"
+
 #include <spdlog/spdlog.h>
 
 // A block of voxels in space.
 class VoxelData : public VoxelDataSource
 {
 public:
-    // Default Destructor.
-    virtual ~VoxelData() = default;
-    
     // No default constructor.
     VoxelData() = delete;
     
@@ -66,7 +64,7 @@ protected:
     // The chunk is populated using data gathered from the underlying source.
     // boundingBox -- The bounding box of the chunk.
     // index -- A unique index to identify the chunk in the sparse grid.
-    virtual ChunkPtr createNewChunk(const AABB &boundingBox, Morton3 index);
+    ChunkPtr createNewChunk(const AABB &boundingBox, Morton3 index);
     
     // Loads a copy of the contents of the specified sub-region of the grid to
     // an Array3D and returns that. May fault in missing voxels to satisfy the
