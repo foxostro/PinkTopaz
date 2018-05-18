@@ -101,3 +101,13 @@ PersistentVoxelChunks::get(const AABB &cell, Morton3 index)
         }
     });
 }
+
+void PersistentVoxelChunks::invalidate(const AABB &region)
+{
+    for (const auto chunkCellCoords : slice(_chunks, region)) {
+        const glm::vec3 chunkCenter = _chunks.cellCenterAtCellCoords(chunkCellCoords);
+        const Morton3 chunkIndex = _chunks.indexAtCellCoords(chunkCellCoords);
+        _chunks.invalidate(chunkIndex);
+        _mapRegionStore->invalidate(chunkCenter, chunkIndex);
+    }
+}

@@ -9,7 +9,6 @@
 #ifndef VoxelData_hpp
 #define VoxelData_hpp
 
-#include "Grid/SparseGrid.hpp"
 #include "Terrain/VoxelDataSource.hpp"
 #include "Terrain/PersistentVoxelChunks.hpp"
 

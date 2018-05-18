@@ -15,7 +15,7 @@
 #include <spdlog/spdlog.h>
 
 // Store/Load voxel chunks to file.
-class PersistentVoxelChunks : GridIndexer
+class PersistentVoxelChunks : public GridIndexer
 {
 public:
     using Chunk = Array3D<Voxel>;
@@ -62,6 +62,9 @@ public:
     // boundingBox -- The bounding box of the chunk.
     // index -- A unique index to identify the chunk in the sparse grid.
     std::shared_ptr<Chunk> get(const AABB &boundingBox, Morton3 index);
+    
+    // Invalidate all chunks in the specified region.
+    void invalidate(const AABB &region);
     
 private:
     std::shared_ptr<spdlog::logger> _log;
