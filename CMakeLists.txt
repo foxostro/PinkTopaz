@@ -70,7 +70,7 @@ set(SOURCE_FILES_TERRAIN
     "src/include/Terrain/VoxelDataSource.hpp"
     "src/Terrain/VoxelData.cpp" "src/include/Terrain/VoxelData.hpp"
     "src/Terrain/SunlightData.cpp" "src/include/Terrain/SunlightData.hpp"
-    "src/Terrain/TransactedVoxelData.cpp" "src/include/Terrain/TransactedVoxelData.hpp"
+    "src/Terrain/ConcurrentVoxelData.cpp" "src/include/Terrain/ConcurrentVoxelData.hpp"
     "src/Terrain/VoxelDataGenerator.cpp" "src/include/Terrain/VoxelDataGenerator.hpp"
     "src/Terrain/Terrain.cpp" "src/include/Terrain/Terrain.hpp"
     "src/Terrain/TerrainMesh.cpp" "src/include/Terrain/TerrainMesh.hpp"

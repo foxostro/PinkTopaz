@@ -1,21 +1,21 @@
 //
-//  TransactedVoxelData.cpp
+//  ConcurrentVoxelData.cpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 5/17/18.
 //
 //
 
-#include "Terrain/TransactedVoxelData.hpp"
+#include "Terrain/ConcurrentVoxelData.hpp"
 
-TransactedVoxelData::TransactedVoxelData(std::shared_ptr<spdlog::logger> log,
+ConcurrentVoxelData::ConcurrentVoxelData(std::shared_ptr<spdlog::logger> log,
                                          std::unique_ptr<VoxelDataSource> &&source)
  : VoxelDataSource(source->boundingBox(), source->gridResolution()),
    _log(log),
    _source(std::move(source))
 {}
 
-void TransactedVoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
+void ConcurrentVoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
 {
     const AABB lockedRegion = boundingBox().intersect(region);
     auto mutex = _lockArbitrator.readerMutex(lockedRegion);
@@ -23,7 +23,7 @@ void TransactedVoxelData::readerTransaction(const AABB &region, std::function<vo
     _source->readerTransaction(lockedRegion, fn);
 }
 
-void TransactedVoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
+void ConcurrentVoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
 {
     const AABB lockedRegion = boundingBox().intersect(operation->getAffectedRegion());
     
@@ -36,7 +36,7 @@ void TransactedVoxelData::writerTransaction(const std::shared_ptr<TerrainOperati
     onWriterTransaction(lockedRegion);
 }
 
-void TransactedVoxelData::setWorkingSet(const AABB &workingSet)
+void ConcurrentVoxelData::setWorkingSet(const AABB &workingSet)
 {
     _source->setWorkingSet(workingSet);
 }

@@ -11,7 +11,7 @@
 #include "Terrain/MapRegionStore.hpp"
 #include "Terrain/VoxelData.hpp"
 #include "Terrain/SunlightData.hpp"
-#include "Terrain/TransactedVoxelData.hpp"
+#include "Terrain/ConcurrentVoxelData.hpp"
 #include "Profiler.hpp"
 #include "Grid/GridIndexerRange.hpp"
 #include "Grid/FrustumRange.hpp"
@@ -313,9 +313,6 @@ Terrain::createVoxelData(unsigned voxelDataSeed,
                                                        TERRAIN_CHUNK_SIZE,
                                                        std::move(sunlightRegionStore));
     
-    // The transacted voxel data object implements the locking protocol
-    // for concurrent access.
-    auto transactedVoxelData = std::make_unique<TransactedVoxelData>(_log, std::move(sunlightData));
-    
-    return transactedVoxelData;
+    // Wrap in another VoxelDataSource object to implement the locking policy.
+    return std::make_unique<ConcurrentVoxelData>(_log, std::move(sunlightData));
 }
