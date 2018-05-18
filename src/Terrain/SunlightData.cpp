@@ -40,28 +40,7 @@ void SunlightData::readerTransaction(const AABB &region, std::function<void(cons
 
 void SunlightData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
 {
-#if 0
-    AABB sunlightRegion;
-    {
-        sunlightRegion = operation->getAffectedRegion();
-        
-        // First, account for horizontal propagation.
-        sunlightRegion = sunlightRegion.inset(-glm::vec3(MAX_LIGHT));
-        
-        // Second, account for downward, vertical propagation.
-        glm::vec3 mins = sunlightRegion.mins();
-        glm::vec3 maxs = sunlightRegion.maxs();
-        mins.y = boundingBox().mins().y;
-        glm::vec3 center = (maxs + mins) * 0.5f;
-        glm::vec3 extent = (maxs - mins) * 0.5f;
-        sunlightRegion = {center, extent};
-        
-        sunlightRegion = boundingBox().intersect(sunlightRegion);
-    }
-#else
-    AABB sunlightRegion = operation->getAffectedRegion();
-#endif
-    
+    const AABB sunlightRegion = getAccessRegionForOperation(operation);
     _chunks.invalidate(sunlightRegion);
     _source->writerTransaction(operation);
     onWriterTransaction(sunlightRegion);
@@ -98,7 +77,29 @@ std::unique_ptr<PersistentVoxelChunks::Chunk> SunlightData::createNewChunk(const
 AABB SunlightData::getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
 {
     AABB sourceAccessRegion = _source->getAccessRegionForOperation(operation);
-    AABB ourAccessRegion = operation->getAffectedRegion();
-    AABB combinedAccessRegion = boundingBox().intersect(ourAccessRegion.unionBox(sourceAccessRegion));
+    
+#if 0
+    AABB sunlightRegion;
+    {
+        sunlightRegion = operation->getAffectedRegion();
+        
+        // First, account for horizontal propagation.
+        sunlightRegion = sunlightRegion.inset(-glm::vec3(MAX_LIGHT));
+        
+        // Second, account for downward, vertical propagation.
+        glm::vec3 mins = sunlightRegion.mins();
+        glm::vec3 maxs = sunlightRegion.maxs();
+        mins.y = boundingBox().mins().y;
+        glm::vec3 center = (maxs + mins) * 0.5f;
+        glm::vec3 extent = (maxs - mins) * 0.5f;
+        sunlightRegion = {center, extent};
+        
+        sunlightRegion = boundingBox().intersect(sunlightRegion);
+    }
+#else
+    AABB sunlightRegion = operation->getAffectedRegion();
+#endif
+    
+    AABB combinedAccessRegion = boundingBox().intersect(sunlightRegion.unionBox(sourceAccessRegion));
     return combinedAccessRegion;
 }
