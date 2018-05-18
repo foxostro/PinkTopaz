@@ -11,7 +11,7 @@
 
 #include "Grid/SparseGrid.hpp"
 #include "Terrain/VoxelDataSource.hpp"
-#include "Terrain/MapRegionStore.hpp"
+#include "Terrain/PersistentVoxelChunks.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -26,6 +26,7 @@ public:
     // log -- The logger to use.
     // source -- The source provides initial voxel data.
     // chunkSize -- The size of chunk VoxelData should use internally.
+    // mapRegionStore -- The map file in which to persist chunks.
     VoxelData(std::shared_ptr<spdlog::logger> log,
               std::unique_ptr<VoxelDataSource> &&source,
               unsigned chunkSize,
@@ -55,34 +56,11 @@ public:
     AABB getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation) override;
     
 private:
-    using Chunk = Array3D<Voxel>;
-    using ChunkPtr = std::shared_ptr<Chunk>;
-    
     std::shared_ptr<spdlog::logger> _log;
     std::unique_ptr<VoxelDataSource> _source;
-    SparseGrid<ChunkPtr> _chunks;
-    std::unique_ptr<MapRegionStore> _mapRegionStore;
+    PersistentVoxelChunks _chunks;
     
-    // Returns a new chunk for the corresponding region of space.
-    // The chunk is populated using data gathered from the underlying source.
-    // boundingBox -- The bounding box of the chunk.
-    ChunkPtr createNewChunk(const AABB &boundingBox);
-    
-    // Loads a copy of the contents of the specified sub-region of the grid to
-    // an Array3D and returns that. May fault in missing voxels to satisfy the
-    // request.
-    // Appropriate locks must be held while calling this method.
-    Chunk load(const AABB &region);
-    
-    // Stores the contents of the specified array of voxels to the grid.
-    // Appropriate locks must be held while calling this method.
-    void store(const Chunk &voxels);
-    
-    // Returns the chunk, creating it if necessary, but prefering to fetch it
-    // from the map region file.
-    // boundingBox -- The bounding box of the chunk.
-    // index -- A unique index to identify the chunk in the sparse grid.
-    ChunkPtr get(const AABB &boundingBox, Morton3 index);
+    std::unique_ptr<PersistentVoxelChunks::Chunk> createNewChunk(const AABB &cell);
 };
 
 #endif /* VoxelData_hpp */

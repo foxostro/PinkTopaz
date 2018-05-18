@@ -27,6 +27,7 @@ public:
     // log -- The logger to use.
     // source -- The source provides initial, unlit voxel data.
     // chunkSize -- The size of chunk VoxelData should use internally.
+    // mapRegionStore -- The map file in which to persist chunks.
     SunlightData(std::shared_ptr<spdlog::logger> log,
                  std::unique_ptr<VoxelDataSource> &&source,
                  unsigned chunkSize,

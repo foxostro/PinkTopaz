@@ -16,8 +16,14 @@ VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
  : VoxelDataSource(source->boundingBox(), source->gridResolution()),
    _log(log),
    _source(std::move(source)),
-   _chunks(_source->boundingBox(), _source->gridResolution() / (int)chunkSize),
-   _mapRegionStore(std::move(mapRegionStore))
+   _chunks(log,
+           _source->boundingBox(),
+           _source->gridResolution(),
+           chunkSize,
+           std::move(mapRegionStore),
+           [=](const AABB &cell){
+               return createNewChunk(cell);
+           })
 {
     // Note that we do not have to register with _source->onWriterTransaction
     // beause we have a unique pointer to it and can garauntee it is never
@@ -26,104 +32,29 @@ VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
 
 void VoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
 {
-    fn(load(region));
+    fn(_chunks.load(region));
 }
 
 void VoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
 {
     const AABB region = operation->getAffectedRegion();
-    auto data = load(region);
+    auto data = _chunks.load(region);
     operation->perform(data);
-    store(data);
+    _chunks.store(data);
     onWriterTransaction(region);
 }
 
 void VoxelData::setWorkingSet(const AABB &workingSet)
 {
     _source->setWorkingSet(workingSet);
-    
-    glm::ivec3 count = _chunks.countCellsInRegion(workingSet);
-    size_t chunkCountLimit = count.x * count.y * count.z;
-    _chunks.setCountLimit(chunkCountLimit);
+    _chunks.setWorkingSet(workingSet);
 }
 
-VoxelData::Chunk VoxelData::load(const AABB &region)
+std::unique_ptr<PersistentVoxelChunks::Chunk> VoxelData::createNewChunk(const AABB &cell)
 {
-    // Adjust the region so that it includes the full extent of all voxels that
-    // fall within it. For example, the region may only pass through a portion
-    // of some voxels on the edge, but the adjusted region should include all
-    // of those voxels.
-    const AABB adjustedRegion = _source->snapRegionToCellBoundaries(region);
-    
-    // Construct the destination array.
-    const glm::ivec3 res = _source->countCellsInRegion(adjustedRegion);
-    Array3D<Voxel> dst(adjustedRegion, res);
-    
-    // Fetch all the chunks in the region.
-    for (auto cellCoords : slice(_chunks, adjustedRegion)) {
-        const Morton3 index = _chunks.indexAtCellCoords(cellCoords);
-        const AABB chunkBoundingBox = _chunks.cellAtCellCoords(cellCoords);
-        ChunkPtr chunk = get(chunkBoundingBox, index);
-        
-        // It is entirely possible that the sub-region is not the full size of
-        // the chunk. Iterate over chunk voxels that fall within the region.
-        // Copy each of those voxels into the destination array.
-        const AABB subRegion = chunk->boundingBox().intersect(adjustedRegion);
-        for (const auto voxelCoords : slice(*chunk, subRegion)) {
-            const auto voxelCenter = chunk->cellCenterAtCellCoords(voxelCoords);
-            dst.mutableReference(voxelCenter) = chunk->reference(voxelCoords);
-        }
-    }
-
-    return dst;
-}
-
-void VoxelData::store(const Chunk &voxels)
-{
-    const AABB region = voxels.boundingBox();
-    
-    for (const auto chunkCellCoords : slice(_chunks, region)) {
-        const AABB chunkBoundingBox = _chunks.cellAtCellCoords(chunkCellCoords);
-        const Morton3 chunkIndex = _chunks.indexAtCellCoords(chunkCellCoords);
-        ChunkPtr chunk = get(chunkBoundingBox, chunkIndex);
-        
-        // It is entirely possible that the sub-region is not the full size of
-        // the chunk. Iterate over chunk voxels that fall within the region.
-        // Copy each of those voxels into the destination array.
-        const AABB subRegion = chunkBoundingBox.intersect(region);
-        for (const auto voxelCellCoords : slice(*chunk, subRegion)) {
-            Voxel &dst = chunk->mutableReference(voxelCellCoords);
-            
-            const auto cellCenter = chunk->cellCenterAtCellCoords(voxelCellCoords);
-            const Voxel &src = voxels.reference(cellCenter);
-            
-            dst = src;
-        }
-        
-        // Save the modified chunk back to disk.
-        _mapRegionStore->store(chunkBoundingBox, chunkIndex, *chunk);
-    }
-}
-
-VoxelData::ChunkPtr VoxelData::get(const AABB &cell, Morton3 index)
-{
-    return _chunks.get(index, [=]{
-        auto maybeVoxels = _mapRegionStore->load(cell, index);
-        if (maybeVoxels) {
-            return std::make_shared<Chunk>(*maybeVoxels);
-        } else {
-            ChunkPtr chunk = createNewChunk(cell);
-            _mapRegionStore->store(cell, index, *chunk); // save to disk
-            return chunk;
-        }
-    });
-}
-
-VoxelData::ChunkPtr VoxelData::createNewChunk(const AABB &cell)
-{
-    ChunkPtr chunk;
+    std::unique_ptr<PersistentVoxelChunks::Chunk> chunk;
     _source->readerTransaction(cell, [&](const Array3D<Voxel> &voxels) {
-        chunk = std::make_shared<Chunk>(voxels);
+        chunk = std::make_unique<PersistentVoxelChunks::Chunk>(voxels);
     });
     return chunk;
 }
