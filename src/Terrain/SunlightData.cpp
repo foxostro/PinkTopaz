@@ -21,7 +21,11 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
   _chunks(_source->boundingBox(), _source->gridResolution() / (int)chunkSize),
   _mapRegionStore(std::move(mapRegionStore)),
   _noiseSource(std::make_unique<SimplexNoise>(0))
-{}
+{
+    // Note that we do not have to register with _source->onWriterTransaction
+    // beause we have a unique pointer to it and already handle modifications
+    // made to it through writerTransaction().
+}
 
 void SunlightData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
 {

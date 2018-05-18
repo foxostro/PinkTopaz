@@ -13,7 +13,11 @@ ConcurrentVoxelData::ConcurrentVoxelData(std::shared_ptr<spdlog::logger> log,
  : VoxelDataSource(source->boundingBox(), source->gridResolution()),
    _log(log),
    _source(std::move(source))
-{}
+{
+    // Note that we do not have to register with _source->onWriterTransaction
+    // beause we have a unique pointer to it and already handle modifications
+    // made to it through writerTransaction().
+}
 
 void ConcurrentVoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
 {

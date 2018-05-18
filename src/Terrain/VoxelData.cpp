@@ -18,7 +18,11 @@ VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
    _source(std::move(source)),
    _chunks(_source->boundingBox(), _source->gridResolution() / (int)chunkSize),
    _mapRegionStore(std::move(mapRegionStore))
-{}
+{
+    // Note that we do not have to register with _source->onWriterTransaction
+    // beause we have a unique pointer to it and can garauntee it is never
+    // written to.
+}
 
 void VoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
 {
