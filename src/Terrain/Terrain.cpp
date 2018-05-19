@@ -42,7 +42,8 @@ Terrain::Terrain(const Preferences &preferences,
    _dispatcher(dispatcher),
    _mesher(std::make_shared<MesherNaiveSurfaceNets>(preferences)),
    _cameraPosition(initialCameraPosition),
-   _log(log)
+   _log(log),
+   _activeRegionSize(preferences.activeRegionSize)
 {
     // Load terrain texture array from a single image.
     TextureArrayLoader textureArrayLoader(graphicsDevice);
@@ -113,9 +114,9 @@ Terrain::Terrain(const Preferences &preferences,
     // Limit the sparse grids to the number of chunks in the active region.
     // Now, the active region can change size over time but it will never be
     // larger than this size.
-    _voxels->setWorkingSet({glm::vec3(0.f), glm::vec3((float)ACTIVE_REGION_SIZE + TERRAIN_CHUNK_SIZE)});
+    _voxels->setWorkingSet({glm::vec3(0.f), glm::vec3(_activeRegionSize + TERRAIN_CHUNK_SIZE)});
     
-    const unsigned workingSetCount = std::pow(1 + 2*ACTIVE_REGION_SIZE / TERRAIN_CHUNK_SIZE, 3);
+    const unsigned workingSetCount = std::pow(1 + 2*_activeRegionSize / TERRAIN_CHUNK_SIZE, 3);
     _meshes->setCountLimit(2*workingSetCount);
     
     // Setup an actor to rebuild chunks.
@@ -213,7 +214,7 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     // them later. Meshes can disappear at any time due to cache purges. So,
     // we have to do this everytime we need a mesh and can't find it.
     if (0 == missingMeshes.size()) {
-        auto [distance, didChange] = _horizonDistance.increment_clamp(ACTIVE_REGION_SIZE);
+        auto [distance, didChange] = _horizonDistance.increment_clamp(_activeRegionSize);
         if (didChange) {
             _log->info("Increasing horizon distance to {}", distance);
         }

@@ -45,11 +45,13 @@ struct Preferences
     bool showQueuedChunks;
     bool smoothTerrain;
     spdlog::level::level_enum logLevel;
+    float activeRegionSize;
     
     Preferences()
      : showQueuedChunks(false),
        smoothTerrain(true),
-       logLevel(spdlog::level::info)
+       logLevel(spdlog::level::info),
+       activeRegionSize(256.f)
     {}
     
     // Permits logging with spdlog.
@@ -63,6 +65,8 @@ struct Preferences
                   << (prefs.smoothTerrain ? "true" : "false")
                   << "\n\tlogLevel: "
                   << spdlog::level::to_str(prefs.logLevel)
+                  << "\n\tactiveRegionSize: "
+                  << prefs.activeRegionSize
                   << "\n}";
     }
     
@@ -72,7 +76,8 @@ struct Preferences
     {
         archive(CEREAL_NVP(showQueuedChunks),
                 CEREAL_NVP(smoothTerrain),
-                CEREAL_NVP(logLevel));
+                CEREAL_NVP(logLevel),
+                CEREAL_NVP(activeRegionSize));
     }
 };
 

@@ -81,6 +81,7 @@ private:
     std::atomic<glm::vec3> _cameraPosition;
     TerrainHorizonDistance _horizonDistance;
     std::shared_ptr<spdlog::logger> _log;
+    const float _activeRegionSize;
     
     inline AABB getActiveRegion() const
     {
