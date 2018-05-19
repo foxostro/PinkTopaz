@@ -8,14 +8,10 @@
 
 #include "Terrain/TransactedVoxelData.hpp"
 
-TransactedVoxelData::TransactedVoxelData(std::unique_ptr<VoxelDataSource> &&source)
+TransactedVoxelData::TransactedVoxelData(std::unique_ptr<SunlightData> &&source)
  : GridIndexer(source->boundingBox(), source->gridResolution()),
    _source(std::move(source))
-{
-    // Note that we do not have to register with _source->onWriterTransaction
-    // beause we have a unique pointer to it and already handle modifications
-    // made to it through writerTransaction().
-}
+{}
 
 void TransactedVoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
 {

@@ -18,7 +18,7 @@
 #include "Grid/RegionMutualExclusionArbitrator.hpp"
 #include "Terrain/Voxel.hpp"
 #include "Terrain/TerrainOperation.hpp"
-#include "Terrain/VoxelDataSource.hpp"
+#include "Terrain/SunlightData.hpp"
 
 // A block of voxels in space. Concurrent edits are protected by a lock.
 class TransactedVoxelData : public GridIndexer
@@ -32,7 +32,7 @@ public:
     
     // Constructor.
     // source -- The source provides initial voxel data.
-    TransactedVoxelData(std::unique_ptr<VoxelDataSource> &&source);
+    TransactedVoxelData(std::unique_ptr<SunlightData> &&source);
     
     // Perform an atomic transaction as a "reader" with read-only access to the
     // underlying data in the specified region.
@@ -64,7 +64,7 @@ public:
     
 private:
     mutable RegionMutualExclusionArbitrator _lockArbitrator;
-    std::unique_ptr<VoxelDataSource> _source;
+    std::unique_ptr<SunlightData> _source;
 };
 
 #endif /* ConcurrentVoxelData_hpp */

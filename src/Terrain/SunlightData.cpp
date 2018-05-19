@@ -15,7 +15,7 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
                            std::unique_ptr<VoxelData> &&source,
                            unsigned chunkSize,
                            std::unique_ptr<MapRegionStore> &&mapRegionStore)
-: VoxelDataSource(source->boundingBox(), source->gridResolution()),
+: GridIndexer(source->boundingBox(), source->gridResolution()),
   _log(log),
   _source(std::move(source)),
   _noiseSource(std::make_unique<SimplexNoise>(0)),

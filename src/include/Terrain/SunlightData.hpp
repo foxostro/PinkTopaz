@@ -9,7 +9,6 @@
 #ifndef SunlightData_hpp
 #define SunlightData_hpp
 
-#include "Terrain/VoxelDataSource.hpp"
 #include "Terrain/VoxelData.hpp"
 #include "Terrain/PersistentVoxelChunks.hpp"
 #include "Noise/Noise.hpp"
@@ -17,7 +16,7 @@
 #include <spdlog/spdlog.h>
 
 // Voxels with sunlight computation.
-class SunlightData : public VoxelDataSource
+class SunlightData : public GridIndexer
 {
 public:
     // No default constructor.
@@ -37,24 +36,24 @@ public:
     // underlying data in the specified region.
     // region -- The region we will be reading from.
     // fn -- Closure which will be doing the reading.
-    void readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn) override;
+    void readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn);
     
     // Perform an atomic transaction as a "writer" with read-write access to
     // the underlying voxel data in the specified region.
     // operation -- Describes the edits to be made.
-    void writerTransaction(const std::shared_ptr<TerrainOperation> &operation) override;
+    void writerTransaction(const std::shared_ptr<TerrainOperation> &operation);
     
     // VoxelData may evict chunks to keep the total chunk count under a limit.
     // Set the limit to the number of chunks needed to represent the region
     // specified in `workingSet'.
-    void setWorkingSet(const AABB &workingSet) override;
+    void setWorkingSet(const AABB &workingSet);
     
     // Return the region of voxels which may be accessed during the operation.
     // This is a worst-case estimate of the region of voxel which may be
     // accessed while performing the operation.
     // Knowing this region is useful when determining the region which needs to
     // be locked during the operation.
-    AABB getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation) override;
+    AABB getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation);
     
 private:
     std::shared_ptr<spdlog::logger> _log;
