@@ -11,6 +11,7 @@
 
 #include "Terrain/VoxelDataSource.hpp"
 #include "Terrain/PersistentVoxelChunks.hpp"
+#include "Terrain/VoxelDataGenerator.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -27,7 +28,7 @@ public:
     // chunkSize -- The size of chunk VoxelData should use internally.
     // mapRegionStore -- The map file in which to persist chunks.
     VoxelData(std::shared_ptr<spdlog::logger> log,
-              std::unique_ptr<VoxelDataSource> &&source,
+              std::unique_ptr<VoxelDataGenerator> &&source,
               unsigned chunkSize,
               std::unique_ptr<MapRegionStore> &&mapRegionStore);
     
@@ -56,7 +57,7 @@ public:
     
 private:
     std::shared_ptr<spdlog::logger> _log;
-    std::unique_ptr<VoxelDataSource> _source;
+    std::unique_ptr<VoxelDataGenerator> _source;
     PersistentVoxelChunks _chunks;
     
     std::unique_ptr<PersistentVoxelChunks::Chunk> createNewChunk(const AABB &cell);

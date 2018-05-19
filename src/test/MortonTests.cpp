@@ -9,7 +9,6 @@
 #include "catch.hpp"
 #include <glm/glm.hpp>
 #include "Morton.hpp"
-#include <iostream>
 
 using namespace glm;
 

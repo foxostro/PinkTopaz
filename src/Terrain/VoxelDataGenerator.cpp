@@ -92,18 +92,13 @@ static void generateTerrainVoxel(const Noise &noiseSource0,
 }
 
 VoxelDataGenerator::VoxelDataGenerator(unsigned seed)
- : VoxelDataSource(AABB{glm::vec3(0.f, 0.f, 0.f), glm::vec3((float)extent, (float)extent, (float)extent)},
-                   glm::ivec3(res, res, res)),
-   _noiseSource0(std::make_unique<SimplexNoise>(seed)),
-   _noiseSource1(std::make_unique<SimplexNoise>(seed + 1))
+ : GridIndexer(AABB{glm::vec3(0.f, 0.f, 0.f), glm::vec3((float)extent, (float)extent, (float)extent)},
+               glm::ivec3(res, res, res)),
+               _noiseSource0(std::make_unique<SimplexNoise>(seed)),
+               _noiseSource1(std::make_unique<SimplexNoise>(seed + 1))
 {}
 
-void VoxelDataGenerator::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
-{
-    fn(load(region));
-}
-
-Array3D<Voxel> VoxelDataGenerator::load(const AABB &region)
+Array3D<Voxel> VoxelDataGenerator::copy(const AABB &region) const
 {
     static constexpr float terrainHeight = 20.f;
     
@@ -122,12 +117,4 @@ Array3D<Voxel> VoxelDataGenerator::load(const AABB &region)
     }
     
     return dst;
-}
-
-void VoxelDataGenerator::setWorkingSet(const AABB &workingSet)
-{}
-
-AABB VoxelDataGenerator::getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
-{
-    return operation->getAffectedRegion();
 }

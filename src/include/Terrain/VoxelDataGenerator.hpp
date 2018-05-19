@@ -9,37 +9,26 @@
 #ifndef VoxelDataGenerator_hpp
 #define VoxelDataGenerator_hpp
 
-#include "Terrain/VoxelDataSource.hpp"
+#include "Grid/GridIndexer.hpp"
+#include "Grid/Array3D.hpp"
+#include "Voxel.hpp"
 #include "Noise/Noise.hpp"
+#include <memory>
 
 // Procedurally generates voxel data from pseudorandom noise.
-class VoxelDataGenerator : public VoxelDataSource
+class VoxelDataGenerator : public GridIndexer
 {
 public:
     VoxelDataGenerator(unsigned seed);
     VoxelDataGenerator() = delete;
     ~VoxelDataGenerator() = default;
     
-    void readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn) override;
-    
-    // This operation is unavailable. Calling this will throw VoxelDataReadOnlyException.
-    void writerTransaction(const std::shared_ptr<TerrainOperation> &operation) override
-    {
-        throw VoxelDataReadOnlyException();
-    }
-    
-    void setWorkingSet(const AABB &workingSet) override;
-    
-    AABB getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation) override;
+    // Returns an array which holds a copy of the contents of the subregion.
+    Array3D<Voxel> copy(const AABB &region) const;
     
 private:
     std::unique_ptr<Noise> _noiseSource0;
     std::unique_ptr<Noise> _noiseSource1;
-    
-    // Loads a copy of the contents of the specified sub-region of the grid to
-    // an Array3D and returns that. May fault in missing voxels to satisfy the
-    // request.
-    Array3D<Voxel> load(const AABB &region);
 };
 
 #endif /* VoxelDataGenerator_hpp */

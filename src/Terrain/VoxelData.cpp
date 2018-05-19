@@ -10,7 +10,7 @@
 #include "Grid/GridIndexerRange.hpp"
 
 VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
-                     std::unique_ptr<VoxelDataSource> &&source,
+                     std::unique_ptr<VoxelDataGenerator> &&source,
                      unsigned chunkSize,
                      std::unique_ptr<MapRegionStore> &&mapRegionStore)
  : VoxelDataSource(source->boundingBox(), source->gridResolution()),
@@ -41,23 +41,16 @@ void VoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &opera
 
 void VoxelData::setWorkingSet(const AABB &workingSet)
 {
-    _source->setWorkingSet(workingSet);
     _chunks.setWorkingSet(workingSet);
 }
 
 std::unique_ptr<PersistentVoxelChunks::Chunk> VoxelData::createNewChunk(const AABB &cell)
 {
-    std::unique_ptr<PersistentVoxelChunks::Chunk> chunk;
-    _source->readerTransaction(cell, [&](const Array3D<Voxel> &voxels) {
-        chunk = std::make_unique<PersistentVoxelChunks::Chunk>(voxels);
-    });
+    auto chunk = std::make_unique<PersistentVoxelChunks::Chunk>(_source->copy(cell));
     return chunk;
 }
 
 AABB VoxelData::getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
 {
-    AABB sourceAccessRegion = _source->getAccessRegionForOperation(operation);
-    AABB ourAccessRegion = operation->getAffectedRegion();
-    AABB combinedAccessRegion = boundingBox().intersect(ourAccessRegion.unionBox(sourceAccessRegion));
-    return combinedAccessRegion;
+    return boundingBox().intersect(operation->getAffectedRegion());
 }
