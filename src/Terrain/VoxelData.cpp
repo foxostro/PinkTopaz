@@ -13,7 +13,7 @@ VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
                      std::unique_ptr<VoxelDataGenerator> &&source,
                      unsigned chunkSize,
                      std::unique_ptr<MapRegionStore> &&mapRegionStore)
- : VoxelDataSource(source->boundingBox(), source->gridResolution()),
+ : GridIndexer(source->boundingBox(), source->gridResolution()),
    _log(log),
    _source(std::move(source)),
    _chunks(log,
@@ -48,9 +48,4 @@ std::unique_ptr<PersistentVoxelChunks::Chunk> VoxelData::createNewChunk(const AA
 {
     auto chunk = std::make_unique<PersistentVoxelChunks::Chunk>(_source->copy(cell));
     return chunk;
-}
-
-AABB VoxelData::getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
-{
-    return boundingBox().intersect(operation->getAffectedRegion());
 }

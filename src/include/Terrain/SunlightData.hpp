@@ -10,6 +10,7 @@
 #define SunlightData_hpp
 
 #include "Terrain/VoxelDataSource.hpp"
+#include "Terrain/VoxelData.hpp"
 #include "Terrain/PersistentVoxelChunks.hpp"
 #include "Noise/Noise.hpp"
 
@@ -28,7 +29,7 @@ public:
     // chunkSize -- The size of chunk VoxelData should use internally.
     // mapRegionStore -- The map file in which to persist chunks.
     SunlightData(std::shared_ptr<spdlog::logger> log,
-                 std::unique_ptr<VoxelDataSource> &&source,
+                 std::unique_ptr<VoxelData> &&source,
                  unsigned chunkSize,
                  std::unique_ptr<MapRegionStore> &&mapRegionStore);
     
@@ -57,7 +58,7 @@ public:
     
 private:
     std::shared_ptr<spdlog::logger> _log;
-    std::unique_ptr<VoxelDataSource> _source;
+    std::unique_ptr<VoxelData> _source;
     std::unique_ptr<Noise> _noiseSource;
     PersistentVoxelChunks _chunks;
     

@@ -12,7 +12,7 @@
 #include "math.hpp" // for clamp
 
 SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
-                           std::unique_ptr<VoxelDataSource> &&source,
+                           std::unique_ptr<VoxelData> &&source,
                            unsigned chunkSize,
                            std::unique_ptr<MapRegionStore> &&mapRegionStore)
 : VoxelDataSource(source->boundingBox(), source->gridResolution()),
@@ -71,8 +71,6 @@ std::unique_ptr<PersistentVoxelChunks::Chunk> SunlightData::createNewChunk(const
 
 AABB SunlightData::getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
 {
-    AABB sourceAccessRegion = _source->getAccessRegionForOperation(operation);
-    
 #if 0
     AABB sunlightRegion;
     {
@@ -88,13 +86,11 @@ AABB SunlightData::getAccessRegionForOperation(const std::shared_ptr<TerrainOper
         glm::vec3 center = (maxs + mins) * 0.5f;
         glm::vec3 extent = (maxs - mins) * 0.5f;
         sunlightRegion = {center, extent};
-        
-        sunlightRegion = boundingBox().intersect(sunlightRegion);
     }
 #else
     AABB sunlightRegion = operation->getAffectedRegion();
 #endif
     
-    AABB combinedAccessRegion = boundingBox().intersect(sunlightRegion.unionBox(sourceAccessRegion));
-    return combinedAccessRegion;
+    sunlightRegion = boundingBox().intersect(sunlightRegion);
+    return sunlightRegion;
 }
