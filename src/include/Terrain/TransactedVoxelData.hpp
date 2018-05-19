@@ -45,9 +45,8 @@ public:
     // operation -- Describes the edits to be made.
     void writerTransaction(const std::shared_ptr<TerrainOperation> &operation);
     
-    // VoxelData may evict chunks to keep the total chunk count under a limit.
-    // Set the limit to the number of chunks needed to represent the region
-    // specified in `workingSet'.
+    // We may evict voxel data to keep memory use under some limit.
+    // Specify the working set of voxel data to determine that limit.
     void setWorkingSet(const AABB &workingSet);
     
     // This signal fires when a "writer" transaction finishes. This provides the
