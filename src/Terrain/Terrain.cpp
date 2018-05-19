@@ -11,7 +11,6 @@
 #include "Terrain/MapRegionStore.hpp"
 #include "Terrain/VoxelData.hpp"
 #include "Terrain/SunlightData.hpp"
-#include "Terrain/ConcurrentVoxelData.hpp"
 #include "Profiler.hpp"
 #include "Grid/GridIndexerRange.hpp"
 #include "Grid/FrustumRange.hpp"
@@ -286,7 +285,7 @@ void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress
     _meshes->set(cell.center, terrainMesh);
 }
 
-std::unique_ptr<VoxelDataSource>
+std::unique_ptr<TransactedVoxelData>
 Terrain::createVoxelData(unsigned voxelDataSeed,
                          const boost::filesystem::path &voxelsDirectory,
                          const boost::filesystem::path &sunlightDirectory)
@@ -315,6 +314,6 @@ Terrain::createVoxelData(unsigned voxelDataSeed,
                                                        TERRAIN_CHUNK_SIZE,
                                                        std::move(sunlightRegionStore));
     
-    // Wrap in a ConcurrentVoxelData to implement the locking policy.
-    return std::make_unique<ConcurrentVoxelData>(std::move(sunlightData));
+    // Wrap in a TransactedVoxelData to implement the locking policy.
+    return std::make_unique<TransactedVoxelData>(std::move(sunlightData));
 }

@@ -1,14 +1,14 @@
 //
-//  ConcurrentVoxelData.cpp
+//  TransactedVoxelData.cpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 5/17/18.
 //
 //
 
-#include "Terrain/ConcurrentVoxelData.hpp"
+#include "Terrain/TransactedVoxelData.hpp"
 
-ConcurrentVoxelData::ConcurrentVoxelData(std::unique_ptr<VoxelDataSource> &&source)
+TransactedVoxelData::TransactedVoxelData(std::unique_ptr<VoxelDataSource> &&source)
  : VoxelDataSource(source->boundingBox(), source->gridResolution()),
    _source(std::move(source))
 {
@@ -17,7 +17,7 @@ ConcurrentVoxelData::ConcurrentVoxelData(std::unique_ptr<VoxelDataSource> &&sour
     // made to it through writerTransaction().
 }
 
-void ConcurrentVoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
+void TransactedVoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
 {
     const AABB lockedRegion = boundingBox().intersect(region);
     auto mutex = _lockArbitrator.readerMutex(lockedRegion);
@@ -25,7 +25,7 @@ void ConcurrentVoxelData::readerTransaction(const AABB &region, std::function<vo
     _source->readerTransaction(lockedRegion, fn);
 }
 
-void ConcurrentVoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
+void TransactedVoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
 {
     const AABB lockedRegion = getAccessRegionForOperation(operation);
     
@@ -38,12 +38,12 @@ void ConcurrentVoxelData::writerTransaction(const std::shared_ptr<TerrainOperati
     onWriterTransaction(lockedRegion);
 }
 
-void ConcurrentVoxelData::setWorkingSet(const AABB &workingSet)
+void TransactedVoxelData::setWorkingSet(const AABB &workingSet)
 {
     _source->setWorkingSet(workingSet);
 }
 
-AABB ConcurrentVoxelData::getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
+AABB TransactedVoxelData::getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
 {
     return boundingBox().intersect(_source->getAccessRegionForOperation(operation));
 }

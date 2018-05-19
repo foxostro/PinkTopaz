@@ -1,5 +1,5 @@
 //
-//  ConcurrentVoxelData.hpp
+//  TransactedVoxelData.hpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 5/17/18.
@@ -13,18 +13,18 @@
 #include "Terrain/VoxelDataSource.hpp"
 
 // A block of voxels in space. Concurrent edits are protected by a lock.
-class ConcurrentVoxelData : public VoxelDataSource
+class TransactedVoxelData : public VoxelDataSource
 {
 public:
     // Default Destructor.
-    virtual ~ConcurrentVoxelData() = default;
+    virtual ~TransactedVoxelData() = default;
     
     // No default constructor.
-    ConcurrentVoxelData() = delete;
+    TransactedVoxelData() = delete;
     
     // Constructor.
     // source -- The source provides initial voxel data.
-    ConcurrentVoxelData(std::unique_ptr<VoxelDataSource> &&source);
+    TransactedVoxelData(std::unique_ptr<VoxelDataSource> &&source);
     
     // Perform an atomic transaction as a "reader" with read-only access to the
     // underlying data in the specified region.
