@@ -24,11 +24,7 @@ VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
            [=](const AABB &cell){
                return createNewChunk(cell);
            })
-{
-    // Note that we do not have to register with _source->onWriterTransaction
-    // beause we have a unique pointer to it and can garauntee it is never
-    // written to.
-}
+{}
 
 void VoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
 {
@@ -41,7 +37,6 @@ void VoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &opera
     auto data = _chunks.load(region);
     operation->perform(data);
     _chunks.store(data);
-    onWriterTransaction(region);
 }
 
 void VoxelData::setWorkingSet(const AABB &workingSet)

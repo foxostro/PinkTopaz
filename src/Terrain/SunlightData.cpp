@@ -27,11 +27,7 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
           [=](const AABB &cell){
               return createNewChunk(cell);
           })
-{
-    // Note that we do not have to register with _source->onWriterTransaction
-    // beause we have a unique pointer to it and already handle modifications
-    // made to it through writerTransaction().
-}
+{}
 
 void SunlightData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
 {
@@ -43,7 +39,6 @@ void SunlightData::writerTransaction(const std::shared_ptr<TerrainOperation> &op
     const AABB sunlightRegion = getAccessRegionForOperation(operation);
     _chunks.invalidate(sunlightRegion);
     _source->writerTransaction(operation);
-    onWriterTransaction(sunlightRegion);
 }
 
 void SunlightData::setWorkingSet(const AABB &workingSet)

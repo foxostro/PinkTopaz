@@ -9,7 +9,6 @@
 #ifndef VoxelDataSource_hpp
 #define VoxelDataSource_hpp
 
-#include <boost/signals2.hpp>
 #include <functional>
 #include <memory>
 
@@ -58,11 +57,6 @@ public:
     // the underlying voxel data in the specified region.
     // operation -- Describes the edits to be made.
     virtual void writerTransaction(const std::shared_ptr<TerrainOperation> &operation) = 0;
-    
-    // This signal fires when a "writer" transaction finishes. This provides the
-    // opportunity to respond to changes to data. For example, by rebuilding
-    // meshes associated with underlying voxel data.
-    boost::signals2::signal<void (const AABB &affectedRegion)> onWriterTransaction;
     
     // VoxelData may evict chunks to keep the total chunk count under a limit.
     // Set the limit to the number of chunks needed to represent the region
