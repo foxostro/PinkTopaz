@@ -50,13 +50,6 @@ public:
     // specified in `workingSet'.
     void setWorkingSet(const AABB &workingSet);
     
-    // Return the region of voxels which may be accessed during the operation.
-    // This is a worst-case estimate of the region of voxel which may be
-    // accessed while performing the operation.
-    // Knowing this region is useful when determining the region which needs to
-    // be locked during the operation.
-    AABB getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation);
-    
     // This signal fires when a "writer" transaction finishes. This provides the
     // opportunity to respond to changes to data. For example, by rebuilding
     // meshes associated with underlying voxel data.

@@ -23,7 +23,7 @@ void TransactedVoxelData::readerTransaction(const AABB &region, std::function<vo
 
 void TransactedVoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
 {
-    const AABB lockedRegion = getAccessRegionForOperation(operation);
+    const AABB lockedRegion = boundingBox().intersect(_source->getAccessRegionForOperation(operation));
     
     {
         auto mutex = _lockArbitrator.writerMutex(lockedRegion);
@@ -37,9 +37,4 @@ void TransactedVoxelData::writerTransaction(const std::shared_ptr<TerrainOperati
 void TransactedVoxelData::setWorkingSet(const AABB &workingSet)
 {
     _source->setWorkingSet(workingSet);
-}
-
-AABB TransactedVoxelData::getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
-{
-    return boundingBox().intersect(_source->getAccessRegionForOperation(operation));
 }
