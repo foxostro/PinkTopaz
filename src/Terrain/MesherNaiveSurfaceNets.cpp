@@ -170,7 +170,7 @@ vec4 MesherNaiveSurfaceNets::vertexColor(vec3 vertexPosition,
             for(float dz = -1; dz <= 1; dz += 1.0f) {
                 vec3 lightDir = {dx, dy, dz};
                 
-                float contribution = dot(normal, lightDir) / length(lightDir);
+                float contribution = -dot(normal, lightDir) / length(lightDir);
                 
                 if (contribution > 0) {
                     // Did this ray escape the cell?
