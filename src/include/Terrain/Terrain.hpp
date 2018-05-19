@@ -9,6 +9,7 @@
 #ifndef Terrain_hpp
 #define Terrain_hpp
 
+#include "Preferences.hpp"
 #include "Renderer/GraphicsDevice.hpp"
 #include "TaskDispatcher.hpp"
 #include "Terrain/Mesher.hpp"
@@ -32,7 +33,8 @@ class Terrain
 public:
     ~Terrain();
     
-    Terrain(std::shared_ptr<spdlog::logger> log,
+    Terrain(const Preferences &preferences,
+            std::shared_ptr<spdlog::logger> log,
             const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             const std::shared_ptr<TaskDispatcher> &dispatcher,
             const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher,

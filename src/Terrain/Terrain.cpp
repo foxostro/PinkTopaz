@@ -31,7 +31,8 @@ Terrain::~Terrain()
     _dispatcher->shutdown();
 }
 
-Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
+Terrain::Terrain(const Preferences &preferences,
+                 std::shared_ptr<spdlog::logger> log,
                  const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                  const std::shared_ptr<TaskDispatcher> &dispatcher,
                  const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher,
@@ -39,7 +40,7 @@ Terrain::Terrain(std::shared_ptr<spdlog::logger> log,
                  glm::vec3 initialCameraPosition)
  : _graphicsDevice(graphicsDevice),
    _dispatcher(dispatcher),
-   _mesher(std::make_shared<MesherNaiveSurfaceNets>()),
+   _mesher(std::make_shared<MesherNaiveSurfaceNets>(preferences)),
    _cameraPosition(initialCameraPosition),
    _log(log)
 {

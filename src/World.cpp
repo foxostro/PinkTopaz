@@ -58,7 +58,8 @@ World::World(std::shared_ptr<spdlog::logger> log,
     
     // Create an entity to represent the terrain.
     TerrainComponent terrainComponent;
-    terrainComponent.terrain = std::make_shared<Terrain>(_log,
+    terrainComponent.terrain = std::make_shared<Terrain>(preferences,
+                                                         _log,
                                                          graphicsDevice,
                                                          dispatcherHighPriority,
                                                          mainThreadDispatcher,

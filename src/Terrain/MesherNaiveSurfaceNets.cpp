@@ -340,7 +340,7 @@ MesherNaiveSurfaceNets::verticesForFace(const Voxel &thisVoxel,
                                                          voxels);
     
     // Push the vertices toward the isosurface to smooth the surface.
-    const std::array<vec3,4> smoothedQuad = smoothQuad(voxels, transformedQuad);
+    const std::array<vec3,4> smoothedQuad = _smoothTerrain ? smoothQuad(voxels, transformedQuad) : transformedQuad;
     
     // Stitch vertices of the quad together into two triangles.
     constexpr size_t n = 6;

@@ -10,6 +10,7 @@
 #define MesherNaiveSurfaceNets_hpp
 
 #include "Terrain/Mesher.hpp"
+#include "Preferences.hpp"
 #include <array>
 #include <glm/glm.hpp>
 
@@ -18,7 +19,10 @@
 class MesherNaiveSurfaceNets : public Mesher
 {
 public:
-    MesherNaiveSurfaceNets() = default;
+    MesherNaiveSurfaceNets(const Preferences &preferences)
+    : _smoothTerrain(preferences.smoothTerrain)
+    {}
+    
     virtual ~MesherNaiveSurfaceNets() = default;
     
     // Returns a triangle mesh for the isosurface between value=0 and value=1.
@@ -26,6 +30,8 @@ public:
                                const AABB &region) override;
     
 private:
+    bool _smoothTerrain;
+    
     // For marching cubes, we sample a cube where each vertex is a voxel in the
     // voxel grid.
     struct CubeVertex

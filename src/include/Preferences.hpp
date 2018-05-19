@@ -11,6 +11,7 @@
 
 #include <spdlog/fmt/ostr.h>
 #include <cereal/archives/xml.hpp>
+#include <spdlog/spdlog.h>
 
 
 // Allow serializing spdlog::level::level_enum with cereal.
@@ -42,10 +43,13 @@ namespace cereal {
 struct Preferences
 {
     bool showQueuedChunks;
+    bool smoothTerrain;
     spdlog::level::level_enum logLevel;
     
     Preferences()
-    : showQueuedChunks(false), logLevel(spdlog::level::info)
+     : showQueuedChunks(false),
+       smoothTerrain(true),
+       logLevel(spdlog::level::info)
     {}
     
     // Permits logging with spdlog.
@@ -55,6 +59,8 @@ struct Preferences
         return os << "Preferences {"
                   << "\n\tshowQueuedChunks: "
                   << (prefs.showQueuedChunks ? "true" : "false")
+                  << "\n\tsmoothTerrain: "
+                  << (prefs.smoothTerrain ? "true" : "false")
                   << "\n\tlogLevel: "
                   << spdlog::level::to_str(prefs.logLevel)
                   << "\n}";
@@ -65,6 +71,7 @@ struct Preferences
     void serialize(Archive &archive)
     {
         archive(CEREAL_NVP(showQueuedChunks),
+                CEREAL_NVP(smoothTerrain),
                 CEREAL_NVP(logLevel));
     }
 };
