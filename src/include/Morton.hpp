@@ -19,75 +19,77 @@
 #include <x86intrin.h>
 #endif
 
-// Represents a 32-bit Morton Code (Z-order code) in three dimensions.
+// Represents a 64-bit Morton Code (Z-order code) in three dimensions.
 class Morton3
 {
 private:
-    static constexpr uint32_t MortonMaskX = 0b01001001001001001001001001001001; // 11 bits
-    static constexpr uint32_t MortonMaskY = 0b10010010010010010010010010010010; // 11 bits
-    static constexpr uint32_t MortonMaskZ = 0b00100100100100100100100100100100; // 10 bits
+    //                                        0123456789012345678901234567890123456789012345678901234567890123
+    //                                        0         1         2         3         4         5         6
+    static constexpr uint64_t MortonMaskX = 0b1001001001001001001001001001001001001001001001001001001001001001; // 22 bits
+    static constexpr uint64_t MortonMaskY = 0b0010010010010010010010010010010010010010010010010010010010010010; // 21 bits
+    static constexpr uint64_t MortonMaskZ = 0b0100100100100100100100100100100100100100100100100100100100100100; // 21 bits
     
-    static constexpr uint32_t MortonOffX = 1;
-    static constexpr uint32_t MortonOffY = 2;
-    static constexpr uint32_t MortonOffZ = 4;
+    static constexpr uint64_t MortonOffX = 1;
+    static constexpr uint64_t MortonOffY = 2;
+    static constexpr uint64_t MortonOffZ = 4;
     
-    uint32_t _mortonCode;
+    uint64_t _mortonCode;
     
 public:
     
 #if defined(__BMI2__)
     
-    static inline uint32_t encode(const glm::ivec3 &p)
+    static inline uint64_t encode(const glm::ivec3 &p)
     {
         // Check bounds to prevent overflow when using large coordinates.
         assert(p.x >= 0 && p.y >= 0 && p.z >= 0);
-        assert(p.x < (1<<11) && p.y < (1<<11) && p.z < (1<<10));
+        assert(p.x < (1<<22) && p.y < (1<<21) && p.z < (1<<21));
         
-        uint32_t morton = _pdep_u32((uint32_t)p.x, MortonMaskX)
-                        | _pdep_u32((uint32_t)p.y, MortonMaskY)
-                        | _pdep_u32((uint32_t)p.z, MortonMaskZ);
+        uint64_t morton = _pdep_u64((uint64_t)p.x, MortonMaskX)
+                        | _pdep_u64((uint64_t)p.y, MortonMaskY)
+                        | _pdep_u64((uint64_t)p.z, MortonMaskZ);
         
         return morton;
     }
     
-    static inline void decode(glm::ivec3 &r, uint32_t morton)
+    static inline void decode(glm::ivec3 &r, uint64_t morton)
     {
-        r.x = _pext_u32(morton, MortonMaskX);
-        r.y = _pext_u32(morton, MortonMaskY);
-        r.z = _pext_u32(morton, MortonMaskZ);
+        r.x = _pext_u64(morton, MortonMaskX);
+        r.y = _pext_u64(morton, MortonMaskY);
+        r.z = _pext_u64(morton, MortonMaskZ);
     }
     
-    static inline glm::ivec3 decode(uint32_t morton)
+    static inline glm::ivec3 decode(uint64_t morton)
     {
         glm::ivec3 r;
-        r.x = _pext_u32(morton, MortonMaskX);
-        r.y = _pext_u32(morton, MortonMaskY);
-        r.z = _pext_u32(morton, MortonMaskZ);
+        r.x = _pext_u64(morton, MortonMaskX);
+        r.y = _pext_u64(morton, MortonMaskY);
+        r.z = _pext_u64(morton, MortonMaskZ);
         return r;
     }
     
 #else
     
-    static inline uint32_t encode(const glm::ivec3 &p)
+    static inline uint64_t encode(const glm::ivec3 &p)
     {
         // See <http://www.forceflow.be/2013/10/07/morton-encodingdecoding-through-bit-interleaving-implementations/> for details.
-        uint32_t x = p.x, y = p.y, z = p.z;
-        uint32_t answer = 0;
-        for (uint32_t i = 0; i < (sizeof(uint32_t)* CHAR_BIT)/3; ++i) {
-            answer |= ((x & ((uint32_t)1 << i)) << 2*i) | ((y & ((uint32_t)1 << i)) << (2*i + 1)) | ((z & ((uint32_t)1 << i)) << (2*i + 2));
+        uint64_t x = p.x, y = p.y, z = p.z;
+        uint64_t answer = 0;
+        for (uint64_t i = 0; i < (sizeof(uint64_t)* CHAR_BIT)/3; ++i) {
+            answer |= ((x & ((uint64_t)1 << i)) << 2*i) | ((y & ((uint64_t)1 << i)) << (2*i + 1)) | ((z & ((uint64_t)1 << i)) << (2*i + 2));
         }
         return answer;
     }
     
-    static inline void decode(glm::ivec3 &r, uint32_t morton)
+    static inline void decode(glm::ivec3 &r, uint64_t morton)
     {
         // See <http://www.forceflow.be/2013/10/07/morton-encodingdecoding-through-bit-interleaving-implementations/> for details.
         
-        uint32_t x = 0, y = 0, z = 0;
-        const unsigned checkbits = (unsigned)(floor((sizeof(uint32_t) * 8.0f / 3.0f)));
+        uint64_t x = 0, y = 0, z = 0;
+        const unsigned checkbits = (unsigned)(floor((sizeof(uint64_t) * 8.0f / 3.0f)));
         
         for (unsigned i = 0; i <= checkbits; ++i) {
-            uint32_t selector = 1;
+            uint64_t selector = 1;
             unsigned shift_selector = 3 * i;
             unsigned shiftback = 2 * i;
             x |= (morton & (selector << shift_selector)) >> (shiftback);
@@ -100,7 +102,7 @@ public:
         r.z = z;
     }
 
-    static inline glm::ivec3 decode(uint32_t morton)
+    static inline glm::ivec3 decode(uint64_t morton)
     {
         glm::ivec3 result;
         decode(result, morton);
@@ -128,8 +130,8 @@ public:
         return *this;
     }
     
-    // Cast to uint32_t
-    explicit operator uint32_t() const
+    // Cast to uint64_t
+    explicit operator uint64_t() const
     {
         return _mortonCode;
     }
@@ -189,8 +191,8 @@ public:
     // See <http://bitmath.blogspot.fr/2012/11/tesseral-arithmetic-useful-snippets.html>
     inline Morton3 incX()
     {
-        const uint32_t x_sum = ((_mortonCode | (MortonMaskY | MortonMaskZ)) + MortonOffX);
-        const uint32_t r = (x_sum & MortonMaskX) | (_mortonCode & (MortonMaskY | MortonMaskZ));
+        const uint64_t x_sum = ((_mortonCode | (MortonMaskY | MortonMaskZ)) + MortonOffX);
+        const uint64_t r = (x_sum & MortonMaskX) | (_mortonCode & (MortonMaskY | MortonMaskZ));
         _mortonCode = r;
         return *this;
     }
@@ -200,8 +202,8 @@ public:
     // See <http://bitmath.blogspot.fr/2012/11/tesseral-arithmetic-useful-snippets.html>
     inline Morton3 incY()
     {
-        const uint32_t y_sum = ((_mortonCode | (MortonMaskX | MortonMaskZ)) + MortonOffY);
-        const uint32_t r = (y_sum & MortonMaskY) | (_mortonCode & (MortonMaskX | MortonMaskZ));
+        const uint64_t y_sum = ((_mortonCode | (MortonMaskX | MortonMaskZ)) + MortonOffY);
+        const uint64_t r = (y_sum & MortonMaskY) | (_mortonCode & (MortonMaskX | MortonMaskZ));
         _mortonCode = r;
         return *this;
     }
@@ -211,8 +213,8 @@ public:
     // See <http://bitmath.blogspot.fr/2012/11/tesseral-arithmetic-useful-snippets.html>
     inline Morton3 incZ()
     {
-        const uint32_t z_sum = ((_mortonCode | (MortonMaskX | MortonMaskY)) + MortonOffZ);
-        const uint32_t r = ((z_sum & MortonMaskZ) | (_mortonCode & (MortonMaskX | MortonMaskY)));
+        const uint64_t z_sum = ((_mortonCode | (MortonMaskX | MortonMaskY)) + MortonOffZ);
+        const uint64_t r = ((z_sum & MortonMaskZ) | (_mortonCode & (MortonMaskX | MortonMaskY)));
         _mortonCode = r;
         return *this;
     }
@@ -222,8 +224,8 @@ public:
     // See <http://bitmath.blogspot.fr/2012/11/tesseral-arithmetic-useful-snippets.html>
     inline Morton3 decX()
     {
-        const uint32_t x_diff = (_mortonCode & MortonMaskX) - MortonOffX;
-        const uint32_t r = ((x_diff & MortonMaskX) | (_mortonCode & (MortonMaskY | MortonMaskZ)));
+        const uint64_t x_diff = (_mortonCode & MortonMaskX) - MortonOffX;
+        const uint64_t r = ((x_diff & MortonMaskX) | (_mortonCode & (MortonMaskY | MortonMaskZ)));
         _mortonCode = r;
         return *this;
     }
@@ -233,8 +235,8 @@ public:
     // See <http://bitmath.blogspot.fr/2012/11/tesseral-arithmetic-useful-snippets.html>
     inline Morton3 decY()
     {
-        const uint32_t y_diff = (_mortonCode & MortonMaskY) - MortonOffY;
-        const uint32_t r = ((y_diff & MortonMaskY) | (_mortonCode & (MortonMaskX | MortonMaskZ)));
+        const uint64_t y_diff = (_mortonCode & MortonMaskY) - MortonOffY;
+        const uint64_t r = ((y_diff & MortonMaskY) | (_mortonCode & (MortonMaskX | MortonMaskZ)));
         _mortonCode = r;
         return *this;
     }
@@ -244,8 +246,8 @@ public:
     // See <http://bitmath.blogspot.fr/2012/11/tesseral-arithmetic-useful-snippets.html>
     inline Morton3 decZ()
     {
-        const uint32_t z_diff = (_mortonCode & MortonMaskZ) - MortonOffZ;
-        const uint32_t r = ((z_diff & MortonMaskZ) | (_mortonCode & (MortonMaskX | MortonMaskY)));
+        const uint64_t z_diff = (_mortonCode & MortonMaskZ) - MortonOffZ;
+        const uint64_t r = ((z_diff & MortonMaskZ) | (_mortonCode & (MortonMaskX | MortonMaskY)));
         _mortonCode = r;
         return *this;
     }

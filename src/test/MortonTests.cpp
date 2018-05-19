@@ -9,13 +9,14 @@
 #include "catch.hpp"
 #include <glm/glm.hpp>
 #include "Morton.hpp"
+#include <iostream>
 
 using namespace glm;
 
 TEST_CASE("Test Zero", "[Morton]") {
     const ivec3 zero(0, 0, 0);
     const Morton3 morton(zero);
-    const uint32_t code = (uint32_t)morton;
+    const size_t code = (size_t)morton;
     REQUIRE(code == 0);
 }
 
@@ -23,14 +24,14 @@ TEST_CASE("Test Encode 0xF", "[Morton]") {
     // Interleaving bits of the morton code gives us back the coordinates.
     const ivec3 point(0b1111, 0b1111, 0b1111);
     const Morton3 morton(point);
-    const uint32_t code = (uint32_t)morton;
+    const size_t code = (size_t)morton;
     REQUIRE(code == 0b111111111111);
 }
 
 TEST_CASE("Test Encode 0xA", "[Morton]") {
     const ivec3 point(0b1110, 0b1110, 0b1110);
     const Morton3 morton(point);
-    const uint32_t code = (uint32_t)morton;
+    const size_t code = (size_t)morton;
     REQUIRE(code == 0b111111111000);
 }
 
