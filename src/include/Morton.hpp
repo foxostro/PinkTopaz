@@ -23,9 +23,9 @@
 class Morton3
 {
 private:
-    static constexpr uint32_t MortonMaskX = 0b01001001001001001001001001001001;
-    static constexpr uint32_t MortonMaskY = 0b10010010010010010010010010010010;
-    static constexpr uint32_t MortonMaskZ = 0b00100100100100100100100100100100;
+    static constexpr uint32_t MortonMaskX = 0b01001001001001001001001001001001; // 11 bits
+    static constexpr uint32_t MortonMaskY = 0b10010010010010010010010010010010; // 11 bits
+    static constexpr uint32_t MortonMaskZ = 0b00100100100100100100100100100100; // 10 bits
     
     static constexpr uint32_t MortonOffX = 1;
     static constexpr uint32_t MortonOffY = 2;
@@ -41,7 +41,7 @@ public:
     {
         // Check bounds to prevent overflow when using large coordinates.
         assert(p.x >= 0 && p.y >= 0 && p.z >= 0);
-        assert(p.x < (1<<21) && p.y < (1<<21) && p.z < (1<<21));
+        assert(p.x < (1<<11) && p.y < (1<<11) && p.z < (1<<10));
         
         uint32_t morton = _pdep_u32((uint32_t)p.x, MortonMaskX)
                         | _pdep_u32((uint32_t)p.y, MortonMaskY)
