@@ -34,7 +34,7 @@ void SunlightData::readerTransaction(const AABB &region, std::function<void(cons
     fn(_chunks.load(region));
 }
 
-void SunlightData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
+void SunlightData::writerTransaction(TerrainOperation &operation)
 {
     const AABB sunlightRegion = getAccessRegionForOperation(operation);
     _chunks.invalidate(sunlightRegion);
@@ -69,13 +69,12 @@ std::unique_ptr<PersistentVoxelChunks::Chunk> SunlightData::createNewChunk(const
     return chunk;
 }
 
-AABB SunlightData::getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation)
+AABB SunlightData::getAccessRegionForOperation(TerrainOperation &operation)
 {
+    AABB sunlightRegion = operation.getAffectedRegion();
+    
 #if 0
-    AABB sunlightRegion;
     {
-        sunlightRegion = operation->getAffectedRegion();
-        
         // First, account for horizontal propagation.
         sunlightRegion = sunlightRegion.inset(-glm::vec3(MAX_LIGHT));
         
@@ -87,8 +86,6 @@ AABB SunlightData::getAccessRegionForOperation(const std::shared_ptr<TerrainOper
         glm::vec3 extent = (maxs - mins) * 0.5f;
         sunlightRegion = {center, extent};
     }
-#else
-    AABB sunlightRegion = operation->getAffectedRegion();
 #endif
     
     sunlightRegion = boundingBox().intersect(sunlightRegion);

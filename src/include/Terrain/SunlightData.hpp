@@ -41,7 +41,7 @@ public:
     // Perform an atomic transaction as a "writer" with read-write access to
     // the underlying voxel data in the specified region.
     // operation -- Describes the edits to be made.
-    void writerTransaction(const std::shared_ptr<TerrainOperation> &operation);
+    void writerTransaction(TerrainOperation &operation);
     
     // VoxelData may evict chunks to keep the total chunk count under a limit.
     // Set the limit to the number of chunks needed to represent the region
@@ -53,7 +53,7 @@ public:
     // accessed while performing the operation.
     // Knowing this region is useful when determining the region which needs to
     // be locked during the operation.
-    AABB getAccessRegionForOperation(const std::shared_ptr<TerrainOperation> &operation);
+    AABB getAccessRegionForOperation(TerrainOperation &operation);
     
 private:
     std::shared_ptr<spdlog::logger> _log;

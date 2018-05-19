@@ -140,7 +140,7 @@ Terrain::Terrain(const Preferences &preferences,
     if (mustRegenerateMap) {
         _log->info("Rebuilding the map from the terrain journal.");
         _journal->replay([&](const std::shared_ptr<TerrainOperation> &operation){
-            _voxels->writerTransaction(operation);
+            _voxels->writerTransaction(*operation);
         });
     }
 }
@@ -248,7 +248,7 @@ void Terrain::writerTransaction(const std::shared_ptr<TerrainOperation> &operati
 {
     assert(operation);
     _journal->add(operation);
-    _voxels->writerTransaction(operation);
+    _voxels->writerTransaction(*operation);
 }
 
 void Terrain::rebuildMeshInResponseToChanges(const AABB &voxelAffectedRegion)

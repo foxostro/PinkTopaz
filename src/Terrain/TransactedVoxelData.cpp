@@ -21,7 +21,7 @@ void TransactedVoxelData::readerTransaction(const AABB &region, std::function<vo
     _source->readerTransaction(lockedRegion, fn);
 }
 
-void TransactedVoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
+void TransactedVoxelData::writerTransaction(TerrainOperation &operation)
 {
     const AABB lockedRegion = boundingBox().intersect(_source->getAccessRegionForOperation(operation));
     

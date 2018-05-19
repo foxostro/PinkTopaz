@@ -43,7 +43,7 @@ public:
     // Perform an atomic transaction as a "writer" with read-write access to
     // the underlying voxel data in the specified region.
     // operation -- Describes the edits to be made.
-    void writerTransaction(const std::shared_ptr<TerrainOperation> &operation);
+    void writerTransaction(TerrainOperation &operation);
     
     // We may evict voxel data to keep memory use under some limit.
     // Specify the working set of voxel data to determine that limit.

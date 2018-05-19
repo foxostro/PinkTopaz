@@ -31,11 +31,11 @@ void VoxelData::readerTransaction(const AABB &region, std::function<void(const A
     fn(_chunks.load(region));
 }
 
-void VoxelData::writerTransaction(const std::shared_ptr<TerrainOperation> &operation)
+void VoxelData::writerTransaction(TerrainOperation &operation)
 {
-    const AABB region = operation->getAffectedRegion();
+    const AABB region = operation.getAffectedRegion();
     auto data = _chunks.load(region);
-    operation->perform(data);
+    operation.perform(data);
     _chunks.store(data);
 }
 
