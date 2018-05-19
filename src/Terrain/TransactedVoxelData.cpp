@@ -9,7 +9,7 @@
 #include "Terrain/TransactedVoxelData.hpp"
 
 TransactedVoxelData::TransactedVoxelData(std::unique_ptr<VoxelDataSource> &&source)
- : VoxelDataSource(source->boundingBox(), source->gridResolution()),
+ : GridIndexer(source->boundingBox(), source->gridResolution()),
    _source(std::move(source))
 {
     // Note that we do not have to register with _source->onWriterTransaction

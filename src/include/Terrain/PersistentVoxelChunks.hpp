@@ -47,9 +47,8 @@ public:
     // boundingBox -- The bounding box of the chunk.
     std::shared_ptr<Chunk> createNewChunk(const AABB &boundingBox);
     
-    // Loads a copy of the contents of the specified sub-region of the grid to
-    // an Array3D and returns that. May fault in missing voxels to satisfy the
-    // request.
+    // Loads a copy of the contents of the specified sub-region of the grid
+    // and returns that. May fault in missing voxels to satisfy the request.
     // Appropriate locks must be held while calling this method.
     Chunk load(const AABB &region);
     

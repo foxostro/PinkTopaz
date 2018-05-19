@@ -13,7 +13,7 @@ TerrainMesh::TerrainMesh(const AABB &meshBox,
                          const std::shared_ptr<RenderableStaticMesh> &defMesh,
                          const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                          const std::shared_ptr<Mesher> &mesher,
-                         const std::shared_ptr<VoxelDataSource> &voxels)
+                         const std::shared_ptr<TransactedVoxelData> &voxels)
  : _graphicsDevice(graphicsDevice),
    _mesher(mesher),
    _voxels(voxels),
