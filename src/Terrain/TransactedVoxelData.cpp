@@ -18,7 +18,7 @@ void TransactedVoxelData::readerTransaction(const AABB &region, std::function<vo
     const AABB lockedRegion = boundingBox().intersect(region);
     auto mutex = _lockArbitrator.readerMutex(lockedRegion);
     std::lock_guard<decltype(mutex)> lock(mutex);
-    _source->readerTransaction(lockedRegion, fn);
+    fn(_source->load(lockedRegion));
 }
 
 void TransactedVoxelData::writerTransaction(TerrainOperation &operation)
@@ -28,7 +28,7 @@ void TransactedVoxelData::writerTransaction(TerrainOperation &operation)
     {
         auto mutex = _lockArbitrator.writerMutex(lockedRegion);
         std::lock_guard<decltype(mutex)> lock(mutex);
-        _source->writerTransaction(operation);
+        _source->modify(operation);
     }
     
     onWriterTransaction(lockedRegion);

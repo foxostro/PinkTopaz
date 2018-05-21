@@ -26,12 +26,12 @@ VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
            })
 {}
 
-void VoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
+Array3D<Voxel> VoxelData::load(const AABB &region)
 {
-    fn(_chunks.load(region));
+    return _chunks.load(region);
 }
 
-void VoxelData::writerTransaction(TerrainOperation &operation)
+void VoxelData::modify(TerrainOperation &operation)
 {
     const AABB region = operation.getAffectedRegion();
     auto data = _chunks.load(region);

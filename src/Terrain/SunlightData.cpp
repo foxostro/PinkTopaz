@@ -29,16 +29,16 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
           })
 {}
 
-void SunlightData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
+Array3D<Voxel> SunlightData::load(const AABB &region)
 {
-    fn(_chunks.load(region));
+    return _chunks.load(region);
 }
 
-void SunlightData::writerTransaction(TerrainOperation &operation)
+void SunlightData::modify(TerrainOperation &operation)
 {
     const AABB sunlightRegion = getAccessRegionForOperation(operation);
     _chunks.invalidate(sunlightRegion);
-    _source->writerTransaction(operation);
+    _source->modify(operation);
 }
 
 void SunlightData::setWorkingSet(const AABB &workingSet)
@@ -49,13 +49,9 @@ void SunlightData::setWorkingSet(const AABB &workingSet)
 
 std::unique_ptr<PersistentVoxelChunks::Chunk> SunlightData::createNewChunk(const AABB &cell)
 {
-    std::unique_ptr<PersistentVoxelChunks::Chunk> chunk;
-    
-    _source->readerTransaction(cell, [&](const Array3D<Voxel> &voxels) {
-        chunk = std::make_unique<PersistentVoxelChunks::Chunk>(voxels);
-    });
-    
+    auto chunk = std::make_unique<PersistentVoxelChunks::Chunk>(_source->load(cell));
     Array3D<Voxel> &voxels = *chunk;
+    
     for (const auto cellCoords : slice(voxels, voxels.boundingBox())) {
         const glm::vec3 point = voxels.cellCenterAtCellCoords(cellCoords);
         Voxel &voxel = voxels.mutableReference(cellCoords);

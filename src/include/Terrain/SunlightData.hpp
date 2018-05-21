@@ -32,16 +32,13 @@ public:
                  unsigned chunkSize,
                  std::unique_ptr<MapRegionStore> &&mapRegionStore);
     
-    // Perform an atomic transaction as a "reader" with read-only access to the
-    // underlying data in the specified region.
-    // region -- The region we will be reading from.
-    // fn -- Closure which will be doing the reading.
-    void readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn);
+    // Loads a copy of the contents of the specified sub-region of the grid
+    // and returns that. May fault in missing voxels to satisfy the request.
+    Array3D<Voxel> load(const AABB &region);
     
-    // Perform an atomic transaction as a "writer" with read-write access to
-    // the underlying voxel data in the specified region.
+    // Modify the terrain according to the specified operation.
     // operation -- Describes the edits to be made.
-    void writerTransaction(TerrainOperation &operation);
+    void modify(TerrainOperation &operation);
     
     // VoxelData may evict chunks to keep the total chunk count under a limit.
     // Set the limit to the number of chunks needed to represent the region
