@@ -13,7 +13,7 @@
 
 using namespace glm;
 
-static constexpr int size = 1024;
+static constexpr int size = TERRAIN_SIZE;
 static constexpr int border = TERRAIN_CHUNK_SIZE;
 static constexpr int extent = size + border;
 static constexpr int res = (size + border) * 2;

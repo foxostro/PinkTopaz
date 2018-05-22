@@ -42,21 +42,21 @@ public:
     // `resolution.z' cells along the Z-axis.
     Array3D(const AABB &box, glm::ivec3 res)
      : GridIndexer(box, res),
-       _maxValidIndex(numberOfInternalElements(res)),
+       _maxValidIndex(Morton3::encode(res)),
        _cells(numberOfInternalElements(res))
     {}
     
     // Copy constructor.
     Array3D(const Array3D<CellType> &array)
      : GridIndexer(array.boundingBox(), array.gridResolution()),
-       _maxValidIndex(numberOfInternalElements(array.gridResolution())),
+       _maxValidIndex(Morton3::encode(array.gridResolution())),
        _cells(array._cells)
     {}
     
     // Move constructor.
     Array3D(Array3D<CellType> &&array)
      : GridIndexer(array.boundingBox(), array.gridResolution()),
-       _maxValidIndex(numberOfInternalElements(array.gridResolution())),
+       _maxValidIndex(Morton3::encode(array.gridResolution())),
        _cells(std::move(array._cells))
     {}
     
@@ -133,9 +133,10 @@ public:
         
         if constexpr (EnableVerboseBoundsChecking) {
             if (!isValidIndex(index)) {
-                throw OutOfBoundsException(fmt::format("OutOfBoundsException -- boundingBox={} ; cellCoords={} ; index={} ; maxValidIndex={}",
+                throw OutOfBoundsException(fmt::format("OutOfBoundsException:\nboundingBox={}\ncellCoords={}\ngridResolution={}\nindex={}\nmaxValidIndex={}",
                                                        boundingBox(),
                                                        glm::to_string(cellCoords),
+                                                       glm::to_string(gridResolution()),
                                                        (size_t)index,
                                                        _maxValidIndex));
             }
@@ -148,10 +149,14 @@ public:
     {
         if constexpr (EnableVerboseBoundsChecking) {
             if (!isValidIndex(index)) {
-                throw OutOfBoundsException(fmt::format("OutOfBoundsException -- boundingBox={} ; index={} ; maxValidIndex={}",
+                throw OutOfBoundsException(fmt::format("OutOfBoundsException\nboundingBox={}\nindex={}\nmaxValidIndex={}\nindex corresponds to {}\ngridResolution is {}\nmaxValidIndex corresponds to {}\n_cells.size() = {}",
                                                        boundingBox(),
                                                        (size_t)index,
-                                                       _maxValidIndex));
+                                                       _maxValidIndex,
+                                                       glm::to_string(index.decode()),
+                                                       glm::to_string(gridResolution()),
+                                                       glm::to_string(Morton3(gridResolution() - glm::ivec3(1, 1, 1)).decode()),
+                                                       _cells.size()));
             }
         }
         return _cells[(size_t)index];
@@ -182,7 +187,7 @@ private:
     // Get the number of elements to use in the internal array.
     static inline size_t numberOfInternalElements(const glm::ivec3 &res)
     {
-        return Morton3::encode(res - glm::ivec3(1, 1, 1)) + 1;
+        return Morton3::encode(res) + 1;
     }
 };
 

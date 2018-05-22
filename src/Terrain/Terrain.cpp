@@ -239,7 +239,7 @@ float Terrain::getFogDensity() const
     return fogDensity;
 }
 
-void Terrain::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
+void Terrain::readerTransaction(const AABB &region, std::function<void(Array3D<Voxel> &&data)> fn)
 {
     _voxels->readerTransaction(region, fn);
 }

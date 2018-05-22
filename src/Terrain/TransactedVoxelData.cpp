@@ -13,7 +13,7 @@ TransactedVoxelData::TransactedVoxelData(std::unique_ptr<SunlightData> &&source)
    _source(std::move(source))
 {}
 
-void TransactedVoxelData::readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn)
+void TransactedVoxelData::readerTransaction(const AABB &region, std::function<void(Array3D<Voxel> &&data)> fn)
 {
     const AABB lockedRegion = boundingBox().intersect(region);
     auto mutex = _lockArbitrator.readerMutex(lockedRegion);

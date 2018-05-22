@@ -61,7 +61,7 @@ public:
     // underlying data in the specified region.
     // region -- The region we will be reading from.
     // fn -- Closure which will be doing the reading.
-    void readerTransaction(const AABB &region, std::function<void(const Array3D<Voxel> &data)> fn);
+    void readerTransaction(const AABB &region, std::function<void(Array3D<Voxel> &&data)> fn);
     
     // Perform an atomic transaction as a "writer" with read-write access to
     // the underlying voxel data in the specified region.

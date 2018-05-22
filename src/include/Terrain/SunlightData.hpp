@@ -11,7 +11,6 @@
 
 #include "Terrain/VoxelData.hpp"
 #include "Terrain/PersistentVoxelChunks.hpp"
-#include "Noise/Noise.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -55,10 +54,11 @@ public:
 private:
     std::shared_ptr<spdlog::logger> _log;
     std::unique_ptr<VoxelData> _source;
-    std::unique_ptr<Noise> _noiseSource;
     PersistentVoxelChunks _chunks;
     
-    std::unique_ptr<PersistentVoxelChunks::Chunk> createNewChunk(const AABB &cell);
+    std::unique_ptr<PersistentVoxelChunks::Chunk> createNewChunk(const AABB &cell, Morton3 index);
+    
+    AABB getSunlightRegion(AABB sunlightRegion) const;
 };
 
 #endif /* SunlightData_hpp */

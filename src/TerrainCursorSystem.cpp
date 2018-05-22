@@ -159,7 +159,7 @@ void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTran
         bool active = false;
         glm::vec3 cursorPos, placePos;
         
-        terrain->readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
+        terrain->readerTransaction(voxelBox, [&](Array3D<Voxel> &&voxels){
             for (const auto &pos : slice(voxels, ray, maxPlaceDistance)) {
                 const Voxel &voxel = voxels.reference(pos);
                 

@@ -35,7 +35,7 @@ public:
                           const glm::ivec3 gridResolution,
                           unsigned chunkSize,
                           std::unique_ptr<MapRegionStore> &&mapRegionStore,
-                          std::function<std::unique_ptr<Chunk>(const AABB &cell)> factory);
+                          std::function<std::unique_ptr<Chunk>(const AABB &cell, Morton3 index)> factory);
     
     // We may evict chunks to keep the total chunk count under a limit.
     // Set the limit to the number of chunks needed to represent the region
@@ -45,7 +45,8 @@ public:
     // Returns a new chunk for the corresponding region of space.
     // The chunk is populated using data gathered from the underlying source.
     // boundingBox -- The bounding box of the chunk.
-    std::shared_ptr<Chunk> createNewChunk(const AABB &boundingBox);
+    // index -- The coordinates of the chunk.
+    std::shared_ptr<Chunk> createNewChunk(const AABB &boundingBox, Morton3 index);
     
     // Loads a copy of the contents of the specified sub-region of the grid
     // and returns that. May fault in missing voxels to satisfy the request.
@@ -69,7 +70,7 @@ private:
     std::shared_ptr<spdlog::logger> _log;
     SparseGrid<std::shared_ptr<Chunk>> _chunks;
     std::unique_ptr<MapRegionStore> _mapRegionStore;
-    std::function<std::unique_ptr<Chunk>(const AABB &cell)> _factory;
+    std::function<std::unique_ptr<Chunk>(const AABB &cell, Morton3 index)> _factory;
 };
 
 #endif /* PersistentVoxelChunks_hpp */

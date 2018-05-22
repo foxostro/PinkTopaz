@@ -52,7 +52,7 @@ private:
     std::unique_ptr<VoxelDataGenerator> _source;
     PersistentVoxelChunks _chunks;
     
-    std::unique_ptr<PersistentVoxelChunks::Chunk> createNewChunk(const AABB &cell);
+    std::unique_ptr<PersistentVoxelChunks::Chunk> createNewChunk(const AABB &cell, Morton3 index);
 };
 
 #endif /* VoxelData_hpp */

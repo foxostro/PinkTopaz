@@ -21,8 +21,8 @@ VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
            _source->gridResolution(),
            chunkSize,
            std::move(mapRegionStore),
-           [=](const AABB &cell){
-               return createNewChunk(cell);
+           [=](const AABB &cell, Morton3 index){
+               return createNewChunk(cell, index);
            })
 {}
 
@@ -44,8 +44,7 @@ void VoxelData::setWorkingSet(const AABB &workingSet)
     _chunks.setWorkingSet(workingSet);
 }
 
-std::unique_ptr<PersistentVoxelChunks::Chunk> VoxelData::createNewChunk(const AABB &cell)
+std::unique_ptr<PersistentVoxelChunks::Chunk> VoxelData::createNewChunk(const AABB &cell, Morton3 index)
 {
-    auto chunk = std::make_unique<PersistentVoxelChunks::Chunk>(_source->copy(cell));
-    return chunk;
+    return std::make_unique<PersistentVoxelChunks::Chunk>(_source->copy(cell));
 }

@@ -71,7 +71,7 @@ void TerrainMesh::rebuild(TerrainProgressTracker &progress)
     const AABB voxelBox = _meshBox.inset(-2.f * _voxels->cellDimensions());
     
     progress.setState(TerrainProgressEvent::WaitingOnVoxels);
-    _voxels->readerTransaction(voxelBox, [&](const Array3D<Voxel> &voxels){
+    _voxels->readerTransaction(voxelBox, [&](Array3D<Voxel> &&voxels){
         progress.setState(TerrainProgressEvent::ExtractingSurface);
         
         StaticMesh mesh = _mesher->extract(voxels, _meshBox);

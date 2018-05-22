@@ -14,7 +14,7 @@ PersistentVoxelChunks::PersistentVoxelChunks(std::shared_ptr<spdlog::logger> log
                                              const glm::ivec3 gridResolution,
                                              unsigned chunkSize,
                                              std::unique_ptr<MapRegionStore> &&mapRegionStore,
-                                             std::function<std::unique_ptr<Chunk>(const AABB &cell)> factory)
+                                             std::function<std::unique_ptr<Chunk>(const AABB &cell, Morton3 index)> factory)
  : GridIndexer(boundingBox, gridResolution),
    _log(log),
    _chunks(boundingBox, gridResolution / (int)chunkSize),
@@ -95,7 +95,7 @@ PersistentVoxelChunks::get(const AABB &cell, Morton3 index)
         if (maybeVoxels) {
             return std::make_shared<Chunk>(*maybeVoxels);
         } else {
-            std::shared_ptr<Chunk> chunk = _factory(cell);
+            std::shared_ptr<Chunk> chunk = _factory(cell, index);
             _mapRegionStore->store(cell, index, *chunk); // save to disk
             return chunk;
         }
