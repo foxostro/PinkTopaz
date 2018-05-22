@@ -184,11 +184,12 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     // Draw meshes in the camera frustum.
     for (const glm::ivec3 cellCoords : slice(meshes, frustum, activeRegion)) {
         const Morton3 index = meshes.indexAtCellCoords(cellCoords);
-        boost::optional<std::shared_ptr<TerrainMesh>> maybeTerrainMeshPtr = meshes.getIfExists(index);
+        boost::optional<std::shared_ptr<TerrainMesh>> maybeTerrainMeshPtr = meshes.get(index);
         
         if (maybeTerrainMeshPtr) {
-            assert(*maybeTerrainMeshPtr);
-            const RenderableStaticMesh &drawThis = (**maybeTerrainMeshPtr).getMesh();
+            std::shared_ptr<TerrainMesh> terrainMeshPtr = *maybeTerrainMeshPtr;
+            assert(terrainMeshPtr);
+            const RenderableStaticMesh &drawThis = terrainMeshPtr->getMesh();
             if (drawThis.vertexCount > 0) {
                 encoder->setVertexBuffer(drawThis.buffer, 0);
                 encoder->drawPrimitives(Triangles, 0, drawThis.vertexCount, 1);
@@ -201,7 +202,7 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     missingMeshes.clear();
     for (const glm::ivec3 cellCoords : slice(meshes, activeRegion)) {
         const Morton3 index = meshes.indexAtCellCoords(cellCoords);
-        const auto maybeTerrainMeshPtr = meshes.getIfExists(index);
+        const auto maybeTerrainMeshPtr = meshes.get(index);
         if (!maybeTerrainMeshPtr) {
             missingMeshes.emplace_back(std::make_pair(index, meshes.cellAtCellCoords(cellCoords)));
         }

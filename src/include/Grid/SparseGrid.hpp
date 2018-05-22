@@ -15,11 +15,15 @@
 #include <mutex>
 
 // SparseGrid divides space into a regular grid of cells where each cell is
-// associated with an element. Access to elements is synchronized to avoid
-// data races and make this class thread-safe.
+// associated with an element.
 //
 // The grid may limit it's size and choose to evict items which have not been
 // used recently.
+//
+// Access to the grid is synchronized so that concurrent access is safe.
+// However, clients may see data races associated with multiple, concurrent
+// accesses to the same element. Enforce synchronization at a higher level to
+// ensure consistency.
 template<typename ElementType>
 class SparseGrid : public GridIndexer
 {
@@ -49,7 +53,8 @@ public:
         return *this;
     }
     
-    boost::optional<ElementType> getIfExists(Morton3 morton)
+    // Return the element at the specified index, if there is one.
+    boost::optional<ElementType> get(Morton3 morton)
     {
         std::lock_guard<std::mutex> tableLock(_mutex);
         auto iter = _slots.find(morton);
@@ -67,44 +72,21 @@ public:
         }
     }
     
-    boost::optional<ElementType> getIfExists(const glm::vec3 &p)
-    {
-        if constexpr (EnableVerboseBoundsChecking) {
-            if (!inbounds(p)) {
-                throw OutOfBoundsException(fmt::format("OutOfBoundsException -- boundingBox={} ; p={}",
-                                                       boundingBox(),
-                                                       glm::to_string(p)));
-            }
-        }
-        return getIfExists(indexAtPoint(p));
-    }
-    
+    // Return the element at the specified index.
+    // If the slot is empty then this uses `factory' to populate the slot.
     template<typename FactoryType>
     ElementType get(Morton3 morton, FactoryType &&factory)
     {
-        std::unique_lock<std::mutex> tableLock(_mutex);
-        
-        _lru.reference(morton); // reference the key so it doesn't get evicted
-        enforceLimits();
-        
-        std::unique_lock<std::mutex> slotLock(_slotMutexes[morton]);
-        boost::optional<ElementType> &slot = _slots[morton];
-        
-        _lru.reference(morton); // reference the key because it's recently used
-        tableLock.unlock();
-        
-        if (!slot) {
-            slot = boost::make_optional(factory());
+        auto maybeChunk = get(morton);
+        if (!maybeChunk) {
+            set(morton, factory());
+            maybeChunk = get(morton);
         }
-        ElementType el = *slot;
-        return el;
+        assert(maybeChunk);
+        return *maybeChunk;
     }
     
-    ElementType get(Morton3 morton)
-    {
-        return get(morton, []{ return ElementType(); });
-    }
-    
+    // Set the element at the specified index to the specified value.
     void set(Morton3 morton, const ElementType &el)
     {
         std::unique_lock<std::mutex> tableLock(_mutex);
@@ -121,18 +103,7 @@ public:
         slot = boost::make_optional(el);
     }
     
-    ElementType get(const glm::vec3 &p)
-    {
-        if constexpr (EnableVerboseBoundsChecking) {
-            if (!inbounds(p)) {
-                throw OutOfBoundsException(fmt::format("OutOfBoundsException -- boundingBox={} ; p={}",
-                                                       boundingBox(),
-                                                       glm::to_string(p)));
-            }
-        }
-        return get(indexAtPoint(p));
-    }
-    
+    // Set the element at the specified point to the specified value.
     void set(const glm::vec3 &p, const ElementType &el)
     {
         if constexpr (EnableVerboseBoundsChecking) {
@@ -165,6 +136,8 @@ public:
         }
     }
     
+    // Invalidate the element associated with the given index.
+    // The element is disacarded and the associated slot becomes empty.
     void invalidate(Morton3 morton)
     {
         std::unique_lock<std::mutex> tableLock(_mutex);
