@@ -14,7 +14,7 @@ MapRegion::MapRegion(std::shared_ptr<spdlog::logger> log,
    _log(log)
 {}
 
-boost::optional<Array3D<Voxel>> MapRegion::load(const AABB &bbox, Morton3 key)
+boost::optional<VoxelDataChunk> MapRegion::load(const AABB &bbox, Morton3 key)
 {
     boost::optional<std::vector<uint8_t>> maybeBytes(_dataStore.load((size_t)key));
     
@@ -32,9 +32,9 @@ boost::optional<Array3D<Voxel>> MapRegion::load(const AABB &bbox, Morton3 key)
     return boost::none;
 }
 
-void MapRegion::store(Morton3 key, const Array3D<Voxel> &voxels)
+void MapRegion::store(Morton3 key, const VoxelDataChunk &chunk)
 {
-    _dataStore.store((size_t)key, _serializer.store(voxels));
+    _dataStore.store((size_t)key, _serializer.store(chunk));
 }
 
 void MapRegion::invalidate(Morton3 key)

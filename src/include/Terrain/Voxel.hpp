@@ -22,10 +22,18 @@ struct Voxel
     
     Voxel() : value(0), sunLight(0), torchLight(0) {}
     explicit Voxel(bool v) : value(v ? 1 : 0), sunLight(0), torchLight(0) {}
+    explicit Voxel(bool v, unsigned s, unsigned t) : value(v ? 1 : 0), sunLight(s), torchLight(t) {}
     
     bool operator==(const Voxel &other) const
     {
-        return other.value == value;
+        return other.value == value
+            && other.sunLight == sunLight
+            && other.torchLight == torchLight;
+    }
+    
+    bool operator!=(const Voxel &other) const
+    {
+        return !((*this) == other);
     }
     
     template<typename Archive>

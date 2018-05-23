@@ -28,7 +28,7 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
 
 Array3D<Voxel> SunlightData::load(const AABB &region)
 {
-    return _chunks.load(region);
+    return _chunks.copySubRegion(region);
 }
 
 void SunlightData::modify(TerrainOperation &operation)
@@ -49,10 +49,10 @@ AABB SunlightData::getAccessRegionForOperation(TerrainOperation &operation)
     return getSunlightRegion(operation.getAffectedRegion());
 }
 
-std::unique_ptr<PersistentVoxelChunks::Chunk>
+std::unique_ptr<VoxelDataChunk>
 SunlightData::createNewChunk(const AABB &cell, Morton3 chunkIndex)
 {
-    Array3D<Voxel> voxels = _source->load(cell);
+    VoxelDataChunk voxels = _source->load(cell);
     
     const glm::ivec3 res = voxels.gridResolution();
     
@@ -77,34 +77,37 @@ SunlightData::createNewChunk(const AABB &cell, Morton3 chunkIndex)
         
         iterateHorizontalSlice([&](glm::ivec3 cellCoords){
             cellCoords.y = 0;
-            const Voxel &topVoxel = topSunlightChunk->reference(cellCoords);
+            const Voxel topVoxel = topSunlightChunk->get(cellCoords);
             cellCoords.y = voxels.gridResolution().y - 1;
-            Voxel &voxel = voxels.mutableReference(cellCoords);
+            Voxel voxel = voxels.get(cellCoords);
             if ((topVoxel.value == 0) && (voxel.value == 0)) {
                 voxel.sunLight = topVoxel.sunLight;
+                voxels.set(cellCoords, voxel);
             }
         });
     } else {
         iterateHorizontalSlice([&](glm::ivec3 cellCoords){
             cellCoords.y = voxels.gridResolution().y - 1;
-            Voxel &voxel = voxels.mutableReference(cellCoords);
+            Voxel voxel = voxels.get(cellCoords);
             if (voxel.value == 0) {
                 voxel.sunLight = MAX_LIGHT;
+                voxels.set(cellCoords, voxel);
             }
         });
     }
     
     iterateHorizontalSlice([&](glm::ivec3 cellCoords){
         for (cellCoords.y = res.y-2; cellCoords.y >= 0; --cellCoords.y) {
-            const Voxel &topVoxel = voxels.reference(glm::ivec3(cellCoords.x, cellCoords.y + 1, cellCoords.z));
-            Voxel &voxel = voxels.mutableReference(cellCoords);
+            const Voxel topVoxel = voxels.get(glm::ivec3(cellCoords.x, cellCoords.y + 1, cellCoords.z));
+            Voxel voxel = voxels.get(cellCoords);
             if ((topVoxel.value == 0) && (voxel.value == 0)) {
                 voxel.sunLight = topVoxel.sunLight;
+                voxels.set(cellCoords, voxel);
             }
         }
     });
     
-    return std::make_unique<PersistentVoxelChunks::Chunk>(std::move(voxels));\
+    return std::make_unique<VoxelDataChunk>(std::move(voxels));
 }
 
 AABB SunlightData::getSunlightRegion(AABB sunlightRegion) const

@@ -9,7 +9,6 @@
 #ifndef MapRegion_hpp
 #define MapRegion_hpp
 
-#include "Terrain/Voxel.hpp"
 #include "Terrain/VoxelDataSerializer.hpp"
 #include "Grid/Array3D.hpp"
 #include "BlockDataStore/BlockDataStore.hpp"
@@ -24,11 +23,11 @@ public:
     
     // Loads a voxel chunk from file, if available.
     // The key uniquely identifies the chunk in the voxel chunk in space.
-    boost::optional<Array3D<Voxel>> load(const AABB &bbox, Morton3 key);
+    boost::optional<VoxelDataChunk> load(const AABB &bbox, Morton3 key);
     
     // Stores a voxel chunk to file.
     // The key uniquely identifies the chunk in the voxel chunk in space.
-    void store(Morton3 key, const Array3D<Voxel> &voxels);
+    void store(Morton3 key, const VoxelDataChunk &voxels);
     
     // Invalidates a voxel chunk, removing it from file.
     // The key uniquely identifies the chunk in the voxel chunk in space.

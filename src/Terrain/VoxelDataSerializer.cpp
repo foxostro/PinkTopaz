@@ -32,7 +32,7 @@ static std::vector<uint8_t> compress(const std::vector<uint8_t> &input)
     // Guess how many compressed bytes. We'll guess the output has the same
     // number of bytes as the input, but it's probably smaller. That is, after
     // all, the whole point.
-    const size_t guess = input.size();
+    const size_t guess = std::max(input.size(), (size_t)1);
     
     bool done = false;
     std::vector<uint8_t> output(guess);
@@ -58,6 +58,9 @@ static std::vector<uint8_t> compress(const std::vector<uint8_t> &input)
                 
             case Z_MEM_ERROR:
                 throw VoxelDataException("Z_MEM_ERROR");
+                
+            case Z_STREAM_ERROR:
+                throw VoxelDataException("Z_STREAM_ERROR");
                 
             default:
                 assert(!"not reachable");
@@ -115,7 +118,7 @@ VoxelDataSerializer::VoxelDataSerializer()
  : VOXEL_MAGIC('lxov'), VOXEL_VERSION(2)
 {}
 
-Array3D<Voxel> VoxelDataSerializer::load(const AABB &boundingBox,
+VoxelDataChunk VoxelDataSerializer::load(const AABB &boundingBox,
                                          const std::vector<uint8_t> &bytes)
 {
     assert(bytes.size() > sizeof(Header));
@@ -130,37 +133,49 @@ Array3D<Voxel> VoxelDataSerializer::load(const AABB &boundingBox,
         throw VoxelDataIncompatibleVersionException(header.version, VOXEL_VERSION);
     }
     
-    if (header.w == 0 || header.h == 0 || header.d == 0 ||
-        header.w > 255 || header.h > 255 || header.d > 255) {
+    if (header.chunkType == CHUNK_TYPE_ARRAY &&
+        (header.w == 0 || header.h == 0 || header.d == 0 ||
+         header.w >= (1<<22) || header.h >= (1<<21) || header.d >= (1<<21))) {
         throw VoxelDataInvalidSizeException(header.w, header.h, header.d);
     }
     
-    const std::vector<uint8_t> compressedBytes(header.compressedBytes, header.compressedBytes + header.len);
-    
-    uint32_t s = computeChecksum(compressedBytes);
-    if (header.checksum != s) {
-        throw VoxelDataChecksumException(header.checksum, s);
-    }
-    
-    const std::vector<uint8_t> decompressedBytes = decompress(compressedBytes);
     const glm::ivec3 gridResolution(header.w, header.h, header.d);
-    Array3D<Voxel> voxels(boundingBox, gridResolution);
-    memcpy((void *)voxels.data(), (const void *)decompressedBytes.data(), decompressedBytes.size());
     
-    return voxels;
+    switch (header.chunkType) {
+        case CHUNK_TYPE_ARRAY:
+        {
+            const std::vector<uint8_t> compressedBytes(header.compressedBytes, header.compressedBytes + header.len);
+            
+            uint32_t s = computeChecksum(compressedBytes);
+            if (header.checksum != s) {
+                throw VoxelDataChecksumException(header.checksum, s);
+            }
+            
+            const std::vector<uint8_t> decompressedBytes = decompress(compressedBytes);
+            Array3D<Voxel> voxels(boundingBox, gridResolution);
+            memcpy((void *)voxels.data(), (const void *)decompressedBytes.data(), decompressedBytes.size());
+            
+            return VoxelDataChunk::createArrayChunk(std::move(voxels));
+        } break;
+            
+        case CHUNK_TYPE_SKY:
+            return VoxelDataChunk::createSkyChunk(boundingBox, gridResolution);
+            
+        case CHUNK_TYPE_GROUND:
+            return VoxelDataChunk::createGroundChunk(boundingBox, gridResolution);
+            
+        default:
+            throw VoxelDataException("Unknown voxel chunk type {}", header.chunkType);
+            
+    }
 }
 
-std::vector<uint8_t> VoxelDataSerializer::store(const Array3D<Voxel> &voxels)
+std::vector<uint8_t> VoxelDataSerializer::store(const VoxelDataChunk &chunk)
 {
-    const glm::ivec3 res = voxels.gridResolution();
+    const glm::ivec3 res = chunk.gridResolution();
     
     // Get the uncompressed voxel bytes from the chunk.
-    const size_t numberOfVoxelBytes = res.x * res.y * res.z * sizeof(Voxel);
-    std::vector<uint8_t> uncompressedBytes;
-    uncompressedBytes.resize(numberOfVoxelBytes);
-    memcpy((void *)uncompressedBytes.data(),
-           (const void *)voxels.data(),
-           numberOfVoxelBytes);
+    std::vector<uint8_t> uncompressedBytes = chunk.getUncompressedBytes();
     
     // Compress the voxel data.
     const std::vector<uint8_t> compressedBytes = compress(uncompressedBytes);
@@ -176,6 +191,23 @@ std::vector<uint8_t> VoxelDataSerializer::store(const Array3D<Voxel> &voxels)
     header.h = res.y;
     header.d = res.z;
     header.len = (uint32_t)compressedBytes.size();
+    
+    switch (chunk.getType()) {
+        case VoxelDataChunk::Array:
+            header.chunkType = CHUNK_TYPE_ARRAY;
+            break;
+            
+        case VoxelDataChunk::Sky:
+            header.chunkType = CHUNK_TYPE_SKY;
+            break;
+            
+        case VoxelDataChunk::Ground:
+            header.chunkType = CHUNK_TYPE_GROUND;
+            break;
+            
+        default:
+            assert(!"unreachable");
+    }
     
     memcpy((void *)header.compressedBytes,
            (const void *)compressedBytes.data(),

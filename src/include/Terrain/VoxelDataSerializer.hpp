@@ -9,8 +9,8 @@
 #ifndef VoxelDataSerializer_hpp
 #define VoxelDataSerializer_hpp
 
-#include "Terrain/Voxel.hpp"
-#include "Grid/Array3D.hpp"
+
+#include "Terrain/VoxelDataChunk.hpp"
 #include "Exception.hpp"
 
 class VoxelDataException : public Exception
@@ -62,6 +62,10 @@ public:
 class VoxelDataSerializer
 {
 public:
+    static constexpr unsigned CHUNK_TYPE_ARRAY = 0;
+    static constexpr unsigned CHUNK_TYPE_SKY = 1;
+    static constexpr unsigned CHUNK_TYPE_GROUND = 2;
+    
     // This header is placed at the beginning of the serialized voxel data.
     struct Header {
         // Magic number to identify the voxels. This is a very simple way to
@@ -81,6 +85,9 @@ public:
         // The number of compressed bytes in `compressedBytes'.
         uint32_t len;
         
+        // Indicates the type of the chunk, such as Sky, Ground, or Array3D.
+        uint32_t chunkType;
+        
         // The compressed voxel bytes.
         uint8_t compressedBytes[0];
     };
@@ -92,14 +99,14 @@ public:
     // The bounding box is specified here as that information is not stored in
     // the serialized representation of the chunk. (This lets serialized chunks
     // be moved in space.)
-    Array3D<Voxel> load(const AABB &boundingBox,
+    VoxelDataChunk load(const AABB &boundingBox,
                         const std::vector<uint8_t> &bytes);
     
     // Serialize the provided voxel chunk to a sequence of bytes.
     // The serialized representation is not guaranteed to be portable across
     // different systems. For example, we do nothing to address endianness or
     // differences in struct member alignment.
-    std::vector<uint8_t> store(const Array3D<Voxel> &voxels);
+    std::vector<uint8_t> store(const VoxelDataChunk &chunk);
     
 private:
     const uint32_t VOXEL_MAGIC, VOXEL_VERSION;

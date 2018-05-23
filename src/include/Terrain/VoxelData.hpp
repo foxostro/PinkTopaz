@@ -34,9 +34,11 @@ public:
               unsigned chunkSize,
               std::unique_ptr<MapRegionStore> &&mapRegionStore);
     
-    // Loads a copy of the contents of the specified sub-region of the grid
-    // and returns that. May fault in missing voxels to satisfy the request.
-    Array3D<Voxel> load(const AABB &region);
+    // Loads the chunk at the specified region of space.
+    // The specified region of space must exactly match the position and size of
+    // one of the chunks used internally by PersistentVoxelChunks.
+    // May fault in missing voxels to satisfy the request.
+    VoxelDataChunk load(const AABB &region);
     
     // Modify the terrain according to the specified operation.
     // operation -- Describes the edits to be made.
@@ -52,7 +54,7 @@ private:
     std::unique_ptr<VoxelDataGenerator> _source;
     PersistentVoxelChunks _chunks;
     
-    std::unique_ptr<PersistentVoxelChunks::Chunk> createNewChunk(const AABB &cell, Morton3 index);
+    std::unique_ptr<VoxelDataChunk> createNewChunk(const AABB &cell, Morton3 index);
 };
 
 #endif /* VoxelData_hpp */

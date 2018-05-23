@@ -17,7 +17,7 @@ MapRegionStore::MapRegionStore(std::shared_ptr<spdlog::logger> log,
    _log(log)
 {}
 
-boost::optional<Array3D<Voxel>>
+boost::optional<VoxelDataChunk>
 MapRegionStore::load(const AABB &boundingBox, Morton3 key)
 {
     std::lock_guard<std::mutex> lock(_mutex);
@@ -26,11 +26,11 @@ MapRegionStore::load(const AABB &boundingBox, Morton3 key)
 
 void MapRegionStore::store(const AABB &boundingBox,
                            Morton3 key,
-                           const Array3D<Voxel> &voxels)
+                           const VoxelDataChunk &chunk)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     // TODO: MapRegionStore::store() can be async.
-    get(boundingBox.center)->store(key, voxels);
+    get(boundingBox.center)->store(key, chunk);
 }
 
 std::shared_ptr<MapRegion> MapRegionStore::get(const glm::vec3 &p)

@@ -26,7 +26,7 @@ VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
            })
 {}
 
-Array3D<Voxel> VoxelData::load(const AABB &region)
+VoxelDataChunk VoxelData::load(const AABB &region)
 {
     return _chunks.load(region);
 }
@@ -44,7 +44,17 @@ void VoxelData::setWorkingSet(const AABB &workingSet)
     _chunks.setWorkingSet(workingSet);
 }
 
-std::unique_ptr<PersistentVoxelChunks::Chunk> VoxelData::createNewChunk(const AABB &cell, Morton3 index)
+std::unique_ptr<VoxelDataChunk> VoxelData::createNewChunk(const AABB &cell, Morton3 index)
 {
-    return std::make_unique<PersistentVoxelChunks::Chunk>(_source->copy(cell));
+    if (cell.center.y > 64.f || cell.center.y < 0.f) {
+        const auto adjusted = _source->snapRegionToCellBoundaries(cell);
+        const auto res = _source->countCellsInRegion(adjusted);
+        if (cell.center.y < 0.f) {
+            return std::make_unique<VoxelDataChunk>(VoxelDataChunk::createGroundChunk(adjusted, res));
+        } else {
+            return std::make_unique<VoxelDataChunk>(VoxelDataChunk::createSkyChunk(adjusted, res));
+        }
+    } else {
+        return std::make_unique<VoxelDataChunk>(VoxelDataChunk::createArrayChunk(_source->copy(cell)));
+    }
 }

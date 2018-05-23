@@ -69,6 +69,7 @@ set(SOURCE_FILES_TERRAIN
     "src/Terrain/MesherNaiveSurfaceNets.cpp" "src/include/Terrain/MesherNaiveSurfaceNets.hpp"
     "src/Terrain/PersistentVoxelChunks.cpp" "src/include/Terrain/PersistentVoxelChunks.hpp"
     "src/Terrain/VoxelData.cpp" "src/include/Terrain/VoxelData.hpp"
+    "src/include/Terrain/VoxelDataChunk.hpp"
     "src/Terrain/SunlightData.cpp" "src/include/Terrain/SunlightData.hpp"
     "src/Terrain/TransactedVoxelData.cpp" "src/include/Terrain/TransactedVoxelData.hpp"
     "src/Terrain/VoxelDataGenerator.cpp" "src/include/Terrain/VoxelDataGenerator.hpp"
