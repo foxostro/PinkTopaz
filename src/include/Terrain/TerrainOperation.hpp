@@ -9,7 +9,8 @@
 #ifndef TerrainOperation_hpp
 #define TerrainOperation_hpp
 
-#include "Terrain/VoxelDataChunk.hpp"
+#include "Voxel.hpp"
+#include "Grid/Array3D.hpp"
 #include <cereal/types/polymorphic.hpp>
 #include <cereal/archives/binary.hpp>
 
@@ -42,7 +43,7 @@ public:
     }
     
     // Performs the operation.
-    virtual void perform(VoxelDataChunk &chunk) = 0;
+    virtual void perform(Array3D<Voxel> &voxelData) = 0;
     
     // Serialize the operation.
     template<typename Archive>

@@ -29,7 +29,7 @@ void PersistentVoxelChunks::setWorkingSet(const AABB &workingSet)
     _chunks.setCountLimit(chunkCountLimit);
 }
 
-Array3D<Voxel> PersistentVoxelChunks::copySubRegion(const AABB &region)
+Array3D<Voxel> PersistentVoxelChunks::loadSubRegion(const AABB &region)
 {
     // Adjust the region so that it includes the full extent of all voxels that
     // fall within it. For example, the region may only pass through a portion
@@ -57,6 +57,28 @@ Array3D<Voxel> PersistentVoxelChunks::copySubRegion(const AABB &region)
     }
     
     return dst;
+}
+
+void PersistentVoxelChunks::storeSubRegion(const Array3D<Voxel> &voxels)
+{
+    const AABB region = voxels.boundingBox();
+    
+    for (const auto chunkCellCoords : slice(_chunks, region)) {
+        const AABB chunkBoundingBox = _chunks.cellAtCellCoords(chunkCellCoords);
+        VoxelDataChunk chunk = load(chunkBoundingBox);
+        
+        // It is entirely possible that the sub-region is not the full size of
+        // the chunk. Iterate over chunk voxels that fall within the region.
+        // Copy each of those voxels into the destination array.
+        const AABB subRegion = chunkBoundingBox.intersect(region);
+        for (const auto voxelCellCoords : slice(chunk, subRegion)) {
+            const auto cellCenter = chunk.cellCenterAtCellCoords(voxelCellCoords);
+            const Voxel &src = voxels.reference(cellCenter);
+            chunk.set(voxelCellCoords, src);
+        }
+        
+        store(chunk);
+    }
 }
 
 VoxelDataChunk PersistentVoxelChunks::load(const AABB &region)

@@ -28,7 +28,7 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
 
 Array3D<Voxel> SunlightData::load(const AABB &region)
 {
-    return _chunks.copySubRegion(region);
+    return _chunks.loadSubRegion(region);
 }
 
 void SunlightData::modify(TerrainOperation &operation)

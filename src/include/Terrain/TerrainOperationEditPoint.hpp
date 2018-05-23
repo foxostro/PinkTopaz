@@ -27,7 +27,7 @@ public:
     TerrainOperationEditPoint(glm::vec3 location, Voxel newValue);
     
     // Performs the operation.
-    void perform(VoxelDataChunk &chunk) override;
+    void perform(Array3D<Voxel> &voxelData) override;
     
     // Serialize the operation.
     template<typename Archive>

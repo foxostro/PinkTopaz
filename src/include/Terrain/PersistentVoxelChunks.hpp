@@ -50,7 +50,13 @@ public:
     // Copies voxels of the specified sub-region of the grid to an array and
     // returns that. May fault in missing voxels to satisfy the request.
     // The specified region may be any AABB within the bounds of the grid.
-    Array3D<Voxel> copySubRegion(const AABB &region);
+    Array3D<Voxel> loadSubRegion(const AABB &region);
+    
+    // Stores the voxels of the specified sub-region to the grid.
+    // Each chunk touched by the specified voxel data is converted to an Array
+    // chunk to accomodate the changes.
+    // The specified region may be any AABB within the bounds of the grid.
+    void storeSubRegion(const Array3D<Voxel> &voxels);
     
     // Loads the chunk at the specified region of space.
     // The specified region of space must exactly match the position and size of

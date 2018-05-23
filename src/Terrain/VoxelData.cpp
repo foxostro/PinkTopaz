@@ -34,9 +34,9 @@ VoxelDataChunk VoxelData::load(const AABB &region)
 void VoxelData::modify(TerrainOperation &operation)
 {
     const AABB region = operation.getAffectedRegion();
-    auto data = _chunks.load(region);
+    Array3D<Voxel> data = _chunks.loadSubRegion(region);
     operation.perform(data);
-    _chunks.store(data);
+    _chunks.storeSubRegion(data);
 }
 
 void VoxelData::setWorkingSet(const AABB &workingSet)

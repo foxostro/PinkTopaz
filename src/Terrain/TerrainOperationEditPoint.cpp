@@ -15,7 +15,8 @@ TerrainOperationEditPoint::TerrainOperationEditPoint(glm::vec3 location,
    _newValue(newValue)
 {}
 
-void TerrainOperationEditPoint::perform(VoxelDataChunk &chunk)
+void TerrainOperationEditPoint::perform(Array3D<Voxel> &voxelData)
 {
-    chunk.set(_location, _newValue);
+    Voxel &voxel = voxelData.mutableReference(_location);
+    voxel = _newValue;
 }
