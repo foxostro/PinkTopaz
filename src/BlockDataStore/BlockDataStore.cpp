@@ -114,11 +114,19 @@ BoxedMallocZone::BoxedBlock BlockDataStore::lookupTableBlock()
     auto header = _zone.header();
     assert(header);
     auto offset = header->lookupTableOffset;
+    assert(offset != 0);
     return _zone.blockPointerForOffset(offset);
 }
 
 BlockDataStore::LookupTable& BlockDataStore::lookup()
 {
+#ifndef NDEBUG
+    BoxedMallocZone::BoxedBlock boxedBlock = lookupTableBlock();
+    MallocZone::Block *block = *boxedBlock;
+    assert(block);
+    void *data = block->data;
+    assert(data);
+#endif
     return *((LookupTable *)lookupTableBlock()->data);
 }
 
