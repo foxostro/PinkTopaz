@@ -33,6 +33,7 @@ Array3D<Voxel> SunlightData::load(const AABB &region)
 
 void SunlightData::modify(TerrainOperation &operation)
 {
+    // TODO: When we modify a voxel in a Sky chunk, we should convert all Sky chunks below it to Array chunks. Ditto Ground.
     const AABB sunlightRegion = getAccessRegionForOperation(operation);
     _chunks.invalidate(sunlightRegion);
     _source->modify(operation);
@@ -54,6 +55,13 @@ SunlightData::createNewChunk(const AABB &cell, Morton3 chunkIndex)
 {
     VoxelDataChunk voxels = _source->load(cell);
     
+    // If this chunk is Sky or Ground then it already has valid light data and
+    // there's nothing to do.
+    if (auto type = voxels.getType();
+        type == VoxelDataChunk::Sky || type == VoxelDataChunk::Ground) {
+        return std::make_unique<VoxelDataChunk>(std::move(voxels));
+    }
+    
     const glm::ivec3 res = voxels.gridResolution();
     
     auto iterateHorizontalSlice = [&](std::function<void(glm::ivec3 cellCoords)> fn){
@@ -68,6 +76,9 @@ SunlightData::createNewChunk(const AABB &cell, Morton3 chunkIndex)
     // top chunk to the top of this chunk.
     // If we're at the top of the world then there is no top chunk. In this case
     // we instead set the open voxels in the top slice to MAX_LIGHT.
+    // If the top chunk is sky then we also know there is no terrain above us
+    // and can set the open voxels in the top slice to MAX_LIGHT.
+    bool shouldSeedInitialSunlightValues = true;
     AABB topCell = cell;
     topCell.center.y += (2.f * cell.extent.y);
     if (inbounds(topCell)) {
@@ -75,17 +86,22 @@ SunlightData::createNewChunk(const AABB &cell, Morton3 chunkIndex)
         topIndex.incY();
         auto topSunlightChunk = _chunks.get(topCell, topIndex);
         
-        iterateHorizontalSlice([&](glm::ivec3 cellCoords){
-            cellCoords.y = 0;
-            const Voxel topVoxel = topSunlightChunk->get(cellCoords);
-            cellCoords.y = voxels.gridResolution().y - 1;
-            Voxel voxel = voxels.get(cellCoords);
-            if ((topVoxel.value == 0) && (voxel.value == 0)) {
-                voxel.sunLight = topVoxel.sunLight;
-                voxels.set(cellCoords, voxel);
-            }
-        });
-    } else {
+        if (topSunlightChunk->getType() != VoxelDataChunk::Sky) {
+            shouldSeedInitialSunlightValues = false;
+            iterateHorizontalSlice([&](glm::ivec3 cellCoords){
+                cellCoords.y = 0;
+                const Voxel topVoxel = topSunlightChunk->get(cellCoords);
+                cellCoords.y = voxels.gridResolution().y - 1;
+                Voxel voxel = voxels.get(cellCoords);
+                if ((topVoxel.value == 0) && (voxel.value == 0)) {
+                    voxel.sunLight = topVoxel.sunLight;
+                    voxels.set(cellCoords, voxel);
+                }
+            });
+        }
+    }
+    
+    if (shouldSeedInitialSunlightValues) {
         iterateHorizontalSlice([&](glm::ivec3 cellCoords){
             cellCoords.y = voxels.gridResolution().y - 1;
             Voxel voxel = voxels.get(cellCoords);
