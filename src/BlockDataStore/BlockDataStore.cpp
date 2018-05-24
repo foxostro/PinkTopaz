@@ -34,6 +34,12 @@ void BlockDataStore::invalidate(Key key)
     std::lock_guard<std::mutex> lock(_mutex);
     _zone.deallocate(getBlock(key));
     
+    // If no item has yet been stored then we won't have a lookup table.
+    // In this case, do nothing.
+    if (!lookupTableBlock()) {
+        return;
+    }
+    
     // Remove the key from the lookup table.
     BlockDataStore::LookupTable &table = lookup();
     
@@ -47,8 +53,12 @@ void BlockDataStore::invalidate(Key key)
         }
     }
     
+    // If we failed to find the item then there's nothing to do.
+    if (indexToRemove < 0) {
+        return;
+    }
+    
     // Copy subsequent entries back one slot to overwrite it.
-    assert(indexToRemove >= 0);
     for (ssize_t i = indexToRemove, n = table.numberOfEntries-1; i < n; ++i) {
         auto &dst = lookup().entries[i+0];
         const auto &src = lookup().entries[i+1];
