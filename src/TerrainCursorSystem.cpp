@@ -244,9 +244,15 @@ void TerrainCursorSystem::setBlockUnderCursor(TerrainCursor &cursor,
     auto handleTerrain = terrainEntity.component<TerrainComponent>();
     
     if (handleTerrain.valid()) {
-        auto operation = std::make_shared<TerrainOperationEditPoint>(location, voxel);
-        auto &terrain = handleTerrain.get()->terrain;
-        terrain->writerTransaction(operation);
         _needsUpdate = true;
+        
+        // Schedule a task to asynchronously update the terrain.
+        // We do this off the main thread because it may block on a lock to
+        // access the terrain.
+        auto operation = std::make_shared<TerrainOperationEditPoint>(location, voxel);
+        std::shared_ptr<Terrain> terrain = handleTerrain.get()->terrain;
+        _dispatcher->async([terrain, operation]{
+            terrain->writerTransaction(operation);
+        });
     }
 }
