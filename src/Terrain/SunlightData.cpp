@@ -33,8 +33,38 @@ Array3D<Voxel> SunlightData::load(const AABB &region)
 
 void SunlightData::editSingleVoxel(const glm::vec3 &point, const Voxel &value)
 {
-    const AABB sunlightRegion = getSunlightRegion({point, glm::vec3(0.1f)});
-    _chunks.invalidate(sunlightRegion);
+    const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
+    AABB actualAreaOfSunlightChange = _source->cellAtPoint(point);
+    bool done = false;
+    glm::vec3 chunkPoint = _chunks.cellCenterAtPoint(point);
+    
+    while(!done) {
+        const AABB chunkBoundingBox = chunkIndexer.cellAtPoint(chunkPoint);
+        VoxelDataChunk chunk = _chunks.load(chunkBoundingBox);
+        
+        if (chunk.getType() == VoxelDataChunk::Ground) {
+            done = true;
+        } else if (chunk.getType() == VoxelDataChunk::Sky) {
+            // We'll convert this chunk to an array type chunk and then move on.
+            chunk.convertToArray();
+        } else {
+            for (glm::ivec3 cellCoords = chunk.cellCoordsAtPoint(point); cellCoords.y >= 0; --cellCoords.y) {
+                const Voxel &voxel = chunk.get(cellCoords);
+                if (voxel.value == 0) {
+                    const AABB voxelCell = chunk.cellAtCellCoords(cellCoords);
+                    actualAreaOfSunlightChange = actualAreaOfSunlightChange.unionBox(voxelCell);
+                } else {
+                    done = true;
+                    break;
+                }
+            }
+        }
+        
+        chunkPoint.y -= 2.f * chunkBoundingBox.extent.y;
+    }
+    
+    _chunks.invalidate(actualAreaOfSunlightChange);
+    
     _source->editSingleVoxel(point, value);
 }
 

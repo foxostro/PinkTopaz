@@ -169,15 +169,6 @@ public:
         }
     }
     
-private:
-    Type _type;
-    std::unique_ptr<Array3D<Voxel>> _voxels;
-    
-    VoxelDataChunk(const AABB &boundingBox, const glm::ivec3 &gridResolution)
-    : GridIndexer(boundingBox, gridResolution),
-    _type(Array)
-    {}
-    
     void convertToArray()
     {
         assert(_type != Array);
@@ -207,6 +198,15 @@ private:
         
         _type = Array;
     }
+    
+private:
+    Type _type;
+    std::unique_ptr<Array3D<Voxel>> _voxels;
+    
+    VoxelDataChunk(const AABB &boundingBox, const glm::ivec3 &gridResolution)
+    : GridIndexer(boundingBox, gridResolution),
+    _type(Array)
+    {}
 };
 
 #endif /* VoxelDataChunk_hpp */
