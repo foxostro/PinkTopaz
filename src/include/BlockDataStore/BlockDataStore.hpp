@@ -12,7 +12,7 @@
 #include "BlockDataStore/ManagedMallocZone.hpp"
 #include <boost/optional.hpp>
 #include <boost/filesystem.hpp>
-#include <mutex>
+#include <shared_mutex>
 
 // Stores/Loads blocks of unstructured data on the file system.
 class BlockDataStore
@@ -27,7 +27,7 @@ public:
     
     // Loads a block of data from file, if available.
     // The key uniquely identifies the chunk in the voxel chunk in space.
-    boost::optional<std::vector<uint8_t>> load(Key key);
+    boost::optional<std::vector<uint8_t>> load(Key key) const;
     
     // Stores a block of data to file.
     void store(Key key, const std::vector<uint8_t> &data);
@@ -52,20 +52,25 @@ private:
         LookUpTableEntry entries[0];
     };
     
-    std::mutex _mutex;
+    mutable std::shared_mutex _mutex;
     ManagedMallocZone _zone;
     
     // A call to growLookupTable() may invalidate all Block* from the zone.
     void growLookupTable(size_t newCapacity);
     
     BoxedMallocZone::BoxedBlock getBlock(Key key);
+    BoxedMallocZone::ConstBoxedBlock getBlock(Key key) const;
+    
     BoxedMallocZone::BoxedBlock getBlockAndResize(Key key, size_t size);
     
     BoxedMallocZone::BoxedBlock lookupTableBlock();
+    BoxedMallocZone::ConstBoxedBlock lookupTableBlock() const;
+    
     LookupTable& lookup();
+    const LookupTable& lookup() const;
     
     void storeOffsetForKey(Key key, uint32_t offset);
-    boost::optional<uint32_t> loadOffsetForKey(Key key);
+    boost::optional<uint32_t> loadOffsetForKey(Key key) const;
 };
 
 #endif /* BlockDataStore_hpp */

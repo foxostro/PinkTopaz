@@ -63,6 +63,7 @@ public:
                       size_t initialFileSize,
                       uint32_t magic, uint32_t version);
     
+    BoxedMallocZone::ConstBoxedBlock blockPointerForOffset(BoxedMallocZone::Offset offset) const;
     BoxedMallocZone::BoxedBlock blockPointerForOffset(BoxedMallocZone::Offset offset);
     BoxedMallocZone::BoxedBlock allocate(size_t size);
     void deallocate(BoxedMallocZone::BoxedBlock &&block);
@@ -71,6 +72,11 @@ public:
     inline Header* header()
     {
         return (Header *)_file.mapping();
+    }
+    
+    inline const Header* header() const
+    {
+        return (const Header *)_file.mapping();
     }
     
 private:

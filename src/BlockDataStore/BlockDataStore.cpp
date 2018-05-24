@@ -21,7 +21,7 @@ BlockDataStore::BlockDataStore(std::shared_ptr<spdlog::logger> log,
 
 void BlockDataStore::store(Key key, const std::vector<uint8_t> &bytes)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::unique_lock<std::shared_mutex> lock(_mutex);
     const size_t size = bytes.size();
     assert(size > 0);
     BoxedMallocZone::BoxedBlock block = getBlockAndResize(key, size);
@@ -31,7 +31,7 @@ void BlockDataStore::store(Key key, const std::vector<uint8_t> &bytes)
 
 void BlockDataStore::invalidate(Key key)
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::unique_lock<std::shared_mutex> lock(_mutex);
     _zone.deallocate(getBlock(key));
     
     // If no item has yet been stored then we won't have a lookup table.
@@ -74,15 +74,15 @@ void BlockDataStore::invalidate(Key key)
     entry.offset=0xdeadbeef;
 }
 
-boost::optional<std::vector<uint8_t>> BlockDataStore::load(Key key)
+boost::optional<std::vector<uint8_t>> BlockDataStore::load(Key key) const
 {
-    std::lock_guard<std::mutex> lock(_mutex);
+    std::shared_lock<std::shared_mutex> lock(_mutex);
     
     if (!loadOffsetForKey(key)) {
         return boost::none;
     }
     
-    BoxedMallocZone::BoxedBlock block = getBlock(key);
+    BoxedMallocZone::ConstBoxedBlock block = getBlock(key);
     const size_t size = block->size;
     
     std::vector<uint8_t> bytes(size);
@@ -111,6 +111,16 @@ BoxedMallocZone::BoxedBlock BlockDataStore::getBlock(Key key)
     return _zone.blockPointerForOffset(offset);
 }
 
+BoxedMallocZone::ConstBoxedBlock BlockDataStore::getBlock(Key key) const
+{
+    auto offset = BoxedMallocZone::NullOffset;
+    auto maybeOffset = loadOffsetForKey(key);
+    if (maybeOffset) {
+        offset = *maybeOffset;
+    }
+    return _zone.blockPointerForOffset(offset);
+}
+
 BoxedMallocZone::BoxedBlock BlockDataStore::getBlockAndResize(Key key, size_t size)
 {
     auto block = _zone.reallocate(getBlock(key), size);
@@ -128,16 +138,23 @@ BoxedMallocZone::BoxedBlock BlockDataStore::lookupTableBlock()
     return _zone.blockPointerForOffset(offset);
 }
 
+BoxedMallocZone::ConstBoxedBlock BlockDataStore::lookupTableBlock() const
+{
+    auto header = _zone.header();
+    assert(header);
+    auto offset = header->lookupTableOffset;
+    assert(offset != 0);
+    return _zone.blockPointerForOffset(offset);
+}
+
 BlockDataStore::LookupTable& BlockDataStore::lookup()
 {
-#ifndef NDEBUG
-    BoxedMallocZone::BoxedBlock boxedBlock = lookupTableBlock();
-    MallocZone::Block *block = *boxedBlock;
-    assert(block);
-    void *data = block->data;
-    assert(data);
-#endif
     return *((LookupTable *)lookupTableBlock()->data);
+}
+
+const BlockDataStore::LookupTable& BlockDataStore::lookup() const
+{
+    return *((const LookupTable *)lookupTableBlock()->data);
 }
 
 void BlockDataStore::storeOffsetForKey(Key key, BoxedMallocZone::Offset offset)
@@ -168,7 +185,7 @@ void BlockDataStore::storeOffsetForKey(Key key, BoxedMallocZone::Offset offset)
     lookup().entries[lookup().numberOfEntries++] = {key, offset};
 }
 
-boost::optional<uint32_t> BlockDataStore::loadOffsetForKey(Key key)
+boost::optional<uint32_t> BlockDataStore::loadOffsetForKey(Key key) const
 {    
     if (lookupTableBlock()) {
         for (size_t i = 0, n = lookup().numberOfEntries; i < n; ++i) {

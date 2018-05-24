@@ -18,7 +18,14 @@ ManagedMallocZone::ManagedMallocZone(std::shared_ptr<spdlog::logger> log,
     mapFile(initialFileSize);
 }
 
-BoxedMallocZone::BoxedBlock ManagedMallocZone::blockPointerForOffset(BoxedMallocZone::Offset offset)
+BoxedMallocZone::ConstBoxedBlock
+ManagedMallocZone::blockPointerForOffset(BoxedMallocZone::Offset offset) const
+{
+    return _zone.blockPointerForOffset(offset);
+}
+
+BoxedMallocZone::BoxedBlock
+ManagedMallocZone::blockPointerForOffset(BoxedMallocZone::Offset offset)
 {
     return _zone.blockPointerForOffset(offset);
 }

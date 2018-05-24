@@ -25,6 +25,12 @@ BoxedMallocZone::blockPointerForOffset(Offset offset)
     return BoxedBlock(*this, offset);
 }
 
+BoxedMallocZone::ConstBoxedBlock
+BoxedMallocZone::blockPointerForOffset(Offset offset) const
+{
+    return ConstBoxedBlock(*this, offset);
+}
+
 void BoxedMallocZone::grow(uint8_t *start, size_t size)
 {
     _zone.grow(start, size);
@@ -63,6 +69,15 @@ BoxedMallocZone::reallocate(Offset offsetOfOldBlock, size_t newSize)
 }
 
 MallocZone::Block* BoxedMallocZone::blockForOffset(Offset offset)
+{
+    if (offset == NullOffset) {
+        return nullptr;
+    } else {
+        return _zone.blockForOffset(offset);
+    }
+}
+
+const MallocZone::Block* BoxedMallocZone::blockForOffset(Offset offset) const
 {
     if (offset == NullOffset) {
         return nullptr;

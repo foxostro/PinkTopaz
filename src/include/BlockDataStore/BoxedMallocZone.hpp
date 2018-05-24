@@ -12,6 +12,7 @@
 #include "MallocZone.hpp"
 #include <cstdint>
 #include <limits>
+#include <shared_mutex>
 
 // Wraps a MallocZone to provide an API which does not expose raw pointers.
 // Instead, access is only provided through BlockPointer, which uses the offset
@@ -26,27 +27,27 @@ public:
     {
         BoxedMallocZone &_zone;
         Offset _offset;
-
+        
     public:
         ~BoxedBlock() = default;
         
         BoxedBlock() = delete;
         
         BoxedBlock(BoxedMallocZone &zone)
-         : _zone(zone), _offset(NullOffset)
+        : _zone(zone), _offset(NullOffset)
         {}
         
         BoxedBlock(BoxedMallocZone &zone, Offset offset)
-         : _zone(zone), _offset(offset)
+        : _zone(zone), _offset(offset)
         {}
         
         BoxedBlock(const BoxedBlock &ptr)
-         : _zone(ptr._zone), _offset(ptr._offset)
+        : _zone(ptr._zone), _offset(ptr._offset)
         {}
         
         BoxedBlock(BoxedBlock &&ptr)
-         : _zone(ptr._zone),
-           _offset(ptr._offset)
+        : _zone(ptr._zone),
+        _offset(ptr._offset)
         {
             assert(_offset != 0);
             ptr._offset = NullOffset;
@@ -98,6 +99,49 @@ public:
         }
     };
     
+    class ConstBoxedBlock
+    {
+        const BoxedMallocZone &_zone;
+        Offset _offset;
+
+    public:
+        ~ConstBoxedBlock() = default;
+        
+        ConstBoxedBlock() = delete;
+        
+        ConstBoxedBlock(const BoxedMallocZone &zone)
+         : _zone(zone), _offset(NullOffset)
+        {}
+        
+        ConstBoxedBlock(const BoxedMallocZone &zone, Offset offset)
+         : _zone(zone), _offset(offset)
+        {}
+        
+        ConstBoxedBlock(const ConstBoxedBlock &ptr)
+         : _zone(ptr._zone), _offset(ptr._offset)
+        {}
+        
+        explicit operator bool() const
+        {
+            return _offset != NullOffset;
+        }
+        
+        const MallocZone::Block* operator*() const
+        {
+            return _zone.blockForOffset(getOffset());
+        }
+        
+        const MallocZone::Block* operator->() const
+        {
+            return _zone.blockForOffset(getOffset());
+        }
+        
+        Offset getOffset() const
+        {
+            return _offset;
+        }
+    };
+    
     // Destructor.
     ~BoxedMallocZone();
     
@@ -117,6 +161,9 @@ public:
     
     // Gets the block associated with the specified offset.
     BoxedBlock blockPointerForOffset(Offset offset);
+    
+    // Gets the block associated with the specified offset.
+    ConstBoxedBlock blockPointerForOffset(Offset offset) const;
     
     // Increase the size of the backing memory buffer.
     // The new buffer must itself be a valid zone backing buffer.
@@ -151,6 +198,9 @@ private:
     
     // Gets the block associated with the specified offset.
     MallocZone::Block* blockForOffset(Offset offset);
+    
+    // Gets the block associated with the specified offset.
+    const MallocZone::Block* blockForOffset(Offset offset) const;
     
     void mapFile(size_t minimumFileSize);
     void growBackingMemory();
