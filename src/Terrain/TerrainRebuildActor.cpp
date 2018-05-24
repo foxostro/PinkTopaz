@@ -30,13 +30,15 @@ TerrainRebuildActor::TerrainRebuildActor(std::shared_ptr<spdlog::logger> log,
                                          glm::vec3 initialSearchPoint,
                                          std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
                                          entityx::EventManager &events,
+                                         std::chrono::steady_clock::time_point appStartTime,
                                          std::function<void(AABB, TerrainProgressTracker&)> processCell)
 : _threadShouldExit(false),
   _processCell(processCell),
   _searchPoint(initialSearchPoint),
   _mainThreadDispatcher(mainThreadDispatcher),
   _events(events),
-  _log(log)
+  _log(log),
+  _appStartTime(appStartTime)
 {
     for (size_t i = 0; i < numThreads; ++i) {
         _threads.emplace_back([this]{
@@ -63,7 +65,8 @@ void TerrainRebuildActor::push(const std::vector<std::pair<Morton3, AABB>> &cell
                       boundingBox,
                       insertResult.first,
                       _mainThreadDispatcher,
-                      _events);
+                      _events,
+                      _appStartTime);
             _cells.emplace_back(std::move(cell));
         }
     }

@@ -42,7 +42,8 @@ Terrain::Terrain(const Preferences &preferences,
    _mesher(std::make_shared<MesherNaiveSurfaceNets>(preferences)),
    _cameraPosition(initialCameraPosition),
    _log(log),
-   _activeRegionSize(preferences.activeRegionSize)
+   _activeRegionSize(preferences.activeRegionSize),
+   _startTime(std::chrono::steady_clock::now())
 {
     // Load terrain texture array from a single image.
     TextureArrayLoader textureArrayLoader(graphicsDevice);
@@ -125,6 +126,7 @@ Terrain::Terrain(const Preferences &preferences,
                                                               _cameraPosition,
                                                               mainThreadDispatcher,
                                                               events,
+                                                              _startTime,
                                                               [=](const AABB &cell, TerrainProgressTracker &progress){
                                                                   rebuildNextMesh(cell, progress);
                                                               });

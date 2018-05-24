@@ -31,7 +31,8 @@ public:
                            Morton3 cellCoords,
                            AABB boundingBox,
                            std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
-                           entityx::EventManager &events);
+                           entityx::EventManager &events,
+                           std::chrono::steady_clock::time_point appStartTime);
     
     // Gets the cell bounding box.
     inline const AABB& getBoundingBox() const
@@ -54,6 +55,7 @@ private:
     std::shared_ptr<TaskDispatcher> _mainThreadDispatcher;
     std::unordered_map<TerrainProgressEvent::State, std::chrono::steady_clock::time_point> _timeEnteringEachState;
     std::shared_ptr<spdlog::logger> _log;
+    std::chrono::steady_clock::time_point _appStartTime;
 };
 
 #endif /* TerrainProgressTracker_hpp */

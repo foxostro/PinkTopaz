@@ -12,13 +12,15 @@ TerrainProgressTracker::TerrainProgressTracker(std::shared_ptr<spdlog::logger> l
                                                Morton3 cellCoords,
                                                AABB boundingBox,
                                                std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
-                                               entityx::EventManager &events)
+                                               entityx::EventManager &events,
+                                               std::chrono::steady_clock::time_point appStartTime)
 : _cellCoords(cellCoords),
   _boundingBox(boundingBox),
   _state(TerrainProgressEvent::Queued),
   _events(&events),
   _mainThreadDispatcher(mainThreadDispatcher),
-  _log(log)
+  _log(log),
+  _appStartTime(appStartTime)
 {
     setState(TerrainProgressEvent::Queued);
 }
@@ -48,6 +50,10 @@ void TerrainProgressTracker::dump()
         return msStr;
     };
     
+    const auto duration = std::chrono::steady_clock::now() - _appStartTime;
+    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+    const std::string timeSinceAppStartStr = std::to_string(ms.count());
+    
     std::string timeQueuedStr = timeElapsed(TerrainProgressEvent::WaitingOnVoxels,
                                             TerrainProgressEvent::Queued);
     std::string timeWaitingForVoxelsStr = timeElapsed(TerrainProgressEvent::ExtractingSurface,
@@ -58,13 +64,15 @@ void TerrainProgressTracker::dump()
                                                   TerrainProgressEvent::Queued);
     
     _log->debug("Cell {}:\n"
-                "\tQueued             -- {} ms\n"
-                "\tWaitingOnVoxels    -- {} ms\n"
-                "\tExtractingSurface  -- {} ms\n"
-                "\tTotal Elapsed Time -- {} ms",
+                "\tQueued             -- {} ms\n"\
+                "\tWaitingOnVoxels    -- {} ms\n"\
+                "\tExtractingSurface  -- {} ms\n"\
+                "\tTotal Elapsed Time -- {} ms\n"\
+                "\tTime Since App Start -- {} ms",
                 _boundingBox,
                 timeQueuedStr,
                 timeWaitingForVoxelsStr,
                 timeExtractingSurfaceStr,
-                timeTotalElapsedStr);
+                timeTotalElapsedStr,
+                timeSinceAppStartStr);
 }

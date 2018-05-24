@@ -31,6 +31,7 @@ public:
                         glm::vec3 initialSearchPoint,
                         std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
                         entityx::EventManager &events,
+                        std::chrono::steady_clock::time_point appStartTime,
                         std::function<void(AABB, TerrainProgressTracker&)> processCell);
     
     // Add cells to the queue.
@@ -56,10 +57,12 @@ private:
              AABB cellBox,
              std::unordered_set<AABB>::iterator iter,
              std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
-             entityx::EventManager &events)
+             entityx::EventManager &events,
+             std::chrono::steady_clock::time_point appStartTime)
          : box(cellBox),
            setIterator(iter),
-           progress(log, cellCoords, cellBox, mainThreadDispatcher, events)
+           progress(log, cellCoords, cellBox, mainThreadDispatcher,
+                    events, appStartTime)
         {}
     };
     
@@ -74,6 +77,7 @@ private:
     std::shared_ptr<TaskDispatcher> _mainThreadDispatcher;
     entityx::EventManager &_events;
     std::shared_ptr<spdlog::logger> _log;
+    std::chrono::steady_clock::time_point _appStartTime;
     
     // Runs the worker thread.
     void worker();

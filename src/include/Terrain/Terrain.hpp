@@ -82,6 +82,7 @@ private:
     TerrainHorizonDistance _horizonDistance;
     std::shared_ptr<spdlog::logger> _log;
     const float _activeRegionSize;
+    std::chrono::steady_clock::time_point _startTime;
     
     inline AABB getActiveRegion() const
     {
