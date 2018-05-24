@@ -82,8 +82,8 @@ public:
         Iterator(Z *zone, T *curr)
          : _zone(zone), _curr(curr)
         {
-            assert(zone);
-            assert(!curr || zone->pointerIsInBackingMemory(curr));
+//            assert(zone);
+//            assert(!curr || zone->pointerIsInBackingMemory(curr));
         }
         
         // Copy constructor.
@@ -93,10 +93,10 @@ public:
         // The block is set to nullptr at the tail.
         Iterator<Z, T>& operator++()
         {
-            assert(_zone);
-            assert(_curr);
+//            assert(_zone);
+//            assert(_curr);
             _curr = _zone->next(_curr);
-            assert(!_curr || _curr->magic == BLOCK_MAGIC);
+//            assert(!_curr || _curr->magic == BLOCK_MAGIC);
             return *this;
         }
         
@@ -162,14 +162,14 @@ public:
     // Gets the zone header.
     inline Header* header()
     {
-        assert(_header);
+//        assert(_header);
         return _header;
     }
     
     // Gets the zone header.
     inline const Header* header() const
     {
-        assert(_header);
+//        assert(_header);
         return _header;
     }
 
@@ -191,7 +191,7 @@ public:
     
     // Returns true if the specified address is in the backing memory region.
     inline bool pointerIsInBackingMemory(const uint8_t *ptr) const {
-        assert(ptr);
+//        assert(ptr);
         const size_t size = header()->size;
         const uint8_t *start = (uint8_t *)header();
         const uint8_t *end = start + size;
@@ -206,7 +206,7 @@ public:
     // Returns true if the specified address is in the backing memory region
     // or just after at the end of the buffer.
     inline bool pointerIsInBackingMemoryOrJustAfter(const uint8_t *ptr) const {
-        assert(ptr);
+//        assert(ptr);
         const size_t size = header()->size;
         const uint8_t *start = (uint8_t *)header();
         const uint8_t *end = start + size;
@@ -223,9 +223,9 @@ public:
     // Returns nullptr if the specified block is the tail.
     inline Block* next(const Block *block)
     {
-        assert(pointerIsInBackingMemory(block));
+//        assert(pointerIsInBackingMemory(block));
         Block *nextBlock = (Block *)(block->data + block->size);
-        assert(pointerIsInBackingMemoryOrJustAfter(nextBlock));
+//        assert(pointerIsInBackingMemoryOrJustAfter(nextBlock));
         if (pointerIsInBackingMemory(nextBlock)) {
             return nextBlock;
         } else {
@@ -237,9 +237,9 @@ public:
     // Returns nullptr if the specified block is the tail.
     inline const Block* next(const Block *block) const
     {
-        assert(pointerIsInBackingMemory(block));
+//        assert(pointerIsInBackingMemory(block));
         const Block *nextBlock = (const Block *)(block->data + block->size);
-        assert(pointerIsInBackingMemoryOrJustAfter(nextBlock));
+//        assert(pointerIsInBackingMemoryOrJustAfter(nextBlock));
         if (pointerIsInBackingMemory(nextBlock)) {
             return nextBlock;
         } else {
@@ -251,14 +251,14 @@ public:
     // Returns nullptr if the specified block is the head.
     inline Block* prev(const Block *block)
     {
-        assert(pointerIsInBackingMemory(block));
+//        assert(pointerIsInBackingMemory(block));
         const unsigned offset = block->prevOffset;
         if (offset == 0) {
             return nullptr;
         } else {
             uint8_t *start = (uint8_t *)header();
             Block *prevBlock = (Block *)(start + offset);
-            assert(pointerIsInBackingMemory(prevBlock));
+//            assert(pointerIsInBackingMemory(prevBlock));
             return prevBlock;
         }
     }
@@ -267,14 +267,14 @@ public:
     // Returns nullptr if the specified block is the head.
     inline const Block* prev(const Block *block) const
     {
-        assert(pointerIsInBackingMemory(block));
+//        assert(pointerIsInBackingMemory(block));
         const unsigned offset = block->prevOffset;
         if (offset == 0) {
             return nullptr;
         } else {
             const uint8_t *start = (const uint8_t *)header();
             const Block *prevBlock = (const Block *)(start + offset);
-            assert(pointerIsInBackingMemory(prevBlock));
+//            assert(pointerIsInBackingMemory(prevBlock));
             return prevBlock;
         }
     }
@@ -282,7 +282,7 @@ public:
     // Gets the offset of the specified block from the start of the zone.
     inline unsigned offsetForBlock(const Block *block) const
     {
-        assert(pointerIsInBackingMemory(block));
+//        assert(pointerIsInBackingMemory(block));
         const uint8_t *start = (const uint8_t *)header();
         const uint8_t *pointer = (const uint8_t *)block;
         return (unsigned)(pointer - start);
@@ -293,7 +293,7 @@ public:
     {
         uint8_t *start = (uint8_t *)header();
         Block *block = (Block *)(start + offset);
-        assert(blockIsInList(block));
+//        assert(blockIsInList(block));
         return block;
     }
     
@@ -302,7 +302,7 @@ public:
     {
         const uint8_t *start = (const uint8_t *)header();
         const Block *block = (const Block *)(start + offset);
-        assert(blockIsInList(block));
+//        assert(blockIsInList(block));
         return block;
     }
     

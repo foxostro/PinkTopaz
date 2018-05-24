@@ -49,20 +49,20 @@ public:
         : _zone(ptr._zone),
         _offset(ptr._offset)
         {
-            assert(_offset != 0);
+//            assert(_offset != 0);
             ptr._offset = NullOffset;
         }
         
         BoxedBlock& operator=(const BoxedBlock &ptr)
         {
-            assert(&_zone == &ptr._zone);
+//            assert(&_zone == &ptr._zone);
             _offset = ptr._offset;
             return *this;
         }
         
         BoxedBlock& operator=(BoxedBlock &&ptr)
         {
-            assert(&_zone == &ptr._zone);
+//            assert(&_zone == &ptr._zone);
             _offset = ptr._offset;
             ptr._offset = NullOffset;
             return *this;
