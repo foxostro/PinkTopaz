@@ -40,9 +40,8 @@ public:
     // May fault in missing voxels to satisfy the request.
     VoxelDataChunk load(const AABB &region);
     
-    // Modify the terrain according to the specified operation.
-    // operation -- Describes the edits to be made.
-    void modify(TerrainOperation &operation);
+    // Edits a single voxel.
+    void editSingleVoxel(const glm::vec3 &point, const Voxel &value);
     
     // VoxelData may evict chunks to keep the total chunk count under a limit.
     // Set the limit to the number of chunks needed to represent the region

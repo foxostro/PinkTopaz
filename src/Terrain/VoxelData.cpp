@@ -31,12 +31,12 @@ VoxelDataChunk VoxelData::load(const AABB &region)
     return _chunks.load(region);
 }
 
-void VoxelData::modify(TerrainOperation &operation)
+void VoxelData::editSingleVoxel(const glm::vec3 &point, const Voxel &value)
 {
-    const AABB region = operation.getAffectedRegion();
-    Array3D<Voxel> data = _chunks.loadSubRegion(region);
-    operation.perform(data);
-    _chunks.storeSubRegion(data);
+    const AABB chunkBoundingBox = _chunks.getChunkIndexer().cellAtPoint(point);
+    VoxelDataChunk chunk = _chunks.load(chunkBoundingBox);
+    chunk.set(point, value);
+    _chunks.store(chunk);
 }
 
 void VoxelData::setWorkingSet(const AABB &workingSet)

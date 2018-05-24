@@ -31,12 +31,11 @@ Array3D<Voxel> SunlightData::load(const AABB &region)
     return _chunks.loadSubRegion(region);
 }
 
-void SunlightData::modify(TerrainOperation &operation)
+void SunlightData::editSingleVoxel(const glm::vec3 &point, const Voxel &value)
 {
-    // TODO: When we modify a voxel in a Sky chunk, we should convert all Sky chunks below it to Array chunks. Ditto Ground.
-    const AABB sunlightRegion = getAccessRegionForOperation(operation);
+    const AABB sunlightRegion = getSunlightRegion({point, glm::vec3(0.1f)});
     _chunks.invalidate(sunlightRegion);
-    _source->modify(operation);
+    _source->editSingleVoxel(point, value);
 }
 
 void SunlightData::setWorkingSet(const AABB &workingSet)

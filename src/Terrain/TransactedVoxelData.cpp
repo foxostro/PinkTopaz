@@ -29,7 +29,7 @@ void TransactedVoxelData::writerTransaction(TerrainOperation &operation)
     {
         auto mutex = _lockArbitrator.writerMutex(lockedRegion);
         std::lock_guard<decltype(mutex)> lock(mutex);
-        _source->modify(operation);
+        operation.perform(*_source);
     }
     
     onWriterTransaction(lockedRegion);

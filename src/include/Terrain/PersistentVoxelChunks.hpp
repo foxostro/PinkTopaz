@@ -78,6 +78,9 @@ public:
     // Invalidate all chunks in the specified region.
     void invalidate(const AABB &region);
     
+    // Return an indexer for the grid of chunks.
+    const GridIndexer& getChunkIndexer() const;
+    
 private:
     std::shared_ptr<spdlog::logger> _log;
     SparseGrid<std::shared_ptr<VoxelDataChunk>> _chunks;

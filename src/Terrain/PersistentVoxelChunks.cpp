@@ -141,3 +141,8 @@ void PersistentVoxelChunks::invalidate(const AABB &region)
         _mapRegionStore->invalidate(chunkCenter, chunkIndex);
     }
 }
+
+const GridIndexer& PersistentVoxelChunks::getChunkIndexer() const
+{
+    return _chunks;
+}
