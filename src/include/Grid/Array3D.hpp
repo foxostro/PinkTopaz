@@ -42,21 +42,21 @@ public:
     // `resolution.z' cells along the Z-axis.
     Array3D(const AABB &box, glm::ivec3 res)
      : GridIndexer(box, res),
-       _maxValidIndex(Morton3::encode(res)),
-       _cells(numberOfInternalElements(res))
+       _maxValidIndex(Morton3::encode(res - glm::ivec3(1, 1, 1))),
+       _cells(_maxValidIndex+1)
     {}
     
     // Copy constructor.
     Array3D(const Array3D<CellType> &array)
      : GridIndexer(array.boundingBox(), array.gridResolution()),
-       _maxValidIndex(Morton3::encode(array.gridResolution())),
+       _maxValidIndex(Morton3::encode(array.gridResolution() - glm::ivec3(1, 1, 1))),
        _cells(array._cells)
     {}
     
     // Move constructor.
     Array3D(Array3D<CellType> &&array)
      : GridIndexer(array.boundingBox(), array.gridResolution()),
-       _maxValidIndex(Morton3::encode(array.gridResolution())),
+       _maxValidIndex(Morton3::encode(array.gridResolution() - glm::ivec3(1, 1, 1))),
        _cells(std::move(array._cells))
     {}
     
@@ -183,12 +183,6 @@ public:
 private:
     const size_t _maxValidIndex;
     std::vector<CellType> _cells;
-    
-    // Get the number of elements to use in the internal array.
-    static inline size_t numberOfInternalElements(const glm::ivec3 &res)
-    {
-        return Morton3::encode(res) + 1;
-    }
 };
 
 #endif /* Array3D_hpp */
