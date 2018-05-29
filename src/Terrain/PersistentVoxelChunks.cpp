@@ -35,7 +35,7 @@ Array3D<Voxel> PersistentVoxelChunks::loadSubRegion(const AABB &region)
     // fall within it. For example, the region may only pass through a portion
     // of some voxels on the edge, but the adjusted region should include all
     // of those voxels.
-    const AABB adjustedRegion = snapRegionToCellBoundaries(region);
+    const AABB adjustedRegion = boundingBox().intersect(snapRegionToCellBoundaries(region));
     
     // Construct the destination array.
     const glm::ivec3 res = countCellsInRegion(adjustedRegion);

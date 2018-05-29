@@ -55,6 +55,8 @@ public:
     // be locked during the operation.
     AABB getAccessRegionForOperation(TerrainOperation &operation);
     
+    AABB getSunlightRegion(AABB sunlightRegion) const;
+    
 private:
     std::shared_ptr<spdlog::logger> _log;
     std::unique_ptr<VoxelData> _source;
@@ -77,8 +79,6 @@ private:
                        bool losslessPropagationOfMaxLight);
     
     std::unique_ptr<VoxelDataChunk> createNewChunk(const AABB &cell, Morton3 index);
-    
-    AABB getSunlightRegion(AABB sunlightRegion) const;
 };
 
 #endif /* SunlightData_hpp */

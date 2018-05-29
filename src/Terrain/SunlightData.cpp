@@ -36,7 +36,62 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
           [=](const AABB &cell, Morton3 index){
               return createNewChunk(cell, index);
           })
-{}
+{
+    _log->info("SunlightData -- Beginning generation of sunlight data.");
+    
+    std::queue<glm::vec3> sunlightQueue;
+    const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
+    const ivec3 res = chunkIndexer.gridResolution();
+    
+    auto iterateColumns = [&](auto fn) {
+        for (ivec3 cellCoords{0, res.y-1, 0}; cellCoords.x < res.x; ++cellCoords.x) {
+            for (cellCoords.z = 0; cellCoords.z < res.z; ++cellCoords.z) {
+                fn(cellCoords);
+            }
+        }
+    };
+    
+    auto iterateChunks = [&](auto fn) {
+        iterateColumns([&](ivec3 cellCoords){
+            for (cellCoords.y = res.y-1; cellCoords.y >= 0; --cellCoords.y) {
+                fn(cellCoords);
+            }
+        });
+    };
+    
+    _log->info("SunlightData -- Fetching voxels for all chunks in the world.");
+    iterateChunks([&](const ivec3 &cellCoords){
+        AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
+        Morton3 chunkIndex(cellCoords);
+        (void)_chunks.get(chunkBoundingBox, chunkIndex);
+        _log->info("SunlightData -- Fetched chunk at {}", chunkBoundingBox);
+    });
+    
+    _log->info("SunlightData -- Seeding sunlight for all chunks along the ceiling of the world.");
+    iterateColumns([&](const ivec3 &cellCoords){
+        AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
+        Morton3 chunkIndex(cellCoords);
+        auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex);
+        assert(chunkPtr);
+        seedSunlightInTopLayer(*chunkPtr, sunlightQueue);
+        _log->info("SunlightData -- Seeded sunlight for chunk at {}", chunkBoundingBox);
+    });
+    
+    _log->info("SunlightData -- Performing sunlight floodfill propagation.");
+    _log->info("SunlightData -- sunlightQueue contains {} items.", sunlightQueue.size());
+    while (!sunlightQueue.empty()) {
+        const glm::vec3 voxelPos = sunlightQueue.front();
+        sunlightQueue.pop();
+        _log->info("SunlightData -- processing item: voxelPos={}", glm::to_string(voxelPos));
+//        floodNeighbor(voxelPos, vec3(-1,  0,  0), sunlightQueue, false);
+//        floodNeighbor(voxelPos, vec3(+1,  0,  0), sunlightQueue, false);
+//        floodNeighbor(voxelPos, vec3( 0,  0, -1), sunlightQueue, false);
+//        floodNeighbor(voxelPos, vec3( 0,  0, +1), sunlightQueue, false);
+        floodNeighbor(voxelPos, vec3( 0, -1,  0), sunlightQueue, true);
+    }
+    
+    _log->info("SunlightData -- Finished generation of sunlight data.");
+}
 
 bool SunlightData::isChunkComplete(const vec3 &point)
 {
@@ -103,62 +158,30 @@ void SunlightData::floodNeighbor(const vec3 voxelPos,
                                  std::queue<glm::vec3> &sunlightQueue,
                                  bool losslessPropagationOfMaxLight)
 {
-    const vec3 neighborPos = voxelPos + delta;
     const Voxel nodeVoxel = getVoxelAtPoint(voxelPos);
     assert(nodeVoxel.value == 0);
+    const vec3 neighborPos = voxelPos + delta;
     Voxel neighborVoxel = getVoxelAtPoint(neighborPos);
     
-    if ((neighborVoxel.value == 0) && ((neighborVoxel.sunLight + 2) <= nodeVoxel.sunLight)) {
-        if (losslessPropagationOfMaxLight && nodeVoxel.sunLight == MAX_LIGHT) {
-            neighborVoxel.sunLight = MAX_LIGHT;
-        } else {
-            neighborVoxel.sunLight = nodeVoxel.sunLight - 1;
-        }
+    if ((neighborVoxel.value == 0) && (nodeVoxel.value == 0)) {
+        neighborVoxel.sunLight = MAX_LIGHT;
         setVoxelAtPoint(neighborPos, neighborVoxel);
         sunlightQueue.emplace(neighborPos);
     }
+    
+//    if ((neighborVoxel.value == 0) && ((neighborVoxel.sunLight + 2) <= nodeVoxel.sunLight)) {
+//        if (losslessPropagationOfMaxLight && nodeVoxel.sunLight == MAX_LIGHT) {
+//            neighborVoxel.sunLight = MAX_LIGHT;
+//        } else {
+//            neighborVoxel.sunLight = nodeVoxel.sunLight - 1;
+//        }
+//        setVoxelAtPoint(neighborPos, neighborVoxel);
+//        sunlightQueue.emplace(neighborPos);
+//    }
 }
 
 Array3D<Voxel> SunlightData::load(const AABB &region)
 {
-    bool chunkIsComplete = isChunkComplete(region.center);
-    
-    if (!chunkIsComplete) {
-        std::queue<glm::vec3> sunlightQueue;
-        
-        const AABB sunlightRegion = getSunlightRegion(region);
-        const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
-        const ivec3 minCellCoords = chunkIndexer.cellCoordsAtPoint(sunlightRegion.mins());
-        const ivec3 maxCellCoords = chunkIndexer.cellCoordsAtPointRoundUp(sunlightRegion.maxs());
-        
-        for (ivec3 cellCoords = minCellCoords; cellCoords.x < maxCellCoords.x; ++cellCoords.x) {
-            for (cellCoords.z = minCellCoords.z; cellCoords.z < maxCellCoords.z; ++cellCoords.z) {
-                for (cellCoords.y = maxCellCoords.y-1; cellCoords.y >= minCellCoords.y; --cellCoords.y) {
-                    auto chunkPtr = chunkAtCellCoords(cellCoords);
-                    assert(chunkPtr);
-                    seedSunlightInTopLayer(*chunkPtr, sunlightQueue);
-                }
-            }
-        }
-        
-        while (!sunlightQueue.empty()) {
-            const glm::vec3 voxelPos = sunlightQueue.front();
-            sunlightQueue.pop();
-//            floodNeighbor(voxelPos, vec3(-1,  0,  0), sunlightQueue, false);
-//            floodNeighbor(voxelPos, vec3(+1,  0,  0), sunlightQueue, false);
-//            floodNeighbor(voxelPos, vec3( 0,  0, -1), sunlightQueue, false);
-//            floodNeighbor(voxelPos, vec3( 0,  0, +1), sunlightQueue, false);
-            floodNeighbor(voxelPos, vec3( 0, -1,  0), sunlightQueue, true);
-        }
-        
-        ivec3 cellCoords = chunkIndexer.cellCoordsAtPoint(region.center);
-        for (cellCoords.y = maxCellCoords.y-1; cellCoords.y >= minCellCoords.y; --cellCoords.y) {
-            auto chunkPtr = chunkAtCellCoords(cellCoords);
-            assert(chunkPtr);
-            chunkPtr->complete = true;
-        }
-    } // if (!chunkIsComplete)
-    
     return _chunks.loadSubRegion(region);
 }
 
