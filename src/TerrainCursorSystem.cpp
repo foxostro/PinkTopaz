@@ -144,7 +144,8 @@ void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTran
     _dispatcher->async([startTime=std::chrono::steady_clock::now(),
                         cameraTerrainTransform,
                         terrain=terrain,
-                        cancellationToken=cursor.cancellationToken]{
+                        cancellationToken=cursor.cancellationToken,
+                        log=_log]{
 
         if (cancellationToken && cancellationToken->load()) {
             throw BrokenPromiseException();
@@ -159,19 +160,24 @@ void TerrainCursorSystem::requestCursorUpdate(const glm::mat4 &cameraTerrainTran
         bool active = false;
         glm::vec3 cursorPos, placePos;
         
-        terrain->readerTransaction(voxelBox, [&](Array3D<Voxel> &&voxels){
-            for (const auto &pos : slice(voxels, ray, maxPlaceDistance)) {
-                const Voxel &voxel = voxels.reference(pos);
-                
-                if (voxel.value != 0.f) {
-                    active = true;
-                    cursorPos = pos;
-                    break;
-                } else {
-                    placePos = pos;
+        try {
+            terrain->readerTransaction(voxelBox, [&](Array3D<Voxel> &&voxels){
+                for (const auto &pos : slice(voxels, ray, maxPlaceDistance)) {
+                    const Voxel &voxel = voxels.reference(pos);
+                    
+                    if (voxel.value != 0.f) {
+                        active = true;
+                        cursorPos = pos;
+                        break;
+                    } else {
+                        placePos = pos;
+                    }
                 }
-            }
-        });
+            });
+        } catch (OutOfBoundsException e) {
+            log->error("TerrainCursorSystem::requestCursorUpdate triggered OutOfBoundsException: {}", e.what());
+            throw BrokenPromiseException();
+        }
         
         // Return a tuple containing the updated cursor value and the start time
         // of the computation.
