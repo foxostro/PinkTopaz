@@ -19,7 +19,7 @@
 #ifdef TESTING
 constexpr bool EnableVerboseBoundsChecking = true;
 #else
-constexpr bool EnableVerboseBoundsChecking = false;
+constexpr bool EnableVerboseBoundsChecking = true;
 #endif
 
 

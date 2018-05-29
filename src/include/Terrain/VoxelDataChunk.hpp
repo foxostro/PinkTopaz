@@ -28,6 +28,8 @@ static const Voxel GroundVoxel{
 class VoxelDataChunk : public GridIndexer
 {
 public:
+    bool complete;
+    
     enum Type {
         Array,
         Sky,
@@ -36,7 +38,8 @@ public:
     
     VoxelDataChunk(const VoxelDataChunk &other)
     : GridIndexer(other.boundingBox(), other.gridResolution()),
-    _type(other._type)
+      complete(false),
+      _type(other._type)
     {
         if (other._voxels) {
             _voxels = std::make_unique<Array3D<Voxel>>(*other._voxels);
@@ -47,13 +50,15 @@ public:
     
     VoxelDataChunk(VoxelDataChunk &&other)
     : GridIndexer(other.boundingBox(), other.gridResolution()),
-    _type(other._type),
-    _voxels(std::move(other._voxels))
+      complete(false),
+      _type(other._type),
+      _voxels(std::move(other._voxels))
     {}
     
     VoxelDataChunk& operator=(const VoxelDataChunk &other)
     {
         if (&other != this) {
+            complete = other.complete;
             _type = other._type;
             if (other._voxels) {
                 _voxels = std::make_unique<Array3D<Voxel>>(*other._voxels);

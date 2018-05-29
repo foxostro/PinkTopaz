@@ -12,7 +12,7 @@
 #include <cereal/archives/binary.hpp>
 
 // Voxel light values range over [0, MAX_LIGHT].
-constexpr unsigned MAX_LIGHT = 15;
+constexpr unsigned MAX_LIGHT = 3;
 
 struct Voxel
 {

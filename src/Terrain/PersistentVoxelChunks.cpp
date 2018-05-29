@@ -132,6 +132,12 @@ PersistentVoxelChunks::get(const AABB &cell, Morton3 index)
     });
 }
 
+boost::optional<std::shared_ptr<VoxelDataChunk>>
+PersistentVoxelChunks::getIfExists(Morton3 index)
+{
+    return _chunks.get(index);
+}
+
 void PersistentVoxelChunks::invalidate(const AABB &region)
 {
     for (const auto chunkCellCoords : slice(_chunks, region)) {

@@ -7,7 +7,19 @@
 //
 
 #include "Terrain/SunlightData.hpp"
+#include "Terrain/TerrainConfig.hpp"
 #include "Grid/GridIndexerRange.hpp"
+
+using namespace glm;
+
+template<typename Function>
+void iterateHorizontalSlice(const ivec3 &res, Function &&fn){
+    for (ivec3 cellCoords{0,0,0}; cellCoords.x < res.x; ++cellCoords.x) {
+        for (cellCoords.z = 0; cellCoords.z < res.z; ++cellCoords.z) {
+            fn(cellCoords);
+        }
+    }
+}
 
 SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
                            std::unique_ptr<VoxelData> &&source,
@@ -26,17 +38,136 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
           })
 {}
 
+bool SunlightData::isChunkComplete(const vec3 &point)
+{
+    Morton3 index = _chunks.getChunkIndexer().indexAtPoint(point);
+    auto maybeChunk = _chunks.getIfExists(index);
+    if (maybeChunk) {
+        std::shared_ptr<VoxelDataChunk> chunk = *maybeChunk;
+        assert(chunk);
+        if (chunk->complete) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::shared_ptr<VoxelDataChunk> SunlightData::chunkAtCellCoords(const ivec3 &cellCoords)
+{
+    const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
+    const AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
+    const Morton3 index(cellCoords);
+    auto chunkPtr = _chunks.get(chunkBoundingBox, index);
+    return chunkPtr;
+}
+
+void SunlightData::seedSunlightInTopLayer(VoxelDataChunk &chunk,
+                                          std::queue<glm::vec3> &sunlightQueue)
+{
+    const ivec3 res = chunk.gridResolution();
+    for (ivec3 cellCoords{0, res.y-1, 0}; cellCoords.x < res.x; ++cellCoords.x) {
+        for (cellCoords.z = 0; cellCoords.z < res.z; ++cellCoords.z) {
+            Voxel voxel = chunk.get(cellCoords);
+            if (voxel.value == 0) {
+                voxel.sunLight = MAX_LIGHT;
+                chunk.set(cellCoords, voxel);
+                sunlightQueue.emplace(chunk.cellCenterAtCellCoords(cellCoords));
+            }
+        }
+    }
+}
+
+Voxel SunlightData::getVoxelAtPoint(const vec3 voxelPos)
+{
+    const GridIndexer &indexer = _chunks.getChunkIndexer();
+    const ivec3 chunkIndex = indexer.cellCoordsAtPoint(voxelPos);
+    const AABB chunkBoundingBox = indexer.cellAtCellCoords(chunkIndex);
+    std::shared_ptr<VoxelDataChunk> chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex);
+    assert(chunkPtr);
+    const Voxel voxel = chunkPtr->get(voxelPos);
+    return voxel;
+}
+
+void SunlightData::setVoxelAtPoint(const vec3 voxelPos, const Voxel &voxel)
+{
+    const GridIndexer &indexer = _chunks.getChunkIndexer();
+    const ivec3 chunkIndex = indexer.cellCoordsAtPoint(voxelPos);
+    const AABB chunkBoundingBox = indexer.cellAtCellCoords(chunkIndex);
+    std::shared_ptr<VoxelDataChunk> chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex);
+    assert(chunkPtr);
+    chunkPtr->set(voxelPos, voxel);
+}
+
+void SunlightData::floodNeighbor(const vec3 voxelPos,
+                                 const vec3 delta,
+                                 std::queue<glm::vec3> &sunlightQueue,
+                                 bool losslessPropagationOfMaxLight)
+{
+    const vec3 neighborPos = voxelPos + delta;
+    const Voxel nodeVoxel = getVoxelAtPoint(voxelPos);
+    assert(nodeVoxel.value == 0);
+    Voxel neighborVoxel = getVoxelAtPoint(neighborPos);
+    
+    if ((neighborVoxel.value == 0) && ((neighborVoxel.sunLight + 2) <= nodeVoxel.sunLight)) {
+        if (losslessPropagationOfMaxLight && nodeVoxel.sunLight == MAX_LIGHT) {
+            neighborVoxel.sunLight = MAX_LIGHT;
+        } else {
+            neighborVoxel.sunLight = nodeVoxel.sunLight - 1;
+        }
+        setVoxelAtPoint(neighborPos, neighborVoxel);
+        sunlightQueue.emplace(neighborPos);
+    }
+}
+
 Array3D<Voxel> SunlightData::load(const AABB &region)
 {
+    bool chunkIsComplete = isChunkComplete(region.center);
+    
+    if (!chunkIsComplete) {
+        std::queue<glm::vec3> sunlightQueue;
+        
+        const AABB sunlightRegion = getSunlightRegion(region);
+        const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
+        const ivec3 minCellCoords = chunkIndexer.cellCoordsAtPoint(sunlightRegion.mins());
+        const ivec3 maxCellCoords = chunkIndexer.cellCoordsAtPointRoundUp(sunlightRegion.maxs());
+        
+        for (ivec3 cellCoords = minCellCoords; cellCoords.x < maxCellCoords.x; ++cellCoords.x) {
+            for (cellCoords.z = minCellCoords.z; cellCoords.z < maxCellCoords.z; ++cellCoords.z) {
+                for (cellCoords.y = maxCellCoords.y-1; cellCoords.y >= minCellCoords.y; --cellCoords.y) {
+                    auto chunkPtr = chunkAtCellCoords(cellCoords);
+                    assert(chunkPtr);
+                    seedSunlightInTopLayer(*chunkPtr, sunlightQueue);
+                }
+            }
+        }
+        
+        while (!sunlightQueue.empty()) {
+            const glm::vec3 voxelPos = sunlightQueue.front();
+            sunlightQueue.pop();
+//            floodNeighbor(voxelPos, vec3(-1,  0,  0), sunlightQueue, false);
+//            floodNeighbor(voxelPos, vec3(+1,  0,  0), sunlightQueue, false);
+//            floodNeighbor(voxelPos, vec3( 0,  0, -1), sunlightQueue, false);
+//            floodNeighbor(voxelPos, vec3( 0,  0, +1), sunlightQueue, false);
+            floodNeighbor(voxelPos, vec3( 0, -1,  0), sunlightQueue, true);
+        }
+        
+        ivec3 cellCoords = chunkIndexer.cellCoordsAtPoint(region.center);
+        for (cellCoords.y = maxCellCoords.y-1; cellCoords.y >= minCellCoords.y; --cellCoords.y) {
+            auto chunkPtr = chunkAtCellCoords(cellCoords);
+            assert(chunkPtr);
+            chunkPtr->complete = true;
+        }
+    } // if (!chunkIsComplete)
+    
     return _chunks.loadSubRegion(region);
 }
 
-void SunlightData::editSingleVoxel(const glm::vec3 &point, const Voxel &value)
+void SunlightData::editSingleVoxel(const vec3 &point, const Voxel &value)
 {
     const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
     AABB actualAreaOfSunlightChange = _source->cellAtPoint(point);
     bool done = false;
-    glm::vec3 chunkPoint = _chunks.cellCenterAtPoint(point);
+    vec3 chunkPoint = _chunks.cellCenterAtPoint(point);
     
     while(!done) {
         const AABB chunkBoundingBox = chunkIndexer.cellAtPoint(chunkPoint);
@@ -48,7 +179,7 @@ void SunlightData::editSingleVoxel(const glm::vec3 &point, const Voxel &value)
             // We'll convert this chunk to an array type chunk and then move on.
             chunk.convertToArray();
         } else {
-            for (glm::ivec3 cellCoords = chunk.cellCoordsAtPoint(point); cellCoords.y >= 0; --cellCoords.y) {
+            for (ivec3 cellCoords = chunk.cellCoordsAtPoint(point); cellCoords.y >= 0; --cellCoords.y) {
                 const Voxel &voxel = chunk.get(cellCoords);
                 if (voxel.value == 0) {
                     const AABB voxelCell = chunk.cellAtCellCoords(cellCoords);
@@ -82,94 +213,25 @@ AABB SunlightData::getAccessRegionForOperation(TerrainOperation &operation)
 std::unique_ptr<VoxelDataChunk>
 SunlightData::createNewChunk(const AABB &cell, Morton3 chunkIndex)
 {
-    VoxelDataChunk voxels = _source->load(cell);
-    
-    // If this chunk is Sky or Ground then it already has valid light data and
-    // there's nothing to do.
-    if (auto type = voxels.getType();
-        type == VoxelDataChunk::Sky || type == VoxelDataChunk::Ground) {
-        return std::make_unique<VoxelDataChunk>(std::move(voxels));
-    }
-    
-    const glm::ivec3 res = voxels.gridResolution();
-    
-    auto iterateHorizontalSlice = [&](std::function<void(glm::ivec3 cellCoords)> fn){
-        for (glm::ivec3 cellCoords{0,0,0}; cellCoords.x < res.x; ++cellCoords.x) {
-            for (cellCoords.z = 0; cellCoords.z < res.z; ++cellCoords.z) {
-                fn(cellCoords);
-            }
-        }
-    };
-    
-    // Get the top chunk. Then, copy the sunlight data at the bottom of the
-    // top chunk to the top of this chunk.
-    // If we're at the top of the world then there is no top chunk. In this case
-    // we instead set the open voxels in the top slice to MAX_LIGHT.
-    // If the top chunk is sky then we also know there is no terrain above us
-    // and can set the open voxels in the top slice to MAX_LIGHT.
-    bool shouldSeedInitialSunlightValues = true;
-    AABB topCell = cell;
-    topCell.center.y += (2.f * cell.extent.y);
-    if (inbounds(topCell)) {
-        Morton3 topIndex = chunkIndex;
-        topIndex.incY();
-        auto topSunlightChunk = _chunks.get(topCell, topIndex);
-        
-        if (topSunlightChunk->getType() != VoxelDataChunk::Sky) {
-            shouldSeedInitialSunlightValues = false;
-            iterateHorizontalSlice([&](glm::ivec3 cellCoords){
-                cellCoords.y = 0;
-                const Voxel topVoxel = topSunlightChunk->get(cellCoords);
-                cellCoords.y = voxels.gridResolution().y - 1;
-                Voxel voxel = voxels.get(cellCoords);
-                if ((topVoxel.value == 0) && (voxel.value == 0)) {
-                    voxel.sunLight = topVoxel.sunLight;
-                    voxels.set(cellCoords, voxel);
-                }
-            });
-        }
-    }
-    
-    if (shouldSeedInitialSunlightValues) {
-        iterateHorizontalSlice([&](glm::ivec3 cellCoords){
-            cellCoords.y = voxels.gridResolution().y - 1;
-            Voxel voxel = voxels.get(cellCoords);
-            if (voxel.value == 0) {
-                voxel.sunLight = MAX_LIGHT;
-                voxels.set(cellCoords, voxel);
-            }
-        });
-    }
-    
-    iterateHorizontalSlice([&](glm::ivec3 cellCoords){
-        for (cellCoords.y = res.y-2; cellCoords.y >= 0; --cellCoords.y) {
-            const Voxel topVoxel = voxels.get(glm::ivec3(cellCoords.x, cellCoords.y + 1, cellCoords.z));
-            Voxel voxel = voxels.get(cellCoords);
-            if ((topVoxel.value == 0) && (voxel.value == 0)) {
-                voxel.sunLight = topVoxel.sunLight;
-                voxels.set(cellCoords, voxel);
-            }
-        }
-    });
-    
-    return std::make_unique<VoxelDataChunk>(std::move(voxels));
+    VoxelDataChunk chunks = _source->load(cell);
+    chunks.complete = (chunks.getType() != VoxelDataChunk::Array);
+    return std::make_unique<VoxelDataChunk>(std::move(chunks));
 }
 
 AABB SunlightData::getSunlightRegion(AABB sunlightRegion) const
 {
-    // First, account for horizontal propagation.
-    sunlightRegion = sunlightRegion.inset(-glm::vec3(MAX_LIGHT));
+    sunlightRegion = _chunks.getChunkIndexer().snapRegionToCellBoundaries(sunlightRegion);
     
-    // Second, account for downward, vertical propagation.
-    glm::vec3 mins = sunlightRegion.mins();
-    glm::vec3 maxs = sunlightRegion.maxs();
+    sunlightRegion = sunlightRegion.inset(vec3((float)TERRAIN_CHUNK_SIZE, 0, (float)TERRAIN_CHUNK_SIZE));
+    
+    vec3 mins = sunlightRegion.mins();
     mins.y = boundingBox().mins().y;
-    glm::vec3 center = (maxs + mins) * 0.5f;
-    glm::vec3 extent = (maxs - mins) * 0.5f;
-    sunlightRegion = {center, extent};
     
-    // Clip against the bounding box of the sunlight grid.
-    sunlightRegion = boundingBox().intersect(sunlightRegion);
+    vec3 maxs = sunlightRegion.maxs();
+    maxs.y = boundingBox().maxs().y;
+    
+    sunlightRegion.center = (maxs + mins) * 0.5f;
+    sunlightRegion.extent = (maxs - mins) * 0.5f;
     
     return sunlightRegion;
 }

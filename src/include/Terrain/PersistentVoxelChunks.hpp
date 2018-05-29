@@ -75,6 +75,11 @@ public:
     // index -- A unique index to identify the chunk in the sparse grid.
     std::shared_ptr<VoxelDataChunk> get(const AABB &boundingBox, Morton3 index);
     
+    // Returns the chunk, if it already exists.
+    // index -- A unique index to identify the chunk in the sparse grid.
+    boost::optional<std::shared_ptr<VoxelDataChunk>>
+    getIfExists(Morton3 index);
+    
     // Invalidate all chunks in the specified region.
     void invalidate(const AABB &region);
     

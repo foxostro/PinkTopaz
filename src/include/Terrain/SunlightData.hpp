@@ -13,6 +13,7 @@
 #include "Terrain/PersistentVoxelChunks.hpp"
 
 #include <spdlog/spdlog.h>
+#include <queue>
 
 // Voxels with sunlight computation.
 class SunlightData : public GridIndexer
@@ -58,6 +59,22 @@ private:
     std::shared_ptr<spdlog::logger> _log;
     std::unique_ptr<VoxelData> _source;
     PersistentVoxelChunks _chunks;
+    
+    std::shared_ptr<VoxelDataChunk> chunkAtCellCoords(const glm::ivec3 &cellCoords);
+    
+    bool isChunkComplete(const glm::vec3 &point);
+    
+    void seedSunlightInTopLayer(VoxelDataChunk &chunk,
+                                std::queue<glm::vec3> &sunlightQueue);
+    
+    Voxel getVoxelAtPoint(const glm::vec3 voxelPos);
+    
+    void setVoxelAtPoint(const glm::vec3 voxelPos, const Voxel &voxel);
+    
+    void floodNeighbor(const glm::vec3 voxelPos,
+                       const glm::vec3 delta,
+                       std::queue<glm::vec3> &sunlightQueue,
+                       bool losslessPropagationOfMaxLight);
     
     std::unique_ptr<VoxelDataChunk> createNewChunk(const AABB &cell, Morton3 index);
     
