@@ -58,6 +58,19 @@ public:
     AABB getSunlightRegion(AABB sunlightRegion) const;
     
 private:
+    struct LightNode {
+        std::shared_ptr<VoxelDataChunk> chunkPtr;
+        glm::ivec3 chunkCellCoords;
+        glm::ivec3 voxelCellCoords;
+        
+        LightNode(const std::shared_ptr<VoxelDataChunk> &chunkPtr,
+                  const glm::ivec3 &chunkCellCoords,
+                  const glm::ivec3 &voxelCellCoords)
+         : chunkPtr(chunkPtr),
+           chunkCellCoords(chunkCellCoords),
+           voxelCellCoords(voxelCellCoords)
+        {}
+    };
     std::shared_ptr<spdlog::logger> _log;
     std::unique_ptr<VoxelData> _source;
     PersistentVoxelChunks _chunks;
@@ -66,16 +79,15 @@ private:
     
     bool isChunkComplete(const glm::vec3 &point);
     
-    void seedSunlightInTopLayer(VoxelDataChunk &chunk,
-                                std::queue<glm::vec3> &sunlightQueue);
+    void seedSunlightInTopLayer(const std::shared_ptr<VoxelDataChunk> &chunkPtr,
+                                const glm::ivec3 &chunkCellCoords,
+                                std::queue<LightNode> &sunlightQueue);
     
-    Voxel getVoxelAtPoint(const glm::vec3 voxelPos);
-    
-    void setVoxelAtPoint(const glm::vec3 voxelPos, const Voxel &voxel);
-    
-    void floodNeighbor(const glm::vec3 voxelPos,
-                       const glm::vec3 delta,
-                       std::queue<glm::vec3> &sunlightQueue,
+    void floodNeighbor(const std::shared_ptr<VoxelDataChunk> &chunkPtr,
+                       const glm::ivec3 &chunkCellCoords,
+                       const glm::ivec3 &voxelCellCoords,
+                       const glm::ivec3 &delta,
+                       std::queue<LightNode> &sunlightQueue,
                        bool losslessPropagationOfMaxLight);
     
     std::unique_ptr<VoxelDataChunk> createNewChunk(const AABB &cell, Morton3 index);
