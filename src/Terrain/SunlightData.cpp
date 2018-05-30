@@ -68,13 +68,24 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
     });
     
     _log->info("SunlightData -- Seeding sunlight for all chunks along the ceiling of the world.");
-    iterateColumns([&](const ivec3 &cellCoords){
-        AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
-        Morton3 chunkIndex(cellCoords);
-        auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex);
-        assert(chunkPtr);
-        seedSunlightInTopLayer(*chunkPtr, sunlightQueue);
-        _log->info("SunlightData -- Seeded sunlight for chunk at {}", chunkBoundingBox);
+    iterateColumns([&](ivec3 cellCoords){
+        // Walk down each column until we reach the first non-Sky chunk.
+        // Seed sunlight at the top of this chunk and then move on to the next
+        // column.
+        for (cellCoords.y = res.y-1; cellCoords.y >= 0; --cellCoords.y) {
+            AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
+            Morton3 chunkIndex(cellCoords);
+            auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex);
+            assert(chunkPtr);
+            if (chunkPtr->getType() == VoxelDataChunk::Sky) {
+                continue;
+            } else {
+                seedSunlightInTopLayer(*chunkPtr, sunlightQueue);
+                _log->info("SunlightData -- Seeded sunlight for column "\
+                           "<{}, {}>", cellCoords.x, cellCoords.z);
+                break;
+            }
+        }
     });
     
     _log->info("SunlightData -- Performing sunlight floodfill propagation.");
@@ -98,7 +109,7 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
     const auto duration = std::chrono::steady_clock::now() - startTime;
     const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
     _log->info("SunlightData -- Finished generation of sunlight data."\
-               "(processed {} items in {} s)",
+               "(Processed {} items in {} seconds.)",
                count, std::to_string(seconds.count()));
 }
 
