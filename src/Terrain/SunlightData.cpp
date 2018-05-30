@@ -79,6 +79,7 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
     
     _log->info("SunlightData -- Performing sunlight floodfill propagation.");
     _log->info("SunlightData -- sunlightQueue contains {} items.", sunlightQueue.size());
+    const auto startTime = std::chrono::steady_clock::now();
     int count = 0;
     while (!sunlightQueue.empty()) {
         const glm::vec3 voxelPos = sunlightQueue.front();
@@ -89,12 +90,16 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
         floodNeighbor(voxelPos, vec3( 0,  0, +1), sunlightQueue, false);
         floodNeighbor(voxelPos, vec3( 0, -1,  0), sunlightQueue, true);
         count++;
-        if (count % 10000000 == 0) {
+        if (count % 1000000 == 0) {
             _log->info("SunlightData -- processing...");
         }
     }
     
-    _log->info("SunlightData -- Finished generation of sunlight data. (processed {} items)", count);
+    const auto duration = std::chrono::steady_clock::now() - startTime;
+    const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+    _log->info("SunlightData -- Finished generation of sunlight data."\
+               "(processed {} items in {} s)",
+               count, std::to_string(seconds.count()));
 }
 
 bool SunlightData::isChunkComplete(const vec3 &point)
