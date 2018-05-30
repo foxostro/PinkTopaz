@@ -79,18 +79,22 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
     
     _log->info("SunlightData -- Performing sunlight floodfill propagation.");
     _log->info("SunlightData -- sunlightQueue contains {} items.", sunlightQueue.size());
+    int count = 0;
     while (!sunlightQueue.empty()) {
         const glm::vec3 voxelPos = sunlightQueue.front();
         sunlightQueue.pop();
-        _log->info("SunlightData -- processing item: voxelPos={}", glm::to_string(voxelPos));
-//        floodNeighbor(voxelPos, vec3(-1,  0,  0), sunlightQueue, false);
-//        floodNeighbor(voxelPos, vec3(+1,  0,  0), sunlightQueue, false);
-//        floodNeighbor(voxelPos, vec3( 0,  0, -1), sunlightQueue, false);
-//        floodNeighbor(voxelPos, vec3( 0,  0, +1), sunlightQueue, false);
+        floodNeighbor(voxelPos, vec3(-1,  0,  0), sunlightQueue, false);
+        floodNeighbor(voxelPos, vec3(+1,  0,  0), sunlightQueue, false);
+        floodNeighbor(voxelPos, vec3( 0,  0, -1), sunlightQueue, false);
+        floodNeighbor(voxelPos, vec3( 0,  0, +1), sunlightQueue, false);
         floodNeighbor(voxelPos, vec3( 0, -1,  0), sunlightQueue, true);
+        count++;
+        if (count % 10000000 == 0) {
+            _log->info("SunlightData -- processing...");
+        }
     }
     
-    _log->info("SunlightData -- Finished generation of sunlight data.");
+    _log->info("SunlightData -- Finished generation of sunlight data. (processed {} items)", count);
 }
 
 bool SunlightData::isChunkComplete(const vec3 &point)
@@ -161,23 +165,30 @@ void SunlightData::floodNeighbor(const vec3 voxelPos,
     const Voxel nodeVoxel = getVoxelAtPoint(voxelPos);
     assert(nodeVoxel.value == 0);
     const vec3 neighborPos = voxelPos + delta;
+    if (!inbounds(neighborPos)) {
+        return;
+    }
     Voxel neighborVoxel = getVoxelAtPoint(neighborPos);
     
-    if ((neighborVoxel.value == 0) && (nodeVoxel.value == 0)) {
-        neighborVoxel.sunLight = MAX_LIGHT;
-        setVoxelAtPoint(neighborPos, neighborVoxel);
-        sunlightQueue.emplace(neighborPos);
-    }
+    int nodeValue = nodeVoxel.value;
+    int neighborValue = neighborVoxel.value;
     
-//    if ((neighborVoxel.value == 0) && ((neighborVoxel.sunLight + 2) <= nodeVoxel.sunLight)) {
-//        if (losslessPropagationOfMaxLight && nodeVoxel.sunLight == MAX_LIGHT) {
-//            neighborVoxel.sunLight = MAX_LIGHT;
-//        } else {
-//            neighborVoxel.sunLight = nodeVoxel.sunLight - 1;
-//        }
-//        setVoxelAtPoint(neighborPos, neighborVoxel);
-//        sunlightQueue.emplace(neighborPos);
-//    }
+    int nodeSunLight = nodeVoxel.sunLight;
+    int neighborSunLight = neighborVoxel.sunLight;
+    
+    if ((neighborValue == 0) && (nodeValue == 0)) {
+        if (losslessPropagationOfMaxLight && nodeSunLight == MAX_LIGHT) {
+            neighborVoxel.sunLight = MAX_LIGHT;
+            setVoxelAtPoint(neighborPos, neighborVoxel);
+            sunlightQueue.emplace(neighborPos);
+        } else if ((neighborSunLight + 2) <= nodeSunLight) {
+            neighborSunLight = nodeSunLight - 1;
+            assert(neighborSunLight >= 0 && neighborSunLight <= MAX_LIGHT);
+            neighborVoxel.sunLight = neighborSunLight;
+            setVoxelAtPoint(neighborPos, neighborVoxel);
+            sunlightQueue.emplace(neighborPos);
+        }
+    }
 }
 
 Array3D<Voxel> SunlightData::load(const AABB &region)
