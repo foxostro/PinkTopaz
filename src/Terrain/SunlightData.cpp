@@ -106,10 +106,10 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
     }
     
     const auto duration = std::chrono::steady_clock::now() - startTime;
-    const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
     _log->info("SunlightData -- Finished generation of sunlight data."\
-               "(took {} seconds)",
-               std::to_string(seconds.count()));
+               "(took {} ms)",
+               std::to_string(ms.count()));
 }
 
 bool SunlightData::isChunkComplete(const vec3 &point)
