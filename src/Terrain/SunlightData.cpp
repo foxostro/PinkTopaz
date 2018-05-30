@@ -75,7 +75,7 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
         for (cellCoords.y = res.y-1; cellCoords.y >= 0; --cellCoords.y) {
             AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
             Morton3 chunkIndex(cellCoords);
-            auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex);
+            auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex).get();
             assert(chunkPtr);
             if (chunkPtr->getType() == VoxelDataChunk::Sky) {
                 continue;
@@ -135,7 +135,7 @@ std::shared_ptr<VoxelDataChunk> SunlightData::chunkAtCellCoords(const ivec3 &cel
     return chunkPtr;
 }
 
-void SunlightData::seedSunlightInTopLayer(const std::shared_ptr<VoxelDataChunk> &chunkPtr,
+void SunlightData::seedSunlightInTopLayer(VoxelDataChunk *chunkPtr,
                                           const ivec3 &chunkCellCoords,
                                           std::queue<LightNode> &sunlightQueue)
 {
@@ -155,13 +155,15 @@ void SunlightData::seedSunlightInTopLayer(const std::shared_ptr<VoxelDataChunk> 
     }
 }
 
-void SunlightData::floodNeighbor(const std::shared_ptr<VoxelDataChunk> &chunkPtr,
+void SunlightData::floodNeighbor(VoxelDataChunk *chunkPtr,
                                  const ivec3 &chunkCellCoords,
                                  const ivec3 &voxelCellCoords,
                                  const ivec3 &delta,
                                  std::queue<LightNode> &sunlightQueue,
                                  bool losslessPropagationOfMaxLight)
 {
+    assert(chunkPtr);
+    
     const Voxel nodeVoxel = chunkPtr->get(voxelCellCoords);
     assert(nodeVoxel.value == 0);
     
@@ -193,12 +195,12 @@ void SunlightData::floodNeighbor(const std::shared_ptr<VoxelDataChunk> &chunkPtr
     
     // Get the neighbor chunk. We only have to consult `_chunks' if we're
     // crossing a chunk boundary right now.
-    std::shared_ptr<VoxelDataChunk> neighborChunk;
+    VoxelDataChunk *neighborChunk = nullptr;
     if (neighborChunkCellCoords != chunkCellCoords) {
         const GridIndexer &indexer = _chunks.getChunkIndexer();
         if (indexer.inbounds(neighborChunkCellCoords)) {
             const AABB neighborChunkBoundingBox = indexer.cellAtCellCoords(neighborChunkCellCoords);
-            neighborChunk = _chunks.get(neighborChunkBoundingBox, Morton3(neighborChunkCellCoords));
+            neighborChunk = _chunks.get(neighborChunkBoundingBox, Morton3(neighborChunkCellCoords)).get();
         }
     } else {
         neighborChunk = chunkPtr;

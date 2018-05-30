@@ -59,11 +59,11 @@ public:
     
 private:
     struct LightNode {
-        std::shared_ptr<VoxelDataChunk> chunkPtr;
+        VoxelDataChunk *chunkPtr;
         glm::ivec3 chunkCellCoords;
         glm::ivec3 voxelCellCoords;
         
-        LightNode(const std::shared_ptr<VoxelDataChunk> &chunkPtr,
+        LightNode(VoxelDataChunk *chunkPtr,
                   const glm::ivec3 &chunkCellCoords,
                   const glm::ivec3 &voxelCellCoords)
          : chunkPtr(chunkPtr),
@@ -79,11 +79,11 @@ private:
     
     bool isChunkComplete(const glm::vec3 &point);
     
-    void seedSunlightInTopLayer(const std::shared_ptr<VoxelDataChunk> &chunkPtr,
+    void seedSunlightInTopLayer(VoxelDataChunk *chunkPtr,
                                 const glm::ivec3 &chunkCellCoords,
                                 std::queue<LightNode> &sunlightQueue);
     
-    void floodNeighbor(const std::shared_ptr<VoxelDataChunk> &chunkPtr,
+    void floodNeighbor(VoxelDataChunk *chunkPtr,
                        const glm::ivec3 &chunkCellCoords,
                        const glm::ivec3 &voxelCellCoords,
                        const glm::ivec3 &delta,
