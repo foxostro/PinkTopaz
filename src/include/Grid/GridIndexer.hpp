@@ -16,10 +16,10 @@
 
 // Set `EnableVerboseBoundsChecking' to true to enable very verbose bounds
 // checking for grids. There is a severe performance penalty for doing this.
-#ifdef TESTING
+#if defined(TESTING) || !defined(NDEBUG)
 constexpr bool EnableVerboseBoundsChecking = true;
 #else
-constexpr bool EnableVerboseBoundsChecking = true;
+constexpr bool EnableVerboseBoundsChecking = false;
 #endif
 
 
