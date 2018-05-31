@@ -75,9 +75,8 @@ private:
     std::unique_ptr<VoxelData> _source;
     PersistentVoxelChunks _chunks;
     
-    std::shared_ptr<VoxelDataChunk> chunkAtCellCoords(const glm::ivec3 &cellCoords);
-    
-    bool isChunkComplete(const glm::vec3 &point);
+    void propagateSunlight(const GridIndexer &chunkIndexer,
+                           const glm::ivec3 &targetColumnCoords);
     
     void seedSunlightInTopLayer(VoxelDataChunk *chunkPtr,
                                 const glm::ivec3 &chunkCellCoords,
@@ -87,8 +86,15 @@ private:
                        const glm::ivec3 &chunkCellCoords,
                        const glm::ivec3 &voxelCellCoords,
                        const glm::ivec3 &delta,
+                       const glm::ivec3 &neighborHoodMin,
+                       const glm::ivec3 &neighborHoodMax,
                        std::queue<LightNode> &sunlightQueue,
                        bool losslessPropagationOfMaxLight);
+    
+#if 0
+    std::shared_ptr<VoxelDataChunk> chunkAtCellCoords(const glm::ivec3 &cellCoords);
+    bool isChunkComplete(const glm::vec3 &point);
+#endif
     
     std::unique_ptr<VoxelDataChunk> createNewChunk(const AABB &cell, Morton3 index);
 };

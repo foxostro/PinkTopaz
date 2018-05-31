@@ -12,15 +12,6 @@
 
 using namespace glm;
 
-template<typename Function>
-void iterateHorizontalSlice(const ivec3 &res, Function &&fn){
-    for (ivec3 cellCoords{0,0,0}; cellCoords.x < res.x; ++cellCoords.x) {
-        for (cellCoords.z = 0; cellCoords.z < res.z; ++cellCoords.z) {
-            fn(cellCoords);
-        }
-    }
-}
-
 SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
                            std::unique_ptr<VoxelData> &&source,
                            unsigned chunkSize,
@@ -39,7 +30,6 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
 {
     _log->info("SunlightData -- Beginning generation of sunlight data.");
     
-    std::queue<LightNode> sunlightQueue;
     const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
     const ivec3 res = chunkIndexer.gridResolution();
     
@@ -51,46 +41,67 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
         }
     };
     
-    auto iterateChunks = [&](auto fn) {
-        iterateColumns([&](ivec3 cellCoords){
-            for (cellCoords.y = res.y-1; cellCoords.y >= 0; --cellCoords.y) {
-                fn(cellCoords);
-            }
-        });
-    };
-    
-    _log->info("SunlightData -- Fetching voxels for all chunks in the world.");
-    iterateChunks([&](const ivec3 &cellCoords){
-        AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
-        Morton3 chunkIndex(cellCoords);
-        (void)_chunks.get(chunkBoundingBox, chunkIndex);
-        _log->info("SunlightData -- Fetched chunk at {}", chunkBoundingBox);
+    _log->info("SunlightData -- Performing sunlight floodfill propagation.");
+    const auto startTime = std::chrono::steady_clock::now();
+
+    iterateColumns([&](ivec3 columnCoords){
+        _log->info("SunlightData -- propagateSunlight sunlight for column "\
+                   "<{}, {}>", columnCoords.x, columnCoords.z);
+        propagateSunlight(chunkIndexer, columnCoords);
     });
     
-    _log->info("SunlightData -- Seeding sunlight for all chunks along the ceiling of the world.");
-    iterateColumns([&](ivec3 cellCoords){
-        // Walk down each column until we reach the first non-Sky chunk.
-        // Seed sunlight at the top of this chunk and then move on to the next
-        // column.
-        for (cellCoords.y = res.y-1; cellCoords.y >= 0; --cellCoords.y) {
-            AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
-            Morton3 chunkIndex(cellCoords);
-            auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex).get();
-            assert(chunkPtr);
-            if (chunkPtr->getType() == VoxelDataChunk::Sky) {
-                continue;
-            } else {
-                seedSunlightInTopLayer(chunkPtr, cellCoords, sunlightQueue);
-                _log->info("SunlightData -- Seeded sunlight for column "\
-                           "<{}, {}>", cellCoords.x, cellCoords.z);
-                break;
-            }
+    const auto duration = std::chrono::steady_clock::now() - startTime;
+    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+    _log->info("SunlightData -- Finished sunlight propagation. (took {} ms)",
+               std::to_string(ms.count()));
+}
+
+void SunlightData::propagateSunlight(const GridIndexer &chunkIndexer,
+                                     const ivec3 &targetColumnCoords)
+{
+    std::queue<LightNode> sunlightQueue;
+    
+    const ivec3 &res = chunkIndexer.gridResolution();
+    const ivec3 neighborHoodMin(targetColumnCoords.x - 1,     0, targetColumnCoords.z - 1);
+    const ivec3 neighborHoodMax(targetColumnCoords.x + 2, res.y, targetColumnCoords.z + 2);
+    
+    auto iterateNeighborhoodColumns = [&](auto fn){
+        // AFOX_TODO: Won't this be a problem if light from a neighboring chunk needs to flood into this chunk? If we only seed sunlight in the center chunk then this can't happen.
+#if 0
+        for (ivec3 columnCoords = neighborHoodMin; columnCoords.x < neighborHoodMax.x; ++columnCoords.x) {
+            for (columnCoords.z = neighborHoodMin.z; columnCoords.z < neighborHoodMax.z; ++columnCoords.z) {
+                fn(columnCoords);
+            }  // for column delta z
+        } // for column delta x
+#else
+        fn(targetColumnCoords);
+#endif
+    };
+    
+    iterateNeighborhoodColumns([&](const ivec3 &columnCoords){
+        // Skip columns that are outside the bounds of the voxel grid.
+        // This can occur when propagating sunlight at the edge of the world.
+        if (columnCoords.x >= 0 && columnCoords.x < res.x &&
+            columnCoords.z >= 0 && columnCoords.z < res.z) {
+            
+            // Walk down each column until we reach the first non-Sky chunk.
+            // Seed sunlight at the top of this chunk and then move on to the next
+            // column.
+            for (ivec3 cellCoords{columnCoords.x, res.y-1, columnCoords.z}; cellCoords.y >= 0; --cellCoords.y) {
+                AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
+                Morton3 chunkIndex(cellCoords);
+                auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex).get();
+                assert(chunkPtr);
+                if (chunkPtr->getType() == VoxelDataChunk::Sky) {
+                    continue;
+                } else {
+                    seedSunlightInTopLayer(chunkPtr, cellCoords, sunlightQueue);
+                    break;
+                }
+            } // for column y
         }
     });
     
-    _log->info("SunlightData -- Performing sunlight floodfill propagation.");
-    _log->info("SunlightData -- sunlightQueue contains {} items.", sunlightQueue.size());
-    const auto startTime = std::chrono::steady_clock::now();
     while (!sunlightQueue.empty()) {
         const LightNode &node = sunlightQueue.front();
         const auto chunk = node.chunkPtr;
@@ -98,41 +109,26 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
         const ivec3 voxelCoords = node.voxelCellCoords;
         sunlightQueue.pop();
         
-        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3(-1,  0,  0), sunlightQueue, false);
-        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3(+1,  0,  0), sunlightQueue, false);
-        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0,  0, -1), sunlightQueue, false);
-        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0,  0, +1), sunlightQueue, false);
-        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0, -1,  0), sunlightQueue, true);
+        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3(-1,  0,  0),
+                      neighborHoodMin, neighborHoodMax, sunlightQueue, false);
+        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3(+1,  0,  0),
+                      neighborHoodMin, neighborHoodMax, sunlightQueue, false);
+        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0,  0, -1),
+                      neighborHoodMin, neighborHoodMax, sunlightQueue, false);
+        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0,  0, +1),
+                      neighborHoodMin, neighborHoodMax, sunlightQueue, false);
+        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0, -1,  0),
+                      neighborHoodMin, neighborHoodMax, sunlightQueue, true);
     }
     
-    const auto duration = std::chrono::steady_clock::now() - startTime;
-    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-    _log->info("SunlightData -- Finished generation of sunlight data."\
-               "(took {} ms)",
-               std::to_string(ms.count()));
-}
-
-bool SunlightData::isChunkComplete(const vec3 &point)
-{
-    Morton3 index = _chunks.getChunkIndexer().indexAtPoint(point);
-    auto maybeChunk = _chunks.getIfExists(index);
-    if (maybeChunk) {
-        std::shared_ptr<VoxelDataChunk> chunk = *maybeChunk;
-        assert(chunk);
-        if (chunk->complete) {
-            return true;
-        }
-    }
-    return false;
-}
-
-std::shared_ptr<VoxelDataChunk> SunlightData::chunkAtCellCoords(const ivec3 &cellCoords)
-{
-    const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
-    const AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
-    const Morton3 index(cellCoords);
-    auto chunkPtr = _chunks.get(chunkBoundingBox, index);
-    return chunkPtr;
+    // Mark chunks in the target column as complete.
+    for (ivec3 cellCoords{targetColumnCoords.x, res.y-1, targetColumnCoords.x}; cellCoords.y >= 0; --cellCoords.y) {
+        AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
+        Morton3 chunkIndex(cellCoords);
+        auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex).get();
+        assert(chunkPtr);
+        chunkPtr->complete = true;
+    } // for column y
 }
 
 void SunlightData::seedSunlightInTopLayer(VoxelDataChunk *chunkPtr,
@@ -159,6 +155,8 @@ void SunlightData::floodNeighbor(VoxelDataChunk *chunkPtr,
                                  const ivec3 &chunkCellCoords,
                                  const ivec3 &voxelCellCoords,
                                  const ivec3 &delta,
+                                 const ivec3 &neighborHoodMin,
+                                 const ivec3 &neighborHoodMax,
                                  std::queue<LightNode> &sunlightQueue,
                                  bool losslessPropagationOfMaxLight)
 {
@@ -196,19 +194,31 @@ void SunlightData::floodNeighbor(VoxelDataChunk *chunkPtr,
     // Get the neighbor chunk. We only have to consult `_chunks' if we're
     // crossing a chunk boundary right now.
     VoxelDataChunk *neighborChunk = nullptr;
-    if (neighborChunkCellCoords != chunkCellCoords) {
+    if (neighborChunkCellCoords == chunkCellCoords) {
+        neighborChunk = chunkPtr;
+    } else if (neighborChunkCellCoords.x >= neighborHoodMin.x &&
+               neighborChunkCellCoords.x < neighborHoodMax.x &&
+               neighborChunkCellCoords.z >= neighborHoodMin.z &&
+               neighborChunkCellCoords.z < neighborHoodMax.z) {
+        
+        // We don't allow the floodfill to reach outside the local neighborhood.
+        
         const GridIndexer &indexer = _chunks.getChunkIndexer();
         if (indexer.inbounds(neighborChunkCellCoords)) {
+            // We don't allow the floodfill to reach outside the voxel grid.
             const AABB neighborChunkBoundingBox = indexer.cellAtCellCoords(neighborChunkCellCoords);
             neighborChunk = _chunks.get(neighborChunkBoundingBox, Morton3(neighborChunkCellCoords)).get();
         }
-    } else {
-        neighborChunk = chunkPtr;
     }
     if (!neighborChunk) {
         // The neighbor is out of bounds and there's nothing left to do.
         return;
     }
+//    if (neighborChunk->complete) {
+//        // The neighbor chunk is complete and there's nothing left to do.
+//        // This occurs when it was a previous target of propagateSunlight().
+//        return;
+//    }
     
     Voxel neighborVoxel = neighborChunk->get(neighborCellCoords);
     
@@ -238,8 +248,73 @@ void SunlightData::floodNeighbor(VoxelDataChunk *chunkPtr,
     }
 }
 
+#if 0
+bool SunlightData::isChunkComplete(const vec3 &point)
+{
+    Morton3 index = _chunks.getChunkIndexer().indexAtPoint(point);
+    auto maybeChunk = _chunks.getIfExists(index);
+    if (maybeChunk) {
+        std::shared_ptr<VoxelDataChunk> chunk = *maybeChunk;
+        assert(chunk);
+        if (chunk->complete) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::shared_ptr<VoxelDataChunk> SunlightData::chunkAtCellCoords(const ivec3 &cellCoords)
+{
+    const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
+    const AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
+    const Morton3 index(cellCoords);
+    auto chunkPtr = _chunks.get(chunkBoundingBox, index);
+    return chunkPtr;
+}
+#endif
+
 Array3D<Voxel> SunlightData::load(const AABB &region)
 {
+#if 0
+    bool chunkIsComplete = isChunkComplete(region.center);
+    
+    if (!chunkIsComplete) {
+        std::queue<LightNode> sunlightQueue;
+        
+        const AABB sunlightRegion = getSunlightRegion(region);
+        const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
+        const ivec3 minCellCoords = chunkIndexer.cellCoordsAtPoint(sunlightRegion.mins());
+        const ivec3 maxCellCoords = chunkIndexer.cellCoordsAtPointRoundUp(sunlightRegion.maxs());
+        
+        for (ivec3 cellCoords = minCellCoords; cellCoords.x < maxCellCoords.x; ++cellCoords.x) {
+            for (cellCoords.z = minCellCoords.z; cellCoords.z < maxCellCoords.z; ++cellCoords.z) {
+                for (cellCoords.y = maxCellCoords.y-1; cellCoords.y >= minCellCoords.y; --cellCoords.y) {
+                    auto chunkPtr = chunkAtCellCoords(cellCoords);
+                    assert(chunkPtr);
+                    seedSunlightInTopLayer(*chunkPtr, sunlightQueue);
+                }
+            }
+        }
+        
+        while (!sunlightQueue.empty()) {
+            const glm::vec3 voxelPos = sunlightQueue.front();
+            sunlightQueue.pop();
+            //            floodNeighbor(voxelPos, vec3(-1,  0,  0), sunlightQueue, false);
+            //            floodNeighbor(voxelPos, vec3(+1,  0,  0), sunlightQueue, false);
+            //            floodNeighbor(voxelPos, vec3( 0,  0, -1), sunlightQueue, false);
+            //            floodNeighbor(voxelPos, vec3( 0,  0, +1), sunlightQueue, false);
+            floodNeighbor(voxelPos, vec3( 0, -1,  0), sunlightQueue, true);
+        }
+        
+        ivec3 cellCoords = chunkIndexer.cellCoordsAtPoint(region.center);
+        for (cellCoords.y = maxCellCoords.y-1; cellCoords.y >= minCellCoords.y; --cellCoords.y) {
+            auto chunkPtr = chunkAtCellCoords(cellCoords);
+            assert(chunkPtr);
+            chunkPtr->complete = true;
+        }
+    } // if (!chunkIsComplete)
+#endif
+    
     return _chunks.loadSubRegion(region);
 }
 

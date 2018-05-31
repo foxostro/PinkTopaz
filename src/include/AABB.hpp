@@ -145,7 +145,7 @@ struct _AABB
     }
 };
 
-typedef _AABB<glm::vec3> AABB;
+using AABB = _AABB<glm::vec3>;
 
 namespace std {
     template <> struct hash<glm::vec3>
