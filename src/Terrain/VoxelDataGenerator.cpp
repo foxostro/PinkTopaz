@@ -40,7 +40,6 @@ static void generateTerrainVoxel(const Noise &noiseSource0,
 {
     bool groundLayer = false;
     bool floatingMountain = false;
-    bool platform = false;
     
     // Normal rolling hills
     {
@@ -89,14 +88,7 @@ static void generateTerrainVoxel(const Noise &noiseSource0,
         }
     }
     
-    if (p.y >= 32 && p.y < 36 &&
-        p.x >= 0 && p.x < 32 &&
-        p.z >= 0 && p.z < 32) {
-        
-        platform = true;
-    }
-    
-    outVoxel.value = (groundLayer || floatingMountain || platform) ? true : false;
+    outVoxel.value = (groundLayer || floatingMountain) ? true : false;
 }
 
 VoxelDataGenerator::VoxelDataGenerator(unsigned seed)
