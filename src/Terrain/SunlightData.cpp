@@ -251,11 +251,6 @@ void SunlightData::floodNeighbor(VoxelDataChunk *chunkPtr,
         // The neighbor is out of bounds and there's nothing left to do.
         return;
     }
-//    if (neighborChunk->complete) {
-//        // The neighbor chunk is complete and there's nothing left to do.
-//        // This occurs when it was a previous target of propagateSunlight().
-//        return;
-//    }
     
     Voxel neighborVoxel = neighborChunk->get(neighborCellCoords);
     
