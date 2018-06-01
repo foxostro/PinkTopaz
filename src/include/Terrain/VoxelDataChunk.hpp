@@ -216,7 +216,7 @@ private:
     
     VoxelDataChunk(const AABB &boundingBox, const glm::ivec3 &gridResolution)
      : GridIndexer(boundingBox, gridResolution),
-       complete(true),
+       complete(false),
        _type(Sky)
     {}
 };
