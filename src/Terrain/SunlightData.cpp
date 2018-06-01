@@ -348,7 +348,7 @@ AABB SunlightData::getSunlightRegion(AABB sunlightRegion) const
 {
     sunlightRegion = _chunks.getChunkIndexer().snapRegionToCellBoundaries(sunlightRegion);
     
-    sunlightRegion = sunlightRegion.inset(vec3((float)TERRAIN_CHUNK_SIZE, 0, (float)TERRAIN_CHUNK_SIZE));
+    sunlightRegion = sunlightRegion.inset(-vec3((float)TERRAIN_CHUNK_SIZE, 0, (float)TERRAIN_CHUNK_SIZE));
     
     vec3 mins = sunlightRegion.mins();
     mins.y = boundingBox().mins().y;
