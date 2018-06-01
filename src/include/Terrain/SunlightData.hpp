@@ -78,8 +78,16 @@ private:
     void propagateSunlight(const GridIndexer &chunkIndexer,
                            const glm::ivec3 &targetColumnCoords);
     
+    void seedSunlightInColumn(const GridIndexer &chunkIndexer,
+                              const glm::ivec3 &columnCoords,
+                              const glm::ivec3 &minSeedCorner,
+                              const glm::ivec3 &maxSeedCorner,
+                              std::queue<LightNode> &sunlightQueue);
+    
     void seedSunlightInTopLayer(VoxelDataChunk *chunkPtr,
                                 const glm::ivec3 &chunkCellCoords,
+                                const glm::ivec3 &minSeedCorner,
+                                const glm::ivec3 &maxSeedCorner,
                                 std::queue<LightNode> &sunlightQueue);
     
     void floodNeighbor(VoxelDataChunk *chunkPtr,
