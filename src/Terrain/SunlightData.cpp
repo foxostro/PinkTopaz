@@ -265,25 +265,36 @@ void SunlightData::floodNeighbor(VoxelDataChunk *chunkPtr,
 
 Array3D<Voxel> SunlightData::load(const AABB &region)
 {
+    // If any chunks in the region require sunlight propagation then do it now.
     const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
-    
-    bool chunkIsComplete = false;
-    {
-        Morton3 index = chunkIndexer.indexAtPoint(region.center);
-        auto maybeChunk = _chunks.getIfExists(index);
-        if (maybeChunk) {
-            std::shared_ptr<VoxelDataChunk> chunk = *maybeChunk;
-            assert(chunk);
-            if (chunk->complete) {
-                chunkIsComplete = true;
+    const ivec3 minChunkCoords = chunkIndexer.cellCoordsAtPoint(region.mins());
+    const ivec3 maxChunkCoords = chunkIndexer.cellCoordsAtPointRoundUp(region.maxs());
+    for (ivec3 chunkCoords = minChunkCoords; chunkCoords.x < maxChunkCoords.x; ++chunkCoords.x) {
+        for (chunkCoords.z = minChunkCoords.z; chunkCoords.z < maxChunkCoords.z; ++chunkCoords.z) {
+            bool allChunksAreComplete = true;
+            
+            for (chunkCoords.y = minChunkCoords.y; chunkCoords.y < maxChunkCoords.y; ++chunkCoords.y) {
+                bool thisChunkIsComplete = false;
+                Morton3 index = chunkIndexer.indexAtPoint(region.center);
+                auto maybeChunk = _chunks.getIfExists(index);
+                if (maybeChunk) {
+                    std::shared_ptr<VoxelDataChunk> chunk = *maybeChunk;
+                    assert(chunk);
+                    if (chunk->complete) {
+                        thisChunkIsComplete = true;
+                    }
+                }
+                if (!thisChunkIsComplete) {
+                    allChunksAreComplete = false;
+                    break;
+                }
+            } // for y
+            
+            if (!allChunksAreComplete) {
+                propagateSunlight(chunkIndexer, chunkCoords);
             }
-        }
-    }
-    
-    if (!chunkIsComplete) {
-        const ivec3 columnCoords = chunkIndexer.cellCoordsAtPoint(region.center);
-        propagateSunlight(chunkIndexer, columnCoords);
-    } // if (!chunkIsComplete)
+        } // for z
+    } // for x
     
     return _chunks.loadSubRegion(region);
 }
