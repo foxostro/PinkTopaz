@@ -88,6 +88,10 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                 case SDL_QUIT:
                     PROFILER_SIGNPOST(Quit);
                     _log->info("Received SDL_QUIT.");
+                    
+                    // Some futures may be waiting on tasks in main thread dispatch queue.
+                    // Shutdown order matters.
+                    mainThreadDispatcher->shutdown();
                     return;
                     
                 case SDL_WINDOWEVENT:
@@ -152,10 +156,6 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
         
         std::this_thread::sleep_until(nextTime);
     }
-    
-    // Some futures may be waiting on tasks in main thread dispatch queue.
-    // Shutdown order matters.
-    mainThreadDispatcher->shutdown();
 }
     
 void Application::run()

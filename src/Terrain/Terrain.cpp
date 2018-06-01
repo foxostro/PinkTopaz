@@ -184,7 +184,7 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     TerrainMeshGrid &meshes = *_meshes;
     
     // Draw meshes in the camera frustum.
-    for (const glm::ivec3 cellCoords : slice(meshes, frustum, activeRegion)) {
+    for (const glm::ivec3 &cellCoords : slice(meshes, frustum, activeRegion)) {
         const Morton3 index = meshes.indexAtCellCoords(cellCoords);
         boost::optional<std::shared_ptr<TerrainMesh>> maybeTerrainMeshPtr = meshes.get(index);
         

@@ -135,8 +135,8 @@ void CommandEncoderOpenGL::setVertexBuffer(const std::shared_ptr<Buffer> &abstra
             // the vertex buffer.
             GLuint program = _currentShader->getProgram();
             glBindBuffer(target, bufferObject);
-            glUniformBlockBinding(program, index-1, index-1);
-            glBindBufferBase(target, index-1, bufferObject);
+            glUniformBlockBinding(program, (GLuint)index-1, (GLuint)index-1);
+            glBindBufferBase(target, (GLuint)index-1, bufferObject);
             CHECK_GL_ERROR();
         } else {
             GLuint vao = buffer->getHandleVAO();

@@ -54,17 +54,17 @@ public:
     
     static inline void decode(glm::ivec3 &r, uint64_t morton)
     {
-        r.x = _pext_u64(morton, MortonMaskX);
-        r.y = _pext_u64(morton, MortonMaskY);
-        r.z = _pext_u64(morton, MortonMaskZ);
+        r.x = (int)_pext_u64(morton, MortonMaskX);
+        r.y = (int)_pext_u64(morton, MortonMaskY);
+        r.z = (int)_pext_u64(morton, MortonMaskZ);
     }
     
     static inline glm::ivec3 decode(uint64_t morton)
     {
         glm::ivec3 r;
-        r.x = _pext_u64(morton, MortonMaskX);
-        r.y = _pext_u64(morton, MortonMaskY);
-        r.z = _pext_u64(morton, MortonMaskZ);
+        r.x = (int)_pext_u64(morton, MortonMaskX);
+        r.y = (int)_pext_u64(morton, MortonMaskY);
+        r.z = (int)_pext_u64(morton, MortonMaskZ);
         return r;
     }
     

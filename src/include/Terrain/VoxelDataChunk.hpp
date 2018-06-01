@@ -203,7 +203,7 @@ public:
                 assert(!"unreachable");
         }
         
-        for (const auto &coord : slice(*_voxels, _voxels->boundingBox())) {
+        for (const glm::ivec3 coord : slice(*_voxels, _voxels->boundingBox())) {
             _voxels->mutableReference(coord) = value;
         }
         
