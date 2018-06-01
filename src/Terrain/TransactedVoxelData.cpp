@@ -16,7 +16,7 @@ TransactedVoxelData::TransactedVoxelData(std::unique_ptr<SunlightData> &&source)
 void TransactedVoxelData::readerTransaction(const AABB &region, std::function<void(Array3D<Voxel> &&data)> fn)
 {
     const AABB lockedRegion = _source->getSunlightRegion(region);
-    auto mutex = _lockArbitrator.readerMutex(lockedRegion);
+    auto mutex = _lockArbitrator.writerMutex(lockedRegion);
     std::lock_guard<decltype(mutex)> lock(mutex);
     fn(_source->load(region));
 }

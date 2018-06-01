@@ -31,24 +31,7 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
           [=](const AABB &cell, Morton3 index){
               return createNewChunk(cell, index);
           })
-{
-    _log->info("SunlightData -- Beginning generation of sunlight data.");
-    const auto startTime = std::chrono::steady_clock::now();
-    
-    _log->info("SunlightData -- Performing sunlight floodfill propagation.");
-    const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
-    const ivec3 res = chunkIndexer.gridResolution();
-    for (ivec3 columnCoords{0, 0, 0}; columnCoords.x < res.x; ++columnCoords.x) {
-        for (columnCoords.z = 0; columnCoords.z < res.z; ++columnCoords.z) {
-            propagateSunlight(chunkIndexer, columnCoords);
-        }
-    }
-    
-    const auto duration = std::chrono::steady_clock::now() - startTime;
-    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-    _log->info("SunlightData -- Finished sunlight propagation. (took {} ms)",
-               std::to_string(ms.count()));
-}
+{}
 
 void SunlightData::propagateSunlight(const GridIndexer &chunkIndexer,
                                      const ivec3 &targetColumnCoords)
@@ -119,7 +102,7 @@ void SunlightData::propagateSunlight(const GridIndexer &chunkIndexer,
     }
     
     // Mark chunks in the target column as complete.
-    for (ivec3 cellCoords{targetColumnCoords.x, res.y-1, targetColumnCoords.x}; cellCoords.y >= 0; --cellCoords.y) {
+    for (ivec3 cellCoords{targetColumnCoords.x, res.y-1, targetColumnCoords.z}; cellCoords.y >= 0; --cellCoords.y) {
         AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
         Morton3 chunkIndex(cellCoords);
         auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex).get();
@@ -280,72 +263,27 @@ void SunlightData::floodNeighbor(VoxelDataChunk *chunkPtr,
     }
 }
 
-#if 0
-bool SunlightData::isChunkComplete(const vec3 &point)
-{
-    Morton3 index = _chunks.getChunkIndexer().indexAtPoint(point);
-    auto maybeChunk = _chunks.getIfExists(index);
-    if (maybeChunk) {
-        std::shared_ptr<VoxelDataChunk> chunk = *maybeChunk;
-        assert(chunk);
-        if (chunk->complete) {
-            return true;
-        }
-    }
-    return false;
-}
-
-std::shared_ptr<VoxelDataChunk> SunlightData::chunkAtCellCoords(const ivec3 &cellCoords)
-{
-    const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
-    const AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
-    const Morton3 index(cellCoords);
-    auto chunkPtr = _chunks.get(chunkBoundingBox, index);
-    return chunkPtr;
-}
-#endif
-
 Array3D<Voxel> SunlightData::load(const AABB &region)
 {
-#if 0
-    bool chunkIsComplete = isChunkComplete(region.center);
+    const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
     
-    if (!chunkIsComplete) {
-        std::queue<LightNode> sunlightQueue;
-        
-        const AABB sunlightRegion = getSunlightRegion(region);
-        const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
-        const ivec3 minCellCoords = chunkIndexer.cellCoordsAtPoint(sunlightRegion.mins());
-        const ivec3 maxCellCoords = chunkIndexer.cellCoordsAtPointRoundUp(sunlightRegion.maxs());
-        
-        for (ivec3 cellCoords = minCellCoords; cellCoords.x < maxCellCoords.x; ++cellCoords.x) {
-            for (cellCoords.z = minCellCoords.z; cellCoords.z < maxCellCoords.z; ++cellCoords.z) {
-                for (cellCoords.y = maxCellCoords.y-1; cellCoords.y >= minCellCoords.y; --cellCoords.y) {
-                    auto chunkPtr = chunkAtCellCoords(cellCoords);
-                    assert(chunkPtr);
-                    seedSunlightInTopLayer(*chunkPtr, sunlightQueue);
-                }
+    bool chunkIsComplete = false;
+    {
+        Morton3 index = chunkIndexer.indexAtPoint(region.center);
+        auto maybeChunk = _chunks.getIfExists(index);
+        if (maybeChunk) {
+            std::shared_ptr<VoxelDataChunk> chunk = *maybeChunk;
+            assert(chunk);
+            if (chunk->complete) {
+                chunkIsComplete = true;
             }
         }
-        
-        while (!sunlightQueue.empty()) {
-            const glm::vec3 voxelPos = sunlightQueue.front();
-            sunlightQueue.pop();
-            //            floodNeighbor(voxelPos, vec3(-1,  0,  0), sunlightQueue, false);
-            //            floodNeighbor(voxelPos, vec3(+1,  0,  0), sunlightQueue, false);
-            //            floodNeighbor(voxelPos, vec3( 0,  0, -1), sunlightQueue, false);
-            //            floodNeighbor(voxelPos, vec3( 0,  0, +1), sunlightQueue, false);
-            floodNeighbor(voxelPos, vec3( 0, -1,  0), sunlightQueue, true);
-        }
-        
-        ivec3 cellCoords = chunkIndexer.cellCoordsAtPoint(region.center);
-        for (cellCoords.y = maxCellCoords.y-1; cellCoords.y >= minCellCoords.y; --cellCoords.y) {
-            auto chunkPtr = chunkAtCellCoords(cellCoords);
-            assert(chunkPtr);
-            chunkPtr->complete = true;
-        }
+    }
+    
+    if (!chunkIsComplete) {
+        const ivec3 columnCoords = chunkIndexer.cellCoordsAtPoint(region.center);
+        propagateSunlight(chunkIndexer, columnCoords);
     } // if (!chunkIsComplete)
-#endif
     
     return _chunks.loadSubRegion(region);
 }

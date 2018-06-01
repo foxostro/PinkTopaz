@@ -97,11 +97,6 @@ private:
                        std::queue<LightNode> &sunlightQueue,
                        bool losslessPropagationOfMaxLight);
     
-#if 0
-    std::shared_ptr<VoxelDataChunk> chunkAtCellCoords(const glm::ivec3 &cellCoords);
-    bool isChunkComplete(const glm::vec3 &point);
-#endif
-    
     std::unique_ptr<VoxelDataChunk> createNewChunk(const AABB &cell, Morton3 index);
 };
 
