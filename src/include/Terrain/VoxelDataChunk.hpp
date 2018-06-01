@@ -37,23 +37,26 @@ public:
     };
     
     VoxelDataChunk(const VoxelDataChunk &other)
-    : GridIndexer(other.boundingBox(), other.gridResolution()),
-      complete(false),
-      _type(other._type)
+     : GridIndexer(other.boundingBox(), other.gridResolution()),
+       complete(other.complete),
+       _type(other._type)
     {
         if (other._voxels) {
             _voxels = std::make_unique<Array3D<Voxel>>(*other._voxels);
         } else {
             _voxels = nullptr;
         }
+        assert((_type != Array && !_voxels) || (_type == Array && _voxels));
     }
     
     VoxelDataChunk(VoxelDataChunk &&other)
-    : GridIndexer(other.boundingBox(), other.gridResolution()),
-      complete(false),
-      _type(other._type),
-      _voxels(std::move(other._voxels))
-    {}
+     : GridIndexer(other.boundingBox(), other.gridResolution()),
+       complete(other.complete),
+       _type(other._type),
+       _voxels(std::move(other._voxels))
+    {
+        assert((_type != Array && !_voxels) || (_type == Array && _voxels));
+    }
     
     VoxelDataChunk& operator=(const VoxelDataChunk &other)
     {
@@ -65,6 +68,7 @@ public:
             } else {
                 _voxels = nullptr;
             }
+            assert((_type != Array && !_voxels) || (_type == Array && _voxels));
         }
         return *this;
     }
@@ -79,6 +83,7 @@ public:
     {
         switch (_type) {
             case Array:
+                assert(_voxels);
                 return _voxels->reference(point);
                 
             case Sky:
@@ -127,6 +132,7 @@ public:
         VoxelDataChunk chunk(voxels.boundingBox(), voxels.gridResolution());
         chunk._type = Array;
         chunk._voxels = std::make_unique<Array3D<Voxel>>(std::move(voxels));
+        assert(chunk._voxels);
         return chunk;
     }
     
@@ -209,8 +215,9 @@ private:
     std::unique_ptr<Array3D<Voxel>> _voxels;
     
     VoxelDataChunk(const AABB &boundingBox, const glm::ivec3 &gridResolution)
-    : GridIndexer(boundingBox, gridResolution),
-    _type(Array)
+     : GridIndexer(boundingBox, gridResolution),
+       complete(true),
+       _type(Sky)
     {}
 };
 
