@@ -20,6 +20,8 @@
 #include "Terrain/TerrainOperation.hpp"
 #include "Terrain/SunlightData.hpp"
 
+#define TransactedVoxelDataUsesBigLock 1
+
 // A block of voxels in space. Concurrent edits are protected by a lock.
 class TransactedVoxelData : public GridIndexer
 {
@@ -55,7 +57,11 @@ public:
     boost::signals2::signal<void (const AABB &affectedRegion)> onWriterTransaction;
     
 private:
-    RegionMutualExclusionArbitrator _lockArbitrator;
+#if TransactedVoxelDataUsesBigLock
+        std::mutex _mutex;
+#else
+        RegionMutualExclusionArbitrator _lockArbitrator;
+#endif
     std::unique_ptr<SunlightData> _source;
 };
 
