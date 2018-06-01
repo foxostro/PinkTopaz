@@ -94,8 +94,6 @@ private:
                        const glm::ivec3 &chunkCellCoords,
                        const glm::ivec3 &voxelCellCoords,
                        const glm::ivec3 &delta,
-                       const glm::ivec3 &neighborHoodMin,
-                       const glm::ivec3 &neighborHoodMax,
                        std::queue<LightNode> &sunlightQueue,
                        bool losslessPropagationOfMaxLight);
     

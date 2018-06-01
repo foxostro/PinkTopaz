@@ -12,6 +12,10 @@
 
 using namespace glm;
 
+// This assert macro is used for invariants that we cannot test because it
+// degrades performance too much in a Debug build. Mostly for documentation.
+#define VERBOSE_ASSERT(...)
+
 SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
                            std::unique_ptr<VoxelData> &&source,
                            unsigned chunkSize,
@@ -52,8 +56,6 @@ void SunlightData::propagateSunlight(const GridIndexer &chunkIndexer,
     std::queue<LightNode> sunlightQueue;
     
     const ivec3 &res = chunkIndexer.gridResolution();
-    const ivec3 neighborHoodMin(targetColumnCoords.x - 1,     0, targetColumnCoords.z - 1);
-    const ivec3 neighborHoodMax(targetColumnCoords.x + 2, res.y, targetColumnCoords.z + 2);
     
     // Seed sunlight in all columns of the local neighborhood.
     constexpr size_t numNeighborhoodColumns = 9;
@@ -109,11 +111,11 @@ void SunlightData::propagateSunlight(const GridIndexer &chunkIndexer,
         const ivec3 voxelCoords = node.voxelCellCoords;
         sunlightQueue.pop();
         
-        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3(-1,  0,  0), neighborHoodMin, neighborHoodMax, sunlightQueue, false);
-        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3(+1,  0,  0), neighborHoodMin, neighborHoodMax, sunlightQueue, false);
-        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0,  0, -1), neighborHoodMin, neighborHoodMax, sunlightQueue, false);
-        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0,  0, +1), neighborHoodMin, neighborHoodMax, sunlightQueue, false);
-        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0, -1,  0), neighborHoodMin, neighborHoodMax, sunlightQueue, true);
+        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3(-1,  0,  0), sunlightQueue, false);
+        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3(+1,  0,  0), sunlightQueue, false);
+        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0,  0, -1), sunlightQueue, false);
+        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0,  0, +1), sunlightQueue, false);
+        floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0, -1,  0), sunlightQueue, true);
     }
     
     // Mark chunks in the target column as complete.
@@ -166,16 +168,16 @@ void SunlightData::seedSunlightInTopLayer(VoxelDataChunk *chunkPtr,
                                           const ivec3 &maxSeedCorner,
                                           std::queue<LightNode> &sunlightQueue)
 {
-    assert(chunkPtr);
+    VERBOSE_ASSERT(chunkPtr);
     
     const ivec3 &res = chunkPtr->gridResolution();
     
-    assert(minSeedCorner.x >= 0 && minSeedCorner.x < res.x);
-    assert(minSeedCorner.z >= 0 && minSeedCorner.z < res.z);
-    assert(maxSeedCorner.x >= 0 && maxSeedCorner.x <= res.x);
-    assert(maxSeedCorner.z >= 0 && maxSeedCorner.z <= res.z);
-    assert(maxSeedCorner.x > minSeedCorner.x);
-    assert(maxSeedCorner.z > minSeedCorner.z);
+    VERBOSE_ASSERT(minSeedCorner.x >= 0 && minSeedCorner.x < res.x);
+    VERBOSE_ASSERT(minSeedCorner.z >= 0 && minSeedCorner.z < res.z);
+    VERBOSE_ASSERT(maxSeedCorner.x >= 0 && maxSeedCorner.x <= res.x);
+    VERBOSE_ASSERT(maxSeedCorner.z >= 0 && maxSeedCorner.z <= res.z);
+    VERBOSE_ASSERT(maxSeedCorner.x > minSeedCorner.x);
+    VERBOSE_ASSERT(maxSeedCorner.z > minSeedCorner.z);
     
     for (ivec3 cellCoords{minSeedCorner.x, res.y-1, minSeedCorner.z}; cellCoords.x < maxSeedCorner.x; ++cellCoords.x) {
         for (cellCoords.z = minSeedCorner.z; cellCoords.z < maxSeedCorner.z; ++cellCoords.z) {
@@ -195,15 +197,13 @@ void SunlightData::floodNeighbor(VoxelDataChunk *chunkPtr,
                                  const ivec3 &chunkCellCoords,
                                  const ivec3 &voxelCellCoords,
                                  const ivec3 &delta,
-                                 const ivec3 &neighborHoodMin,
-                                 const ivec3 &neighborHoodMax,
                                  std::queue<LightNode> &sunlightQueue,
                                  bool losslessPropagationOfMaxLight)
 {
-    assert(chunkPtr);
+    VERBOSE_ASSERT(chunkPtr);
     
     const Voxel nodeVoxel = chunkPtr->get(voxelCellCoords);
-    assert(nodeVoxel.value == 0);
+    VERBOSE_ASSERT(nodeVoxel.value == 0);
     
     const ivec3 &chunkSize = chunkPtr->gridResolution();
     
@@ -237,14 +237,8 @@ void SunlightData::floodNeighbor(VoxelDataChunk *chunkPtr,
     if (neighborChunkCellCoords == chunkCellCoords) {
         neighborChunk = chunkPtr;
     } else {
-        
-        // We seed sunlight in such a way that the flood fill should never
-        // reach outside the local neighborhood.
-        assert(neighborChunkCellCoords.x >= neighborHoodMin.x &&
-               neighborChunkCellCoords.x < neighborHoodMax.x &&
-               neighborChunkCellCoords.z >= neighborHoodMin.z &&
-               neighborChunkCellCoords.z < neighborHoodMax.z);
-        
+        // Note that we seed sunlight in such a way that the flood fill will
+        // never reach outside the local neighborhood.
         const GridIndexer &indexer = _chunks.getChunkIndexer();
         if (indexer.inbounds(neighborChunkCellCoords)) {
             // We don't allow the floodfill to reach outside the voxel grid.
