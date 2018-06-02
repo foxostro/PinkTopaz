@@ -109,8 +109,7 @@ private:
     
     std::unique_ptr<TransactedVoxelData>
     createVoxelData(unsigned voxelDataSeed,
-                    const boost::filesystem::path &voxelsDirectory,
-                    const boost::filesystem::path &sunlightDirectory);
+                    const boost::filesystem::path &mapDirectory);
 };
 
 #endif /* Terrain_hpp */

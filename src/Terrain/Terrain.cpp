@@ -9,7 +9,6 @@
 #include "Terrain/Terrain.hpp"
 #include "Terrain/MesherNaiveSurfaceNets.hpp"
 #include "Terrain/MapRegionStore.hpp"
-#include "Terrain/VoxelData.hpp"
 #include "Terrain/SunlightData.hpp"
 #include "Profiler.hpp"
 #include "Grid/GridIndexerRange.hpp"
@@ -81,8 +80,6 @@ Terrain::Terrain(const Preferences &preferences,
     const boost::filesystem::path prefPath = getPrefPath();
     const boost::filesystem::path journalFileName = prefPath / "journal.xml";
     const boost::filesystem::path mapDirectory = prefPath / "Map";
-    const boost::filesystem::path voxelsDirectory = mapDirectory / "Voxels";
-    const boost::filesystem::path sunlightDirectory = mapDirectory / "Sunlight";
     
     // If the journal already exists then use the seed that it provides.
     // Else, set an initial seed value ourselves.
@@ -96,16 +93,11 @@ Terrain::Terrain(const Preferences &preferences,
     // the journal. This will allow us to avoid shipping large map region files
     // with the game. We can ship only the journal instead.
     bool mustRegenerateMap = false;
-    if (boost::filesystem::create_directories(voxelsDirectory)) {
-        mustRegenerateMap = true;
-    }
-    if (boost::filesystem::create_directories(sunlightDirectory)) {
+    if (boost::filesystem::create_directories(mapDirectory)) {
         mustRegenerateMap = true;
     }
     
-    _voxels = createVoxelData(_journal->getVoxelDataSeed(),
-                              voxelsDirectory,
-                              sunlightDirectory);
+    _voxels = createVoxelData(_journal->getVoxelDataSeed(), mapDirectory);
     
     const AABB meshGridBoundingBox = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
     const glm::ivec3 meshGridResolution = _voxels->countCellsInRegion(meshGridBoundingBox) / (int)TERRAIN_CHUNK_SIZE;
@@ -290,8 +282,7 @@ void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress
 
 std::unique_ptr<TransactedVoxelData>
 Terrain::createVoxelData(unsigned voxelDataSeed,
-                         const boost::filesystem::path &voxelsDirectory,
-                         const boost::filesystem::path &sunlightDirectory)
+                         const boost::filesystem::path &mapDirectory)
 {
     // First, we need a voxel data generator to create terrain from noise.
     auto generator = std::make_unique<VoxelDataGenerator>(voxelDataSeed);
@@ -299,23 +290,13 @@ Terrain::createVoxelData(unsigned voxelDataSeed,
     // Next, setup a map file on disk to record the shape of the terrain.
     const auto mapRegionBox = generator->boundingBox();
     const auto mapRegionRes = generator->countCellsInRegion(mapRegionBox) / (int)MAP_REGION_SIZE;
-    auto mapRegionStore = std::make_unique<MapRegionStore>(_log, voxelsDirectory, mapRegionBox, mapRegionRes);
-    
-    // The voxel data object stores the shape of the terrain.
-    auto voxelData = std::make_unique<VoxelData>(_log,
-                                                 std::move(generator),
-                                                 TERRAIN_CHUNK_SIZE,
-                                                 std::move(mapRegionStore));
-    
-    // Setup a map file on disk to record lighting computations from sunlight.
-    auto sunlightRegionStore = std::make_unique<MapRegionStore>(_log, sunlightDirectory,
-                                                                mapRegionBox, mapRegionRes);
+    auto mapRegionStore = std::make_unique<MapRegionStore>(_log, mapDirectory, mapRegionBox, mapRegionRes);
     
     // The sunlight data object stores the terrain shape plus sunlight.
     auto sunlightData = std::make_unique<SunlightData>(_log,
-                                                       std::move(voxelData),
+                                                       std::move(generator),
                                                        TERRAIN_CHUNK_SIZE,
-                                                       std::move(sunlightRegionStore));
+                                                       std::move(mapRegionStore));
     
     // Wrap in a TransactedVoxelData to implement the locking policy.
     return std::make_unique<TransactedVoxelData>(std::move(sunlightData));

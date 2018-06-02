@@ -17,7 +17,7 @@ using namespace glm;
 #define VERBOSE_ASSERT(...)
 
 SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
-                           std::unique_ptr<VoxelData> &&source,
+                           std::unique_ptr<VoxelDataGenerator> &&source,
                            unsigned chunkSize,
                            std::unique_ptr<MapRegionStore> &&mapRegionStore)
 : GridIndexer(source->boundingBox(), source->gridResolution()),
@@ -332,13 +332,10 @@ void SunlightData::editSingleVoxel(const vec3 &point, const Voxel &value)
     }
     
     _chunks.invalidate(actualAreaOfSunlightChange);
-    
-    _source->editSingleVoxel(point, value);
 }
 
 void SunlightData::setWorkingSet(const AABB &workingSet)
 {
-    _source->setWorkingSet(workingSet);
     _chunks.setWorkingSet(workingSet);
 }
 
@@ -350,7 +347,17 @@ AABB SunlightData::getAccessRegionForOperation(TerrainOperation &operation)
 std::unique_ptr<VoxelDataChunk>
 SunlightData::createNewChunk(const AABB &cell, Morton3 chunkIndex)
 {
-    return std::make_unique<VoxelDataChunk>(_source->load(cell));
+    if (cell.center.y > 64.f || cell.center.y < 0.f) {
+        const auto adjusted = _source->snapRegionToCellBoundaries(cell);
+        const auto res = _source->countCellsInRegion(adjusted);
+        if (cell.center.y < 0.f) {
+            return std::make_unique<VoxelDataChunk>(VoxelDataChunk::createGroundChunk(adjusted, res));
+        } else {
+            return std::make_unique<VoxelDataChunk>(VoxelDataChunk::createSkyChunk(adjusted, res));
+        }
+    } else {
+        return std::make_unique<VoxelDataChunk>(VoxelDataChunk::createArrayChunk(_source->copy(cell)));
+    }
 }
 
 AABB SunlightData::getSunlightRegion(AABB sunlightRegion) const

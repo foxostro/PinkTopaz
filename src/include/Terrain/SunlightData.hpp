@@ -9,13 +9,14 @@
 #ifndef SunlightData_hpp
 #define SunlightData_hpp
 
-#include "Terrain/VoxelData.hpp"
 #include "Terrain/PersistentVoxelChunks.hpp"
+#include "Terrain/VoxelDataGenerator.hpp"
+#include "Terrain/TerrainOperation.hpp"
 
 #include <spdlog/spdlog.h>
 #include <queue>
 
-// Voxels with sunlight computation.
+// Terrain voxels in space with flood-fill lighting.
 class SunlightData : public GridIndexer
 {
 public:
@@ -24,11 +25,11 @@ public:
     
     // Constructor.
     // log -- The logger to use.
-    // source -- The source provides initial, unlit voxel data.
+    // source --  The source procedurally generates unlit voxel data.
     // chunkSize -- The size of chunk VoxelData should use internally.
     // mapRegionStore -- The map file in which to persist chunks.
     SunlightData(std::shared_ptr<spdlog::logger> log,
-                 std::unique_ptr<VoxelData> &&source,
+                 std::unique_ptr<VoxelDataGenerator> &&source,
                  unsigned chunkSize,
                  std::unique_ptr<MapRegionStore> &&mapRegionStore);
     
@@ -72,7 +73,7 @@ private:
         {}
     };
     std::shared_ptr<spdlog::logger> _log;
-    std::unique_ptr<VoxelData> _source;
+    std::unique_ptr<VoxelDataGenerator> _source;
     PersistentVoxelChunks _chunks;
     
     void propagateSunlight(const GridIndexer &chunkIndexer,

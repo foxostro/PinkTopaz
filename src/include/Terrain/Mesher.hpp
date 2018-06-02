@@ -9,7 +9,8 @@
 #ifndef Mesher_hpp
 #define Mesher_hpp
 
-#include "VoxelData.hpp"
+#include "Terrain/Voxel.hpp"
+#include "Grid/Array3D.hpp"
 #include "Renderer/StaticMesh.hpp"
 
 // Accepts voxels and produces a triangle mesh for the specified isosurface.
