@@ -33,6 +33,7 @@ Terrain::Terrain(const Preferences &preferences,
                  std::shared_ptr<spdlog::logger> log,
                  const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                  const std::shared_ptr<TaskDispatcher> &dispatcher,
+                 const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
                  const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher,
                  entityx::EventManager &events,
                  glm::vec3 initialCameraPosition)
@@ -97,7 +98,9 @@ Terrain::Terrain(const Preferences &preferences,
         mustRegenerateMap = true;
     }
     
-    _voxels = createVoxelData(_journal->getVoxelDataSeed(), mapDirectory);
+    _voxels = createVoxelData(dispatcherVoxelData,
+                              _journal->getVoxelDataSeed(),
+                              mapDirectory);
     
     const AABB meshGridBoundingBox = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
     const glm::ivec3 meshGridResolution = _voxels->countCellsInRegion(meshGridBoundingBox) / (int)TERRAIN_CHUNK_SIZE;
@@ -112,7 +115,7 @@ Terrain::Terrain(const Preferences &preferences,
     _meshes->setCountLimit(2*workingSetCount);
     
     // Setup an actor to rebuild chunks.
-    const unsigned numMeshRebuildThreads = 2*std::max(1u, std::thread::hardware_concurrency());
+    const unsigned numMeshRebuildThreads = std::max(1u, std::thread::hardware_concurrency());
     _meshRebuildActor = std::make_unique<TerrainRebuildActor>(_log,
                                                               numMeshRebuildThreads,
                                                               _cameraPosition,
@@ -281,7 +284,8 @@ void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress
 }
 
 std::unique_ptr<TransactedVoxelData>
-Terrain::createVoxelData(unsigned voxelDataSeed,
+Terrain::createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcher,
+                         unsigned voxelDataSeed,
                          const boost::filesystem::path &mapDirectory)
 {
     // First, we need a voxel data generator to create terrain from noise.
@@ -296,7 +300,8 @@ Terrain::createVoxelData(unsigned voxelDataSeed,
     auto voxelData = std::make_unique<VoxelData>(_log,
                                                  std::move(generator),
                                                  TERRAIN_CHUNK_SIZE,
-                                                 std::move(mapRegionStore));
+                                                 std::move(mapRegionStore),
+                                                 dispatcher);
     
     // Wrap in a TransactedVoxelData to implement the locking policy.
     return std::make_unique<TransactedVoxelData>(std::move(voxelData));

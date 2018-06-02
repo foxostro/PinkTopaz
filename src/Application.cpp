@@ -49,6 +49,7 @@ public:
 
 void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                         const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
+                        const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
                         const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
 {
     // Get the display refresh rate. This is usually 60 Hz.
@@ -59,6 +60,7 @@ void Application::inner(const std::shared_ptr<GraphicsDevice> &graphicsDevice,
                     _preferences,
                     graphicsDevice,
                     dispatcherHighPriority,
+                    dispatcherVoxelData,
                     mainThreadDispatcher);
     
     // Send an event containing the initial window size and scale factor.
@@ -217,8 +219,11 @@ void Application::run()
         throw SDLException("SDL_SetRelativeMouseMode failed");
     }
     
+    const unsigned h = std::max(1u, std::thread::hardware_concurrency());
+    
     inner(createDefaultGraphicsDevice(_log, *_window),
           std::make_shared<TaskDispatcher>("High Priority TaskDispatcher", 1),
+          std::make_shared<TaskDispatcher>("Voxel Data TaskDispatcher", h),
           std::make_shared<TaskDispatcher>("Main Thread Dispatcher", 0));
 
     SDL_DestroyWindow(_window);

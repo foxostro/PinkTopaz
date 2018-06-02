@@ -37,6 +37,7 @@ public:
             std::shared_ptr<spdlog::logger> log,
             const std::shared_ptr<GraphicsDevice> &graphicsDevice,
             const std::shared_ptr<TaskDispatcher> &dispatcher,
+            const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
             const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher,
             entityx::EventManager &events,
             glm::vec3 initialCameraPosition);
@@ -108,7 +109,8 @@ private:
     void rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress);
     
     std::unique_ptr<TransactedVoxelData>
-    createVoxelData(unsigned voxelDataSeed,
+    createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcher,
+                    unsigned voxelDataSeed,
                     const boost::filesystem::path &mapDirectory);
 };
 

@@ -12,6 +12,7 @@
 #include "Terrain/PersistentVoxelChunks.hpp"
 #include "Terrain/VoxelDataGenerator.hpp"
 #include "Terrain/TerrainOperation.hpp"
+#include "TaskDispatcher.hpp"
 
 #include <spdlog/spdlog.h>
 #include <queue>
@@ -28,10 +29,13 @@ public:
     // source --  The source procedurally generates unlit voxel data.
     // chunkSize -- The size of chunk VoxelData should use internally.
     // mapRegionStore -- The map file in which to persist chunks.
+    // dispatcher -- Dispatcher used to fetch voxels data from the generator.
+    //               This permits parallel fetch and generation of voxel data.
     VoxelData(std::shared_ptr<spdlog::logger> log,
-                 std::unique_ptr<VoxelDataGenerator> &&source,
-                 unsigned chunkSize,
-                 std::unique_ptr<MapRegionStore> &&mapRegionStore);
+              std::unique_ptr<VoxelDataGenerator> &&source,
+              unsigned chunkSize,
+              std::unique_ptr<MapRegionStore> &&mapRegionStore,
+              const std::shared_ptr<TaskDispatcher> &dispatcher);
     
     // Loads the chunk at the specified region of space.
     // The specified region of space is not required to exactly match the
@@ -95,6 +99,11 @@ private:
     // Generally, VoxelData encapsulates the concept of chunks. Clients can
     // remain unaware that voxel data is stored in chunks internally.
     PersistentVoxelChunks _chunks;
+    
+    // Dispatcher used to fetch voxels data from the generator. We do this
+    // to provide the opportunity for the voxel data generator to generate the
+    // chunks in parallel.
+    std::shared_ptr<TaskDispatcher> _dispatcher;
     
     // For all chunks in the specified region, perform initial sunlight
     // propagation if it has not yet been done.

@@ -19,7 +19,8 @@ using namespace glm;
 VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
                      std::unique_ptr<VoxelDataGenerator> &&source,
                      unsigned chunkSize,
-                     std::unique_ptr<MapRegionStore> &&mapRegionStore)
+                     std::unique_ptr<MapRegionStore> &&mapRegionStore,
+                     const std::shared_ptr<TaskDispatcher> &dispatcher)
 : GridIndexer(source->boundingBox(), source->gridResolution()),
   _log(log),
   _source(std::move(source)),
@@ -30,7 +31,8 @@ VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
           std::move(mapRegionStore),
           [=](const AABB &cell, Morton3 index){
               return createNewChunk(cell, index);
-          })
+          }),
+  _dispatcher(dispatcher)
 {}
 
 void VoxelData::propagateSunlight(const GridIndexer &chunkIndexer,
@@ -259,34 +261,73 @@ void VoxelData::performInitialSunlightPropagationIfNecessary(const AABB &region)
     const ivec3 minChunkCoords = chunkIndexer.cellCoordsAtPoint(region.mins());
     const ivec3 maxChunkCoords = chunkIndexer.cellCoordsAtPointRoundUp(region.maxs());
     
+    auto iterateColumns = [&](auto fn){
+        for (ivec3 chunkCoords{minChunkCoords.x, 0, minChunkCoords.z}; chunkCoords.x < maxChunkCoords.x; ++chunkCoords.x) {
+            for (chunkCoords.z = minChunkCoords.z; chunkCoords.z < maxChunkCoords.z; ++chunkCoords.z) {
+                fn(chunkCoords);
+            }
+        }
+    };
+    
     _chunks.suspendLimitEnforcement();
-    for (ivec3 chunkCoords = minChunkCoords; chunkCoords.x < maxChunkCoords.x; ++chunkCoords.x) {
-        for (chunkCoords.z = minChunkCoords.z; chunkCoords.z < maxChunkCoords.z; ++chunkCoords.z) {
-            bool columnIsComplete = true;
+    
+    // Determine which columns are missing.
+    std::unordered_set<Morton3> missingChunks;
+    iterateColumns([&](ivec3 chunkCoords){
+        for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
+            Morton3 chunkIndex(chunkCoords);
+            auto maybeChunkPtr = _chunks.getIfExists(chunkIndex);
+            if (!maybeChunkPtr) {
+                missingChunks.insert(chunkIndex);
+            }
+        }
+    });
+    
+    // Fetch missing chunks.
+    auto futuresFetchChunks = _dispatcher->map(missingChunks, [&, this](const Morton3 &chunkIndex){
+        ivec3 chunkCoords = chunkIndex.decode();
+        AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(chunkCoords);
+        (void)_chunks.get(chunkBoundingBox, chunkIndex);
+    });
+    waitForAll(futuresFetchChunks);
+    
+    // For each column, propagate sunlight if the columns is incomplete.
+    // TODO: We can improve on this by seeding all columns at once and running through the BFS queue one time.
+    std::unordered_set<Morton3> modifiedChunks;
+    iterateColumns([&](ivec3 chunkCoords){
+        
+        // Have all chunks in the column already undergone initial propagation?
+        bool columnIsComplete = true;
+        for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
+            Morton3 chunkIndex(chunkCoords);
+            auto maybeChunkPtr = _chunks.getIfExists(chunkIndex);
+            auto &chunkPtr = maybeChunkPtr.value();
+            if (!chunkPtr->complete) {
+                columnIsComplete = false;
+                break;
+            }
+        }
+        
+        if (!columnIsComplete) {
+            propagateSunlight(chunkIndexer, chunkCoords);
             
-            // Touch all chunks in the columns. Note whether any are incomplete.
+            // Note that we'll want to save these changes back to disk later.
             for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
-                AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(chunkCoords);
                 Morton3 chunkIndex(chunkCoords);
-                std::shared_ptr<VoxelDataChunk> chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex);
-                assert(chunkPtr);
-                if (!chunkPtr->complete) {
-                    columnIsComplete = false;
-                    chunkPtr->complete = true;
-                }
+                modifiedChunks.insert(chunkIndex);
             }
-            
-            if (!columnIsComplete) {
-                propagateSunlight(chunkIndexer, chunkCoords);
-                
-                // Save changes back to disk.
-                for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
-                    Morton3 chunkIndex(chunkCoords);
-                    _chunks.store(chunkIndex);
-                }
-            }
-        } // for z
-    } // for x
+        }
+    });
+    
+    // Save changes back to disk.
+    auto futuresSaveChunks = _dispatcher->map(modifiedChunks, [&, this](const Morton3 &chunkIndex){
+        auto maybeChunkPtr = _chunks.getIfExists(chunkIndex);
+        maybeChunkPtr.value()->complete = true;
+        
+        _chunks.store(chunkIndex);
+    });
+    waitForAll(futuresSaveChunks);
+    
     _chunks.resumeLimitEnforcement();
 }
 

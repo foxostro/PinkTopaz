@@ -24,6 +24,7 @@ World::World(std::shared_ptr<spdlog::logger> log,
              const Preferences &preferences,
              const std::shared_ptr<GraphicsDevice> &graphicsDevice,
              const std::shared_ptr<TaskDispatcher> &dispatcherHighPriority,
+             const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
              const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
  : _log(log),
    _preferences(preferences)
@@ -62,6 +63,7 @@ World::World(std::shared_ptr<spdlog::logger> log,
                                                          _log,
                                                          graphicsDevice,
                                                          dispatcherHighPriority,
+                                                         dispatcherVoxelData,
                                                          mainThreadDispatcher,
                                                          events,
                                                          cameraPosition);

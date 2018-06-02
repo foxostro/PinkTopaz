@@ -33,9 +33,9 @@ void MapRegionStore::store(const AABB &boundingBox,
 
 std::shared_ptr<MapRegion> MapRegionStore::get(const glm::vec3 &p)
 {
+    std::lock_guard<std::mutex> lock(_mutex);
     const Morton3 index = _regions.indexAtPoint(p);
     return _regions.get(index, [=]{
-        std::lock_guard<std::mutex> lock(_mutex);
         boost::filesystem::path name("MapRegion_" + std::to_string((size_t)index) + ".bin");
         boost::filesystem::path path(_mapDirectory / name);
         return std::make_shared<MapRegion>(_log, path);
