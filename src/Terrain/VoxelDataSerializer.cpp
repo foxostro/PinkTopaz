@@ -141,6 +141,8 @@ VoxelDataChunk VoxelDataSerializer::load(const AABB &boundingBox,
     
     const glm::ivec3 gridResolution(header.w, header.h, header.d);
     
+    bool complete = (header.complete != 0);
+    
     switch (header.chunkType) {
         case CHUNK_TYPE_ARRAY:
         {
@@ -155,18 +157,27 @@ VoxelDataChunk VoxelDataSerializer::load(const AABB &boundingBox,
             Array3D<Voxel> voxels(boundingBox, gridResolution);
             memcpy((void *)voxels.data(), (const void *)decompressedBytes.data(), decompressedBytes.size());
             
-            return VoxelDataChunk::createArrayChunk(std::move(voxels));
-        } break;
+            auto chunk = VoxelDataChunk::createArrayChunk(std::move(voxels));
+            chunk.complete = complete;
+            return chunk;
+        }
             
         case CHUNK_TYPE_SKY:
-            return VoxelDataChunk::createSkyChunk(boundingBox, gridResolution);
+        {
+            auto chunk = VoxelDataChunk::createSkyChunk(boundingBox, gridResolution);
+            chunk.complete = complete;
+            return chunk;
+        }
             
         case CHUNK_TYPE_GROUND:
-            return VoxelDataChunk::createGroundChunk(boundingBox, gridResolution);
+        {
+            auto chunk = VoxelDataChunk::createGroundChunk(boundingBox, gridResolution);;
+            chunk.complete = complete;
+            return chunk;
+        }
             
         default:
             throw VoxelDataException("Unknown voxel chunk type {}", header.chunkType);
-            
     }
 }
 
@@ -208,6 +219,8 @@ std::vector<uint8_t> VoxelDataSerializer::store(const VoxelDataChunk &chunk)
         default:
             assert(!"unreachable");
     }
+    
+    header.complete = chunk.complete ? 1 : 0;
     
     memcpy((void *)header.compressedBytes,
            (const void *)compressedBytes.data(),

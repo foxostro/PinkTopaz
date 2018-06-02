@@ -86,7 +86,10 @@ public:
         uint32_t len;
         
         // Indicates the type of the chunk, such as Sky, Ground, or Array3D.
-        uint32_t chunkType;
+        uint32_t chunkType : 31;
+        
+        // Indicates whether or not the chunk is complete.
+        uint32_t complete : 1;
         
         // The compressed voxel bytes.
         uint8_t compressedBytes[0];

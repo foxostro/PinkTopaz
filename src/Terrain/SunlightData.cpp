@@ -38,8 +38,6 @@ void SunlightData::propagateSunlight(const GridIndexer &chunkIndexer,
 {
     std::queue<LightNode> sunlightQueue;
     
-    const ivec3 &res = chunkIndexer.gridResolution();
-    
     // Seed sunlight in all columns of the local neighborhood.
     constexpr size_t numNeighborhoodColumns = 9;
     constexpr int b = TERRAIN_CHUNK_SIZE;
@@ -99,15 +97,6 @@ void SunlightData::propagateSunlight(const GridIndexer &chunkIndexer,
         floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0,  0, -1), sunlightQueue, false);
         floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0,  0, +1), sunlightQueue, false);
         floodNeighbor(chunk, chunkCoords, voxelCoords, ivec3( 0, -1,  0), sunlightQueue, true);
-    }
-    
-    // Mark chunks in the target column as complete.
-    for (ivec3 cellCoords{targetColumnCoords.x, res.y-1, targetColumnCoords.z}; cellCoords.y >= 0; --cellCoords.y) {
-        AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
-        Morton3 chunkIndex(cellCoords);
-        auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex).get();
-        assert(chunkPtr);
-        chunkPtr->complete = true;
     }
 }
 
@@ -267,31 +256,40 @@ Array3D<Voxel> SunlightData::load(const AABB &region)
 {
     // If any chunks in the region require sunlight propagation then do it now.
     const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
+    const glm::ivec3 &res = chunkIndexer.gridResolution();
     const ivec3 minChunkCoords = chunkIndexer.cellCoordsAtPoint(region.mins());
     const ivec3 maxChunkCoords = chunkIndexer.cellCoordsAtPointRoundUp(region.maxs());
+    
     for (ivec3 chunkCoords = minChunkCoords; chunkCoords.x < maxChunkCoords.x; ++chunkCoords.x) {
         for (chunkCoords.z = minChunkCoords.z; chunkCoords.z < maxChunkCoords.z; ++chunkCoords.z) {
-            bool allChunksAreComplete = true;
+            bool columnIsComplete = true;
             
-            for (chunkCoords.y = minChunkCoords.y; chunkCoords.y < maxChunkCoords.y; ++chunkCoords.y) {
-                bool thisChunkIsComplete = false;
-                Morton3 index = chunkIndexer.indexAtPoint(region.center);
-                auto maybeChunk = _chunks.getIfExists(index);
-                if (maybeChunk) {
-                    std::shared_ptr<VoxelDataChunk> chunk = *maybeChunk;
-                    assert(chunk);
-                    if (chunk->complete) {
-                        thisChunkIsComplete = true;
-                    }
+            // Touch all chunks in the columns. Note whether any are incomplete.
+            for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
+                AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(chunkCoords);
+                Morton3 chunkIndex(chunkCoords);
+                std::shared_ptr<VoxelDataChunk> chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex);
+                assert(chunkPtr);
+                if (!chunkPtr->complete) {
+                    columnIsComplete = false;
+                    chunkPtr->complete = true;
+                    _log->info("The chunk at {} is not complete. chunkPtr --> {}",
+                               glm::to_string(chunkCoords),
+                               (void *)chunkPtr.get());
                 }
-                if (!thisChunkIsComplete) {
-                    allChunksAreComplete = false;
-                    break;
-                }
-            } // for y
+            }
             
-            if (!allChunksAreComplete) {
+            if (!columnIsComplete) {
+                _log->info("Incomplete sunlight in column ({},{}). Propagating...", chunkCoords.x, chunkCoords.z);
                 propagateSunlight(chunkIndexer, chunkCoords);
+                
+                // Save changes back to disk.
+                for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
+                    Morton3 chunkIndex(chunkCoords);
+                    _chunks.store(chunkIndex);
+                }
+                
+                _log->info("Done propagating sunlight for column ({},{})", chunkCoords.x, chunkCoords.z);
             }
         } // for z
     } // for x
@@ -350,9 +348,7 @@ AABB SunlightData::getAccessRegionForOperation(TerrainOperation &operation)
 std::unique_ptr<VoxelDataChunk>
 SunlightData::createNewChunk(const AABB &cell, Morton3 chunkIndex)
 {
-    VoxelDataChunk chunks = _source->load(cell);
-    chunks.complete = (chunks.getType() != VoxelDataChunk::Array);
-    return std::make_unique<VoxelDataChunk>(std::move(chunks));
+    return std::make_unique<VoxelDataChunk>(_source->load(cell));
 }
 
 AABB SunlightData::getSunlightRegion(AABB sunlightRegion) const
