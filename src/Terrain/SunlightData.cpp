@@ -260,6 +260,7 @@ Array3D<Voxel> SunlightData::load(const AABB &region)
     const ivec3 minChunkCoords = chunkIndexer.cellCoordsAtPoint(region.mins());
     const ivec3 maxChunkCoords = chunkIndexer.cellCoordsAtPointRoundUp(region.maxs());
     
+    _chunks.suspendLimitEnforcement();
     for (ivec3 chunkCoords = minChunkCoords; chunkCoords.x < maxChunkCoords.x; ++chunkCoords.x) {
         for (chunkCoords.z = minChunkCoords.z; chunkCoords.z < maxChunkCoords.z; ++chunkCoords.z) {
             bool columnIsComplete = true;
@@ -293,6 +294,7 @@ Array3D<Voxel> SunlightData::load(const AABB &region)
             }
         } // for z
     } // for x
+    _chunks.resumeLimitEnforcement();
     
     return _chunks.loadSubRegion(region);
 }

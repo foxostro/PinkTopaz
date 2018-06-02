@@ -41,6 +41,16 @@ public:
     // specified in `workingSet'.
     void setWorkingSet(const AABB &workingSet);
     
+    // Sometimes, for correctness, we need to suspend eviction of chunks until
+    // an operation is finished. For example, we may need to modify several
+    // chunks and then save them back to file. Evicting one before we can save
+    // the changes will basically throw away the work and lead to incorrect
+    // results.
+    void suspendLimitEnforcement();
+    
+    // Resume limit enforcement after it had been suspended for a while.
+    void resumeLimitEnforcement();
+    
     // Returns a new chunk for the corresponding region of space.
     // The chunk is populated using data gathered from the underlying source.
     // boundingBox -- The bounding box of the chunk.

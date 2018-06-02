@@ -33,7 +33,8 @@ public:
     
     SparseGrid(const AABB &boundingBox, const glm::ivec3 &gridResolution)
      : GridIndexer(boundingBox, gridResolution),
-       _countLimit(std::numeric_limits<std::size_t>::max())
+       _countLimit(std::numeric_limits<std::size_t>::max()),
+       _suspendLimitEnforcement(0)
     {}
     
     // Copy assignment operator. This is done unlocked so be careful.
@@ -136,8 +137,29 @@ public:
         }
     }
     
+    // Sometimes, for correctness, we need to suspend eviction of chunks until
+    // an operation is finished. For example, we may need to modify several
+    // chunks and then save them back to file. Evicting one before we can save
+    // the changes will basically throw away the work and lead to incorrect
+    // results.
+    void suspendLimitEnforcement()
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _suspendLimitEnforcement++;
+    }
+    
+    // Resume limit enforcement after it had been suspended for a while.
+    void resumeLimitEnforcement()
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _suspendLimitEnforcement--;
+        if (_suspendLimitEnforcement > 0) {
+            enforceLimits();
+        }
+    }
+    
     // Invalidate the element associated with the given index.
-    // The element is disacarded and the associated slot becomes empty.
+    // The element is discarded and the associated slot becomes empty.
     void invalidate(Morton3 morton)
     {
         std::unique_lock<std::mutex> tableLock(_mutex);
@@ -163,10 +185,17 @@ private:
     // order to keep the count at, or under, this limit.
     size_t _countLimit;
     
+    // Enforcement of grid limits is suspended so long as this counter is > 0.
+    int _suspendLimitEnforcement;
+    
     // Must hold `_mutex' on entry to this method.
     void enforceLimits()
     {
         assert(_countLimit > 1);
+        
+        if (_suspendLimitEnforcement > 0) {
+            return;
+        }
         
         while (_slots.size() > _countLimit) {
             auto maybeKey = _lru.pop();

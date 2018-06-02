@@ -29,6 +29,16 @@ void PersistentVoxelChunks::setWorkingSet(const AABB &workingSet)
     _chunks.setCountLimit(chunkCountLimit);
 }
 
+void PersistentVoxelChunks::suspendLimitEnforcement()
+{
+    _chunks.suspendLimitEnforcement();
+}
+
+void PersistentVoxelChunks::resumeLimitEnforcement()
+{
+    _chunks.resumeLimitEnforcement();
+}
+
 Array3D<Voxel> PersistentVoxelChunks::loadSubRegion(const AABB &region)
 {
     // Adjust the region so that it includes the full extent of all voxels that
