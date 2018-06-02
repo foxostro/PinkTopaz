@@ -17,9 +17,9 @@ using namespace glm;
 #define VERBOSE_ASSERT(...)
 
 VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
-                           std::unique_ptr<VoxelDataGenerator> &&source,
-                           unsigned chunkSize,
-                           std::unique_ptr<MapRegionStore> &&mapRegionStore)
+                     std::unique_ptr<VoxelDataGenerator> &&source,
+                     unsigned chunkSize,
+                     std::unique_ptr<MapRegionStore> &&mapRegionStore)
 : GridIndexer(source->boundingBox(), source->gridResolution()),
   _log(log),
   _source(std::move(source)),
@@ -34,7 +34,7 @@ VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
 {}
 
 void VoxelData::propagateSunlight(const GridIndexer &chunkIndexer,
-                                     const ivec3 &targetColumnCoords)
+                                  const ivec3 &targetColumnCoords)
 {
     std::queue<LightNode> sunlightQueue;
     
@@ -101,10 +101,10 @@ void VoxelData::propagateSunlight(const GridIndexer &chunkIndexer,
 }
 
 void VoxelData::seedSunlightInColumn(const GridIndexer &chunkIndexer,
-                                        const ivec3 &columnCoords,
-                                        const ivec3 &minSeedCorner,
-                                        const ivec3 &maxSeedCorner,
-                                        std::queue<LightNode> &sunlightQueue)
+                                     const ivec3 &columnCoords,
+                                     const ivec3 &minSeedCorner,
+                                     const ivec3 &maxSeedCorner,
+                                     std::queue<LightNode> &sunlightQueue)
 {
     const ivec3 &res = chunkIndexer.gridResolution();
     
@@ -135,10 +135,10 @@ void VoxelData::seedSunlightInColumn(const GridIndexer &chunkIndexer,
 }
 
 void VoxelData::seedSunlightInTopLayer(VoxelDataChunk *chunkPtr,
-                                          const ivec3 &chunkCellCoords,
-                                          const ivec3 &minSeedCorner,
-                                          const ivec3 &maxSeedCorner,
-                                          std::queue<LightNode> &sunlightQueue)
+                                       const ivec3 &chunkCellCoords,
+                                       const ivec3 &minSeedCorner,
+                                       const ivec3 &maxSeedCorner,
+                                       std::queue<LightNode> &sunlightQueue)
 {
     VERBOSE_ASSERT(chunkPtr);
     
@@ -166,11 +166,11 @@ void VoxelData::seedSunlightInTopLayer(VoxelDataChunk *chunkPtr,
 }
 
 void VoxelData::floodNeighbor(VoxelDataChunk *chunkPtr,
-                                 const ivec3 &chunkCellCoords,
-                                 const ivec3 &voxelCellCoords,
-                                 const ivec3 &delta,
-                                 std::queue<LightNode> &sunlightQueue,
-                                 bool losslessPropagationOfMaxLight)
+                              const ivec3 &chunkCellCoords,
+                              const ivec3 &voxelCellCoords,
+                              const ivec3 &delta,
+                              std::queue<LightNode> &sunlightQueue,
+                              bool losslessPropagationOfMaxLight)
 {
     VERBOSE_ASSERT(chunkPtr);
     
@@ -252,9 +252,8 @@ void VoxelData::floodNeighbor(VoxelDataChunk *chunkPtr,
     }
 }
 
-Array3D<Voxel> VoxelData::load(const AABB &region)
+void VoxelData::performInitialSunlightPropagationIfNecessary(const AABB &region)
 {
-    // If any chunks in the region require sunlight propagation then do it now.
     const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
     const glm::ivec3 &res = chunkIndexer.gridResolution();
     const ivec3 minChunkCoords = chunkIndexer.cellCoordsAtPoint(region.mins());
@@ -289,7 +288,11 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
         } // for z
     } // for x
     _chunks.resumeLimitEnforcement();
-    
+}
+
+Array3D<Voxel> VoxelData::load(const AABB &region)
+{
+    performInitialSunlightPropagationIfNecessary(region);
     return _chunks.loadSubRegion(region);
 }
 
