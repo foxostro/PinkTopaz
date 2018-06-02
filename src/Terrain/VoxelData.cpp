@@ -274,14 +274,10 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
                 if (!chunkPtr->complete) {
                     columnIsComplete = false;
                     chunkPtr->complete = true;
-                    _log->info("The chunk at {} is not complete. chunkPtr --> {}",
-                               glm::to_string(chunkCoords),
-                               (void *)chunkPtr.get());
                 }
             }
             
             if (!columnIsComplete) {
-                _log->info("Incomplete sunlight in column ({},{}). Propagating...", chunkCoords.x, chunkCoords.z);
                 propagateSunlight(chunkIndexer, chunkCoords);
                 
                 // Save changes back to disk.
@@ -289,8 +285,6 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
                     Morton3 chunkIndex(chunkCoords);
                     _chunks.store(chunkIndex);
                 }
-                
-                _log->info("Done propagating sunlight for column ({},{})", chunkCoords.x, chunkCoords.z);
             }
         } // for z
     } // for x
