@@ -69,6 +69,10 @@ public:
     // used internally by PersistentVoxelChunks.
     void store(const VoxelDataChunk &voxels);
     
+    // Re-saves the chunk for the specified index.
+    // This is useful when a chunk is retrieved via get() and then modified.
+    void store(Morton3 index);
+    
     // Returns the chunk, creating it if necessary, but prefering to fetch it
     // from the map region file.
     // boundingBox -- The bounding box of the chunk.
