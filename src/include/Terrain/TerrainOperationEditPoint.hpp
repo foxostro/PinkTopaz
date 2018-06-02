@@ -12,7 +12,7 @@
 #include "TerrainOperation.hpp"
 #include "CerealGLM.hpp"
 
-class SunlightData;
+class VoxelData;
 
 // An operation which edits a single voxel block.
 // This is useful for edits made with the mouse cursor ala Minecraft.
@@ -29,7 +29,7 @@ public:
     TerrainOperationEditPoint(glm::vec3 location, Voxel newValue);
     
     // Performs the operation.
-    void perform(SunlightData &sunlightData) override;
+    void perform(VoxelData &voxelData) override;
     
     // Serialize the operation.
     template<typename Archive>

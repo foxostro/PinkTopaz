@@ -1,13 +1,13 @@
 //
-//  SunlightData.hpp
+//  VoxelData.hpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 5/15/18.
 //
 //
 
-#ifndef SunlightData_hpp
-#define SunlightData_hpp
+#ifndef VoxelData_hpp
+#define VoxelData_hpp
 
 #include "Terrain/PersistentVoxelChunks.hpp"
 #include "Terrain/VoxelDataGenerator.hpp"
@@ -17,18 +17,18 @@
 #include <queue>
 
 // Terrain voxels in space with flood-fill lighting.
-class SunlightData : public GridIndexer
+class VoxelData : public GridIndexer
 {
 public:
     // No default constructor.
-    SunlightData() = delete;
+    VoxelData() = delete;
     
     // Constructor.
     // log -- The logger to use.
     // source --  The source procedurally generates unlit voxel data.
     // chunkSize -- The size of chunk VoxelData should use internally.
     // mapRegionStore -- The map file in which to persist chunks.
-    SunlightData(std::shared_ptr<spdlog::logger> log,
+    VoxelData(std::shared_ptr<spdlog::logger> log,
                  std::unique_ptr<VoxelDataGenerator> &&source,
                  unsigned chunkSize,
                  std::unique_ptr<MapRegionStore> &&mapRegionStore);
@@ -101,4 +101,4 @@ private:
     std::unique_ptr<VoxelDataChunk> createNewChunk(const AABB &cell, Morton3 index);
 };
 
-#endif /* SunlightData_hpp */
+#endif /* VoxelData_hpp */

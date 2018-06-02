@@ -14,7 +14,7 @@
 #include <cereal/types/polymorphic.hpp>
 #include <cereal/archives/binary.hpp>
 
-class SunlightData;
+class VoxelData;
 
 // Base class for operations which modify voxel data.
 class TerrainOperation
@@ -45,7 +45,7 @@ public:
     }
     
     // Performs the operation.
-    virtual void perform(SunlightData &sunlightData) = 0;
+    virtual void perform(VoxelData &voxelData) = 0;
     
     // Serialize the operation.
     template<typename Archive>

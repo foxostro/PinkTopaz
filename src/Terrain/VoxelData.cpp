@@ -1,12 +1,12 @@
 //
-//  SunlightData.cpp
+//  VoxelData.cpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 5/15/18.
 //
 //
 
-#include "Terrain/SunlightData.hpp"
+#include "Terrain/VoxelData.hpp"
 #include "Terrain/TerrainConfig.hpp"
 #include "Grid/GridIndexerRange.hpp"
 
@@ -16,7 +16,7 @@ using namespace glm;
 // degrades performance too much in a Debug build. Mostly for documentation.
 #define VERBOSE_ASSERT(...)
 
-SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
+VoxelData::VoxelData(std::shared_ptr<spdlog::logger> log,
                            std::unique_ptr<VoxelDataGenerator> &&source,
                            unsigned chunkSize,
                            std::unique_ptr<MapRegionStore> &&mapRegionStore)
@@ -33,7 +33,7 @@ SunlightData::SunlightData(std::shared_ptr<spdlog::logger> log,
           })
 {}
 
-void SunlightData::propagateSunlight(const GridIndexer &chunkIndexer,
+void VoxelData::propagateSunlight(const GridIndexer &chunkIndexer,
                                      const ivec3 &targetColumnCoords)
 {
     std::queue<LightNode> sunlightQueue;
@@ -100,7 +100,7 @@ void SunlightData::propagateSunlight(const GridIndexer &chunkIndexer,
     }
 }
 
-void SunlightData::seedSunlightInColumn(const GridIndexer &chunkIndexer,
+void VoxelData::seedSunlightInColumn(const GridIndexer &chunkIndexer,
                                         const ivec3 &columnCoords,
                                         const ivec3 &minSeedCorner,
                                         const ivec3 &maxSeedCorner,
@@ -134,7 +134,7 @@ void SunlightData::seedSunlightInColumn(const GridIndexer &chunkIndexer,
     } // for column y
 }
 
-void SunlightData::seedSunlightInTopLayer(VoxelDataChunk *chunkPtr,
+void VoxelData::seedSunlightInTopLayer(VoxelDataChunk *chunkPtr,
                                           const ivec3 &chunkCellCoords,
                                           const ivec3 &minSeedCorner,
                                           const ivec3 &maxSeedCorner,
@@ -165,7 +165,7 @@ void SunlightData::seedSunlightInTopLayer(VoxelDataChunk *chunkPtr,
     }
 }
 
-void SunlightData::floodNeighbor(VoxelDataChunk *chunkPtr,
+void VoxelData::floodNeighbor(VoxelDataChunk *chunkPtr,
                                  const ivec3 &chunkCellCoords,
                                  const ivec3 &voxelCellCoords,
                                  const ivec3 &delta,
@@ -252,7 +252,7 @@ void SunlightData::floodNeighbor(VoxelDataChunk *chunkPtr,
     }
 }
 
-Array3D<Voxel> SunlightData::load(const AABB &region)
+Array3D<Voxel> VoxelData::load(const AABB &region)
 {
     // If any chunks in the region require sunlight propagation then do it now.
     const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
@@ -299,7 +299,7 @@ Array3D<Voxel> SunlightData::load(const AABB &region)
     return _chunks.loadSubRegion(region);
 }
 
-void SunlightData::editSingleVoxel(const vec3 &point, const Voxel &value)
+void VoxelData::editSingleVoxel(const vec3 &point, const Voxel &value)
 {
     const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
     AABB actualAreaOfSunlightChange = _source->cellAtPoint(point);
@@ -334,18 +334,18 @@ void SunlightData::editSingleVoxel(const vec3 &point, const Voxel &value)
     _chunks.invalidate(actualAreaOfSunlightChange);
 }
 
-void SunlightData::setWorkingSet(const AABB &workingSet)
+void VoxelData::setWorkingSet(const AABB &workingSet)
 {
     _chunks.setWorkingSet(workingSet);
 }
 
-AABB SunlightData::getAccessRegionForOperation(TerrainOperation &operation)
+AABB VoxelData::getAccessRegionForOperation(TerrainOperation &operation)
 {
     return getSunlightRegion(operation.getAffectedRegion());
 }
 
 std::unique_ptr<VoxelDataChunk>
-SunlightData::createNewChunk(const AABB &cell, Morton3 chunkIndex)
+VoxelData::createNewChunk(const AABB &cell, Morton3 chunkIndex)
 {
     if (cell.center.y > 64.f || cell.center.y < 0.f) {
         const auto adjusted = _source->snapRegionToCellBoundaries(cell);
@@ -360,7 +360,7 @@ SunlightData::createNewChunk(const AABB &cell, Morton3 chunkIndex)
     }
 }
 
-AABB SunlightData::getSunlightRegion(AABB sunlightRegion) const
+AABB VoxelData::getSunlightRegion(AABB sunlightRegion) const
 {
     sunlightRegion = _chunks.getChunkIndexer().snapRegionToCellBoundaries(sunlightRegion);
     

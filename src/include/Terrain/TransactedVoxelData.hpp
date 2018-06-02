@@ -18,7 +18,7 @@
 #include "Grid/RegionMutualExclusionArbitrator.hpp"
 #include "Terrain/Voxel.hpp"
 #include "Terrain/TerrainOperation.hpp"
-#include "Terrain/SunlightData.hpp"
+#include "Terrain/VoxelData.hpp"
 
 #define TransactedVoxelDataUsesBigLock 1
 
@@ -34,7 +34,7 @@ public:
     
     // Constructor.
     // source -- The source provides initial voxel data.
-    TransactedVoxelData(std::unique_ptr<SunlightData> &&source);
+    TransactedVoxelData(std::unique_ptr<VoxelData> &&source);
     
     // Perform an atomic transaction as a "reader" with read-only access to the
     // underlying data in the specified region.
@@ -62,7 +62,7 @@ private:
 #else
         RegionMutualExclusionArbitrator _lockArbitrator;
 #endif
-    std::unique_ptr<SunlightData> _source;
+    std::unique_ptr<VoxelData> _source;
 };
 
 #endif /* ConcurrentVoxelData_hpp */

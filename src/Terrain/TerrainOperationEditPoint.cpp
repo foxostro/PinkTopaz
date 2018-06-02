@@ -7,7 +7,7 @@
 //
 
 #include "Terrain/TerrainOperationEditPoint.hpp"
-#include "Terrain/SunlightData.hpp"
+#include "Terrain/VoxelData.hpp"
 
 TerrainOperationEditPoint::TerrainOperationEditPoint(glm::vec3 location,
                                                      Voxel newValue)
@@ -16,7 +16,7 @@ TerrainOperationEditPoint::TerrainOperationEditPoint(glm::vec3 location,
    _newValue(newValue)
 {}
 
-void TerrainOperationEditPoint::perform(SunlightData &sunlightData)
+void TerrainOperationEditPoint::perform(VoxelData &voxelData)
 {
-    sunlightData.editSingleVoxel(_location, _newValue);
+    voxelData.editSingleVoxel(_location, _newValue);
 }

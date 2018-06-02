@@ -8,7 +8,7 @@
 
 #include "Terrain/TransactedVoxelData.hpp"
 
-TransactedVoxelData::TransactedVoxelData(std::unique_ptr<SunlightData> &&source)
+TransactedVoxelData::TransactedVoxelData(std::unique_ptr<VoxelData> &&source)
  : GridIndexer(source->boundingBox(), source->gridResolution()),
    _source(std::move(source))
 {}
