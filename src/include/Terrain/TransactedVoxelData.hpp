@@ -20,7 +20,10 @@
 #include "Terrain/TerrainOperation.hpp"
 #include "Terrain/VoxelData.hpp"
 
-#define TransactedVoxelDataUsesBigLock 1
+// Set TransactedVoxelDataUsesBigLock to 1 to force TransactedVoxelData to use
+// a single lock for all transactions. This completely serializes access to
+// voxel data, which is occassionally useful for debugging.
+#define TransactedVoxelDataUsesBigLock 0
 
 // A block of voxels in space. Concurrent edits are protected by a lock.
 class TransactedVoxelData : public GridIndexer
