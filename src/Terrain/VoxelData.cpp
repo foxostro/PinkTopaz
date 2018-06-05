@@ -293,9 +293,8 @@ void VoxelData::performInitialSunlightPropagationIfNecessary(const AABB &region)
     
     // For each column, propagate sunlight if the columns is incomplete.
     // TODO: We can improve on this by seeding all columns at once and running through the BFS queue one time.
-    std::unordered_set<Morton3> modifiedChunks;
-    iterateColumns([&](ivec3 chunkCoords){
-        
+    bool modifiedAnyChunk = false;
+    auto processColumn = [&](ivec3 chunkCoords){
         // Have all chunks in the column already undergone initial propagation?
         bool columnIsComplete = true;
         for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
@@ -310,23 +309,61 @@ void VoxelData::performInitialSunlightPropagationIfNecessary(const AABB &region)
         
         if (!columnIsComplete) {
             propagateSunlight(chunkIndexer, chunkCoords);
+            modifiedAnyChunk = true;
             
             // Note that we'll want to save these changes back to disk later.
             for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
                 Morton3 chunkIndex(chunkCoords);
-                modifiedChunks.insert(chunkIndex);
+                auto maybeChunkPtr = _chunks.getIfExists(chunkIndex);
+                maybeChunkPtr.value()->complete = true;
             }
         }
-    });
+    };
+    
+    // When we propagate sunlight for the center column, there is a region of
+    // space in neighboring columns which is correct. Though, not the entire
+    // column will be correct. If the requested region only touches this safe
+    // region then we can propagate sunlight for the center column of the
+    // neighborhood only.
+    
+    AABB safeRegion;
+    {
+        safeRegion = _chunks.getChunkIndexer().cellAtPoint(region.center);
+        
+        safeRegion = safeRegion.inset(-vec3((float)TERRAIN_CHUNK_SIZE-MAX_LIGHT, 0, (float)TERRAIN_CHUNK_SIZE-MAX_LIGHT));
+        
+        vec3 mins = safeRegion.mins();
+        mins.y = boundingBox().mins().y;
+        
+        vec3 maxs = safeRegion.maxs();
+        maxs.y = boundingBox().maxs().y;
+        
+        safeRegion.center = (maxs + mins) * 0.5f;
+        safeRegion.extent = (maxs - mins) * 0.5f;
+    }
+    
+    bool useFastPath = (safeRegion.intersect(region) == region);
+    
+    if (useFastPath) {
+        const ivec3 chunkCoords = chunkIndexer.cellCoordsAtPoint(region.center);
+        processColumn(chunkCoords);
+    } else {
+        iterateColumns(processColumn);
+    }
     
     // Save changes back to disk.
-    auto futuresSaveChunks = _dispatcher->map(modifiedChunks, [&, this](const Morton3 &chunkIndex){
-        auto maybeChunkPtr = _chunks.getIfExists(chunkIndex);
-        maybeChunkPtr.value()->complete = true;
-        
-        _chunks.store(chunkIndex);
-    });
-    waitForAll(futuresSaveChunks);
+    if (modifiedAnyChunk) {
+        std::vector<Future<void>> futures;
+        iterateColumns([&](ivec3 chunkCoords){
+            for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
+                Morton3 chunkIndex(chunkCoords);
+                futures.emplace_back(_dispatcher->async([this, chunkIndex](){
+                    _chunks.store(chunkIndex);
+                }));
+            }
+        });
+        waitForAll(futures);
+    }
     
     _chunks.resumeLimitEnforcement();
 }
