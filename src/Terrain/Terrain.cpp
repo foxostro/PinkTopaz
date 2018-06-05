@@ -275,18 +275,21 @@ void Terrain::rebuildMeshInResponseToChanges(const AABB &voxelAffectedRegion)
 
 void Terrain::rebuildNextMeshBatch(const TerrainRebuildActor::Batch &batch)
 {
-    for (const TerrainRebuildActor::Cell &cell : batch.requestedCells()) {
-        rebuildNextMesh(cell.box, cell.progress);
-    }
-}
-
-void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress)
-{
-    // Rebuild the mesh and then stick it in the grid.
     PROFILER(TerrainRebuildNextMesh);
-    auto terrainMesh = std::make_shared<TerrainMesh>(cell, _defaultMesh, _graphicsDevice, _mesher, _voxels);
-    terrainMesh->rebuild(progress);
-    _meshes->set(cell.center, terrainMesh);
+    
+    for (const TerrainRebuildActor::Cell &cell : batch.requestedCells()) {
+        cell.progress.setState(TerrainProgressEvent::WaitingOnVoxels);
+        
+        // We need a border of voxels around the region of the mesh in order to
+        // perform surface extraction.
+        const AABB voxelBox = cell.box.inset(-2.f * _voxels->cellDimensions());
+        
+        _voxels->readerTransaction(voxelBox, [&](Array3D<Voxel> &&voxels){
+            auto terrainMesh = std::make_shared<TerrainMesh>(cell.box, _defaultMesh, _graphicsDevice, _mesher);
+            terrainMesh->rebuild(voxels, cell.progress);
+            _meshes->set(cell.box.center, terrainMesh);
+        });
+    }
 }
 
 std::unique_ptr<TransactedVoxelData>

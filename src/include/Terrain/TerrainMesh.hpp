@@ -29,12 +29,10 @@ public:
     // defaultMesh -- Contains resources shared between meshes.
     // graphicsDevice -- Used to create graphics resources for meshes.
     // mesher -- Used to extract an isosurface from the voxel field.
-    // voxels -- The voxels fo the world.
     TerrainMesh(const AABB &meshBox,
                 const std::shared_ptr<RenderableStaticMesh> &defaultMesh,
                 const std::shared_ptr<GraphicsDevice> &graphicsDevice,
-                const std::shared_ptr<Mesher> &mesher,
-                const std::shared_ptr<TransactedVoxelData> &voxels);
+                const std::shared_ptr<Mesher> &mesher);
     
     // Default constructor is deleted
     TerrainMesh() = delete;
@@ -51,8 +49,8 @@ public:
     // Returns an optional that contains the mesh, if the mesh is present.
     RenderableStaticMesh getMesh() const;
     
-    // Causes the mesh to be rebuilt using the voxel data store.
-    void rebuild(TerrainProgressTracker &progress);
+    // Causes the mesh to be rebuilt using the specified voxel data.
+    void rebuild(const Array3D<Voxel> &voxels, TerrainProgressTracker &progress);
     
     inline const AABB& boundingBox() const
     {
@@ -69,7 +67,6 @@ private:
     
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
     std::shared_ptr<Mesher> _mesher;
-    std::shared_ptr<TransactedVoxelData> _voxels;
     
     std::shared_ptr<RenderableStaticMesh> _defaultMesh;
     RenderableStaticMesh _mesh;
