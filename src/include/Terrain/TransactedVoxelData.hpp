@@ -40,6 +40,16 @@ public:
     // fn -- Closure which will be doing the reading.
     void readerTransaction(const AABB &region, std::function<void(Array3D<Voxel> &&data)> fn);
     
+    // Perform an atomic transaction as a "reader" with read-only access to the
+    // underlying data in the specified regions. This is a batch operation which
+    // takes a lock, once, and then performs multiple operations.
+    // regions -- Collection of regions to read.
+    // fn -- Closure which will be doing the reading for each specified region.
+    //       Parameters are the index of the region to process and the voxels
+    //       associated with that region.
+    void readerTransaction(const std::vector<AABB> regions,
+                           std::function<void(size_t index, Array3D<Voxel> &&data)> fn);
+    
     // Perform an atomic transaction as a "writer" with read-write access to
     // the underlying voxel data in the specified region.
     // operation -- Describes the edits to be made.

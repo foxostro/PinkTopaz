@@ -277,19 +277,27 @@ void Terrain::rebuildNextMeshBatch(const TerrainRebuildActor::Batch &batch)
 {
     PROFILER(TerrainRebuildNextMesh);
     
-    for (const TerrainRebuildActor::Cell &cell : batch.requestedCells()) {
+    const std::vector<TerrainRebuildActor::Cell> &requestedCells = batch.requestedCells();
+    
+    std::vector<AABB> voxelBoxes;
+    voxelBoxes.reserve(requestedCells.size());
+    
+    for (const TerrainRebuildActor::Cell &cell : requestedCells) {
         cell.progress.setState(TerrainProgressEvent::WaitingOnVoxels);
         
         // We need a border of voxels around the region of the mesh in order to
         // perform surface extraction.
         const AABB voxelBox = cell.box.inset(-2.f * _voxels->cellDimensions());
         
-        _voxels->readerTransaction(voxelBox, [&](Array3D<Voxel> &&voxels){
-            auto terrainMesh = std::make_shared<TerrainMesh>(cell.box, _defaultMesh, _graphicsDevice, _mesher);
-            terrainMesh->rebuild(voxels, cell.progress);
-            _meshes->set(cell.box.center, terrainMesh);
-        });
+        voxelBoxes.push_back(voxelBox);
     }
+    
+    _voxels->readerTransaction(voxelBoxes, [&](size_t index, Array3D<Voxel> &&voxels){
+        const TerrainRebuildActor::Cell &cell = requestedCells.at(index);
+        auto terrainMesh = std::make_shared<TerrainMesh>(cell.box, _defaultMesh, _graphicsDevice, _mesher);
+        terrainMesh->rebuild(voxels, cell.progress);
+        _meshes->set(cell.box.center, terrainMesh);
+    });
 }
 
 std::unique_ptr<TransactedVoxelData>
