@@ -105,6 +105,9 @@ private:
     // by a change.
     void rebuildMeshInResponseToChanges(const AABB &affectedRegion);
     
+    // Rebuilds the next pending batch of meshes in the queue.
+    void rebuildNextMeshBatch(const TerrainRebuildActor::Batch &batch);
+    
     // Rebuilds the next pending mesh in the queue.
     void rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress);
     

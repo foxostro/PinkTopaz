@@ -10,6 +10,22 @@
 #include "ThreadName.hpp"
 #include "AutoreleasePool.hpp"
 #include <glm/gtx/string_cast.hpp>
+#include <unordered_map>
+
+#include <boost/functional/hash.hpp>
+namespace std {
+    template <> struct hash<glm::ivec2>
+    {
+        size_t operator()(const glm::ivec2 &vec) const
+        {
+            std::hash<glm::ivec2::value_type> hasher;
+            size_t seed = 0;
+            boost::hash_combine(seed, hasher(vec.x));
+            boost::hash_combine(seed, hasher(vec.y));
+            return seed;
+        }
+    };
+}
 
 // The threshold below which changes in the search point are ignored.
 // This prevents re-sorting uneccessarily as all cells fall on a regular grid,
@@ -31,9 +47,9 @@ TerrainRebuildActor::TerrainRebuildActor(std::shared_ptr<spdlog::logger> log,
                                          std::shared_ptr<TaskDispatcher> mainThreadDispatcher,
                                          entityx::EventManager &events,
                                          std::chrono::steady_clock::time_point appStartTime,
-                                         std::function<void(AABB, TerrainProgressTracker&)> processCell)
+                                         std::function<void(const Batch &)> &&processBatch)
 : _threadShouldExit(false),
-  _processCell(processCell),
+  _processBatch(std::move(processBatch)),
   _searchPoint(initialSearchPoint),
   _mainThreadDispatcher(mainThreadDispatcher),
   _events(events),
@@ -53,28 +69,41 @@ void TerrainRebuildActor::push(const std::vector<std::pair<Morton3, AABB>> &cell
     std::lock_guard<std::mutex> lock(_lock);
     
     int numberAdded = 0;
+    std::unordered_map<glm::ivec2, std::vector<Cell>> mapColumnToCells;
     
     for (const auto &cellPair : cells) {
-        const Morton3 cellCoords = cellPair.first;
+        const Morton3 cellIndex = cellPair.first;
         const AABB &boundingBox = cellPair.second;
         const auto insertResult = _set.insert(boundingBox);
         if (insertResult.second) {
             numberAdded++;
-            Cell cell(_log,
-                      cellCoords,
-                      boundingBox,
-                      insertResult.first,
-                      _mainThreadDispatcher,
-                      _events,
-                      _appStartTime);
-            _cells.emplace_back(std::move(cell));
+            
+            const glm::ivec3 cellCoords = cellIndex.decode();
+            const glm::ivec2 columnCoords(cellCoords.x, cellCoords.z);
+            
+            auto iter = mapColumnToCells.find(columnCoords);
+            if (iter == mapColumnToCells.end()) {
+                mapColumnToCells.insert(std::make_pair(columnCoords, std::vector<Cell>{}));
+                iter = mapColumnToCells.find(columnCoords);
+            }
+            
+            iter->second.emplace_back(_log,
+                                      cellIndex,
+                                      boundingBox,
+                                      insertResult.first,
+                                      _mainThreadDispatcher,
+                                      _events,
+                                      _appStartTime);
         }
     }
     
     _log->trace("Added {} chunks in push()", numberAdded);
     if (numberAdded > 0) {
+        for (auto &pair : mapColumnToCells) {
+            _pendingBatches.emplace_back(std::move(pair.second));
+        }
         sort();
-        if (numberAdded == 1) {
+        if (mapColumnToCells.size() == 1) {
             _cvar.notify_one();
         } else {
             _cvar.notify_all();
@@ -99,26 +128,26 @@ void TerrainRebuildActor::worker()
         AutoreleasePool pool;
         
         // Wait for a cell to work on.
-        boost::optional<Cell> maybeCell;
+        boost::optional<Batch> maybeBatch;
         {
             std::unique_lock<std::mutex> lock(_lock);
             _cvar.wait(lock, [this]{
-                return _threadShouldExit || !_cells.empty();
+                return _threadShouldExit || !_pendingBatches.empty();
             });
-            if (!(_threadShouldExit || _cells.empty())) {
-                Cell cell = std::move(_cells.front());
-                _cells.pop_front();
-                maybeCell = boost::make_optional(cell);
+            if (!(_threadShouldExit || _pendingBatches.empty())) {
+                maybeBatch = boost::make_optional(std::move(_pendingBatches.front()));
+                _pendingBatches.pop_front();
             }
         }
         
-        if (maybeCell) {
-            Cell &cell = *maybeCell;
-            _processCell(cell.box, cell.progress);
+        if (maybeBatch) {
+            Batch &batch = *maybeBatch;
+            _processBatch(batch);
          
             // Remove from the set only at the very end.
+            std::unique_lock<std::mutex> lock(_lock);
+            for (Cell &cell : batch.requestedCells())
             {
-                std::unique_lock<std::mutex> lock(_lock);
                 cell.progress.setState(TerrainProgressEvent::Complete);
                 cell.progress.dump();
                 _set.erase(cell.setIterator);
@@ -129,10 +158,10 @@ void TerrainRebuildActor::worker()
 
 void TerrainRebuildActor::sort()
 {
-    std::sort(_cells.begin(), _cells.end(),
-              [searchPoint=_searchPoint](const Cell& cell1, const Cell& cell2){
-                  const AABB &a = cell1.box;
-                  const AABB &b = cell2.box;
+    std::sort(_pendingBatches.begin(), _pendingBatches.end(),
+              [searchPoint=_searchPoint](const Batch& batch1, const Batch& batch2){
+                  const AABB &a = batch1.boundingBox();
+                  const AABB &b = batch2.boundingBox();
                   const auto distA = glm::distance(a.center, searchPoint);
                   const auto distB = glm::distance(b.center, searchPoint);
                   return distA < distB;

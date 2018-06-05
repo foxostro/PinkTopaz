@@ -121,8 +121,8 @@ Terrain::Terrain(const Preferences &preferences,
                                                               mainThreadDispatcher,
                                                               events,
                                                               _startTime,
-                                                              [=](const AABB &cell, TerrainProgressTracker &progress){
-                                                                  rebuildNextMesh(cell, progress);
+                                                              [=](const TerrainRebuildActor::Batch &batch){
+                                                                  rebuildNextMeshBatch(batch);
                                                               });
     
     // When voxels change, we need to extract a polygonal mesh representation
@@ -271,6 +271,13 @@ void Terrain::rebuildMeshInResponseToChanges(const AABB &voxelAffectedRegion)
         }
     }
     _meshRebuildActor->push(meshCellsToRebuild);
+}
+
+void Terrain::rebuildNextMeshBatch(const TerrainRebuildActor::Batch &batch)
+{
+    for (const TerrainRebuildActor::Cell &cell : batch.requestedCells()) {
+        rebuildNextMesh(cell.box, cell.progress);
+    }
 }
 
 void Terrain::rebuildNextMesh(const AABB &cell, TerrainProgressTracker &progress)
