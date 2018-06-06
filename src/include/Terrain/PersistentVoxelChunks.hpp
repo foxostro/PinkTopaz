@@ -94,9 +94,6 @@ public:
     boost::optional<std::shared_ptr<VoxelDataChunk>>
     getIfExists(Morton3 index);
     
-    // Invalidate all chunks in the specified region.
-    void invalidate(const AABB &region);
-    
     // Return an indexer for the grid of chunks.
     const GridIndexer& getChunkIndexer() const;
     

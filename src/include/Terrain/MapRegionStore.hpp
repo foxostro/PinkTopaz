@@ -42,10 +42,6 @@ public:
     // The key uniquely identifies the chunk in the voxel chunk in space.
     void store(const AABB &boundingBox, Morton3 key, const VoxelDataChunk &chunk);
     
-    // Invalidates a voxel chunk and removes it from file.
-    // The key uniquely identifies the chunk in the voxel chunk in space.
-    void invalidate(const glm::vec3 &point, Morton3 key);
-    
 private:
     boost::filesystem::path _mapDirectory;
     SparseGrid<std::shared_ptr<MapRegion>> _regions;

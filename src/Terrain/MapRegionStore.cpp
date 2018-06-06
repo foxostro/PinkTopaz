@@ -41,8 +41,3 @@ std::shared_ptr<MapRegion> MapRegionStore::get(const glm::vec3 &p)
         return std::make_shared<MapRegion>(_log, path);
     });
 }
-
-void MapRegionStore::invalidate(const glm::vec3 &point, Morton3 key)
-{
-    get(point)->invalidate(key);
-}

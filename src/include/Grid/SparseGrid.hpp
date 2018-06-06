@@ -147,9 +147,9 @@ public:
         }
     }
     
-    // Invalidate the element associated with the given index.
+    // Removes the element associated with the given index.
     // The element is discarded and the associated slot becomes empty.
-    void invalidate(Morton3 morton)
+    void remove(Morton3 morton)
     {
         std::lock_guard<std::mutex> lock(_mutex);
         boost::optional<ElementType> &slot = _slots[morton];

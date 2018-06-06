@@ -266,9 +266,9 @@ void Terrain::rebuildMeshInResponseToChanges(const AABB &voxelAffectedRegion)
         const AABB cell = _meshes->cellAtCellCoords(cellCoords);
         const Morton3 index = _meshes->indexAtCellCoords(cellCoords);
         if (doBoxesIntersect(cell, activeRegion)) {
-            meshCellsToRebuild.push_back(std::make_pair(index, cell));
+            meshCellsToRebuild.emplace_back(index, cell);
         } else {
-            _meshes->invalidate(index);
+            _meshes->remove(index);
         }
     }
     _meshRebuildActor->push(meshCellsToRebuild);

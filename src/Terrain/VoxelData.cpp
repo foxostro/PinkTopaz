@@ -376,37 +376,13 @@ Array3D<Voxel> VoxelData::load(const AABB &region)
 
 void VoxelData::editSingleVoxel(const vec3 &point, const Voxel &value)
 {
+    // TODO: Update lighting in the region surrounding the point and return the region where voxels actually did change.
     const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
-    AABB actualAreaOfSunlightChange = _source->cellAtPoint(point);
-    bool done = false;
-    vec3 chunkPoint = _chunks.cellCenterAtPoint(point);
-    
-    while(!done) {
-        const AABB chunkBoundingBox = chunkIndexer.cellAtPoint(chunkPoint);
-        VoxelDataChunk chunk = _chunks.load(chunkBoundingBox);
-        
-        if (chunk.getType() == VoxelDataChunk::Ground) {
-            done = true;
-        } else if (chunk.getType() == VoxelDataChunk::Sky) {
-            // We'll convert this chunk to an array type chunk and then move on.
-            chunk.convertToArray();
-        } else {
-            for (ivec3 cellCoords = chunk.cellCoordsAtPoint(point); cellCoords.y >= 0; --cellCoords.y) {
-                const Voxel &voxel = chunk.get(cellCoords);
-                if (voxel.value == 0) {
-                    const AABB voxelCell = chunk.cellAtCellCoords(cellCoords);
-                    actualAreaOfSunlightChange = actualAreaOfSunlightChange.unionBox(voxelCell);
-                } else {
-                    done = true;
-                    break;
-                }
-            }
-        }
-        
-        chunkPoint.y -= 2.f * chunkBoundingBox.extent.y;
-    }
-    
-    _chunks.invalidate(actualAreaOfSunlightChange);
+    const AABB chunkBoundingBox = chunkIndexer.cellAtPoint(point);
+    const Morton3 chunkIndex = chunkIndexer.indexAtPoint(point);
+    auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex);
+    chunkPtr->set(point, value);
+    _chunks.store(chunkIndex);
 }
 
 void VoxelData::setWorkingSet(const AABB &workingSet)
@@ -416,7 +392,9 @@ void VoxelData::setWorkingSet(const AABB &workingSet)
 
 AABB VoxelData::getAccessRegionForOperation(TerrainOperation &operation)
 {
-    return getSunlightRegion(operation.getAffectedRegion());
+    AABB region = _source->snapRegionToCellBoundaries(operation.getAffectedRegion());
+    region = _chunks.getChunkIndexer().snapRegionToCellBoundaries(region);
+    return region;
 }
 
 std::unique_ptr<VoxelDataChunk>

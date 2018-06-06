@@ -29,7 +29,7 @@ void BlockDataStore::store(Key key, const std::vector<uint8_t> &bytes)
     memset(block->data + size, 0, block->size - size);
 }
 
-void BlockDataStore::invalidate(Key key)
+void BlockDataStore::remove(Key key)
 {
     std::unique_lock<std::shared_mutex> lock(_mutex);
     _zone.deallocate(getBlock(key));

@@ -36,8 +36,3 @@ void MapRegion::store(Morton3 key, const VoxelDataChunk &chunk)
 {
     _dataStore.store((size_t)key, _serializer.store(chunk));
 }
-
-void MapRegion::invalidate(Morton3 key)
-{
-    _dataStore.invalidate((size_t)key);
-}

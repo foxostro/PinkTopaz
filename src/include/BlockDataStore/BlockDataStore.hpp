@@ -33,7 +33,7 @@ public:
     void store(Key key, const std::vector<uint8_t> &data);
     
     // Invalidates the block of data, removing it from file.
-    void invalidate(Key key);
+    void remove(Key key);
     
 private:
     static constexpr size_t InitialBackingBufferSize = 128;
