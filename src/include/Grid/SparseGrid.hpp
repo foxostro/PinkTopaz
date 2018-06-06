@@ -57,18 +57,13 @@ public:
     // Return the element at the specified index, if there is one.
     boost::optional<ElementType> get(Morton3 morton)
     {
-        std::lock_guard<std::mutex> tableLock(_mutex);
+        std::lock_guard<std::mutex> lock(_mutex);
         auto iter = _slots.find(morton);
         if (iter == _slots.end()) {
             return boost::none;
         } else {
             _lru.reference(morton);
-            
-            std::mutex &slotMutex = _slotMutexes[morton];
             boost::optional<ElementType> &slot = _slots[morton];
-            
-            // Lock the slot before attempting to retrieve the value.
-            std::lock_guard<std::mutex> slotLock(slotMutex);
             return slot;
         }
     }
@@ -90,17 +85,11 @@ public:
     // Set the element at the specified index to the specified value.
     void set(Morton3 morton, const ElementType &el)
     {
-        std::unique_lock<std::mutex> tableLock(_mutex);
-        
+        std::lock_guard<std::mutex> lock(_mutex);
         _lru.reference(morton); // reference the key so it doesn't get evicted
         enforceLimits();
-        
-        std::unique_lock<std::mutex> slotLock(_slotMutexes[morton]);
         boost::optional<ElementType> &slot = _slots[morton];
-        
         _lru.reference(morton); // reference the key because it's recently used
-        tableLock.unlock();
-        
         slot = boost::make_optional(el);
     }
     
@@ -162,21 +151,16 @@ public:
     // The element is discarded and the associated slot becomes empty.
     void invalidate(Morton3 morton)
     {
-        std::unique_lock<std::mutex> tableLock(_mutex);
-        std::unique_lock<std::mutex> slotLock(_slotMutexes[morton]);
+        std::lock_guard<std::mutex> lock(_mutex);
         boost::optional<ElementType> &slot = _slots[morton];
         slot = boost::none;
     }
     
 private:
-    // Protects `_slots' and `_slotMutexes' from concurrent access.
     mutable std::mutex _mutex;
     
     // Slots in the sparse grid. Each may contain an element.
     std::unordered_map<Morton3, boost::optional<ElementType>> _slots;
-    
-    // One lock per cell in the sparse grid.
-    std::unordered_map<Morton3, std::mutex> _slotMutexes;
     
     // Track of least-recently used items in case we need to evict some.
     GridLRU<Morton3> _lru;
@@ -210,14 +194,6 @@ private:
                 key = _slots.begin()->first;
             }
             
-            // Take the lock on the slot before removing it.
-            std::mutex &slotMutex = _slotMutexes[key];
-            std::lock_guard<std::mutex> lock(slotMutex);
-            
-            // We never erase locks in _slotMutexes. This is a kind of
-            // space leak, but it's not too bad and we can live with it.
-            // TODO: Find a good way to purge mutexes for slots which are empty
-            // without having to block on all those locks.
             _slots.erase(key);
         }
     }
