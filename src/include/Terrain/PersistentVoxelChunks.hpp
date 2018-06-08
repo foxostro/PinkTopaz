@@ -36,21 +36,6 @@ public:
                           std::unique_ptr<MapRegionStore> &&mapRegionStore,
                           std::function<std::unique_ptr<VoxelDataChunk>(const AABB &cell, Morton3 index)> factory);
     
-    // We may evict chunks to keep the total chunk count under a limit.
-    // Set the limit to the number of chunks needed to represent the region
-    // specified in `workingSet'.
-    void setWorkingSet(const AABB &workingSet);
-    
-    // Sometimes, for correctness, we need to suspend eviction of chunks until
-    // an operation is finished. For example, we may need to modify several
-    // chunks and then save them back to file. Evicting one before we can save
-    // the changes will basically throw away the work and lead to incorrect
-    // results.
-    void suspendLimitEnforcement();
-    
-    // Resume limit enforcement after it had been suspended for a while.
-    void resumeLimitEnforcement();
-    
     // Returns a new chunk for the corresponding region of space.
     // The chunk is populated using data gathered from the underlying source.
     // boundingBox -- The bounding box of the chunk.

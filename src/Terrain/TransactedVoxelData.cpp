@@ -33,8 +33,3 @@ void TransactedVoxelData::writerTransaction(TerrainOperation &operation)
     
     onWriterTransaction(lockedRegion);
 }
-
-void TransactedVoxelData::setWorkingSet(const AABB &workingSet)
-{
-    _source->setWorkingSet(workingSet);
-}

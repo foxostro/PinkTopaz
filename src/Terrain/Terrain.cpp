@@ -105,14 +105,6 @@ Terrain::Terrain(const Preferences &preferences,
     const AABB meshGridBoundingBox = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
     const glm::ivec3 meshGridResolution = _voxels->countCellsInRegion(meshGridBoundingBox) / (int)TERRAIN_CHUNK_SIZE;
     _meshes = std::make_unique<TerrainMeshGrid>(meshGridBoundingBox, meshGridResolution);
-
-    // Limit the sparse grids to the number of chunks in the active region.
-    // Now, the active region can change size over time but it will never be
-    // larger than this size.
-    _voxels->setWorkingSet({glm::vec3(0.f), glm::vec3(_activeRegionSize + TERRAIN_CHUNK_SIZE)});
-    
-    const unsigned workingSetCount = std::pow(1 + 2*_activeRegionSize / TERRAIN_CHUNK_SIZE, 3);
-    _meshes->setCountLimit(2*workingSetCount);
     
     // Setup an actor to rebuild chunks.
     const unsigned numMeshRebuildThreads = std::max(1u, std::thread::hardware_concurrency());

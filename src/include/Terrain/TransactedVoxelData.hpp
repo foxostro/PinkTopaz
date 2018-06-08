@@ -45,10 +45,6 @@ public:
     // operation -- Describes the edits to be made.
     void writerTransaction(TerrainOperation &operation);
     
-    // We may evict voxel data to keep memory use under some limit.
-    // Specify the working set of voxel data to determine that limit.
-    void setWorkingSet(const AABB &workingSet);
-    
     // This signal fires when a "writer" transaction finishes. This provides the
     // opportunity to respond to changes to data. For example, by rebuilding
     // meshes associated with underlying voxel data.

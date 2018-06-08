@@ -22,23 +22,6 @@ PersistentVoxelChunks::PersistentVoxelChunks(std::shared_ptr<spdlog::logger> log
    _factory(factory)
 {}
 
-void PersistentVoxelChunks::setWorkingSet(const AABB &workingSet)
-{
-    glm::ivec3 count = _chunks.countCellsInRegion(workingSet);
-    size_t chunkCountLimit = count.x * count.y * count.z;
-    _chunks.setCountLimit(chunkCountLimit);
-}
-
-void PersistentVoxelChunks::suspendLimitEnforcement()
-{
-    _chunks.suspendLimitEnforcement();
-}
-
-void PersistentVoxelChunks::resumeLimitEnforcement()
-{
-    _chunks.resumeLimitEnforcement();
-}
-
 Array3D<Voxel> PersistentVoxelChunks::loadSubRegion(const AABB &region)
 {
     // Adjust the region so that it includes the full extent of all voxels that

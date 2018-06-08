@@ -48,11 +48,6 @@ public:
     // Edits a single voxel.
     void editSingleVoxel(const glm::vec3 &point, const Voxel &value);
     
-    // VoxelData may evict chunks to keep the total chunk count under a limit.
-    // Set the limit to the number of chunks needed to represent the region
-    // specified in `workingSet'.
-    void setWorkingSet(const AABB &workingSet);
-    
     // Return the region of voxels which may be accessed during the operation.
     // This is a worst-case estimate of the region of voxel which may be
     // accessed while performing the operation.

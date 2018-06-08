@@ -269,8 +269,6 @@ void VoxelData::performInitialSunlightPropagationIfNecessary(const AABB &region)
         }
     };
     
-    _chunks.suspendLimitEnforcement();
-    
     // Determine which columns are missing.
     std::unordered_set<Morton3> missingChunks;
     iterateColumns([&](ivec3 chunkCoords){
@@ -364,8 +362,6 @@ void VoxelData::performInitialSunlightPropagationIfNecessary(const AABB &region)
         });
         waitForAll(futures);
     }
-    
-    _chunks.resumeLimitEnforcement();
 }
 
 Array3D<Voxel> VoxelData::load(const AABB &region)
@@ -383,11 +379,6 @@ void VoxelData::editSingleVoxel(const vec3 &point, const Voxel &value)
     auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex);
     chunkPtr->set(point, value);
     _chunks.store(chunkIndex);
-}
-
-void VoxelData::setWorkingSet(const AABB &workingSet)
-{
-    _chunks.setWorkingSet(workingSet);
 }
 
 AABB VoxelData::getAccessRegionForOperation(TerrainOperation &operation)
