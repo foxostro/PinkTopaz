@@ -108,15 +108,19 @@ void PersistentVoxelChunks::store(const VoxelDataChunk &chunkToStore)
     _mapRegionStore->store(chunkBoundingBox, chunkIndex, chunkToStore);
 }
 
-void PersistentVoxelChunks::store(Morton3 chunkIndex)
+void PersistentVoxelChunks::store(Morton3 chunkIndex, const std::shared_ptr<TaskDispatcher> &dispatcher)
 {
+    // AFOX_TODO: If a chunk is enqueued twice then it will be saved twice. Instead, consider adding an actor which enqueues the index, stashes the chunk object in something like a sparse grid, and then only saves the most recent version as it processes the queue.
     glm::ivec3 chunkCellCoords;
     chunkIndex.decode(chunkCellCoords);
     auto maybeChunk = getIfExists(chunkIndex);
     if (maybeChunk) {
         std::shared_ptr<VoxelDataChunk> chunkPtr = *maybeChunk;
-        const AABB chunkBoundingBox = _chunks.cellAtCellCoords(chunkCellCoords);
-        _mapRegionStore->store(chunkBoundingBox, chunkIndex, *chunkPtr);
+        VoxelDataChunk chunk(*chunkPtr); // copy it
+        dispatcher->async([this, chunkIndex, chunkCellCoords, chunk]{
+            const AABB chunkBoundingBox = _chunks.cellAtCellCoords(chunkCellCoords);
+            _mapRegionStore->store(chunkBoundingBox, chunkIndex, chunk);
+        });
     }
 }
 
@@ -130,8 +134,6 @@ PersistentVoxelChunks::get(const AABB &cell, Morton3 index)
         } else {
             std::shared_ptr<VoxelDataChunk> chunkPtr = _factory(cell, index);
             assert(chunkPtr);
-            VoxelDataChunk &chunk = *chunkPtr;
-            _mapRegionStore->store(cell, index, chunk); // save to disk
             return chunkPtr;
         }
     });

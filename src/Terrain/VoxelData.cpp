@@ -50,7 +50,7 @@ void VoxelData::editSingleVoxel(const vec3 &point, const Voxel &value)
     const Morton3 chunkIndex = chunkIndexer.indexAtPoint(point);
     auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex);
     chunkPtr->set(point, value);
-    _chunks.store(chunkIndex);
+    _chunks.store(chunkIndex, _dispatcher);
 }
 
 AABB VoxelData::getAccessRegionForOperation(TerrainOperation &operation)

@@ -113,20 +113,15 @@ void InitialSunlightPropagationOperation::performInitialSunlightPropagationIfNec
         iterateColumns(processColumn);
     }
     
-//    // Save changes back to disk.
-//    // AFOX_TODO: Do this on a background thread later.
-//    if (modifiedAnyChunk) {
-//        std::vector<Future<void>> futures;
-//        iterateColumns([&](ivec3 chunkCoords){
-//            for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
-//                const Morton3 chunkIndex = chunkIndexer.indexAtCellCoords(chunkCoords);
-//                futures.emplace_back(_dispatcher->async([this, chunkIndex](){
-//                    _chunks.store(chunkIndex);
-//                }));
-//            }
-//        });
-//        waitForAll(futures);
-//    }
+    // Kick off background tasks to save changes to disk.
+    if (modifiedAnyChunk) {
+        iterateColumns([&](ivec3 chunkCoords){
+            for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
+                const Morton3 chunkIndex = chunkIndexer.indexAtCellCoords(chunkCoords);
+                _chunks.store(chunkIndex, _dispatcher);
+            }
+        });
+    }
 }
 
 void InitialSunlightPropagationOperation::propagateSunlight(const ivec3 &targetColumnCoords)

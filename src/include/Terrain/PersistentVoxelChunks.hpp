@@ -12,6 +12,7 @@
 #include "Grid/ConcurrentSparseGrid.hpp"
 #include "Terrain/MapRegionStore.hpp"
 #include "Terrain/VoxelDataChunk.hpp"
+#include "TaskDispatcher.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -59,14 +60,15 @@ public:
     // May fault in missing voxels to satisfy the request.
     VoxelDataChunk load(const AABB &region);
     
-    // Stores the specified chunk.
+    // Stores the specified chunk immediately.
     // This chunk must exactly match the position and size of one of the chunks
     // used internally by PersistentVoxelChunks.
     void store(const VoxelDataChunk &voxels);
     
     // Re-saves the chunk for the specified index.
+    // The save is done asynchronously on the specified task dispatcher.
     // This is useful when a chunk is retrieved via get() and then modified.
-    void store(Morton3 index);
+    void store(Morton3 index, const std::shared_ptr<TaskDispatcher> &dispatcher);
     
     // Returns the chunk, creating it if necessary, but prefering to fetch it
     // from the map region file.

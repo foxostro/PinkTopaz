@@ -61,9 +61,9 @@ private:
         
         // Re-saves the chunk for the specified index.
         // This is useful when a chunk is retrieved via get() and then modified.
-        inline void store(Morton3 index)
+        inline void store(Morton3 index, const std::shared_ptr<TaskDispatcher> &dispatcher)
         {
-            _persistentVoxelChunks.store(index);
+            _persistentVoxelChunks.store(index, dispatcher);
         }
         
         // Returns the chunk, creating it if necessary, but prefering to fetch it
