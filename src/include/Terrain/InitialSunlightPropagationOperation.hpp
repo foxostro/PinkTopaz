@@ -17,6 +17,9 @@
 #include <spdlog/spdlog.h>
 #include <queue>
 
+// It's not clear that cached chunk access is actually beneficial.
+#define CACHED_CHUNK_ACCESS 0
+
 // Propagates sunlight through newly created voxel data chunks.
 class InitialSunlightPropagationOperation
 {
@@ -44,20 +47,16 @@ public:
     void performInitialSunlightPropagationIfNecessary(const AABB &region);
     
 private:
-    // Provides cached access to the backing data store for voxel data chunks.
-    //
-    // Accessing the backing data store can be surprisingly expensive due to
-    // lock contention with the other threads processing voxel data chunks. This
-    // cache allows us to minimize the number of times we touch that data store.
-    // This is safe so long as we are gauranteed that the region of grid we're
-    // working on won't change during the operation.
-    class ChunkCache
+    // Adapt the PersistentVoxelChunks object to provide more convenient API.
+    class ChunksAdapter
     {
     public:
-        ChunkCache(PersistentVoxelChunks &persistentVoxelChunks)
-         : _persistentVoxelChunks(persistentVoxelChunks),
-           _cache(persistentVoxelChunks.getChunkIndexer().boundingBox(),
+        ChunksAdapter(PersistentVoxelChunks &persistentVoxelChunks)
+         : _persistentVoxelChunks(persistentVoxelChunks)
+#if CACHED_CHUNK_ACCESS
+           ,_cache(persistentVoxelChunks.getChunkIndexer().boundingBox(),
                   persistentVoxelChunks.getChunkIndexer().gridResolution())
+#endif
         {}
         
         // Re-saves the chunk for the specified index.
@@ -72,12 +71,19 @@ private:
         // index -- A unique index to identify the chunk in the sparse grid.
         VoxelDataChunk* get(Morton3 index)
         {
+#if CACHED_CHUNK_ACCESS
             return _cache.get(index, [&]{
                 const AABB boundingBox = _cache.cellAtCellCoords(index.decode());
                 std::shared_ptr<VoxelDataChunk> smartPointerChunk = _persistentVoxelChunks.get(boundingBox, index);
                 VoxelDataChunk *pointerChunk = smartPointerChunk.get();
                 return pointerChunk;
             });
+#else
+            const AABB boundingBox = getChunkIndexer().cellAtCellCoords(index.decode());
+            std::shared_ptr<VoxelDataChunk> smartPointerChunk = _persistentVoxelChunks.get(boundingBox, index);
+            VoxelDataChunk *pointerChunk = smartPointerChunk.get();
+            return pointerChunk;
+#endif
         }
         
         // Returns true if the specified chunk is missing from the grid.
@@ -85,6 +91,7 @@ private:
         // backing store.
         bool isMissing(Morton3 index)
         {
+#if CACHED_CHUNK_ACCESS
             bool missing = false;
             if (!_cache.get(index)) {
                 boost::optional<std::shared_ptr<VoxelDataChunk>> maybeChunkPtr = _persistentVoxelChunks.getIfExists(index);
@@ -96,20 +103,34 @@ private:
                 }
             }
             return missing;
+#else
+            boost::optional<std::shared_ptr<VoxelDataChunk>> maybeChunkPtr = _persistentVoxelChunks.getIfExists(index);
+            if (maybeChunkPtr) {
+                return false;
+            } else {
+                return true;
+            }
+#endif
         }
         
         // Return an indexer for the grid of chunks.
         inline const GridIndexer& getChunkIndexer() const
         {
+#if CACHED_CHUNK_ACCESS
             return _cache;
+#else
+            return _persistentVoxelChunks.getChunkIndexer();
+#endif
         }
         
     private:
         // Backing data store for voxel data chunks.
         PersistentVoxelChunks &_persistentVoxelChunks;
         
+#if CACHED_CHUNK_ACCESS
         // Caches pointers to chunks retrieved from the backing data store.
         ConcurrentSparseGrid<VoxelDataChunk*> _cache;
+#endif
     };
     
     // A node in the sunlight propagation BFS queue.
@@ -137,8 +158,8 @@ private:
     // Logger to use.
     std::shared_ptr<spdlog::logger> _log;
     
-    // Caches chunks retrieved from PersistentVoxelChunks.
-    ChunkCache _chunks;
+    // Provides access to the voxel chunks backing store.
+    ChunksAdapter _chunks;
     
     // Dispatcher used to fetch voxels data from the generator. We do this
     // to provide the opportunity for the voxel data generator to generate the
