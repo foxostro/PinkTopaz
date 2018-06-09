@@ -46,14 +46,14 @@ TerrainJournal::TerrainJournal(std::shared_ptr<spdlog::logger> log,
 
 void TerrainJournal::add(Change change)
 {
-    std::lock_guard<std::mutex> lock(_lock);
+    std::scoped_lock lock(_lock);
     _changes.emplace_back(std::move(change));
     save();
 }
 
 void TerrainJournal::replay(std::function<void(Change)> processChange)
 {
-    std::lock_guard<std::mutex> lock(_lock);
+    std::scoped_lock lock(_lock);
     for (auto change : _changes) {
         processChange(change);
     }

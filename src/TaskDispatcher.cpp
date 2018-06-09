@@ -33,7 +33,8 @@ void TaskDispatcher::shutdown()
 
     _threadShouldExit = true;
     
-    while (!_tasks.empty()) {        std::shared_ptr<AbstractTask> task(_tasks.front());
+    while (!_tasks.empty()) {
+        std::shared_ptr<AbstractTask> task(_tasks.front());
         _tasks.pop();
         task->cancel();
     }

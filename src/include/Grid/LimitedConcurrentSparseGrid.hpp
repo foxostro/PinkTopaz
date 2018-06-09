@@ -173,7 +173,7 @@ public:
             assert(maybeKey);
             Key key = *maybeKey;
             Bucket& bucket = getBucket(key);
-            std::lock_guard<std::mutex> lock(bucket.mutex);
+            std::scoped_lock lock(bucket.mutex);
             size_t numberOfElementsErased = bucket.slots.erase(key);
             assert(_count >= numberOfElementsErased);
             _count -= numberOfElementsErased;

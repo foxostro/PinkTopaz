@@ -53,13 +53,13 @@ TerrainMesh& TerrainMesh::operator=(const TerrainMesh &rhs)
 
 RenderableStaticMesh TerrainMesh::getMesh() const
 {
-    std::lock_guard<std::mutex> lock(_lockMesh);
+    std::scoped_lock lock(_lockMesh);
     return _mesh;
 }
 
 void TerrainMesh::rebuild(const Array3D<Voxel> &voxels, TerrainProgressTracker &progress)
 {
-    std::lock_guard<std::mutex> lock(_lockMeshInFlight);
+    std::scoped_lock lock(_lockMeshInFlight);
     
     progress.setState(TerrainProgressEvent::ExtractingSurface);
     
@@ -79,7 +79,7 @@ void TerrainMesh::rebuild(const Array3D<Voxel> &voxels, TerrainProgressTracker &
     renderableStaticMesh.buffer = vertexBuffer;
     
     {
-        std::lock_guard<std::mutex> lock(_lockMesh);
+        std::scoped_lock lock(_lockMesh);
         _mesh = renderableStaticMesh;
     }
 }

@@ -47,7 +47,7 @@ BufferMetal::BufferMetal(id <MTLDevice> device,
 
 BufferMetal::~BufferMetal()
 {
-    std::lock_guard<std::mutex> lock(_bufferLock);
+    std::scoped_lock lock(_bufferLock);
     [_buffer release];
     [_device release];
 }
@@ -64,7 +64,7 @@ void BufferMetal::replace(std::vector<uint8_t> &&data)
 
 void BufferMetal::replace(size_t size, const void *data)
 {
-    std::lock_guard<std::mutex> lock(_bufferLock);
+    std::scoped_lock lock(_bufferLock);
     
     size_t len = _buffer.length;
     if (size == len) {
@@ -82,14 +82,14 @@ void BufferMetal::addDebugMarker(const std::string &marker,
                                  size_t location,
                                  size_t length)
 {
-    std::lock_guard<std::mutex> lock(_bufferLock);
+    std::scoped_lock lock(_bufferLock);
     [_buffer addDebugMarker:[NSString stringWithUTF8String:marker.c_str()]
                       range:NSMakeRange(location, length)];
 }
 
 void BufferMetal::removeAllDebugMarkers()
 {
-    std::lock_guard<std::mutex> lock(_bufferLock);
+    std::scoped_lock lock(_bufferLock);
     [_buffer removeAllDebugMarkers];
 }
 
@@ -100,7 +100,7 @@ BufferType BufferMetal::getType() const
 
 id <MTLBuffer> BufferMetal::getMetalBuffer() const
 {
-    std::lock_guard<std::mutex> lock(_bufferLock);
+    std::scoped_lock lock(_bufferLock);
     id <MTLBuffer> result = [[_buffer retain] autorelease];
     return result;
 }

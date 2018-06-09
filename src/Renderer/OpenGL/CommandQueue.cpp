@@ -28,7 +28,7 @@ void CommandQueue::execute()
     // now because then commands would interleave inappropriately.
     Queue queue;
     {
-        std::lock_guard<std::mutex> lock(_queueLock);
+        std::scoped_lock lock(_queueLock);
         queue = std::move(_queue);
     }
     
@@ -43,14 +43,14 @@ void CommandQueue::cancel(unsigned id)
     auto pred = [id](const Task &task){
         return task.id == id;
     };
-    std::lock_guard<std::mutex> lock(_queueLock);
+    std::scoped_lock lock(_queueLock);
     _log->trace("Cancelling command with id={}.", id);
     _queue.erase(std::remove_if(_queue.begin(), _queue.end(), pred), _queue.end());
 }
 
 void CommandQueue::enqueue(unsigned id, const std::string &label, std::function<void()> &&fn)
 {
-    std::lock_guard<std::mutex> lock(_queueLock);
+    std::scoped_lock lock(_queueLock);
     Task task = { id, label, std::move(fn) };
     _log->trace("Enqueueing command \"{}\" with id={}.", task.label, task.id);
     _queue.emplace_back(std::move(task));

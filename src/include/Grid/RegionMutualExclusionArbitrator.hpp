@@ -24,7 +24,7 @@ public:
     
     // Represents a region of space for which we need mutually exclusive access.
     // Supports either a reader or a writer depending on TokenType.
-    // Satisfies BasicLockable and can be used with std::lock_guard.
+    // Satisfies BasicLockable and can be used with std::scoped_lock.
     template<typename TokenType>
     class RegionMutex
     {
@@ -100,7 +100,7 @@ private:
     // Unlock a region preiously locked for reading.
     void unlock(ReaderToken &token)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::scoped_lock lock(_mutex);
         _readerTransactions.erase(token.iter);
         token.iter = _readerTransactions.end();
         _cvar.notify_all();
@@ -109,7 +109,7 @@ private:
     // Unlock a region preiously locked for writing.
     void unlock(WriterToken &token)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::scoped_lock lock(_mutex);
         _writerTransactions.erase(token.iter);
         token.iter = _writerTransactions.end();
         _cvar.notify_all();

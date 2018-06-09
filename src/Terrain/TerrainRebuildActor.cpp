@@ -66,7 +66,7 @@ TerrainRebuildActor::TerrainRebuildActor(std::shared_ptr<spdlog::logger> log,
 
 void TerrainRebuildActor::push(const std::vector<std::pair<Morton3, AABB>> &cells)
 {
-    std::lock_guard<std::mutex> lock(_lock);
+    std::scoped_lock lock(_lock);
     
     int numberAdded = 0;
     std::unordered_map<glm::ivec2, std::vector<Cell>> mapColumnToCells;
@@ -113,7 +113,7 @@ void TerrainRebuildActor::push(const std::vector<std::pair<Morton3, AABB>> &cell
 
 void TerrainRebuildActor::setSearchPoint(glm::vec3 searchPoint)
 {
-    std::lock_guard<std::mutex> lock(_lock);
+    std::scoped_lock lock(_lock);
     if (glm::distance(_searchPoint, searchPoint) > searchPointThreshold) {
         _log->trace("Updating search point from {} to {}",
                     glm::to_string(_searchPoint), glm::to_string(searchPoint));

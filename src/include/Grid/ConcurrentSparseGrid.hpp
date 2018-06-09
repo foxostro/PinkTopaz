@@ -38,7 +38,7 @@ public:
     boost::optional<Value> get(Key key)
     {
         Bucket& bucket = getBucket(key);
-        std::lock_guard<std::mutex> lock(bucket.mutex);
+        std::scoped_lock lock(bucket.mutex);
         return bucket.slots[key];
     }
     
@@ -60,7 +60,7 @@ public:
     void set(Key key, Value value)
     {
         Bucket& bucket = getBucket(key);
-        std::lock_guard<std::mutex> lock(bucket.mutex);
+        std::scoped_lock lock(bucket.mutex);
         bucket.slots[key] = value;
     }
     
@@ -82,7 +82,7 @@ public:
     inline void remove(Key key)
     {
         Bucket& bucket = getBucket(key);
-        std::lock_guard<std::mutex> lock(bucket.mutex);
+        std::scoped_lock lock(bucket.mutex);
         bucket.slots.erase(key);
     }
     
