@@ -1,45 +1,47 @@
 //
-//  ConcurrentSparseGrid.hpp
+//  UnlockedSparseGrid.hpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 9/27/17.
 //
 //
 
-#ifndef ConcurrentSparseGrid_hpp
-#define ConcurrentSparseGrid_hpp
+#ifndef UnlockedSparseGrid_hpp
+#define UnlockedSparseGrid_hpp
 
 #include "Grid/GridIndexer.hpp"
-#include "Grid/GridLRU.hpp"
 #include <unordered_map>
-#include <mutex>
 
-// ConcurrentSparseGrid divides space into a regular grid of cells where each
-// cell is associated with an element. It supports multiple, concurrent readers
-// and writers.
-template<typename Value, size_t NumberOfBuckets = 4093>
-class ConcurrentSparseGrid : public GridIndexer
+// UnlockedSparseGrid divides space into a regular grid of cells where each cell is
+// associated with an element.
+//
+// Access is totally unsynchronized and is not thread-safe.
+//
+// The grid may limit it's size and choose to evict items which have not been
+// used recently.
+template<typename Value>
+class UnlockedSparseGrid : public GridIndexer
 {
 public:
     using Key = Morton3;
     
-    ~ConcurrentSparseGrid() = default;
-    ConcurrentSparseGrid() = delete;
+    ~UnlockedSparseGrid() = default;
+    UnlockedSparseGrid() = delete;
     
-    ConcurrentSparseGrid(const AABB &boundingBox,
-                         const glm::ivec3 &gridResolution,
-                         size_t numberOfBuckets = NumberOfBuckets)
+    UnlockedSparseGrid(const AABB &boundingBox,
+                       const glm::ivec3 &gridResolution)
      : GridIndexer(boundingBox, gridResolution)
-    {
-        buckets.resize(numberOfBuckets);
-    }
+    {}
     
     // Return the element at the specified index, if there is one.
     boost::optional<Value> get(Key key)
     {
-        Bucket& bucket = getBucket(key);
-        std::lock_guard<std::mutex> lock(bucket.mutex);
-        return bucket.slots[key];
+        auto iter = _dictionary.find(key);
+        if (iter == _dictionary.end()) {
+            return boost::none;
+        } else {
+            return iter->second;
+        }
     }
     
     // Return the element at the specified index.
@@ -59,9 +61,7 @@ public:
     // Set the element at the specified index to the specified value.
     void set(Key key, Value value)
     {
-        Bucket& bucket = getBucket(key);
-        std::lock_guard<std::mutex> lock(bucket.mutex);
-        bucket.slots[key] = value;
+        _dictionary[key] = value;
     }
     
     // Set the element at the specified point to the specified value.
@@ -81,28 +81,11 @@ public:
     // The element is discarded and the associated slot becomes empty.
     inline void remove(Key key)
     {
-        Bucket& bucket = getBucket(key);
-        std::lock_guard<std::mutex> lock(bucket.mutex);
-        bucket.slots.erase(key);
+        _dictionary.erase(key);
     }
     
 private:
-    struct Bucket
-    {
-        std::mutex mutex;
-        std::unordered_map<Key, boost::optional<Value>> slots;
-        
-        Bucket() = default;
-        Bucket(const Bucket &bucket) : slots(bucket.slots) {}
-    };
-    
-    std::vector<Bucket> buckets;
-    std::hash<Key> _hasher;
-    
-    inline Bucket& getBucket(Key key)
-    {
-        return buckets[_hasher(key) % buckets.size()];
-    }
+    std::unordered_map<Key, Value> _dictionary;
 };
 
-#endif /* ConcurrentSparseGrid_hpp */
+#endif /* UnlockedSparseGrid_hpp */

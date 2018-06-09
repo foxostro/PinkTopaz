@@ -12,7 +12,7 @@
 #include "Terrain/VoxelDataSerializer.hpp"
 #include "Terrain/MapRegion.hpp"
 #include "Grid/RegionMutualExclusionArbitrator.hpp"
-#include "Grid/ConcurrentSparseGrid.hpp"
+#include "Grid/UnlockedSparseGrid.hpp"
 #include <boost/optional.hpp>
 #include <boost/filesystem.hpp>
 #include <spdlog/spdlog.h>
@@ -44,7 +44,7 @@ public:
     
 private:
     boost::filesystem::path _mapDirectory;
-    ConcurrentSparseGrid<std::shared_ptr<MapRegion>> _regions;
+    UnlockedSparseGrid<std::shared_ptr<MapRegion>> _regions;
     std::shared_ptr<spdlog::logger> _log;
     std::mutex _mutex;
     
