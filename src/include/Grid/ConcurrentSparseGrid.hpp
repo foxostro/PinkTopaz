@@ -1,13 +1,13 @@
 //
-//  SparseGrid.hpp
+//  ConcurrentSparseGrid.hpp
 //  PinkTopaz
 //
 //  Created by Andrew Fox on 9/27/17.
 //
 //
 
-#ifndef SparseGrid_hpp
-#define SparseGrid_hpp
+#ifndef ConcurrentSparseGrid_hpp
+#define ConcurrentSparseGrid_hpp
 
 #include "Grid/GridIndexer.hpp"
 #include "Grid/GridLRU.hpp"
@@ -18,17 +18,17 @@
 // associated with an element. It supports multiple, concurrent
 // readers and writers.
 template<typename Value, size_t NumberOfBuckets = 4093>
-class SparseGrid : public GridIndexer
+class ConcurrentSparseGrid : public GridIndexer
 {
 public:
     using Key = Morton3;
     
-    ~SparseGrid() = default;
-    SparseGrid() = delete;
+    ~ConcurrentSparseGrid() = default;
+    ConcurrentSparseGrid() = delete;
     
-    SparseGrid(const AABB &boundingBox,
-               const glm::ivec3 &gridResolution,
-               size_t numberOfBuckets = NumberOfBuckets)
+    ConcurrentSparseGrid(const AABB &boundingBox,
+                         const glm::ivec3 &gridResolution,
+                         size_t numberOfBuckets = NumberOfBuckets)
      : GridIndexer(boundingBox, gridResolution)
     {
         buckets.resize(numberOfBuckets);
@@ -105,4 +105,4 @@ private:
     }
 };
 
-#endif /* SparseGrid_hpp */
+#endif /* ConcurrentSparseGrid_hpp */

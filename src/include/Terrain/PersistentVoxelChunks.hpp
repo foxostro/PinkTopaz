@@ -9,7 +9,7 @@
 #ifndef PersistentVoxelChunks_hpp
 #define PersistentVoxelChunks_hpp
 
-#include "Grid/SparseGrid.hpp"
+#include "Grid/ConcurrentSparseGrid.hpp"
 #include "Terrain/MapRegionStore.hpp"
 #include "Terrain/VoxelDataChunk.hpp"
 
@@ -84,7 +84,7 @@ public:
     
 private:
     std::shared_ptr<spdlog::logger> _log;
-    SparseGrid<std::shared_ptr<VoxelDataChunk>> _chunks;
+    ConcurrentSparseGrid<std::shared_ptr<VoxelDataChunk>> _chunks;
     std::unique_ptr<MapRegionStore> _mapRegionStore;
     std::function<std::unique_ptr<VoxelDataChunk>(const AABB &cell, Morton3 index)> _factory;
 };
