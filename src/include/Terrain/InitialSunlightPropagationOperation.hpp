@@ -11,6 +11,7 @@
 
 #include "Terrain/PersistentVoxelChunks.hpp"
 #include "Terrain/TerrainOperation.hpp"
+#include "Grid/ConcurrentSparseGrid.hpp"
 #include "TaskDispatcher.hpp"
 
 #include <spdlog/spdlog.h>
@@ -25,12 +26,13 @@ public:
     
     // Constructor.
     // log -- The logger to use.
-    // chunks -- The peristent chunks object fetches voxel data chunks for us
-    //           from memory, file, or from the generator.
+    // persistentVoxelChunks -- The peristent chunks object fetches voxel data
+    //                          chunks for us from memory, file, or from the
+    //                          generator.
     // dispatcher -- Dispatcher used to fetch voxels data from the generator.
     //               This permits parallel fetch and generation of voxel data.
     InitialSunlightPropagationOperation(std::shared_ptr<spdlog::logger> log,
-                                        PersistentVoxelChunks &chunks,
+                                        PersistentVoxelChunks &persistentVoxelChunks,
                                         const std::shared_ptr<TaskDispatcher> &dispatcher);
     
     // For all chunks in the specified region, perform initial sunlight
@@ -42,6 +44,74 @@ public:
     void performInitialSunlightPropagationIfNecessary(const AABB &region);
     
 private:
+    // Provides cached access to the backing data store for voxel data chunks.
+    //
+    // Accessing the backing data store can be surprisingly expensive due to
+    // lock contention with the other threads processing voxel data chunks. This
+    // cache allows us to minimize the number of times we touch that data store.
+    // This is safe so long as we are gauranteed that the region of grid we're
+    // working on won't change during the operation.
+    class ChunkCache
+    {
+    public:
+        ChunkCache(PersistentVoxelChunks &persistentVoxelChunks)
+         : _persistentVoxelChunks(persistentVoxelChunks),
+           _cache(persistentVoxelChunks.getChunkIndexer().boundingBox(),
+                  persistentVoxelChunks.getChunkIndexer().gridResolution())
+        {}
+        
+        // Re-saves the chunk for the specified index.
+        // This is useful when a chunk is retrieved via get() and then modified.
+        inline void store(Morton3 index)
+        {
+            _persistentVoxelChunks.store(index);
+        }
+        
+        // Returns the chunk, creating it if necessary, but prefering to fetch it
+        // from the map region file.
+        // index -- A unique index to identify the chunk in the sparse grid.
+        VoxelDataChunk* get(Morton3 index)
+        {
+            return _cache.get(index, [&]{
+                const AABB boundingBox = _cache.cellAtCellCoords(index.decode());
+                std::shared_ptr<VoxelDataChunk> smartPointerChunk = _persistentVoxelChunks.get(boundingBox, index);
+                VoxelDataChunk *pointerChunk = smartPointerChunk.get();
+                return pointerChunk;
+            });
+        }
+        
+        // Returns true if the specified chunk is missing from the grid.
+        // In this case, the chunk is not present in either the cache or in the
+        // backing store.
+        bool isMissing(Morton3 index)
+        {
+            bool missing = false;
+            if (!_cache.get(index)) {
+                boost::optional<std::shared_ptr<VoxelDataChunk>> maybeChunkPtr = _persistentVoxelChunks.getIfExists(index);
+                if (maybeChunkPtr) {
+                    VoxelDataChunk *rawPointer = maybeChunkPtr->get();
+                    _cache.set(index, rawPointer);
+                } else {
+                    missing = true;
+                }
+            }
+            return missing;
+        }
+        
+        // Return an indexer for the grid of chunks.
+        inline const GridIndexer& getChunkIndexer() const
+        {
+            return _cache;
+        }
+        
+    private:
+        // Backing data store for voxel data chunks.
+        PersistentVoxelChunks &_persistentVoxelChunks;
+        
+        // Caches pointers to chunks retrieved from the backing data store.
+        ConcurrentSparseGrid<VoxelDataChunk*> _cache;
+    };
+    
     // A node in the sunlight propagation BFS queue.
     struct LightNode {
         // A pointer to the chunk that needs to be updated.
@@ -67,10 +137,8 @@ private:
     // Logger to use.
     std::shared_ptr<spdlog::logger> _log;
     
-    // Helper object for storing and persisting chunks of voxel data.
-    // Generally, VoxelData encapsulates the concept of chunks. Clients can
-    // remain unaware that voxel data is stored in chunks internally.
-    PersistentVoxelChunks &_chunks;
+    // Caches chunks retrieved from PersistentVoxelChunks.
+    ChunkCache _chunks;
     
     // Dispatcher used to fetch voxels data from the generator. We do this
     // to provide the opportunity for the voxel data generator to generate the
@@ -81,14 +149,11 @@ private:
     // target column. When this returns, chunks in the target column will have
     // correct sunlight values. Chunks in neighboring columns may have partial
     // sunlight values which has not yet reached equilibrium.
-    // chunkIndexer -- An indexer into the grid of chunks.
     // targetColumnCoords -- The X and Z coordinates of the column to work on.
     //                       The Y coordinate is ignored.
-    void propagateSunlight(const GridIndexer &chunkIndexer,
-                           const glm::ivec3 &targetColumnCoords);
+    void propagateSunlight(const glm::ivec3 &targetColumnCoords);
     
     // Seeds initial sunlight in the specified column, populating the queue.
-    // chunkIndexer -- An indexer into the grid of chunks.
     // columnCoords -- The X and Z coordinates of the column to work on.
     //                 The Y coordinate is ignored.
     // minSeedCorner -- When seeding the local neighborhood, we often want to
@@ -101,8 +166,7 @@ private:
     // maxSeedCorner -- The maximum corner of the region to seed.
     //                  The Y coordinate is ignored.
     // sunlightQueue -- A queue to use when performing the sunlight flood-fill.
-    void seedSunlightInColumn(const GridIndexer &chunkIndexer,
-                              const glm::ivec3 &columnCoords,
+    void seedSunlightInColumn(const glm::ivec3 &columnCoords,
                               const glm::ivec3 &minSeedCorner,
                               const glm::ivec3 &maxSeedCorner,
                               std::queue<LightNode> &sunlightQueue);

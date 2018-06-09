@@ -13,11 +13,11 @@
 using namespace glm;
 
 InitialSunlightPropagationOperation::InitialSunlightPropagationOperation(std::shared_ptr<spdlog::logger> log,
-                                                                         PersistentVoxelChunks &chunks,
+                                                                         PersistentVoxelChunks &persistentVoxelChunks,
                                                                          const std::shared_ptr<TaskDispatcher> &dispatcher)
-: _log(log),
-_chunks(chunks),
-_dispatcher(dispatcher)
+ : _log(log),
+   _chunks(persistentVoxelChunks),
+   _dispatcher(dispatcher)
 {}
 
 void InitialSunlightPropagationOperation::performInitialSunlightPropagationIfNecessary(const AABB &region)
@@ -39,9 +39,8 @@ void InitialSunlightPropagationOperation::performInitialSunlightPropagationIfNec
     std::unordered_set<Morton3> missingChunks;
     iterateColumns([&](ivec3 chunkCoords){
         for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
-            Morton3 chunkIndex(chunkCoords);
-            auto maybeChunkPtr = _chunks.getIfExists(chunkIndex);
-            if (!maybeChunkPtr) {
+            const Morton3 chunkIndex = chunkIndexer.indexAtCellCoords(chunkCoords);
+            if (_chunks.isMissing(chunkIndex)) {
                 missingChunks.insert(chunkIndex);
             }
         }
@@ -49,9 +48,7 @@ void InitialSunlightPropagationOperation::performInitialSunlightPropagationIfNec
     
     // Fetch missing chunks.
     auto futuresFetchChunks = _dispatcher->map(missingChunks, [&, this](const Morton3 &chunkIndex){
-        ivec3 chunkCoords = chunkIndex.decode();
-        AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(chunkCoords);
-        (void)_chunks.get(chunkBoundingBox, chunkIndex);
+        (void)_chunks.get(chunkIndex.decode());
     });
     waitForAll(futuresFetchChunks);
     
@@ -62,9 +59,9 @@ void InitialSunlightPropagationOperation::performInitialSunlightPropagationIfNec
         // Have all chunks in the column already undergone initial propagation?
         bool columnIsComplete = true;
         for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
-            Morton3 chunkIndex(chunkCoords);
-            auto maybeChunkPtr = _chunks.getIfExists(chunkIndex);
-            auto &chunkPtr = maybeChunkPtr.value();
+            const Morton3 chunkIndex = chunkIndexer.indexAtCellCoords(chunkCoords);
+            VoxelDataChunk *chunkPtr = _chunks.get(chunkIndex);
+            assert(chunkPtr);
             if (!chunkPtr->complete) {
                 columnIsComplete = false;
                 break;
@@ -72,14 +69,15 @@ void InitialSunlightPropagationOperation::performInitialSunlightPropagationIfNec
         }
         
         if (!columnIsComplete) {
-            propagateSunlight(chunkIndexer, chunkCoords);
+            propagateSunlight(chunkCoords);
             modifiedAnyChunk = true;
             
             // Note that we'll want to save these changes back to disk later.
             for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
-                Morton3 chunkIndex(chunkCoords);
-                auto maybeChunkPtr = _chunks.getIfExists(chunkIndex);
-                maybeChunkPtr.value()->complete = true;
+                const Morton3 chunkIndex = chunkIndexer.indexAtCellCoords(chunkCoords);
+                VoxelDataChunk *chunkPtr = _chunks.get(chunkIndex);
+                assert(chunkPtr);
+                chunkPtr->complete = true;
             }
         }
     };
@@ -116,11 +114,12 @@ void InitialSunlightPropagationOperation::performInitialSunlightPropagationIfNec
     }
     
     // Save changes back to disk.
+    // AFOX_TODO: Do this on a background thread later.
     if (modifiedAnyChunk) {
         std::vector<Future<void>> futures;
         iterateColumns([&](ivec3 chunkCoords){
             for (chunkCoords.y = 0; chunkCoords.y < res.y; ++chunkCoords.y) {
-                Morton3 chunkIndex(chunkCoords);
+                const Morton3 chunkIndex = chunkIndexer.indexAtCellCoords(chunkCoords);
                 futures.emplace_back(_dispatcher->async([this, chunkIndex](){
                     _chunks.store(chunkIndex);
                 }));
@@ -130,8 +129,7 @@ void InitialSunlightPropagationOperation::performInitialSunlightPropagationIfNec
     }
 }
 
-void InitialSunlightPropagationOperation::propagateSunlight(const GridIndexer &chunkIndexer,
-                                                            const ivec3 &targetColumnCoords)
+void InitialSunlightPropagationOperation::propagateSunlight(const ivec3 &targetColumnCoords)
 {
     std::queue<LightNode> sunlightQueue;
     
@@ -174,8 +172,7 @@ void InitialSunlightPropagationOperation::propagateSunlight(const GridIndexer &c
         ivec3(a, y, a), // (+1, +1)
     }};
     for (size_t i = 0; i < numNeighborhoodColumns; ++i) {
-        seedSunlightInColumn(chunkIndexer,
-                             neighborhoodColumn[i],
+        seedSunlightInColumn(neighborhoodColumn[i],
                              minSeedCorner[i],
                              maxSeedCorner[i],
                              sunlightQueue);
@@ -197,12 +194,12 @@ void InitialSunlightPropagationOperation::propagateSunlight(const GridIndexer &c
     }
 }
 
-void InitialSunlightPropagationOperation::seedSunlightInColumn(const GridIndexer &chunkIndexer,
-                                                               const ivec3 &columnCoords,
+void InitialSunlightPropagationOperation::seedSunlightInColumn(const ivec3 &columnCoords,
                                                                const ivec3 &minSeedCorner,
                                                                const ivec3 &maxSeedCorner,
                                                                std::queue<LightNode> &sunlightQueue)
 {
+    const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
     const ivec3 &res = chunkIndexer.gridResolution();
     
     // Skip columns that are outside the bounds of the voxel grid.
@@ -216,9 +213,8 @@ void InitialSunlightPropagationOperation::seedSunlightInColumn(const GridIndexer
     // Seed sunlight at the top of this chunk and then move on to the next
     // column.
     for (ivec3 cellCoords{columnCoords.x, res.y-1, columnCoords.z}; cellCoords.y >= 0; --cellCoords.y) {
-        AABB chunkBoundingBox = chunkIndexer.cellAtCellCoords(cellCoords);
-        Morton3 chunkIndex(cellCoords);
-        auto chunkPtr = _chunks.get(chunkBoundingBox, chunkIndex).get();
+        const Morton3 chunkIndex = chunkIndexer.indexAtCellCoords(cellCoords);
+        VoxelDataChunk *chunkPtr = _chunks.get(chunkIndex);
         assert(chunkPtr);
         if (chunkPtr->getType() == VoxelDataChunk::Sky) {
             continue;
@@ -308,12 +304,12 @@ void InitialSunlightPropagationOperation::floodNeighbor(VoxelDataChunk *chunkPtr
     } else {
         // Note that we seed sunlight in such a way that the flood fill will
         // never reach outside the local neighborhood.
-        const GridIndexer &indexer = _chunks.getChunkIndexer();
-        if (indexer.inbounds(neighborChunkCellCoords)) {
+        const GridIndexer &chunkIndexer = _chunks.getChunkIndexer();
+        if (chunkIndexer.inbounds(neighborChunkCellCoords)) {
             // We don't allow the floodfill to reach outside the voxel grid.
             // This can happen at the edge of the world.
-            const AABB neighborChunkBoundingBox = indexer.cellAtCellCoords(neighborChunkCellCoords);
-            neighborChunk = _chunks.get(neighborChunkBoundingBox, Morton3(neighborChunkCellCoords)).get();
+            const Morton3 index = chunkIndexer.indexAtCellCoords(neighborChunkCellCoords);
+            neighborChunk = _chunks.get(index);
         }
     }
     if (!neighborChunk) {
