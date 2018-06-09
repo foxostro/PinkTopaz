@@ -113,9 +113,11 @@ void PersistentVoxelChunks::store(Morton3 chunkIndex)
     glm::ivec3 chunkCellCoords;
     chunkIndex.decode(chunkCellCoords);
     auto maybeChunk = getIfExists(chunkIndex);
-    std::shared_ptr<VoxelDataChunk> chunkPtr = maybeChunk.value();
-    const AABB chunkBoundingBox = _chunks.cellAtCellCoords(chunkCellCoords);
-    _mapRegionStore->store(chunkBoundingBox, chunkIndex, *chunkPtr);
+    if (maybeChunk) {
+        std::shared_ptr<VoxelDataChunk> chunkPtr = *maybeChunk;
+        const AABB chunkBoundingBox = _chunks.cellAtCellCoords(chunkCellCoords);
+        _mapRegionStore->store(chunkBoundingBox, chunkIndex, *chunkPtr);
+    }
 }
 
 std::shared_ptr<VoxelDataChunk>
