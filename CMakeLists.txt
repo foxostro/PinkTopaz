@@ -52,6 +52,7 @@ set(SOURCE_FILES_GRID
     "src/include/Grid/Array3D.hpp"
     "src/include/Grid/GridLRU.hpp"
     "src/include/Grid/SparseGrid.hpp"
+    "src/include/Grid/LimitedConcurrentSparseGrid.hpp"
     "src/include/Grid/RegionMutualExclusionArbitrator.hpp"
     "src/include/Grid/FrustumRange.hpp"
     "src/include/Grid/GridIndexerRange.hpp"

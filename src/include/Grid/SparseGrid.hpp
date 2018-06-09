@@ -15,29 +15,23 @@
 #include <mutex>
 
 // SparseGrid divides space into a regular grid of cells where each cell is
-// associated with an element.
-//
-// The grid may limit it's size and choose to evict items which have not been
-// used recently.
-//
-// Access to the grid is synchronized so that concurrent access is safe.
-// However, clients may see data races associated with multiple, concurrent
-// accesses to the same element. Enforce synchronization at a higher level to
-// ensure consistency.
-template<typename Value>
+// associated with an element. It supports multiple, concurrent
+// readers and writers.
+template<typename Value, size_t NumberOfBuckets = 4093>
 class SparseGrid : public GridIndexer
 {
 public:
-    static constexpr size_t NumberOfBuckets = 4093;
     using Key = Morton3;
     
     ~SparseGrid() = default;
     SparseGrid() = delete;
     
-    SparseGrid(const AABB &boundingBox, const glm::ivec3 &gridResolution)
+    SparseGrid(const AABB &boundingBox,
+               const glm::ivec3 &gridResolution,
+               size_t numberOfBuckets = NumberOfBuckets)
      : GridIndexer(boundingBox, gridResolution)
     {
-        buckets.resize(NumberOfBuckets);
+        buckets.resize(numberOfBuckets);
     }
     
     // Return the element at the specified index, if there is one.

@@ -104,7 +104,14 @@ Terrain::Terrain(const Preferences &preferences,
     
     const AABB meshGridBoundingBox = _voxels->boundingBox().inset(glm::vec3((float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE, (float)TERRAIN_CHUNK_SIZE));
     const glm::ivec3 meshGridResolution = _voxels->countCellsInRegion(meshGridBoundingBox) / (int)TERRAIN_CHUNK_SIZE;
+    
+    // Limit the number of meshes that can be in memory at once.
+    // GPU resources are relatively scarce so don't hold onto these
+    // forever.
     _meshes = std::make_unique<TerrainMeshGrid>(meshGridBoundingBox, meshGridResolution);
+    
+    const unsigned workingSetCount = std::pow(1 + 2*_activeRegionSize / TERRAIN_CHUNK_SIZE, 3);
+    _meshes->setCountLimit(2*workingSetCount);
     
     // Setup an actor to rebuild chunks.
     const unsigned numMeshRebuildThreads = std::max(1u, std::thread::hardware_concurrency());

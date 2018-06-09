@@ -9,7 +9,7 @@
 #ifndef TerrainMeshGrid_hpp
 #define TerrainMeshGrid_hpp
 
-#include "Grid/SparseGrid.hpp"
+#include "Grid/LimitedConcurrentSparseGrid.hpp"
 #include "Terrain/TerrainMesh.hpp"
 #include <memory>
 
@@ -24,6 +24,6 @@
 //   sparse grid as needed to stay under a specified memory limit.
 //   The use of shared_ptr ensures that references we've vended out in the past
 //   remain live until they no longer in use.
-using TerrainMeshGrid = SparseGrid<std::shared_ptr<TerrainMesh>>;
+using TerrainMeshGrid = LimitedConcurrentSparseGrid<std::shared_ptr<TerrainMesh>>;
 
 #endif /* TerrainMeshGrid_hpp */
