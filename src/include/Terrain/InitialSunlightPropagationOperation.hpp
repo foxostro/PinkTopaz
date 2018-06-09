@@ -17,9 +17,6 @@
 #include <spdlog/spdlog.h>
 #include <queue>
 
-// It's not clear that cached chunk access is actually beneficial.
-#define CACHED_CHUNK_ACCESS 0
-
 // Propagates sunlight through newly created voxel data chunks.
 class InitialSunlightPropagationOperation
 {
@@ -53,10 +50,6 @@ private:
     public:
         ChunksAdapter(PersistentVoxelChunks &persistentVoxelChunks)
          : _persistentVoxelChunks(persistentVoxelChunks)
-#if CACHED_CHUNK_ACCESS
-           ,_cache(persistentVoxelChunks.getChunkIndexer().boundingBox(),
-                  persistentVoxelChunks.getChunkIndexer().gridResolution())
-#endif
         {}
         
         // Re-saves the chunk for the specified index.
@@ -71,19 +64,10 @@ private:
         // index -- A unique index to identify the chunk in the sparse grid.
         VoxelDataChunk* get(Morton3 index)
         {
-#if CACHED_CHUNK_ACCESS
-            return _cache.get(index, [&]{
-                const AABB boundingBox = _cache.cellAtCellCoords(index.decode());
-                std::shared_ptr<VoxelDataChunk> smartPointerChunk = _persistentVoxelChunks.get(boundingBox, index);
-                VoxelDataChunk *pointerChunk = smartPointerChunk.get();
-                return pointerChunk;
-            });
-#else
             const AABB boundingBox = getChunkIndexer().cellAtCellCoords(index.decode());
             std::shared_ptr<VoxelDataChunk> smartPointerChunk = _persistentVoxelChunks.get(boundingBox, index);
             VoxelDataChunk *pointerChunk = smartPointerChunk.get();
             return pointerChunk;
-#endif
         }
         
         // Returns true if the specified chunk is missing from the grid.
@@ -91,46 +75,23 @@ private:
         // backing store.
         bool isMissing(Morton3 index)
         {
-#if CACHED_CHUNK_ACCESS
-            bool missing = false;
-            if (!_cache.get(index)) {
-                boost::optional<std::shared_ptr<VoxelDataChunk>> maybeChunkPtr = _persistentVoxelChunks.getIfExists(index);
-                if (maybeChunkPtr) {
-                    VoxelDataChunk *rawPointer = maybeChunkPtr->get();
-                    _cache.set(index, rawPointer);
-                } else {
-                    missing = true;
-                }
-            }
-            return missing;
-#else
             boost::optional<std::shared_ptr<VoxelDataChunk>> maybeChunkPtr = _persistentVoxelChunks.getIfExists(index);
             if (maybeChunkPtr) {
                 return false;
             } else {
                 return true;
             }
-#endif
         }
         
         // Return an indexer for the grid of chunks.
         inline const GridIndexer& getChunkIndexer() const
         {
-#if CACHED_CHUNK_ACCESS
-            return _cache;
-#else
             return _persistentVoxelChunks.getChunkIndexer();
-#endif
         }
         
     private:
         // Backing data store for voxel data chunks.
         PersistentVoxelChunks &_persistentVoxelChunks;
-        
-#if CACHED_CHUNK_ACCESS
-        // Caches pointers to chunks retrieved from the backing data store.
-        ConcurrentSparseGrid<VoxelDataChunk*> _cache;
-#endif
     };
     
     // A node in the sunlight propagation BFS queue.
