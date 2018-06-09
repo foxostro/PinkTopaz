@@ -34,6 +34,7 @@ public:
                                 size_t numberOfBuckets = NumberOfBuckets)
      : GridIndexer(boundingBox, gridResolution),
        _countLimit(std::numeric_limits<std::size_t>::max()),
+       _count(0),
        _suspendLimitEnforcement(0)
     {
         _buckets.resize(numberOfBuckets);
@@ -202,6 +203,10 @@ private:
     std::mutex _mutexCount;
     size_t _count;
     
+    // Enforcement of grid limits is suspended so long as this counter is > 0.
+    std::mutex _mutexSuspendLimitEnforcement;
+    int _suspendLimitEnforcement;
+    
     std::vector<Bucket> _buckets;
     std::hash<Key> _hasher;
     
@@ -209,10 +214,6 @@ private:
     {
         return _buckets[_hasher(key) % _buckets.size()];
     }
-    
-    // Enforcement of grid limits is suspended so long as this counter is > 0.
-    std::mutex _mutexSuspendLimitEnforcement;
-    int _suspendLimitEnforcement;
 };
 
 #endif /* LimitedConcurrentSparseGrid_hpp */
