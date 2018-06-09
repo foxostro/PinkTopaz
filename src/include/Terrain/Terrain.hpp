@@ -88,8 +88,7 @@ private:
     inline AABB getActiveRegion() const
     {
         const glm::vec3 cameraPos = _cameraPosition;
-        const float horizonDistance = _horizonDistance.get();
-        const AABB horizonBox = {cameraPos, glm::vec3(horizonDistance, horizonDistance, horizonDistance)};
+        const AABB horizonBox = {cameraPos, glm::vec3(_activeRegionSize)};
         const AABB activeRegion = _meshes->boundingBox().intersect(horizonBox);
         return activeRegion;
     }
