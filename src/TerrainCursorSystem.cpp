@@ -20,9 +20,8 @@
 #include <mutex>
 
 TerrainCursorSystem::TerrainCursorSystem(std::shared_ptr<spdlog::logger> log,
-                                         const std::shared_ptr<TaskDispatcher> &dispatcher,
                                          const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher)
- : _dispatcher(dispatcher),
+ : _dispatcher(std::make_shared<TaskDispatcher>("TerrainCursorSystem", 1)),
    _mainThreadDispatcher(mainThreadDispatcher),
    _needsUpdate(false),
    _mouseDownCounter(0),

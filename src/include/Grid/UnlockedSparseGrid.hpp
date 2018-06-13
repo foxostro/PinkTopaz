@@ -59,7 +59,7 @@ public:
     }
     
     // Set the element at the specified index to the specified value.
-    void set(Key key, Value value)
+    inline void set(Key key, Value value)
     {
         _dictionary[key] = value;
     }
@@ -82,6 +82,12 @@ public:
     inline void remove(Key key)
     {
         _dictionary.erase(key);
+    }
+    
+    // Remove all elements.
+    inline void clear()
+    {
+        _dictionary.clear();
     }
     
 private:

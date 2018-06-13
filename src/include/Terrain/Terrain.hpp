@@ -25,6 +25,7 @@
 
 #include <entityx/entityx.h>
 #include <memory>
+#include <shared_mutex>
 #include <spdlog/spdlog.h>
 
 // Object represents the voxel terrain of the world.
@@ -36,8 +37,6 @@ public:
     Terrain(const Preferences &preferences,
             std::shared_ptr<spdlog::logger> log,
             const std::shared_ptr<GraphicsDevice> &graphicsDevice,
-            const std::shared_ptr<TaskDispatcher> &dispatcher,
-            const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
             const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher,
             entityx::EventManager &events,
             glm::vec3 initialCameraPosition);
@@ -71,7 +70,8 @@ public:
     
 private:
     std::shared_ptr<GraphicsDevice> _graphicsDevice;
-    std::shared_ptr<TaskDispatcher> _dispatcher;
+    std::shared_ptr<TaskDispatcher> _dispatcherHighPriority;
+    std::shared_ptr<TaskDispatcher> _dispatcherVoxelData;
     std::shared_ptr<Mesher> _mesher;
     std::shared_ptr<TransactedVoxelData> _voxels;
     std::unique_ptr<TerrainMeshGrid> _meshes;
@@ -84,6 +84,14 @@ private:
     std::shared_ptr<spdlog::logger> _log;
     const float _activeRegionSize;
     std::chrono::steady_clock::time_point _startTime;
+    
+    std::mutex _lockFrontDrawList;
+    std::unique_ptr<UnlockedSparseGrid<RenderableStaticMesh>> _frontDrawList, _backDrawList;
+    std::mutex _lockDrawListNeedsRebuild;
+    bool _drawListNeedsRebuild;
+    
+    void requestDrawListRebuild();
+    void rebuildDrawList();
     
     inline AABB getActiveRegion() const
     {

@@ -146,8 +146,7 @@ void TerrainRebuildActor::worker()
          
             // Remove from the set only at the very end.
             std::unique_lock<std::mutex> lock(_lock);
-            for (Cell &cell : batch.requestedCells())
-            {
+            for (Cell &cell : batch.requestedCells()) {
                 cell.progress.setState(TerrainProgressEvent::Complete);
                 cell.progress.dump();
                 _set.erase(cell.setIterator);

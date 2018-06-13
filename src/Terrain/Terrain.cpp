@@ -25,26 +25,30 @@ constexpr unsigned InitialVoxelDataSeed = 52;
 
 Terrain::~Terrain()
 {
+    _dispatcherHighPriority->shutdown();
     _meshRebuildActor.reset();
-    _dispatcher->shutdown();
+    _dispatcherVoxelData->shutdown();
 }
 
 Terrain::Terrain(const Preferences &preferences,
                  std::shared_ptr<spdlog::logger> log,
                  const std::shared_ptr<GraphicsDevice> &graphicsDevice,
-                 const std::shared_ptr<TaskDispatcher> &dispatcher,
-                 const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
                  const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher,
                  entityx::EventManager &events,
                  glm::vec3 initialCameraPosition)
  : _graphicsDevice(graphicsDevice),
-   _dispatcher(dispatcher),
    _mesher(std::make_shared<MesherNaiveSurfaceNets>(preferences)),
    _cameraPosition(initialCameraPosition),
    _log(log),
    _activeRegionSize(preferences.activeRegionSize),
-   _startTime(std::chrono::steady_clock::now())
+   _startTime(std::chrono::steady_clock::now()),
+   _drawListNeedsRebuild(false)
 {
+    const unsigned numberOfHardwareThreads = std::max(1u, std::thread::hardware_concurrency());
+    
+    _dispatcherHighPriority = std::make_shared<TaskDispatcher>("Terrain High Priority TaskDispatcher", 1);
+    _dispatcherVoxelData = std::make_shared<TaskDispatcher>("Voxel Data TaskDispatcher", numberOfHardwareThreads);
+    
     // Load terrain texture array from a single image.
     TextureArrayLoader textureArrayLoader(graphicsDevice);
     auto texture = textureArrayLoader.load("terrain.png");
@@ -98,7 +102,7 @@ Terrain::Terrain(const Preferences &preferences,
         mustRegenerateMap = true;
     }
     
-    _voxels = createVoxelData(dispatcherVoxelData,
+    _voxels = createVoxelData(_dispatcherVoxelData,
                               _journal->getVoxelDataSeed(),
                               mapDirectory);
     
@@ -114,9 +118,8 @@ Terrain::Terrain(const Preferences &preferences,
     _meshes->setCountLimit(2*workingSetCount);
     
     // Setup an actor to rebuild chunks.
-    const unsigned numMeshRebuildThreads = std::max(1u, std::thread::hardware_concurrency());
     _meshRebuildActor = std::make_unique<TerrainRebuildActor>(_log,
-                                                              numMeshRebuildThreads,
+                                                              numberOfHardwareThreads,
                                                               _cameraPosition,
                                                               mainThreadDispatcher,
                                                               events,
@@ -139,6 +142,11 @@ Terrain::Terrain(const Preferences &preferences,
             _voxels->writerTransaction(*operation);
         });
     }
+    
+    // Setup some empty draw lists and request these be rebuilt soon.
+    _frontDrawList = std::make_unique<UnlockedSparseGrid<RenderableStaticMesh>>(_meshes->boundingBox(), _meshes->gridResolution());
+    _backDrawList  = std::make_unique<UnlockedSparseGrid<RenderableStaticMesh>>(_meshes->boundingBox(), _meshes->gridResolution());
+    requestDrawListRebuild();
 }
 
 void Terrain::update(entityx::TimeDelta dt)
@@ -155,69 +163,42 @@ void Terrain::setTerrainUniforms(const TerrainUniforms &uniforms)
     // Extract the camera position from the camera transform.
     const glm::vec3 cameraPos = glm::vec3(glm::inverse(uniforms.view)[3]);
     _cameraPosition = cameraPos;
-    _dispatcher->async([this]{
-        if (_meshRebuildActor) {
-            _meshRebuildActor->setSearchPoint(_cameraPosition);
-        }
+    _dispatcherHighPriority->async([this]{
+        _meshRebuildActor->setSearchPoint(_cameraPosition);
     });
     
     // We'll use the MVP later to extract the camera frustum.
-    _modelViewProjection = uniforms.proj * uniforms.view;
+    {
+        glm::mat4x4 modelViewProjection = uniforms.proj * uniforms.view;
+        if (modelViewProjection != _modelViewProjection) {
+            _modelViewProjection = modelViewProjection;
+            requestDrawListRebuild();
+        }
+    }
 }
 
 void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
 {
-    Frustum frustum(_modelViewProjection);
+    std::scoped_lock lock(_lockFrontDrawList);
     
     encoder->setShader(_defaultMesh->shader);
     encoder->setFragmentSampler(_defaultMesh->textureSampler, 0);
     encoder->setFragmentTexture(_defaultMesh->texture, 0);
     encoder->setVertexBuffer(_defaultMesh->uniforms, 1);
     
+    const TerrainMeshGrid &meshes = *_meshes;
+    const Frustum frustum(_modelViewProjection);
     const AABB activeRegion = getActiveRegion();
-    TerrainMeshGrid &meshes = *_meshes;
     
-    // Draw meshes in the camera frustum.
     for (const glm::ivec3 &cellCoords : slice(meshes, frustum, activeRegion)) {
-        const Morton3 index = meshes.indexAtCellCoords(cellCoords);
-        boost::optional<std::shared_ptr<TerrainMesh>> maybeTerrainMeshPtr = meshes.get(index);
-        
-        if (maybeTerrainMeshPtr) {
-            std::shared_ptr<TerrainMesh> terrainMeshPtr = *maybeTerrainMeshPtr;
-            assert(terrainMeshPtr);
-            const RenderableStaticMesh &drawThis = terrainMeshPtr->getMesh();
-            if (drawThis.vertexCount > 0) {
-                encoder->setVertexBuffer(drawThis.buffer, 0);
-                encoder->drawPrimitives(Triangles, 0, drawThis.vertexCount, 1);
+        auto maybeRenderable = _frontDrawList->get(cellCoords);
+        if (maybeRenderable) {
+            const RenderableStaticMesh &renderable = *maybeRenderable;
+            if (renderable.vertexCount > 0) {
+                encoder->setVertexBuffer(renderable.buffer, 0);
+                encoder->drawPrimitives(Triangles, 0, renderable.vertexCount, 1);
             }
         }
-    }
-    
-    // Figure out which meshes in the active region are missing.
-    static std::vector<std::pair<Morton3, AABB>> missingMeshes;
-    missingMeshes.clear();
-    for (const glm::ivec3 cellCoords : slice(meshes, activeRegion)) {
-        const Morton3 index = meshes.indexAtCellCoords(cellCoords);
-        const auto maybeTerrainMeshPtr = meshes.get(index);
-        if (!maybeTerrainMeshPtr) {
-            missingMeshes.emplace_back(std::make_pair(index, meshes.cellAtCellCoords(cellCoords)));
-        }
-    }
-    
-    // If no meshes were missing in the active region then increase the horizon
-    // distance so we can draw meshes further away next time.
-    // Otherwise, queue the meshes to be fetched asynchronously so we can draw
-    // them later. Meshes can disappear at any time due to cache purges. So,
-    // we have to do this everytime we need a mesh and can't find it.
-    if (0 == missingMeshes.size()) {
-        auto [distance, didChange] = _horizonDistance.increment_clamp(_activeRegionSize);
-        if (didChange) {
-            _log->info("Increasing horizon distance to {}", distance);
-        }
-    } else {
-        _log->trace("There are {} missing meshes in active region {}.",
-                    missingMeshes.size(), activeRegion);
-        _meshRebuildActor->push(missingMeshes);
     }
 }
 
@@ -298,10 +279,12 @@ void Terrain::rebuildNextMeshBatch(const TerrainRebuildActor::Batch &batch)
         terrainMesh->rebuild(voxels, cell.progress);
         _meshes->set(cell.box.center, terrainMesh);
     });
+    
+    requestDrawListRebuild();
 }
 
 std::unique_ptr<TransactedVoxelData>
-Terrain::createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcher,
+Terrain::createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcherVoxelData,
                          unsigned voxelDataSeed,
                          const boost::filesystem::path &mapDirectory)
 {
@@ -318,8 +301,71 @@ Terrain::createVoxelData(const std::shared_ptr<TaskDispatcher> &dispatcher,
                                                  std::move(generator),
                                                  TERRAIN_CHUNK_SIZE,
                                                  std::move(mapRegionStore),
-                                                 dispatcher);
+                                                 dispatcherVoxelData);
     
     // Wrap in a TransactedVoxelData to implement the locking policy.
     return std::make_unique<TransactedVoxelData>(std::move(voxelData));
+}
+
+void Terrain::requestDrawListRebuild()
+{
+    auto rebuildIfNecessary = [=]{
+        bool needsRebuild;
+        {
+            std::scoped_lock lock(_lockDrawListNeedsRebuild);
+            needsRebuild = _drawListNeedsRebuild;
+            _drawListNeedsRebuild = false;
+        }
+        if (needsRebuild) {
+            rebuildDrawList();
+        }
+    };
+    
+    std::scoped_lock lock(_lockDrawListNeedsRebuild);
+    if (!_drawListNeedsRebuild) {
+        _drawListNeedsRebuild = true;
+        _dispatcherHighPriority->async(rebuildIfNecessary);
+    }
+}
+
+void Terrain::rebuildDrawList()
+{
+    const AABB activeRegion = getActiveRegion();
+    TerrainMeshGrid &meshes = *_meshes;
+    
+    // Get meshes in the active region.
+    // Figure out which meshes in the active region are missing.
+    _backDrawList->clear();
+    std::vector<std::pair<Morton3, AABB>> missingMeshes;
+    for (const glm::ivec3 cellCoords : slice(meshes, activeRegion)) {
+        const Morton3 index = meshes.indexAtCellCoords(cellCoords);
+        const auto maybeTerrainMeshPtr = meshes.get(index);
+        if (maybeTerrainMeshPtr) {
+            _backDrawList->set(index, (*maybeTerrainMeshPtr)->getMesh());
+        } else {
+            missingMeshes.emplace_back(index, meshes.cellAtCellCoords(cellCoords));
+        }
+    }
+    
+    // Swap
+    {
+        std::scoped_lock lock(_lockFrontDrawList);
+        std::swap(_backDrawList, _frontDrawList);
+    }
+    
+    // If no meshes were missing in the active region then increase the horizon
+    // distance so we can draw meshes further away next time.
+    // Otherwise, queue the meshes to be fetched asynchronously so we can draw
+    // them later. Meshes can disappear at any time due to cache purges. So,
+    // we have to do this everytime we need a mesh and can't find it.
+    if (0 == missingMeshes.size()) {
+        auto [distance, didChange] = _horizonDistance.increment_clamp(_activeRegionSize);
+        if (didChange) {
+            _log->info("Increasing horizon distance to {}", distance);
+        }
+    } else {
+        _log->trace("There are {} missing meshes in active region {}.",
+                    missingMeshes.size(), activeRegion);
+        _meshRebuildActor->push(missingMeshes);
+    }
 }

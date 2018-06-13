@@ -31,7 +31,6 @@ class TerrainCursorSystem : public entityx::System<TerrainCursorSystem>, public 
 {
 public:
     TerrainCursorSystem(std::shared_ptr<spdlog::logger> log,
-                        const std::shared_ptr<TaskDispatcher> &dispatcher,
                         const std::shared_ptr<TaskDispatcher> &mainThreadDispatcher);
     void configure(entityx::EventManager &em) override;
     void update(entityx::EntityManager &es, entityx::EventManager &events, entityx::TimeDelta dt) override;
