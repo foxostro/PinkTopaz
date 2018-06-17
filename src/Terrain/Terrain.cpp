@@ -22,6 +22,12 @@
 // Random seed to use for a new journal.
 constexpr unsigned InitialVoxelDataSeed = 52;
 
+// Set to true to enable frustum culling while drawing terrain.
+// Measurements show that the time spent culling -- and, specifically, time
+// spent accessing elements of the grid via the get() method -- is
+// counterproductive. So, this is disabled by default.
+constexpr bool EnableFrustumCulling = false;
+
 
 Terrain::~Terrain()
 {
@@ -186,18 +192,26 @@ void Terrain::draw(const std::shared_ptr<CommandEncoder> &encoder)
     encoder->setFragmentTexture(_defaultMesh->texture, 0);
     encoder->setVertexBuffer(_defaultMesh->uniforms, 1);
     
-    const TerrainMeshGrid &meshes = *_meshes;
-    const Frustum frustum(_modelViewProjection);
-    const AABB activeRegion = getActiveRegion();
+    auto drawChunk = [&](const RenderableStaticMesh &renderable){
+        if (renderable.vertexCount > 0) {
+            encoder->setVertexBuffer(renderable.buffer, 0);
+            encoder->drawPrimitives(Triangles, 0, renderable.vertexCount, 1);
+        }
+    };
     
-    for (const glm::ivec3 &cellCoords : slice(meshes, frustum, activeRegion)) {
-        auto maybeRenderable = _frontDrawList->get(cellCoords);
-        if (maybeRenderable) {
-            const RenderableStaticMesh &renderable = *maybeRenderable;
-            if (renderable.vertexCount > 0) {
-                encoder->setVertexBuffer(renderable.buffer, 0);
-                encoder->drawPrimitives(Triangles, 0, renderable.vertexCount, 1);
+    if constexpr (EnableFrustumCulling) {
+        const Frustum frustum(_modelViewProjection);
+        const AABB activeRegion = getActiveRegion();
+        
+        for (const glm::ivec3 &cellCoords : slice(*_frontDrawList, frustum, activeRegion)) {
+            auto maybeRenderable = _frontDrawList->get(cellCoords);
+            if (maybeRenderable) {
+                drawChunk(*maybeRenderable);
             }
+        }
+    } else {
+        for (const auto& [key, renderable] : *_frontDrawList) {
+            drawChunk(renderable);
         }
     }
 }

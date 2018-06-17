@@ -90,6 +90,26 @@ public:
         _dictionary.clear();
     }
     
+    inline auto begin()
+    {
+        return _dictionary.begin();
+    }
+    
+    inline auto end()
+    {
+        return _dictionary.end();
+    }
+    
+    inline auto begin() const
+    {
+        return _dictionary.begin();
+    }
+    
+    inline auto end() const
+    {
+        return _dictionary.end();
+    }
+    
 private:
     std::unordered_map<Key, Value> _dictionary;
 };
